@@ -1,0 +1,63 @@
+		
+	<!--  prépare flash -->
+		
+	<script  type="text/javascript"> AC_FL_RunContent = 0; </script>
+	<script  type="text/javascript"> DetectFlashVer = 0; </script>
+	<script src="helpers/AC_RunActiveContent.js"  type="text/javascript"></script>
+	<script type="text/javascript">
+		<!--
+		//
+		// Variables globales
+		// Version majeure de Flash requise
+		var requiredMajorVersion = 9;
+		// Version mineure de Flash requise
+		var requiredMinorVersion = 0;
+		// Révision de Flash requise
+		var requiredRevision = 45;
+		// 
+		// -->
+	</script>
+	<script type="text/javascript">
+<!--
+if (AC_FL_RunContent == 0 || DetectFlashVer == 0) {
+	alert("Cette page nécessite le fichier AC_RunActiveContent.js.");
+} else {
+	var hasRightVersion = DetectFlashVer(requiredMajorVersion, requiredMinorVersion, requiredRevision);
+	if(hasRightVersion) {  // si nous avons détecté une version acceptable
+		// intégrer le clip Flash
+		AC_FL_RunContent(
+			'codebase', 'http://download.macromedia.com/pub/shockwave/cabs/flash/swflash.cab#version=9,0,45,0',
+			'width', '100%',
+			'height', '100%',
+			'src', '<?php echo "helpers/homeMade/zoom/ZOOM.swf"; ?>',
+			'quality', 'high',
+			'pluginspage', 'http://www.macromedia.com/go/getflashplayer',
+			'align', 'middle',
+			'play', 'true',
+			'loop', 'true',
+			'scale', 'showall',
+			'wmode', 'transparent',
+			'devicefont', 'false',
+			'id', 'ZOOM_DEF3',
+			'bgcolor', '#351e1e',
+			'name', 'zoom',
+			'menu', 'true',
+			'allowScriptAccess','sameDomain',
+			'allowFullScreen','false',
+			'movie', '<?php echo "helpers/homeMade/zoom/ZOOM"; ?>',
+			'flashvars', '<?php echo "loupe=content/portfolio/".$fragment."/".$fragment."_XL.jpg&thumb=content/portfolio/".$fragment."/".$fragment."_S.jpg"; ?>',
+			'salign', 'lt'
+			); //end AC code
+	} else {  // version Flash trop ancienne ou détection du plug-in impossible
+		var alternateContent = '<img width="100%" src="<?php echo "content/portfolio/".$fragment."/".$fragment."_XL.jpg"; ?>" />'
+			+ 'Ce contenu fonctionnerait mieux avec Adobe Flash Player. '
+			+ '<a href=http://www.macromedia.com/go/getflash/>Obtenir Flash</a>';
+		document.write(alternateContent);  // Insérer contenu non-Flash
+	}
+}
+// -->
+</script>
+<noscript>
+			<img width="100%" src="<?php echo "content/portfolio/".$fragment."/".$fragment."_XL.jpg"; ?>" />
+</noscript>
+		

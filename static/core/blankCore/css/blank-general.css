@@ -1,0 +1,426 @@
+/*        < blank >       */
+/*     Nicolas Taffin     */
+/*  http://polylogue.com  */
+/*  licence CC: BY-NC-SA   */
+
+
+/* 
+	Cette css sert à régler le positionnement des éléments standard
+
+	- des outils de positionnement libre sont dispo dans blank-gridTools.css
+	
+		theme
+	- le backoffice est géré par theme-backoffice.css
+ 	- les couleurs, bordures, fonds et fontes se règlent dans theme-main.css
+ 	- les menus et navigations dans theme-menus.css
+	- les formulaires dans theme-forms.css
+	- le html documentaire dans theme-html.css
+*/
+
+
+
+
+/****************************************/
+/*        	 generalités				*/							
+/****************************************/
+
+/* remise à zéro */
+
+*
+{
+	margin: 0px 0px 0px 0px;
+	padding: 0px 0px 0px 0px;
+	border: 0;
+	font-weight: inherit;
+  	font-style: inherit;
+  	font-family: inherit;
+  	vertical-align: baseline;
+}
+
+html, body, div, span, object, iframe,
+h1, h2, h3, h4, h5, h6, p, blockquote, pre,
+a, abbr, acronym, address, code,
+del, dfn, em, img, q, dl, dt, dd, ol, ul, li,
+fieldset, form, label, legend,
+table, caption, tbody, tfoot, thead, tr, th, td
+{
+	margin: 0px 0px 0px 0px;
+	padding: 0px 0px 0px 0px;
+	border: 0;
+	font-weight: inherit;
+  	font-style: inherit;
+  	font-size: 100%;
+  	font-family: inherit;
+  	vertical-align: baseline;
+}
+a
+{
+	color: inherit;
+}
+
+a:active, a:focus
+{
+	outline:0 !important; 
+}
+
+img { border: none; }
+a img { border: none; }
+
+sup, sub
+{line-height: 0em;}
+
+
+
+/* usuels */
+
+
+.clearer, .nettoyeur, .cleaner
+{
+	display: block;
+	clear: both;
+	height: 0px;
+	line-height: 0px;
+	font-size: 0px;
+}
+.spacer5, .espaceur5
+{
+	display: block;
+	clear: both;
+	height: 5px;
+	line-height: 0px;
+	font-size: 0px;
+}
+
+.spacer10, spacer, .espaceur10, .espaceur
+{
+	display: block;
+	clear: both;
+	height: 10px;
+	line-height: 0px;
+	font-size: 0px;
+}
+.spacer20, .espaceur20
+{
+	display: block;
+	clear: both;
+	height: 20px;
+	line-height: 0px;
+	font-size: 0px;
+}
+.spacer25, .espaceur25
+{
+	display: block;
+	clear: both;
+	height: 25px;
+	line-height: 0px;
+	font-size: 0px;
+}
+.spacer30, .espaceur30
+{
+	display: block;
+	clear: both;
+	height: 30px;
+	line-height: 0px;
+	font-size: 0px;
+}
+
+
+.clearerRight, .cleanerRight, .nettoyeurDroite
+{
+	display: block;
+	clear: right;
+	height: 0px;
+	line-height: 0px;
+	font-size: 0px;
+}
+.clearerLeft, .cleanerLeft, .nettoyeurGauche
+{
+	display: block;
+	clear: left;
+	height: 0px;
+	line-height: 0px;
+	font-size: 0px;
+}
+.accessibilite, .accessibility
+{
+	display: none;
+}
+.none
+{
+	display: none;
+}
+
+
+.screenOnly
+{
+	display: block;
+}
+.printOnly, .handHeldOnly
+{
+	display: none;
+}
+
+
+
+
+/****************************************/
+/*     	 construction générale		    */							
+/****************************************/
+
+html, body
+{
+	height: 100%;
+}
+.wrapper, .enveloppe
+{
+	float: left;
+}
+.content, .contenu
+{
+	display: block;
+	width: auto;
+	height: auto;
+	margin: 0px 0px 0px 0px;
+	padding: 0px 0px 0px 0px;
+}
+
+#pageWrapper, #enveloppePage, .pageWrapper, .enveloppePage
+{
+}
+
+#page, .page
+{
+	display: block;
+	position: relative;
+	
+}
+#pageContent, #pageContenu, .pageContent, .pageContenu
+{
+}
+
+#headerWrapper, #enveloppeTete, .headerWrapper, .enveloppeTete
+{
+}
+
+header, #header, #tete, .header, .tete
+{
+	display: block;
+
+}
+#headerContent, #teteContenu, .headerContent, .teteContenu
+{
+}
+
+#footerWrapper, #enveloppePied, .footerWrapper, .enveloppePied
+{
+}
+footer, #footer, #pied, .footerWrapper, .pied
+{
+	display: block;
+
+
+}
+#footerContent, #piedContenu, .footerContent, .piedContenu
+{
+}
+
+#mainWrapper, #enveloppeVentre, .mainWrapper, .enveloppeVentre
+{
+}
+#main, #ventre, .main, .ventre
+{
+	display: block;
+		position: relative;
+		/* pour pouvoir y insérer des clearers */
+
+}
+#mainContent, #ventreContenu, .mainContent, .ventreContenu
+{
+
+}
+
+/* html5 */
+
+nav {} /* navigation element */
+aside {} /* highlight element */
+section {} /* section element */
+article {} /* article element */
+hgroup {} /* header and subheader element */
+figure {} 
+figcaption {}
+mark {} /* interactive highlight element */
+canvas {}
+
+video {}
+audio {}
+
+/****************************************/
+/*     	          modules   		    */							
+/****************************************/
+
+
+
+.banner, .banniere
+{
+	display: block;	
+}
+
+
+.block, .bloc
+{
+	display: block;
+}
+
+
+
+.left, .gauche
+{
+	float: left;
+}
+
+.right, .droite
+{
+	float: right;
+}
+
+.center, .centre
+{
+	margin-left: auto;
+	margin-right: auto;
+}
+.left.margins, .gauche.marge
+{
+	margin-top: 0.5em;
+	margin-bottom: 0.7em;
+	margin-right: 1em;
+}
+.right.margins, .droite.marge
+{
+	margin-top: 0.5em;
+	margin-bottom: 0.7em;
+	margin-left: 1em;
+}
+
+.textLeft, .ferGauche
+{
+	text-align: left;
+}
+.textRight, .ferDroite
+{
+	text-align: right;
+}
+.textCenter, texteCentre
+{
+	text-align: center;
+}
+.textJustify, texteJustifie
+{
+	text-align: justify;
+}
+
+
+.auto
+{
+	width: auto;
+	height: auto;
+}
+.relative
+{
+	position: relative;
+}
+.absolute
+{
+	position: absolute;
+}
+.absoluteRight
+{
+	position: absolute;
+	right: 0px;
+}
+.absoluteRightMore
+{
+	position: absolute;
+	right: -20px;
+}
+.absoluteLeftMore
+{
+	position: absolute;
+	left: -20px;
+}
+.absoluteTopMore
+{
+	position: absolute;
+	top: -20px;
+}
+.absoluteBottomMore
+{
+	position: absolute;
+	bottom: -20px;
+}
+
+.top
+{
+	z-index: 10000;
+}
+
+.tableLike
+{
+	display: table; 
+	height: 100%; 
+	width: 100%;
+}
+
+.cellLike
+{
+	display: table-cell; 
+	text-align: center; 
+	vertical-align: middle;
+}
+
+/****************************************/
+/*     	          tiroirs   		    */							
+/****************************************/
+
+
+.tiroir, .tiroirInactif
+{
+	border: 1px solid #BBB;
+	
+}
+.tiroirActif
+{
+	border: 2px solid  #FF0;
+	
+}
+
+.tiroirBandeau
+{
+	padding: 5px 5px 5px 5px;
+}
+.tiroirBandeau img
+{
+	display : inline;
+}
+.tiroirBandeau a
+{
+	text-decoration: none;
+}
+
+.contenuTiroirAlt
+{
+	background-color: white;
+	padding: 20px;
+}
+.contenuTiroir
+{
+	background-color: white;
+}
+
+
+/***********************************/
+/*       for PHP developpers       */
+/***********************************/
+
+pre.xdebug-var-dump {
+  text-align: left;
+}

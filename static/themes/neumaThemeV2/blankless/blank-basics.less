@@ -1,0 +1,517 @@
+/*      	< blank >		    */
+/*     Nicolas Taffin     */
+/*  http://polylogue.com  */
+/*    licence CC: BY-SA   */
+
+
+/**
+*		General
+**/
+
+/*
+*	 css reset 
+*	 derived from (and thanks to):
+*	 http://meyerweb.com/eric/tools/css/reset/
+* 	public domain licence
+*/
+
+html, body, div, span, applet, object, iframe,
+h1, h2, h3, h4, h5, h6, p, blockquote, pre,
+a, abbr, acronym, address, big, cite, code,
+del, dfn, em, img, ins, kbd, q, s, samp,
+small, strike, strong, sub, sup, tt, var,
+b, u, i, center,
+dl, dt, dd, ol, ul, li,
+fieldset, form, label, legend,
+table, caption, tbody, tfoot, thead, tr, th, td,
+main, article, aside, canvas, details, embed, 
+figure, figcaption, picture, header, footer, hgroup, 
+menu, nav, output, ruby, section, summary,
+time, mark, audio, video,
+{
+	margin: 0;
+	padding: 0;
+	border: 0;
+	font-weight: inherit;
+	font-style: inherit;
+	font-size: 100%;
+	font-family: inherit;
+	vertical-align: baseline;
+					box-sizing: border-box;
+		 -moz-box-sizing: border-box;
+	-webkit-box-sizing: border-box;
+}
+
+/* for older browsers */
+
+article, aside, details, figcaption, figure, 
+footer, header, hgroup, menu, nav, picture, section {
+	display: block;
+}
+
+html, body {
+	height: 100%;
+}
+body {
+	line-height: 1;
+}
+ol, ul {
+	list-style: none;
+}
+blockquote, q {
+	quotes: none;
+}
+blockquote:before, blockquote:after,
+q:before, q:after {
+	content: '';
+	content: none;
+}
+table {
+	border-collapse: collapse;
+	border-spacing: 0;
+}
+
+/* media behavior */
+
+img {
+	display: block;
+	border: none;
+	max-width: 100%;
+	width: auto;
+	height: auto;
+}
+video {
+	width: 100%;
+	height: auto;
+}
+picture {
+	display: block;
+	width: 100%;
+	height: auto;
+}
+figcaption {
+	font-size: 0.8em;
+	padding: 0.8em 0;
+}
+/*  links */
+
+a {
+	text-decoration: none;
+	outline: none;
+}
+a img { border: none; }
+
+
+
+/**
+*		Development stage :
+*		temporarily locate things a bit with a .teou body
+**/
+
+
+.teou {
+	border: 1px solid rgba(0,230,250,0.5);
+}
+.teou * {
+	.teou;
+}
+.zero {
+	margin: 0;
+	padding: 0;
+}
+pre.xdebug-var-dump {
+  text-align: left;
+}
+
+/**
+*		typography
+**/
+
+
+h1, h2, h3, h4, h5, h6, p
+{
+	text-rendering: optimizeLegibility;
+}
+
+sup, sub {
+   vertical-align: baseline;
+   position: relative;
+   top: -0.4em;
+}
+sub { top: 0.4em; }
+
+
+/* trigger manual hyphenation with &hyphen; or &shy; */
+
+.hyphenable(@how: auto) {
+  -webkit-hyphens: @how;
+  -ms-hyphens: @how;
+  hyphens: @how;
+}
+
+.force-wrap, .force-break {
+	-ms-word-break: break-all;
+    	word-break: break-all;
+  word-wrap: break-word;
+	-webkit-hyphens: auto;
+		 -moz-hyphens: auto;
+					hyphens: auto;
+}
+
+.unbreakable {
+	white-space:nowrap;
+}
+
+.ellipsis {
+	text-overflow: ellipsis;
+	overflow: hidden;
+	white-space: nowrap;
+}
+
+.columns(@number:2; @gap: 20px) {
+	column-count: @number;  
+	column-rule: none;
+	column-gap: @gap;
+	hyphens: auto;
+	hyphenate-lines: 3;
+}
+
+.columns, .columns2 {
+	.columns(2);
+}
+
+.columns3 {
+	.columns(3); 
+}
+
+.columns4 {
+	.columns(4); 
+}
+
+.normal-text {
+	display: block;
+	font-size: 1em;
+	line-height: 1.3em;
+}
+.small-text {
+	display: block;
+	font-size: 13pt;
+	line-height: 1.3em;
+}
+.tiny-text {
+	display: block;
+	font-size: 11pt;
+	line-height: 1.3em;
+}
+.micro-text {
+	display: block;
+	font-size: 9pt;
+	line-height: 1.3em;
+}
+
+/* new clearfix container */
+
+.clearfix {
+    overflow: auto;
+    zoom: 1;
+}
+
+/*
+*		clearfixed by default : section and article
+*		form field divs
+*/
+
+
+
+section, 
+article,
+fieldset > div:after {
+   overflow: auto;
+   zoom: 1;
+}
+
+/* or clearer */
+
+.clear(@where: both) {
+	display: block;
+	clear: @where;
+	height: 0;
+	line-height: 0;
+	overflow: hidden;
+}
+.clearer {
+	.clear;
+}
+.clearer-right {
+	.clear(right);
+}
+.clearer-left {
+	.clear(left);
+}
+
+
+/* spacers */
+
+.space(@height: 1em) {
+	display: block;
+	clear: both;
+	height: @height;
+	line-height: 0;
+	overflow: hidden;
+}
+.spacer{
+	.space;
+}
+.spacer5 {
+	.space(5px);
+}
+.spacer10 {
+	.space(10px);
+}
+.spacer15 {
+	.space(15px);
+}
+.spacer20 {
+	.space(20px);
+}
+.spacer25 {
+	.space(25px);
+}
+.spacer30 {
+	.space(30px);
+}
+
+/* text label not displayed */
+
+.accessibility {
+	position: absolute !important;
+	top: -1000px !important;
+	left: -1000px !important;
+	visibility: hidden !important;
+	line-height: 0 !important;
+	height: 0px !important;
+	width: 0px !important;
+	overflow: hidden !important;
+}
+
+/* display rules */ 
+
+.none {
+	display: none;
+}
+.screen-only {
+	display: block;
+}
+.print-only, .handheld-only {
+	display: none;
+}
+
+
+/**
+*	builders
+**/
+
+
+.wrapper {
+	float: left;
+}
+.content {
+	display: block;
+	margin: 0;
+	padding: 0;
+}
+.banner {
+	display: block;	
+}
+.block {
+	display: block;
+}
+
+.left {
+	float: left;
+}
+.right {
+	float: right;
+}
+.nowrap {
+	overflow: auto;
+}
+.centered {
+	margin-left: auto;
+	margin-right: auto;
+}
+.margins {
+	margin: 0.5em;
+}
+.left.margins {
+	margin-top: 0.5em;
+	margin-right: 1em;
+	margin-bottom: 0.7em;
+	margin-left: 0;
+}
+.right.margins {
+	margin-top: 0.5em;
+	margin-right: 0;
+	margin-bottom: 0.7em;
+	margin-left: 1em;
+}
+.box {
+	background-color: #DDD;
+	padding: 1em;
+	font-size: 0.8em;
+	line-height: 1.3em;
+	.margins;
+}
+
+
+.text-left {
+	text-align: left;
+}
+.text-right {
+	text-align: right;
+}
+.text-center {
+	text-align: center;
+}
+.text-justify { 
+	text-align: justify;
+	-webkit-hyphens: auto;
+     -moz-hyphens: auto;
+          hyphens: auto; 
+}
+
+
+.auto {
+	width: auto;
+	height: auto;
+}
+.relative {
+	position: relative;
+}
+.absolute {
+	position: absolute;
+	left: 0;
+}
+.absolute.right {
+	left: auto;
+	right: 0;
+}
+.absolute.top {
+	top: 0;
+}
+.absolute.bottom {
+	top: auto;
+	bottom: 0;
+}
+.fixed {
+	position: fixed;
+	left: 0;
+	top: 0;
+}
+.static, .statique {
+	position: static;
+}
+
+.zz-top {
+	z-index: 9999999999;
+}
+
+.table {
+	display: table; 
+	height: 100%; 
+	width: 100%;
+}
+.inline-table {
+	display: inline-table; 
+	height: 100%; 
+	width: 100%;
+}
+.table-row {
+	display: table-row; 
+	height: 100%; 
+	width: 100%;
+}
+.table-cell {
+	display: table-cell; 
+	text-align: center; 
+	vertical-align: middle;
+}
+
+ul.nude, .article ul.nude {
+	list-style-image: none;
+	list-style-type: none;
+	margin: 0;
+	padding: 0;
+}
+
+/**
+*	Inline blocks
+*/
+
+// auto children
+
+.inline-blocks {
+	font-size: 0;
+	line-height: 0;
+}
+.inline-blocks > * {
+	font-size: 14pt;
+	font-size: 1rem;
+	line-height: 1.3rem;
+	display: inline-block;
+	width: auto;
+	vertical-align: top;
+}
+
+// manual
+
+.inline-block {
+	display: inline-block;
+	float: none;
+	width: auto;
+	padding: 0;
+	margin: 0;
+}
+
+/**
+*	responsive square thanks to captain anonymous:
+*	http://codepen.io/anon/pen/cvzuh
+*/
+
+.square {
+	display: inline-block;
+	text-align: center;
+	padding: 0;
+	height: auto;
+}
+.square:before {
+  content:'';
+  display:inline-block;
+  padding-top: 100%; /* ou */ 
+  padding: 50% 0; /* ou */
+  padding: 40% 0 60%;
+  /* padding vertical = 100% */
+  vertical-align:middle; /* top pour centrage en haut , ou bottom pour en bas */
+}
+
+
+/**
+*	pseudo-images
+*/
+
+.p-image(@width: 320px;@height: 240px;) {
+	display: inline-block;
+	width: @width;
+	height: @height;
+	background-position: 50% 50%;
+	background-color: #BDD;
+	background-repeat: no-repeat;
+	background-size: cover;
+}
+.pseudo-image {
+	.p-image;
+}
+.contain {
+	background-size: contain;
+}
+

@@ -1,0 +1,18 @@
+{
+  "query": {
+    "bool": {
+      "must": [
+        {
+          "match_phrase": {
+            "descriptors.value": "{melodic_pattern}"
+          }
+        },
+        {
+          "term": {
+            "corpus.corpus": "{keywords}"
+          }
+        }
+      ]
+    }
+  }
+}

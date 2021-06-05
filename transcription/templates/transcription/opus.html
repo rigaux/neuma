@@ -1,0 +1,188 @@
+{% extends "layout_transcription.html" %} 
+{% load i18n %} 
+{% load extras %} 
+{% load guardian_tags %}
+
+{% block content %}
+
+<!-- Load the user/object permissions for the corpus -->
+{% get_obj_perms request.user for opus.corpus as "user_corpus_perms" %}
+
+<script type="text/javascript" src="/static/js/chart.min.js"></script>
+<script type="text/javascript" src="/static/js/concordance.js"></script>
+
+<script language="JavaScript" type="text/JavaScript">
+/* Declare the list of tabs in the current page */
+
+{% if "import_corpus" in user_corpus_perms  %}
+var tabNames = [{"tabId": "tab1", "divId":"transcription"},
+                ]
+ {% else %}
+var tabNames = [{"tabId": "tab1", "divId":"transcription"},
+                ]
+{% endif %}
+
+</script>
+
+
+<h1>
+    <ul class="toolbar">
+
+        {% if perms.manager.change_opus %}
+        <li class="edit"><a
+            href="{% url 'admin:manager_opus_change' opus.id %}"
+            title="edit this opus"> <span class="accessibility">edit</span>
+        </a></li> {% endif %}
+    </ul>
+
+{{opus.title}}</h1>
+
+ 
+<dl class="description">
+	<dt>{% trans "Corpus" %}</dt>
+	<dd>
+		<a href="{% url 'home:corpus' opus.corpus.id %}">{{opus.corpus.title}}</a>
+	</dd>
+	<dt>{% trans "Opus title" %}</dt>
+	<dd>{{opus.title}}</dd>
+	{% if opus.year != None %}
+	<dt>{% trans "Year" %}</dt>
+	<dd>{{opus.year}}&nbsp;</dd>
+	{% endif %} {% if opus.reference != None %}
+	<dt>{% trans "Reference" %}</dt>
+	<dd>{{opus.reference}}&nbsp;</dd>
+	{% endif %} 
+	{% if opus.composer != None %}
+	<dt>{% trans "Composer" %}</dt>
+	<dd>{{opus.composer}}&nbsp;</dd>
+	{% endif %} 
+	{% if opus.lyricist != None %}
+	<dt>{% trans "Lyricist" %}</dt>
+	<dd>{{opus.lyricist}}&nbsp;</dd>
+	{% endif %}
+    {% if opus.external_link != None %}
+    <dt>{% trans "External link" %}</dt>
+    <dd><a href="{{opus.external_link}}" target="_blank">{{opus.external_link}}</a>&nbsp;</dd>
+    {% endif %} 
+
+	<dt>{% trans "Files"%}</dt>
+	<dd>
+    {% if opus.pdf %}| <a href="{{opus.pdf.url}}">PDF</a>{% endif %} 
+    {% if opus.mei %} | <a target="_blank" href="{{opus.mei.url}}">MEI</a>{% endif %} 
+    {% if opus.musicxml %} | <a target="_blank" href="{{opus.musicxml.url}}">MusicXML</a>{% endif %}
+    {% if opus.record %} | <a target="_blank" href="{{opus.record.url}}">MP3</a>{% endif %}
+    {% if opus.summary %} | <a target="_blank" href="{{opus.summary.url}}">Summary</a>{% endif %}
+  </dd>
+</dl>
+<!-- fin div .description -->
+
+<div>
+	<ul id="tabnav">
+     <li id="tab1"><a href="#" onClick="TabClick(tabNames, 4);">Transcription</a> </li>
+	</ul>
+</div>
+
+<div class="clearer">&nbsp;</div>
+
+<div id="score" style="display: block">
+  <h2>File: {{audiofile.filename}}</h2>
+
+<!-- if request.session.search_context.pattern != "" and opus.mei  -->
+
+    {%if  opus.mei  %}
+    <button onclick="toggleScoreVisibility()">Toggle score visibility</button>
+	<div>
+		<div id="verovio"></div>
+	</div>
+
+<div id="transcription_settings" style="margin-top:20px;">
+Settings:
+  {% if audio_id %} 
+  {% else %}
+  {% endif %}
+  <form action="{% url 'transcription:opus' opus.ref audio_id %}" method="post">
+  {% csrf_token %}
+  <ul>
+  {% for field in transcription_form %}
+  <li style="margin-bottom:10px;"> {{ field.errors }}
+  <label for="{{ field.id_for_label }}" style="width:150px;">{{ field.label }}</label>
+  {{ field }}
+  </li>
+  {% endfor %}
+  </ul>
+
+<input type="submit" value="Launch transcription">
+</form>
+
+TODO : 
+ <ul>
+<li> lancer la commande run_quant.sh avec le filename</li>
+<li> et récupérer le mei créé</li>
+<li> l'afficher en regard de l'autre.</li>
+</ul>
+
+</div>
+
+
+	{% else %}
+	<ul class="toolbar">
+		<li class="download"><a href="{{opus.url_musicxml}}"
+			title="{% trans 'Download' %}"> <span class="accessibility">{%
+					trans 'Download' %}</span>
+		</a></li>
+	</ul>
+	{% if opus.png %} 
+	  <img src="{{opus.png.url}}" alt="{{opus.title}}" />
+	 {% else %}
+	 <p>No image</p>
+	{% endif %} 
+	{% endif %}
+</div>
+
+<div class="clearer">&nbsp;</div>
+<!--   Tab for transcription -->
+<div id="transcription" style="display: none">
+  <ul>
+<dl class="description">
+  {% if audio_id %} <!-- there's an audio id to transcribe -->
+  {% else %}
+  {% for audio in audio_files %}
+
+	<li><dt>{% trans "Fichier" %}</dt>
+	<dd>
+		{{audio.filename}}
+	</dd>
+	
+	<dt>{% trans "Description" %}</dt>
+	<dd>{{audio.description}}</dd>
+	
+	{% if creation_timestamp %}
+	<dt>{% trans "Création" %}</dt>
+	<dd>{{creation_timestamp}}&nbsp;</dd>
+	{% endif %} {% if update_timestamp %}
+	<dt>{% trans "Mise à jour" %}</dt>
+	<dd>{{update_timestamp}}&nbsp;</dd>
+	{% endif %} 
+	<dt>{% trans "Actions"%}</dt>
+	<dd>
+		 <a href="{% url 'admin:manager_audio_change' audio.id %}" 
+		 	title="edit this audio file">Éditer</a> | 
+		 <a target="_blank" href="">Transcrire</a> 
+           </dd>
+   </li>
+
+    {% endfor %}
+  {% endif %}
+   </dl> 
+    </ul>
+</div>
+
+<script type="text/javascript">
+   TabClick(tabNames, {{tab}});
+    // clonePattern("seepartition", "pattern_score")
+  </script>
+<div class="clearer">&nbsp;</div>
+
+{% endblock content %}
+
+<!-- just deleted a block opus_menu, see home template for reversion -->

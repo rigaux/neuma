@@ -1,0 +1,56 @@
+<div>
+    <h1>Concordance harmonique</h1>
+    <a href="#" id="explications">Explications</a>
+    <table width="100%" class="preview">
+
+<tr>
+  <td> <input type="checkbox" name="concordance" onclick="process('{{opus.ref}}', 'concordance')"> <b>Concordance</b></td>
+</tr>
+<tr>
+    <td> <input type="checkbox" name="coherence" onclick="process('{{opus.ref}}', 'coherence')"> <b>Cohérence</b></td>
+</tr>
+<tr>
+    <td> <input type="checkbox" name="concordanceTotale" onclick="process('{{opus.ref}}', 'concordanceTotale')"> <b>Concordance totale</b></td>
+</tr>
+<tr>
+  <td> <input type="checkbox" name="concordanceOrdre3" onclick="process('{{opus.ref}}', 'concordanceOrdre3')"> <b>Concordance d'ordre 3</b></td>
+
+</tr>
+        <tr>
+  <td> <input type="checkbox" name="couleurHarmonique" onclick="process('{{opus.ref}}', 'couleurHarmonique')"> <b>Couleur harmonique</b></td>
+
+</tr>
+
+
+</table>
+
+    <h3>Paramètres</h3>
+    <form id="concordanceForm" action="#" method="GET">
+        <label for="partiels">Nombre de partiels</label>
+        <input type="number" class="param" id="partiels" name="partiels" min="0" max="40" step="1" value="20"><br><br>
+        <label for="sigma">Sigma</label>
+        <input type="number" class="param" id="sigma" name="sigma" min="0" max="0.1" step="0.001" value="0.01"><br><br>
+        <label for="decroissance">Décroissance</label>
+        <input type="number" class="param" id="decroissance" name="decroissance" min="0" max="3" step="0.1" value="0.5"><br>
+    </form>
+</div>
+
+
+    <div id="dialogBox" style="display: none;">
+Un signal sonore peut être représenté de deux manières : sous sa forme temporelle, et sous la forme de spectrogramme. Tandis que la première représente l’évolution temporelle de l’intensité acoustique, la seconde indique, à chaque instant, le contenu spectral du signal, c'est-à-dire sa répartition en fréquences. Les notions définies ci-dessous vont s’appuyer précisément sur la représentation fréquentielle.
+<h4>Energie et concordance harmonique</h4>
+Un son est une onde de pression qui se propage dans l’air. En tant que phénomène physique, un signal sonore véhicule donc une énergie, et sa puissance à un instant donné correspond à l’intégrale fréquentielle de son spectre à cet instant donné. Lorsque plusieurs notes sont jouées en même temps, l’énergie résultante est la somme des énergies des sons pris individuellement plus un terme d’interaction, qui représente l’énergie échangée entre les deux sons. Lorsqu’il n’y a que deux sons, il correspond à la valeur absolue du produit des deux spectres, c'est-à-dire qu’il mesure l’importance des fréquences communes aux spectres des deux sons, en d’autres termes leur degré de parenté au sens harmonique. Nous donnons précisément à ce terme le nom de concordance harmonique, ou concordance des deux sons. En présence de sons harmoniques, si l’un des deux sons a une fréquence fondamentale qui tombe sur un harmonique de l’autre, alors la concordance sera élevée, par contre si les deux sons n’ont aucun partiel en commun, la concordance sera faible. Lorsque l’accord comporte au moins trois notes, sa concordance harmonique est toujours  définie par rapport au terme d’interaction, il correspondra alors à la somme des concordances de deux notes des notes de l’accord prises deux-à-deux. Par exemple,
+        la concordance de l’accord de trois notes do-mi-sol sera la somme de trois concordances : la concordance de do-mi, la concordance de do-sol, et la concordance de mi-sol.
+<h4>Cohérence harmonique</h4>
+La cohérence harmonique d’un accord d’au moins trois notes est définie comme l’écart-type des notes prises deux-à-deux. Elle renseigne sur la répartition de la concordance entre les différentes concordances des notes prises deux-à-deux.
+<h4>Concordance totale</h4>
+Tandis que la concordance d’un accord mesure, via le terme d’interaction énergétique, le degré de parenté des notes prises deux-à-deux de l’accord, la concordance totale mesure le degré de parenté des notes de l’accord prises dans leur ensemble, et non plus deux-deux. Il correspond à la valeur absolue du produit des spectres de toutes les notes de l’accord, renormalisé de façon à être homogène à une énergie.
+<h4>Concordance d’ordre 3</h4>
+La concordance d’ordre 3, pour les accords de trois sons, est égale à la concordance totale, elle mesure donc la parenté au sens harmonique entre les trois notes. Pour les accords de plus de trois sons, elle est définie comme la somme des concordances d’ordre 3 des notes de l’accord prises trois-à-trois.
+<h4>Modèle de spectre et influence du timbre</h4>
+Les calculs de concordance, cohérence, concordance totale et concordance d’ordre 3 font intervenir le spectre de l’instrument. Nous avons ici modélisé le spectre avec un modèle simple de spectre en gaussiennes, afin d’avoir des résultats interprétables, assez souple pour être en mesure de mettre en valeur l’influence du timbre sur les paramètres harmoniques. Le paramètres de spectre, ajustables, sont les suivants :
+•   Nombre de partiels
+•   Répartition des partiels. Permet de modéliser des sons inharmoniques
+•   Décroissance des partiels
+•   Facteur sigma : c’est la largeur spectrale des partiels
+    </div>

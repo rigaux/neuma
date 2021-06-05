@@ -1,0 +1,140 @@
+{% load i18n %}
+<header class="page-header">
+			
+	<!-- premier étage : languages -->
+
+	<div class="banner langages">
+	</div>
+	<!-- fin div .langages -->
+
+	<!-- deuxième étage : platform -->
+
+	<div class="banner platform">
+
+
+		<!-- le menu à propos -->
+		
+		<ul class="menu menuAbout">
+			<li><a href="javascript:void(0);">Menu</a>
+				<ul>
+					<li><a href="{% url 'home:presentation' %}">{% trans "Presentation" %}
+					</a></li>
+                    <li><a href="{% url 'home:services' %}">{% trans "Services" %}
+                    </a></li>
+                    {% if request.user.is_superuser %}
+                    <li><a href="{% url 'manager:index' %}">{% trans "Admin" %}
+                    </a></li>
+                    <li><a href="{% url 'migration:index' %}">{% trans "Migration" %}
+					</a></li>
+                    {% endif %}
+                     {% if current_view == "quality:index" %}
+                    <li class='selected'><a  href="{% url 'quality:index' %}">{% trans "Quality" %}
+                    </a></li>
+                    {% else %}
+                     <li><a href="{% url 'quality:index' %}">{% trans "Quality" %}
+                    </a></li>
+                      {% endif %}
+                      {% if current_view == "transcription:index" %}
+                    <li class='selected'><a  href="{% url 'transcription:index' %}">{% trans "Transcription" %}
+                    </a></li>
+                    {% else %}
+                     <li><a href="{% url 'transcription:index' %}">{% trans "Transcription" %}
+                    </a></li>
+                      {% endif %}
+                     {% if current_view == "home:structsearch" %}
+                    <li class='selected'><a href="{% url 'home:structsearch' %}">{% trans "Structured search" %}
+                    {% else %}
+                    <li><a href="{% url 'home:structsearch' %}">{% trans "Structured search" %}
+                    {% endif %}
+                    </a></li>
+					<li><a href="{% url 'home:contact' %}">{% trans "Contact" %}</a>
+					</li>
+				</ul></li>
+		</ul>
+
+		<!-- le logo -->
+		<a class="logo" href="/" title="Neuma home page"> <span
+			class="accessibility">Neuma home page</span>
+		</a>
+
+		<!-- la connexion -->
+		<a href="javascript:void(0);" id="connexionLink">{% trans "Connection" %}</a>
+
+		<div id="connexionZone">
+			<!-- ajax content here -->
+
+		</div>
+		<!-- ending connexionZone -->
+
+		
+	</div>
+	<!-- fin div .platform -->
+
+
+	<!-- troisième étage : access -->
+
+	<div class="banner access">
+
+		<!-- le menu collections -->
+		<ul class="menu menuAccess">
+
+			<li class="selected"><a href="/">Collections</a>
+				<ul>
+					{% if corpus.ref == 'all' %}
+					<li class='selected'><a href="{% url 'home:corpus' 'all' %}">{% trans "All" %}…</a>
+					</li>
+					{% else %}
+					<li><a href="{% url 'home:corpus' 'all' %}">{% trans "All" %}…</a>
+                    </li>
+					{% endif %}
+					{% for corpus in view.top_level_corpora %}
+					 {% if corpus.ref in request.session.search_context.ref  %}
+					   {{ view.get_context_for_layout | safe}}
+                      {% else %}
+                    <li> <a
+                        href="{% url 'home:corpus' corpus.ref %}">{{corpus.short_title}}</a>
+                      </li>
+                      {% endif %}
+					{% endfor %}
+				</ul></li>
+		</ul>
+
+		<!-- rechercher -->
+		<div class="searchForm">
+			<form action="{% url 'home:search' %}" method="get">
+				<!--  <input type="hidden" name="searchForm" value="1" /> -->
+				<fieldset>
+					<div id="scoreSnippet" style="">
+						<!-- background this div with the score snippet -->
+						<input width="200" id="expression" placeholder="Keywords" type="text"
+							name="keywords" value="{{request.session.search_context.keywords}}" 
+							onfocus="if (this.value=='Keywords') this.value=''"
+							onblur="if (this.value=='') this.value='Keywords'">
+					</div>
+
+					<a id="keyboardLink" title="{% trans "Keyboard" %}"> <span
+						class="accessibility">{%trans "Keyboard" %}</span>
+					</a>
+
+					<!-- <a id="collectionsLink" title="Collections"> <span class="accessibility">Collections</span> 
+							</a> -->
+
+					<div id="keyboardZone">
+					{% include "keyboard.html" %}
+					</div>
+					<!-- ending keyboardZone -->
+
+					<div id="collectionsZone">
+						<!-- ajax content here -->
+					</div>
+					<!-- ending collectionsZone -->
+					<input id="submitButton" type="submit" value="{% trans 'Search' %}" />
+
+				</fieldset>
+			</form>
+		</div>
+	</div>
+	<!-- fin div .access -->
+
+	<div class="clearer">&nbsp;</div>
+</header>

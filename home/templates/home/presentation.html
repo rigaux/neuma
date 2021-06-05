@@ -1,0 +1,55 @@
+{% extends "layout.html" %} {% load i18n %} {% block content %}
+
+
+<h1 class="title">{% trans "NEUMA, a music score digital library" %}</h1>
+
+<div class="story">{% blocktrans %} NEUMA is a digital library
+	that aims at publishing on-line rare corpora of music. We maintain and
+	develop collections of scores with a clear and flexible organization
+	based on interrelated corpus, so that users can easily browse, search
+	and access them. NEUMA is also an open platform: as a user, you can get
+	an account, create your own corpora and enrich them with new scores,
+	annotate existing scores, and, overall, contribute to the collaborative
+	effort of publishing beautiful but hardly accessible music works. 
+	{% endblocktrans %}</div>
+
+<h2 class="title">{% trans "Thematic corpora" %}</h2>
+
+<div class="story">
+{% blocktrans %} 
+Consult our list of corpora,
+	sub-corpora and attached collections. NEUMA hosts rare music
+	collections, such as sequentia, a corpus of liturgic chants, many
+	psalters from the European renaissance, the RISM catalagogue of the
+	Bibliothèque Nationale de France, etc. Consult the complete list of our
+	corpora to discover more. 
+	{% endblocktrans %}
+	</div>
+
+<h2 class="title">{% trans "Searching NEUMA collections" %}</h2>
+
+<div class="story">
+{% blocktrans %} 
+Beyond the mere inspection of
+	a Corpus extension, NEUMA supports an advanced search interface that
+	lets you carry out cross-collections retrieval of scores, based on
+	description, annotations, or content. As a registered user, you can
+	contribute to NEUMA: select and annotate existing scores, join a
+	contributor team, or create and manage your own corpus/corpora. Please
+	sign in and contact the corpora administrator. 
+{% endblocktrans %}</div>
+
+<h2 class="title">{% trans "REST Services" %}</h2>
+
+<div class="story">
+{% url 'home:services' as service_url %}
+{% blocktrans %} NEUMA provides a REST
+	interface that allow external application to manage their musical
+	content (represented in symbolic format). Please look at the 
+	<a href="{{service_url}}">services</a>
+	description page for details on the REST interface. Two corpora of
+	Ancient music currently rely on NEUMA services: Psautiers andSequentia.
+{% endblocktrans %}</div>
+
+
+{% endblock content %}

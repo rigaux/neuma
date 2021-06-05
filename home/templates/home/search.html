@@ -1,0 +1,88 @@
+{% extends "layout.html" %} {% load i18n %}
+
+{% block content %}
+
+ <script src="/static/js/verovio-toolkit.js"></script>
+
+<script>
+    var vrvToolkit = new verovio.toolkit();
+    </script>
+
+    <div class="grid">
+        <div class="col3">
+            {% if corpus_cover != "" %}
+            <div class="spacer30">&nbsp;</div>
+            <img width="170" height="200" src="{{ corpus_cover.url }}" alt="Image" />
+            {% endif %}
+        </div>
+        <div class="col1"></div>
+        <div class="col8">
+            <h1>{% trans "Search criteria" %}</h1>
+            <h4>{% trans 'Context' %}</h4> {{corpus.title}}
+            <h4>{% trans 'Keywords' %}
+            <span class="control">[<a href="{% url 'home:search' %}?keywords=">{% trans "Clear" %}</a>]</span>
+            </h4>
+            {{request.session.search_context.keywords}}
+            <h4>{% trans "Pattern" %}
+            <span class="control">[<a href="{% url 'home:search' %}?pattern=">{% trans "Clear" %}</a>]</span>
+            </h4>
+            <h4>Search type:</h4> <span>{{ request.session.search_context.search_type }}</span>
+            <h4>Mirror search:</h4> <span>{{ request.session.search_context.mirror_search }}</span>
+            <div id="search_partition"></div>
+        </div>
+    </div>
+   
+
+<div class="clearer">&nbsp;
+</div>
+
+
+<div>
+    <ul id="tabnav">
+        <li id="tab1" class="active"><a href="#" onClick="">Results ({{nbHits}})
+        </a></li>
+    </ul>
+</div>
+
+<div id="result" style="display: block">
+
+    <div id="opus" >
+
+        {%if corpus %}
+        <ul class="paginator">
+            <li class="leftend">
+                <a href="{% url 'home:search' %}?page=1" title="First"></a>
+            </li>
+            {%if opera.has_previous %}
+            <li class="left">
+                <a href="{% url 'home:search' %}?page={{opera.previous_page_number}}" title="Previous"></a>
+            </li>
+            {% endif %}
+            {% for i in opera.paginator.page_range %}
+            <li> <a href="{% url 'home:search' %}?page={{i}}">{{i}}</a></li>
+            {% endfor %}
+
+            {%if opera.has_next %}
+            <li class="nextRight">
+                <a href="{% url 'home:search' %}?page={{opera.next_page_number}}"></a>
+            </li>
+            {% endif %}
+            <li class="lastRight">
+                <a href="{% url 'home:search' %}?page={{opera.paginator.num_pages}}" title="last page"></a>
+            </li>
+        </ul>
+        {% endif %}
+        <div class="clearer">&nbsp;</div>
+        {% for result in opera %}
+        {% include "home/opus_item.html" with opus=result.opus %}
+        {% endfor %}
+    </div>
+
+    <script type="text/javascript">
+        // TabClick(tabNames, 0);
+        clonePattern("seepartition", "search_partition")
+    </script>
+    <div class="clearer">&nbsp;</div>
+
+</div>
+{% endblock content %}

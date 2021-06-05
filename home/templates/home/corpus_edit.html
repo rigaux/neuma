@@ -1,0 +1,22 @@
+{% extends "layout.html" %} 
+{% load i18n %} 
+{% block content %} 
+{% load extras %} 
+{% load guardian_tags %}
+
+<!-- Load the user/object permissions for the current corpus -->
+{% get_obj_perms request.user for corpus as "user_corpus_perms" %}
+
+   <h3>{% trans "Create a child corpus" %}</h3>
+   
+   Current corpus : {{corpus.title}}
+  <form method="post" enctype="multipart/form-data" action="{% url 'home:create_corpus_child' corpus.ref %}" >
+    {% csrf_token %}
+        {{ corpus_form.as_p }}
+        <input type="submit" value="{% trans 'Save' %}"/>
+    </form>
+    
+    
+{% endblock content %}
+
+    

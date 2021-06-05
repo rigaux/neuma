@@ -1,0 +1,13 @@
+{% extends "layout.html" %} 
+{% load i18n %}
+
+{% block content %}
+
+<h1>Tests of ElasticSearch</h1>
+
+<ul>
+{% for hit in hits %}
+   <li>Corpus: {{ hit.title }}</li>
+{% endfor %}
+</ul>
+{% endblock content %}

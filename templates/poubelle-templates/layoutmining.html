@@ -1,0 +1,53 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN"
+        "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+
+{% load i18n %}
+
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="fr">
+
+    {% include "part-html-header.html" %}
+
+<body class="mining">
+	<div class="attrape-clic"></div>
+
+    <div class="page">
+
+
+		<!-- Header -->
+        {% include "part-header.html" %}
+        <!-- fin header .page-header -->
+		
+
+		<!-- Main -->
+
+
+			<main class="main document">
+				
+					{% block content %}{% endblock content %}
+
+					<div class="clearer">&nbsp;</div>
+			
+			</main>
+			<!-- fin div .main -->
+
+
+
+		<!-- Footer -->
+            {% include "part-footer.html" %}
+        <!-- fin footer .page-footer -->
+
+
+		<div class="clearer">&nbsp;</div>
+    	
+    </div>
+    <!-- fin div .page -->
+
+	
+
+	<!-- The Ajax code to show the connexion zone -->
+	<script language="Javascript">
+		$("#connexionZone").load("{% url 'home:auth' %}");
+	</script>
+
+</body>
+</html>

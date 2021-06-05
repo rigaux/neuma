@@ -1,0 +1,114 @@
+{% load i18n %} 
+
+{% if user.is_authenticated %}
+
+<div class="content document loginForm">
+
+	<h4>{% trans "Welcome" %}  {{ user.get_short_name }}</h4>
+	<p>
+		{%trans "Your id is" %} <i>{{user}}</i>. {% trans "You are connected" %}.
+	</p>
+
+	<form id="form_logout" action="{% url 'home:auth' %}" method="get">
+		<fieldset>
+            <input id="logout" type="hidden" name="logout" value="1" />
+			<input id="deconnexion" type="submit" value="Logout" />
+		</fieldset>
+	</form>
+</div>
+{% else %}
+
+<div class="content document loginForm">
+
+	<h4>{% trans "Please authenticate yourself" %}</h4>
+
+	{%if invalid_login %}
+	<p>
+		<strong>{% trans "Invalid login. Please try again." %} </strong>
+	</p>
+	{% else %}
+	<p>
+		<strong>{% trans "Do you already have an account?" %}</strong>
+	</p>
+	{% endif %}
+
+	<form id="form_login" action="{% url 'home:auth' %}" method="get">
+		{% csrf_token %}
+		<fieldset>
+			<label for="login">{% trans "Your login" %} </label> <input
+				name="login" type="text">
+
+			<div class="clearer">&nbsp;</div>
+
+
+			<label for="pass">{% trans "Your password" %}</label> <input
+				name="password" type="password">
+
+
+			<label for="identification">&nbsp; </label> <input
+				id="identification" value="Connexion" type="submit">
+
+			<div class="clearer">&nbsp;</div>
+		</fieldset>
+	</form>
+
+	<h4>{% trans "Create an account" %}</h4>
+	<p>{% trans "Please contact us if you need an account." %}</p>
+{% endif %}
+	<!--  
+<p>
+Your login must be a short ASCII character string, without blanks and any special character.  It cannot be changed once defined..</p>
+
+
+<form id="form_user" action="" method="post">
+    <fieldset>
+            <label for="id">Your login</label>
+                <input name="id" type="text" value="philippe">
+                    <div class="clearer">&nbsp;
+                    </div>
+                    
+        <label for="firstName" >Your first (given) name</label>
+        <input name="firstName" type="text" value="Philippe">
+
+            <div class="clearer">&nbsp;
+            </div>
+
+
+            <label for="lastName">Your name</label>
+            <input name="lastName" type="text">
+
+                <div class="clearer">&nbsp;
+                </div>
+
+        <label for="email">
+            Your email
+            </label>
+        <input type='text' name="email" />
+        <div class="clearer">&nbsp;
+        </div>
+    
+                    <label for="password">Your password</label>
+
+                    <input name="password" type="password">
+
+                        <div class="clearer">&nbsp;
+                        </div>
+
+                        <label for="confirm">Confirm your password</label>
+                        <input name="confirm" type="password">
+
+                            <div class="spacer10">&nbsp;
+                            </div>
+
+                            <label for="inscription">&nbsp;
+                            </label>
+                            <input id="inscription" value="Submit" type="submit">
+
+                                <div class="clearer">&nbsp;
+                                </div>
+
+    </fieldset>
+</form>
+-->
+	<div class="clearer">&nbsp;</div>
+</div>

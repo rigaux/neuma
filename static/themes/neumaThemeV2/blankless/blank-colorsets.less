@@ -1,0 +1,930 @@
+/*        < blank >       */
+/*     Nicolas Taffin     */
+/*  http://polylogue.com  */
+/*    licence CC: BY-SA   */
+
+/* Seasonal variations on 17 core html standard colors */
+
+/* WebStandard17 */
+
+@black: black;
+@gray: gray;
+@silver: silver;
+@white: white;
+@navy: navy;
+@blue: blue;
+@aqua: aqua;
+@teal: teal;
+@lime: lime;
+@green: green;
+@olive: olive;
+@yellow: yellow;
+@orange: orange;
+@red: red;
+@maroon: maroon;
+@purple: purple;
+@fuchsia: fuchsia;
+
+
+/* WinterSet 17
+	 Brace Yourself for colder and darker times */
+
+@winterblack:		#131621;
+@wintergray:		#515158;
+@wintersilver:	#9797a5;
+@winterwhite:		#e1e1ff;
+@winternavy:		#32325c;
+@winterblue:		#6d6db2;
+@winteraqua:		#498496;
+@winterteal:		#336b69;
+@winterlime:		#489374;
+@wintergreen:		#2f593e;
+@winterolive:		#5c6036;
+@winteryellow:	#afad5c;
+@winterorange:	#bda45b;
+@winterred:			#7f403d;
+@wintermaroon:	#502931;
+@winterpurple:	#3f2452;
+@winterfuchsia:	#93569c;
+
+/*	SpringSet 17
+		cold in the morning, pastel in the afternoon */
+
+@springblack: 	#252621;
+@springgray: 		#abb09b;
+@springsilver: 	#e2e6d5;
+@springwhite: 	#fefffc;
+@springnavy: 		#6885ed;
+@springblue: 		#88c1ff;
+@springaqua: 		#88e8ff;
+@springteal: 		#7cf0d9;
+@springlime: 		#82ff9d;
+@springgreen: 	#76c764;
+@springolive: 	#83b05a;
+@springyellow: 	#efff79;
+@springorange: 	#ffea74;
+@springred: 		#ff9d82;
+@springmaroon: 	#ec7d70;
+@springpurple: 	#bc7faf;
+@springfuchsia: #ff8ea7;
+
+/*	Summerset 17
+		Vivid, bright and warmest season */
+
+@summerblack:		#261d1d;
+@summergray:		#665e5e;
+@summersilver:	#bfb2b2;
+@summerwhite:		#fff7f7;
+@summernavy:		#2b0586;
+@summerblue:		#7a16ff;
+@summeraqua:		#5173ff;
+@summerteal:		#216e80;
+@summerlime:		#75db26;
+@summergreen:		#349519;
+@summerolive:		#aea204;
+@summeryellow:	#ffff00;
+@summerorange:	#ff9a01;
+@summerred:			#de0000;
+@summermaroon:	#870000;
+@summerpurple:	#620942;
+@summerfuchsia: #ff1ac6;
+
+/*	AutumnSet 17
+		warm in the sun but cold at dawn, nostalgia times */
+
+@autumnblack:		#292820;
+@autumngray:		#76715c;
+@autumnsilver:	#bfb79b;
+@autumnwhite:		#fffae6;
+@autumnnavy:		#5b4a80;
+@autumnblue:		#7481d3;
+@autumnaqua:		#6dacc1;
+@autumnteal:		#48806a;
+@autumnlime:		#84c950;
+@autumngreen:		#65802a;
+@autumnolive:		#807f28;
+@autumnyellow:	#e4c548;
+@autumnorange:	#e3914b;
+@autumnred:			#c65a3f;
+@autumnmaroon:	#6d3a34;
+@autumnpurple:	#782c49;
+@autumnfuchsia:	#a64785;
+
+/* standard colors */
+
+.black {
+	color: @black;
+}
+.gray {
+	color: @gray;
+}
+.silver {
+	color: @silver;
+}
+.white {
+	color: @white;
+}
+.navy {
+	color: @navy;
+}
+.blue {
+	color: @blue;
+}
+.aqua {
+	color: @aqua;
+}
+.teal {
+	color: @teal;
+}
+.lime {
+	color: @lime;
+}
+.green {
+	color: @green;
+}
+.olive {
+	color: @olive;
+}
+.yellow {
+	color: @yellow;
+}
+.orange {
+	color: @orange;
+}
+.red {
+	color: @red;
+}
+.maroon {
+	color: @maroon;
+}
+.purple {
+	color: @purple;
+}
+.fuchsia {
+	color: @fuchsia;
+}
+
+/* standard background-colors */
+
+.bg-black {
+	background-color: @black;
+}
+.bg-gray {
+	background-color: @gray;
+}
+.bg-silver {
+	background-color: @silver;
+}
+.bg-white {
+	background-color: @white;
+}
+.bg-navy {
+	background-color: @navy;
+}
+.bg-blue {
+	background-color: @blue;
+}
+.bg-aqua {
+	background-color: @aqua;
+}
+.bg-teal {
+	background-color: @teal;
+}
+.bg-lime {
+	background-color: @lime;
+}
+.bg-green {
+	background-color: @green;
+}
+.bg-olive {
+	background-color: @olive;
+}
+.bg-yellow {
+	background-color: @yellow;
+}
+.bg-orange {
+	background-color: @orange;
+}
+.bg-red {
+	background-color: @red;
+}
+.bg-maroon {
+	background-color: @maroon;
+}
+.bg-purple {
+	background-color: @purple;
+}
+.bg-fuchsia {
+	background-color: @fuchsia;
+}
+
+/* standard border-colors */
+
+.bd-black {
+	border-color: @black;
+}
+.bd-gray {
+	border-color: @gray;
+}
+.bd-silver {
+	border-color: @silver;
+}
+.bd-white {
+	border-color: @white;
+}
+.bd-navy {
+	border-color: @navy;
+}
+.bd-blue {
+	border-color: @blue;
+}
+.bd-aqua {
+	border-color: @aqua;
+}
+.bd-teal {
+	border-color: @teal;
+}
+.bd-lime {
+	border-color: @lime;
+}
+.bd-green {
+	border-color: @green;
+}
+.bd-olive {
+	border-color: @olive;
+}
+.bd-yellow {
+	border-color: @yellow;
+}
+.bd-orange {
+	border-color: @orange;
+}
+.bd-red {
+	border-color: @red;
+}
+.bd-maroon {
+	border-color: @maroon;
+}
+.bd-purple {
+	border-color: @purple;
+}
+.bd-fuchsia {
+	border-color: @fuchsia;
+}
+
+
+/* winter colors */
+
+.winter .black, .winter-black{
+	color: @winterblack;
+}
+.winter .gray, .winter-gray{
+	color: @wintergray;
+}
+.winter .silver, .winter-silver{
+	color: @wintersilver;
+}
+.winter .white, .winter-white{
+	color: @winterwhite;
+}
+.winter .navy, .winter-navy{
+	color: @winternavy;
+}
+.winter .blue, .winter-blue{
+	color: @winterblue;
+}
+.winter .aqua, .winter-aqua{
+	color: @winteraqua;
+}
+.winter .teal, .winter-teal{
+	color: @winterteal;
+}
+.winter .lime, .winter-lime{
+	color: @winterlime;
+}
+.winter .green, .winter-green{
+	color: @wintergreen;
+}
+.winter .olive, .winter-olive{
+	color: @winterolive;
+}
+.winter .yellow, .winter-yellow{
+	color: @winteryellow;
+}
+.winter .orange, .winter-orange{
+	color: @winterorange;
+}
+.winter .red, .winter-red{
+	color: @winterred;
+}
+.winter .maroon, .winter-maroon{
+	color: @wintermaroon;
+}
+.winter .purple, .winter-purple{
+	color: @winterpurple;
+}
+.winter .fuchsia, .winter-fuchsia{
+	color: @winterfuchsia;
+}
+
+/* winter background-colors */
+
+.winter .bg-black, .winter-bg-black{
+	background-color: @winterblack;
+}
+.winter .bg-gray, .winter-bg-gray{
+	background-color: @wintergray;
+}
+.winter .bg-silver, .winter-bg-silver{
+	background-color: @wintersilver;
+}
+.winter .bg-white, .winter-bg-white{
+	background-color: @winterwhite;
+}
+.winter .bg-navy, .winter-bg-navy{
+	background-color: @winternavy;
+}
+.winter .bg-blue, .winter-bg-blue{
+	background-color: @winterblue;
+}
+.winter .bg-aqua, .winter-bg-aqua{
+	background-color: @winteraqua;
+}
+.winter .bg-teal, .winter-bg-teal{
+	background-color: @winterteal;
+}
+.winter .bg-lime, .winter-bg-lime{
+	background-color: @winterlime;
+}
+.winter .bg-green, .winter-bg-green{
+	background-color: @wintergreen;
+}
+.winter .bg-olive, .winter-bg-olive{
+	background-color: @winterolive;
+}
+.winter .bg-yellow, .winter-bg-yellow{
+	background-color: @winteryellow;
+}
+.winter .bg-orange, .winter-bg-orange{
+	background-color: @winterorange;
+}
+.winter .bg-red, .winter-bg-red{
+	background-color: @winterred;
+}
+.winter .bg-maroon, .winter-bg-maroon{
+	background-color: @wintermaroon;
+}
+.winter .bg-purple, .winter-bg-purple{
+	background-color: @winterpurple;
+}
+.winter .bg-fuchsia, .winter-bg-fuchsia{
+	background-color: @winterfuchsia;
+}
+
+
+/* winter border-colors */
+
+.winter .bd-black, .winter-bd-black{
+	border-color: @winterblack;
+}
+.winter .bd-gray, .winter-bd-gray{
+	border-color: @wintergray;
+}
+.winter .bd-silver, .winter-bd-silver{
+	border-color: @wintersilver;
+}
+.winter .bd-white, .winter-bd-white{
+	border-color: @winterwhite;
+}
+.winter .bd-navy, .winter-bd-navy{
+	border-color: @winternavy;
+}
+.winter .bd-blue, .winter-bd-blue{
+	border-color: @winterblue;
+}
+.winter .bd-aqua, .winter-bd-aqua{
+	border-color: @winteraqua;
+}
+.winter .bd-teal, .winter-bd-teal{
+	border-color: @winterteal;
+}
+.winter .bd-lime, .winter-bd-lime{
+	border-color: @winterlime;
+}
+.winter .bd-green, .winter-bd-green{
+	border-color: @wintergreen;
+}
+.winter .bd-olive, .winter-bd-olive{
+	border-color: @winterolive;
+}
+.winter .bd-yellow, .winter-bd-yellow{
+	border-color: @winteryellow;
+}
+.winter .bd-orange, .winter-bd-orange{
+	border-color: @winterorange;
+}
+.winter .bd-red, .winter-bd-red{
+	border-color: @winterred;
+}
+.winter .bd-maroon, .winter-bd-maroon{
+	border-color: @wintermaroon;
+}
+.winter .bd-purple, .winter-bd-purple{
+	border-color: @winterpurple;
+}
+.winter .bd-fuchsia, .winter-bd-fuchsia{
+	border-color: @winterfuchsia;
+}
+
+
+/* spring colors */
+
+.spring .black, .spring-black{
+	color: @springblack;
+}
+.spring .gray, .spring-gray{
+	color: @springgray;
+}
+.spring .silver, .spring-silver{
+	color: @springsilver;
+}
+.spring .white, .spring-white{
+	color: @springwhite;
+}
+.spring .navy, .spring-navy{
+	color: @springnavy;
+}
+.spring .blue, .spring-blue{
+	color: @springblue;
+}
+.spring .aqua, .spring-aqua{
+	color: @springaqua;
+}
+.spring .teal, .spring-teal{
+	color: @springteal;
+}
+.spring .lime, .spring-lime{
+	color: @springlime;
+}
+.spring .green, .spring-green{
+	color: @springgreen;
+}
+.spring .olive, .spring-olive{
+	color: @springolive;
+}
+.spring .yellow, .spring-yellow{
+	color: @springyellow;
+}
+.spring .orange, .spring-orange{
+	color: @springorange;
+}
+.spring .red, .spring-red{
+	color: @springred;
+}
+.spring .maroon, .spring-maroon{
+	color: @springmaroon;
+}
+.spring .purple, .spring-purple{
+	color: @springpurple;
+}
+.spring .fuchsia, .spring-fuchsia{
+	color: @springfuchsia;
+}
+
+/* spring background-colors */
+
+.spring .bg-black, .spring-bg-black{
+	background-color: @springblack;
+}
+.spring .bg-gray, .spring-bg-gray{
+	background-color: @springgray;
+}
+.spring .bg-silver, .spring-bg-silver{
+	background-color: @springsilver;
+}
+.spring .bg-white, .spring-bg-white{
+	background-color: @springwhite;
+}
+.spring .bg-navy, .spring-bg-navy{
+	background-color: @springnavy;
+}
+.spring .bg-blue, .spring-bg-blue{
+	background-color: @springblue;
+}
+.spring .bg-aqua, .spring-bg-aqua{
+	background-color: @springaqua;
+}
+.spring .bg-teal, .spring-bg-teal{
+	background-color: @springteal;
+}
+.spring .bg-lime, .spring-bg-lime{
+	background-color: @springlime;
+}
+.spring .bg-green, .spring-bg-green{
+	background-color: @springgreen;
+}
+.spring .bg-olive, .spring-bg-olive{
+	background-color: @springolive;
+}
+.spring .bg-yellow, .spring-bg-yellow{
+	background-color: @springyellow;
+}
+.spring .bg-orange, .spring-bg-orange{
+	background-color: @springorange;
+}
+.spring .bg-red, .spring-bg-red{
+	background-color: @springred;
+}
+.spring .bg-maroon, .spring-bg-maroon{
+	background-color: @springmaroon;
+}
+.spring .bg-purple, .spring-bg-purple{
+	background-color: @springpurple;
+}
+.spring .bg-fuchsia, .spring-bg-fuchsia{
+	background-color: @springfuchsia;
+}
+
+
+/* spring border-colors */
+
+.spring .bd-black, .spring-bd-black{
+	border-color: @springblack;
+}
+.spring .bd-gray, .spring-bd-gray{
+	border-color: @springgray;
+}
+.spring .bd-silver, .spring-bd-silver{
+	border-color: @springsilver;
+}
+.spring .bd-white, .spring-bd-white{
+	border-color: @springwhite;
+}
+.spring .bd-navy, .spring-bd-navy{
+	border-color: @springnavy;
+}
+.spring .bd-blue, .spring-bd-blue{
+	border-color: @springblue;
+}
+.spring .bd-aqua, .spring-bd-aqua{
+	border-color: @springaqua;
+}
+.spring .bd-teal, .spring-bd-teal{
+	border-color: @springteal;
+}
+.spring .bd-lime, .spring-bd-lime{
+	border-color: @springlime;
+}
+.spring .bd-green, .spring-bd-green{
+	border-color: @springgreen;
+}
+.spring .bd-olive, .spring-bd-olive{
+	border-color: @springolive;
+}
+.spring .bd-yellow, .spring-bd-yellow{
+	border-color: @springyellow;
+}
+.spring .bd-orange, .spring-bd-orange{
+	border-color: @springorange;
+}
+.spring .bd-red, .spring-bd-red{
+	border-color: @springred;
+}
+.spring .bd-maroon, .spring-bd-maroon{
+	border-color: @springmaroon;
+}
+.spring .bd-purple, .spring-bd-purple{
+	border-color: @springpurple;
+}
+.spring .bd-fuchsia, .spring-bd-fuchsia{
+	border-color: @springfuchsia;
+}
+
+
+
+
+/* summer colors */
+
+.summer .black, .summer-black{
+	color: @summerblack;
+}
+.summer .gray, .summer-gray{
+	color: @summergray;
+}
+.summer .silver, .summer-silver{
+	color: @summersilver;
+}
+.summer .white, .summer-white{
+	color: @summerwhite;
+}
+.summer .navy, .summer-navy{
+	color: @summernavy;
+}
+.summer .blue, .summer-blue{
+	color: @summerblue;
+}
+.summer .aqua, .summer-aqua{
+	color: @summeraqua;
+}
+.summer .teal, .summer-teal{
+	color: @summerteal;
+}
+.summer .lime, .summer-lime{
+	color: @summerlime;
+}
+.summer .green, .summer-green{
+	color: @summergreen;
+}
+.summer .olive, .summer-olive{
+	color: @summerolive;
+}
+.summer .yellow, .summer-yellow{
+	color: @summeryellow;
+}
+.summer .orange, .summer-orange{
+	color: @summerorange;
+}
+.summer .red, .summer-red{
+	color: @summerred;
+}
+.summer .maroon, .summer-maroon{
+	color: @summermaroon;
+}
+.summer .purple, .summer-purple{
+	color: @summerpurple;
+}
+.summer .fuchsia, .summer-fuchsia{
+	color: @summerfuchsia;
+}
+
+/* summer background-colors */
+
+.summer .bg-black, .summer-bg-black{
+	background-color: @summerblack;
+}
+.summer .bg-gray, .summer-bg-gray{
+	background-color: @summergray;
+}
+.summer .bg-silver, .summer-bg-silver{
+	background-color: @summersilver;
+}
+.summer .bg-white, .summer-bg-white{
+	background-color: @summerwhite;
+}
+.summer .bg-navy, .summer-bg-navy{
+	background-color: @summernavy;
+}
+.summer .bg-blue, .summer-bg-blue{
+	background-color: @summerblue;
+}
+.summer .bg-aqua, .summer-bg-aqua{
+	background-color: @summeraqua;
+}
+.summer .bg-teal, .summer-bg-teal{
+	background-color: @summerteal;
+}
+.summer .bg-lime, .summer-bg-lime{
+	background-color: @summerlime;
+}
+.summer .bg-green, .summer-bg-green{
+	background-color: @summergreen;
+}
+.summer .bg-olive, .summer-bg-olive{
+	background-color: @summerolive;
+}
+.summer .bg-yellow, .summer-bg-yellow{
+	background-color: @summeryellow;
+}
+.summer .bg-orange, .summer-bg-orange{
+	background-color: @summerorange;
+}
+.summer .bg-red, .summer-bg-red{
+	background-color: @summerred;
+}
+.summer .bg-maroon, .summer-bg-maroon{
+	background-color: @summermaroon;
+}
+.summer .bg-purple, .summer-bg-purple{
+	background-color: @summerpurple;
+}
+.summer .bg-fuchsia, .summer-bg-fuchsia{
+	background-color: @summerfuchsia;
+}
+
+/* summer border-colors */
+
+.summer .bd-black, .summer-bd-black{
+	border-color: @summerblack;
+}
+.summer .bd-gray, .summer-bd-gray{
+	border-color: @summergray;
+}
+.summer .bd-silver, .summer-bd-silver{
+	border-color: @summersilver;
+}
+.summer .bd-white, .summer-bd-white{
+	border-color: @summerwhite;
+}
+.summer .bd-navy, .summer-bd-navy{
+	border-color: @summernavy;
+}
+.summer .bd-blue, .summer-bd-blue{
+	border-color: @summerblue;
+}
+.summer .bd-aqua, .summer-bd-aqua{
+	border-color: @summeraqua;
+}
+.summer .bd-teal, .summer-bd-teal{
+	border-color: @summerteal;
+}
+.summer .bd-lime, .summer-bd-lime{
+	border-color: @summerlime;
+}
+.summer .bd-green, .summer-bd-green{
+	border-color: @summergreen;
+}
+.summer .bd-olive, .summer-bd-olive{
+	border-color: @summerolive;
+}
+.summer .bd-yellow, .summer-bd-yellow{
+	border-color: @summeryellow;
+}
+.summer .bd-orange, .summer-bd-orange{
+	border-color: @summerorange;
+}
+.summer .bd-red, .summer-bd-red{
+	border-color: @summerred;
+}
+.summer .bd-maroon, .summer-bd-maroon{
+	border-color: @summermaroon;
+}
+.summer .bd-purple, .summer-bd-purple{
+	border-color: @summerpurple;
+}
+.summer .bd-fuchsia, .summer-bd-fuchsia{
+	border-color: @summerfuchsia;
+}
+
+
+
+/* autumn colors */
+
+.autumn .black, .autumn-black{
+	color: @autumnblack;
+}
+.autumn .gray, .autumn-gray{
+	color: @autumngray;
+}
+.autumn .silver, .autumn-silver{
+	color: @autumnsilver;
+}
+.autumn .white, .autumn-white{
+	color: @autumnwhite;
+}
+.autumn .navy, .autumn-navy{
+	color: @autumnnavy;
+}
+.autumn .blue, .autumn-blue{
+	color: @autumnblue;
+}
+.autumn .aqua, .autumn-aqua{
+	color: @autumnaqua;
+}
+.autumn .teal, .autumn-teal{
+	color: @autumnteal;
+}
+.autumn .lime, .autumn-lime{
+	color: @autumnlime;
+}
+.autumn .green, .autumn-green{
+	color: @autumngreen;
+}
+.autumn .olive, .autumn-olive{
+	color: @autumnolive;
+}
+.autumn .yellow, .autumn-yellow{
+	color: @autumnyellow;
+}
+.autumn .orange, .autumn-orange{
+	color: @autumnorange;
+}
+.autumn .red, .autumn-red{
+	color: @autumnred;
+}
+.autumn .maroon, .autumn-maroon{
+	color: @autumnmaroon;
+}
+.autumn .purple, .autumn-purple{
+	color: @autumnpurple;
+}
+.autumn .fuchsia, .autumn-fuchsia{
+	color: @autumnfuchsia;
+}
+
+/* autumn background-colors */
+
+.autumn .bg-black, .autumn-bg-black{
+	background-color: @autumnblack;
+}
+.autumn .bg-gray, .autumn-bg-gray{
+	background-color: @autumngray;
+}
+.autumn .bg-silver, .autumn-bg-silver{
+	background-color: @autumnsilver;
+}
+.autumn .bg-white, .autumn-bg-white{
+	background-color: @autumnwhite;
+}
+.autumn .bg-navy, .autumn-bg-navy{
+	background-color: @autumnnavy;
+}
+.autumn .bg-blue, .autumn-bg-blue{
+	background-color: @autumnblue;
+}
+.autumn .bg-aqua, .autumn-bg-aqua{
+	background-color: @autumnaqua;
+}
+.autumn .bg-teal, .autumn-bg-teal{
+	background-color: @autumnteal;
+}
+.autumn .bg-lime, .autumn-bg-lime{
+	background-color: @autumnlime;
+}
+.autumn .bg-green, .autumn-bg-green{
+	background-color: @autumngreen;
+}
+.autumn .bg-olive, .autumn-bg-olive{
+	background-color: @autumnolive;
+}
+.autumn .bg-yellow, .autumn-bg-yellow{
+	background-color: @autumnyellow;
+}
+.autumn .bg-orange, .autumn-bg-orange{
+	background-color: @autumnorange;
+}
+.autumn .bg-red, .autumn-bg-red{
+	background-color: @autumnred;
+}
+.autumn .bg-maroon, .autumn-bg-maroon{
+	background-color: @autumnmaroon;
+}
+.autumn .bg-purple, .autumn-bg-purple{
+	background-color: @autumnpurple;
+}
+.autumn .bg-fuchsia, .autumn-bg-fuchsia{
+	background-color: @autumnfuchsia;
+}
+
+/* autumn border-colors */
+
+.autumn .bd-black, .autumn-bd-black{
+	border-color: @autumnblack;
+}
+.autumn .bd-gray, .autumn-bd-gray{
+	border-color: @autumngray;
+}
+.autumn .bd-silver, .autumn-bd-silver{
+	border-color: @autumnsilver;
+}
+.autumn .bd-white, .autumn-bd-white{
+	border-color: @autumnwhite;
+}
+.autumn .bd-navy, .autumn-bd-navy{
+	border-color: @autumnnavy;
+}
+.autumn .bd-blue, .autumn-bd-blue{
+	border-color: @autumnblue;
+}
+.autumn .bd-aqua, .autumn-bd-aqua{
+	border-color: @autumnaqua;
+}
+.autumn .bd-teal, .autumn-bd-teal{
+	border-color: @autumnteal;
+}
+.autumn .bd-lime, .autumn-bd-lime{
+	border-color: @autumnlime;
+}
+.autumn .bd-green, .autumn-bd-green{
+	border-color: @autumngreen;
+}
+.autumn .bd-olive, .autumn-bd-olive{
+	border-color: @autumnolive;
+}
+.autumn .bd-yellow, .autumn-bd-yellow{
+	border-color: @autumnyellow;
+}
+.autumn .bd-orange, .autumn-bd-orange{
+	border-color: @autumnorange;
+}
+.autumn .bd-red, .autumn-bd-red{
+	border-color: @autumnred;
+}
+.autumn .bd-maroon, .autumn-bd-maroon{
+	border-color: @autumnmaroon;
+}
+.autumn .bd-purple, .autumn-bd-purple{
+	border-color: @autumnpurple;
+}
+.autumn .bd-fuchsia, .autumn-bd-fuchsia{
+	border-color: @autumnfuchsia;
+}

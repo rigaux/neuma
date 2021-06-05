@@ -1,0 +1,13 @@
+{% extends "layout.html" %} 
+{% load i18n %}
+
+{% block content %}
+
+<h1>Migration of corpuses</h1>
+
+<a href="{% url 'migration:index' %}">Back to the migration menu</a>
+
+
+{% include "migration/migration_item.html" %}
+     
+{% endblock content %}

@@ -1,0 +1,12 @@
+<ol>
+     {% for corpus in corpora %}
+      <li>({{corpus.ref}}). {{corpus.title}} <br/>
+       <b>Actions:</b> Migrate opera from CouchDB (use the script)
+          {% if corpus.children %}
+              {% with corpora=corpus.children %}
+                {% include "manager/corpus_item.html" %}
+              {% endwith %}
+          {% endif %}
+     </li>
+     {% endfor %}
+ </ol>

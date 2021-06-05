@@ -1,0 +1,12 @@
+<ol>
+     {% for corpus in corpora %}
+      <li>({{corpus.ref}}). {{corpus.title}} {{corpus.short_description}}
+
+          {% if corpus.children %}
+              {% with corpora=corpus.children %}
+                {% include "manager/corpus_item.html" %}
+              {% endwith %}
+          {% endif %}
+     </li>
+     {% endfor %}
+ </ol>

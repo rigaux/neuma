@@ -1,0 +1,23 @@
+{% extends "layout.html" %} 
+
+{% load i18n %}
+
+{% block content %}
+
+<h2>{% trans 'Structured search' %}</h2>
+
+<div>
+<form action="{% url 'home:structsearch' %}"  method="post">
+    {% csrf_token %}
+    {{ form }}
+    <input type="submit" value="Submit" />
+</form>
+</div>
+
+{% if query_submitted %}
+
+<h3>Query result</h3>
+{{query_text}}
+{% endif %}
+
+{% endblock content %}

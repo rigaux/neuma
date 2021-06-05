@@ -1,0 +1,343 @@
+/*        < blank >       */
+/*     Nicolas Taffin     */
+/*  http://polylogue.com  */
+/*  licence CC: BY-NC-SA   */
+/*
+* LESS COMMONS : COLORS, FONTS, MIXINS
+*/
+
+@import (reference) url("common.less");
+
+
+
+
+
+
+/****************************************/
+/*     	            html   		        */							
+/****************************************/
+
+/* corps de base */
+.document
+{
+	font-size: 12pt;
+}
+
+
+
+
+/* links */
+
+.document a {
+	color: #515151;
+	text-decoration: none;
+}
+
+.document a:visited
+{
+color: #515151;
+text-decoration: none; 
+}
+.document a:hover { color: #313131; }
+.document a:active { color: #313131; }
+
+
+.document h1 a, .document h2 a, .document h3 a, .document h4 a, .document h5 a, .document h6 a,
+.document h1 a:visited, .document h2 a:visited, .document h3 a:visited, .document h4 a:visited, .document h5 a:visited, .document h6 a:visited
+{
+	color: #E64F3E;
+	text-decoration: none;
+}
+.document h1 a:hover, .document h2 a:hover, .document h3 a:hover, .document h4 a:hover, .document h5 a:hover, .document h6 a:hover
+{
+	color: #9F3723;
+	text-decoration: none;
+}
+
+
+/* images */
+
+.document img
+{
+}
+
+/* titles */
+
+.document h1 {
+	font-weight: 500;
+	font-size: 1.8em;
+	line-height: 1.3em;
+	color: #E64F3E;
+	padding-top: 20px;
+	padding-bottom: 10px;
+}
+.document h2
+	{ 
+	font-weight: 500;
+	font-size: 1.6em;
+	line-height: 1.3em;
+	color: #E64F3E;	 
+	padding-top: 20px;
+	padding-bottom: 10px;
+		}
+.document h3
+{
+	font-weight: 500;
+	font-size: 1.4em;
+	line-height: 1em;
+	color: #E64F3E;	
+	padding-top: 15px;
+	padding-bottom: 8px;
+}
+.document h4
+{
+	font-weight: 500;
+	font-size: 1.3em;
+	line-height: 1.3em;
+	color: #E64F3E;	 
+	padding-top: 15px;
+	padding-bottom: 8px;
+}
+.document h5
+{
+	font-weight: 500;
+	font-size: 1.15em;
+	line-height: 1.25em;
+	color: #4D4D4C;	
+	padding-top: 18px;
+	padding-bottom: 10px;
+}
+.document h6
+{
+	font-weight: normal;
+	font-size: 1em;
+	line-height: 1.45em;
+	color: #4D4D4C;	 
+	padding-top: 12px;
+	padding-bottom: 7px;
+}
+
+.document hr
+{
+	margin: 15px 0px 18px 0px;
+	border-top: 2px rgba(0,0,0,0.2) solid;
+	border-bottom: none;
+}
+
+/* text */
+
+.document p
+{
+	font-weight: normal;
+	font-size: 1em;
+	line-height: 1.45em; 
+	padding-top: 5px;
+	padding-bottom: 8px;
+	color: #4D4D4C;
+}
+
+em
+{
+	font-style: italic;
+}
+
+strong
+{
+	font-weight: 500;
+}
+
+code
+{
+	display: block;
+	font-family: monospace;
+	font-size: 0.8em;
+	line-height: 1.4em;
+	padding: 10px 5px 10px 29px;
+	background-color: #DBECEB;
+	border: none;
+	margin: 0x;
+}
+pre
+{
+	overflow-x: hidden !important;
+}
+
+blockquote
+{
+	margin-left: 20px;
+	font-weight: normal;
+	font-size: 1em;
+	line-height: 1.45em;
+	color: black; 
+	padding-top: 5px;
+	padding-bottom: 8px;
+}
+
+address
+{
+	font-weight: normal;
+	font-size: 0.75em;
+	line-height: 1.45em;
+	color: rgb(112, 106, 97);
+	padding-top: 5px;
+	padding-bottom: 8px;
+}
+
+
+/* lists */
+
+.document ul
+{
+	margin-left: 20px;
+	margin-top: 10px;
+	margin-bottom: 10px;
+	padding-left: 20px;
+	font-weight: normal;
+	font-size: 1em;
+	line-height: 1.45em;
+	list-style-image: url(../images/liDash.png);
+}
+
+
+.document ul li
+{
+
+}
+
+.document ul ul
+{
+	margin-left: 0px;
+	margin-top: 0px;
+	margin-bottom: 2px;
+	padding-left: 20px;
+	
+	font-weight: normal;
+	font-size: 1em;
+	line-height: 1.45em;
+}
+.document ul ul li
+{
+}
+
+.document ol
+{
+	margin-left: 20px;
+	margin-top: 10px;
+	margin-bottom: 10px;
+	padding-left: 20px;
+	
+	font-weight: normal;
+	font-size: 1em;
+	line-height: 1.45em;
+}
+.document ol li
+{
+}
+.document ol ol
+{
+	margin-left: 0px;
+	margin-top: 0px;
+	margin-bottom: 2px;
+	padding-left: 20px;
+}
+.document ol ol li
+{
+}
+
+.document dl
+{
+	margin-left: 0px;
+	margin-top: 10px;
+	margin-bottom: 10px;
+	padding-left: 0px;
+	
+	font-weight: normal;
+	font-size: 1em;
+	line-height: 1.45em;
+}
+.document dl dt
+{
+}
+.document dl.description dt
+{
+	display: block;
+	width: auto;
+	float: left;
+	margin-right: 8px;
+}
+.document dl dd
+{
+	font-weight: 500;
+	margin-left: 0px;
+	margin-top: 0px;
+	margin-bottom: 5px;
+}
+.document dl.description dd
+{
+	display: block;
+}
+
+/* tables */
+
+.document table
+{
+	border-collapse: collapse; /* separate */
+	margin: 3px 0px 10px 0px;
+	
+	font-weight: normal;
+	font-size: 0.85em;
+	line-height: 1.45em;
+	
+	border: 1px solid #ccc;
+}
+
+.document thead
+{
+}
+
+.document tfoot
+{
+}
+
+.document tr
+{
+}
+
+.document th
+{
+	border: 1px white solid;
+	padding: 3px;
+	background: #F8B3AB;
+	color: #4D4D4C;
+}
+.document .row tr:nth-child(even) { background-color: #EBEEF3; }
+.document .row tr:nth-child(odd) {
+  background: white;
+}
+.document td.alt { background-color: #EBEEF3; }
+
+.document td
+{
+	border: 1px solid #ccc; 
+	padding: 3px;
+	color: #333;
+}
+
+.document td img
+{
+	vertical-align: top;
+}
+
+.document caption
+{
+	color: #737372;
+	padding: 20px 0px 10px 0px;
+	font-weight: 500;
+}
+.document table.invisible, .document table.invisible th,
+.document table.invisible tr, .document table.invisible td
+{
+	border: none;
+	background-color: transparent;
+	background-image: none;
+}

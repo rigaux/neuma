@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<?xml-stylesheet href="html_style.xsl" type="text/xsl"?>
+
+
+<analytic_model id="comparison">
+    <name>Comparison</name>
+    <description>Comparison indicators
+    </description>
+
+    <!-- Tree of concepts -->
+    <concepts>
+        <!-- COMPARISON scores -->
+        <concept id="comparison_scores">
+            <name>ComparisonScores</name>
+            <description>
+                Scores about the comparison
+            </description>
+            <color name="engraving1"/>
+             <concepts>
+                <concept id="comparison_cost">
+                    <name>Cost</name>
+                    <description>Total comparison cost</description>
+                     <color name="engraving2"/>
+                       <icon name="square"/>
+                   <concepts>
+                    </concepts>
+                </concept>
+            </concepts>
+        </concept>
+        <!-- COMPARISON indicators -->
+        <concept id="comparison_annotations">
+            <name>ComparisonIndicators</name>
+            <description>
+                Comparison between two scores
+            </description>
+            <color name="engraving1"/>
+             <concepts>
+                <concept id="insertion">
+                    <name>Insertion</name>
+                    <description>Event inserted.</description>
+                     <color name="insertion"/>
+                       <icon name="square"/>
+                   <concepts>
+                    </concepts>
+                </concept>
+                <concept id="deletion">
+                    <name>Deletion</name>
+                    <description>Event deleted.</description>
+                     <color name="deletion"/>
+                       <icon name="diamond"/>
+                   <concepts>
+                    </concepts>
+                </concept>
+                <concept id="modification">
+                    <name>Modification</name>
+                    <description>Event modified.</description>
+                     <color name="modification"/>
+                       <icon name="triangle"/>
+                   <concepts>
+                    </concepts>
+                </concept>
+            </concepts>
+        </concept>
+    </concepts>
+</analytic_model>

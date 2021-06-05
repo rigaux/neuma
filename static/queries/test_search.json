@@ -1,0 +1,19 @@
+{  
+  "_source": {
+    "exclude": [
+      "descriptors",
+      "_rev"
+    ]
+  },
+  "query": {
+    "bool": {
+      "must": [
+             {
+          "match": {
+            "_all": "Psaume"
+          }
+        }
+      ]
+    }
+  }
+}

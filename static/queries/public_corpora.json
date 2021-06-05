@@ -1,0 +1,22 @@
+{
+    "sort" : [
+        { "positionInParent" : {"order" : "asc"}},
+        { "title" : {"order" : "asc"}}
+    ],
+  "filter": {
+    "and": [{
+       "term": {
+             "isPublic": true
+          }        
+        },
+        {
+          "missing" : { "field" : "parent" }
+        }, 
+        { 
+          "type" : {
+          "value" : "Corpus"
+          }
+        }   
+      ]
+   }
+}

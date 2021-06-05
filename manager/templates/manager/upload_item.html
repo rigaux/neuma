@@ -1,0 +1,7 @@
+<ol>
+     {% for upload in uploads %}
+      <li><b>Upload {{upload.id}}. For corpus: {{upload.corpus.ref}}, created {{upload.creation_timestamp}}. {{upload.description}}<br/>
+            <a href='{%url 'manager:list_imports' upload.id False%}'>Show content</a>
+      </li>
+     {% endfor %}
+ </ol>

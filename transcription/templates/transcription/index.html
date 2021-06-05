@@ -1,0 +1,131 @@
+{% extends "layout.html" %} 
+
+{% load i18n %}
+
+{% block content %}
+
+<!-- ACCUEIL -->
+
+<div class="welcome">
+
+	<img src="/static/themes/neumaTheme/images/neumaLogoAccueil.png"
+		alt="neuma" width="360" height="90" alt="" />
+	<div class="description">
+	{% blocktrans trimmed %}
+	TRANSCRIPTION
+	{% endblocktrans %}
+	</div>
+
+
+</div>
+
+<div class="clearer">&nbsp;</div>
+
+<div class="homeColls">
+
+	<div class="shadow shadowLeft">&nbsp;</div>
+	<div class="shadow shadowRight">&nbsp;</div>
+
+	<a class="button buttonRight"> <span class="accessibility">go
+			right</span>
+	</a> <a class="button buttonLeft"> <span class="accessibility">go
+			left</span>
+	</a>
+
+
+	<div class="slider" id="slider">
+		<div class="train" id="train">
+			{% for corpus in view.top_level_corpora %}
+			<div id="coll{{ forloop.counter }}" class="wagon">
+				<a href="{% url 'home:corpus' corpus.ref %}"> 
+				 {% if corpus.cover %}
+				 <img
+					class="illustration" alt="" width="200" height="213"
+					src="{{ corpus.cover.url }}" />
+				 {% endif %}
+					 <span class="collTitre">
+						{{ corpus.shortTitle }}</span> <span class="collSoustitre">{{ corpus.short_description}}</span>
+				</a>
+			</div>
+			{% endfor %}
+		</div>
+		<!-- fin du train -->
+	</div>
+	<!-- fin du slider -->
+</div>
+<!-- fin du homeColls -->
+
+
+<!-- COLONNE DE GAUCHE - ÉCHANTILLONS -->
+
+<!-- COLONNE DE GAUCHE - ÉCHANTILLONS -->
+
+
+<div class="block antiThird left homeGauche">
+	<h2>{% trans "Bookmarks" %}</h2>
+	    {% for opus in view.recent_bookmarks %}
+	<ul class="toolbar">
+          {% if opus.midi %}
+          		<li class="play">
+		<a href="{{opus.midi.url}}"
+			title="{def.listen}"> <span class="accessibility">{% trans Listen %} </span>
+		</a></li>
+		{% endif %}
+         {% if opus.musicxml %}
+ 		<li class="download"><a href="{{opus.musicxml.url}}"
+			title="{% trans Download %}"> <span class="accessibility">{% trans Download %} </span>
+		</a></li>
+         {% endif %}
+	</ul>
+
+	<a name="{{opus.id}}"></a>
+	<h5>
+		<a href="{% url 'home:opus' opus.ref %}">  {{opus.title}} </a>
+		<i>in</i> <a href="{% url 'home:corpus' opus.corpus.ref %}">{{opus.corpus.title}}</a>
+	</h5>
+
+        {% if opus.preview %}
+	<a
+		href="{base_url}/ajax/highlight?height=600&width=800&id={Opus->neutralId}&score={Opus->uri_score.png}&link={Opus->uri_link.xml}&positions={pattern_positions}"
+		class="thickbox"> <img src="{{opus.preview.url}}"
+		width="100%" alt="{{opus.title}}" />
+	</a>
+	         {% endif %}
+	
+        {% endfor %} 
+
+
+</div>
+<!-- FIN COLONNE DE GAUCHE -->
+
+
+<!-- COLONNE DE DROITE - ZOOM -->
+
+<div class="block quarter right homeDroite">
+
+	<h5>{% trans "Infos/news" %}</h5>
+	<div class="content">
+		<b>{% trans "Get an account" %}</b> ? <br />
+		{% blocktrans trimmed %}
+        Participate to the creation and management of collections.
+      {% endblocktrans %}
+      <a	href="">[{% trans "More" %}]</a>
+		<hr />
+		<b>{% trans "Manage your own collections" %}</b>  <br />
+		{% trans "You can use Neuma to create and manage your own collections" %} <a href="">[{% trans "More" %}]</a>
+		<hr />
+		<b>{% trans "Navigation" %}</b> <br /> {% trans "How collections are organized, and how to navigate" %}
+		<a href="">[{% trans "More" %}]</a> <br />
+		<hr />
+		<b>{% trans "Search" %}</b> <br />
+		{% trans "Understanding structured and unstructured search."%} <a href="">[{% trans "More" %}]</a>
+
+	</div>
+</div>
+<!-- FIN COLONNE DE DROITE -->
+
+
+
+<div class="clearer">&nbsp;</div>
+
+{% endblock content %}

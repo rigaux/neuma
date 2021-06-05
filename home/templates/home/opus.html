@@ -1,0 +1,327 @@
+{% extends "layout_quality.html" %} 
+{% load i18n %} 
+{% load extras %} 
+{% load guardian_tags %}
+
+{% block content %}
+
+<!-- Load the user/object permissions for the corpus -->
+{% get_obj_perms request.user for opus.corpus as "user_corpus_perms" %}
+
+<script type="text/javascript" src="/static/js/chart.min.js"></script>
+
+<script type="text/javascript">
+/* remove access header and replace by alternative header */
+$(function() {
+  //$('.page-header .banner.access').remove();
+  $("#alternate-banner").appendTo(".page-header");
+});
+</script>
+{% include "alternate-banner-analysis.html" %}
+{% include "midi-player.html" %}
+
+
+<script language="JavaScript" type="text/JavaScript">
+/* Declare the list of tabs in the current page */
+
+{% if "import_corpus" in user_corpus_perms  %}
+var tabNames = [{"tabId": "tab1", "divId": "score"}, 
+                {"tabId": "tab2", "divId":"stats"},
+                {"tabId": "tab3", "divId":"neighbors"},
+                {"tabId": "tab4", "divId":"manage"}
+                ]
+ {% else %}
+var tabNames = [{"tabId": "tab1", "divId": "score"}, 
+                {"tabId": "tab2", "divId":"stats"},
+                {"tabId": "tab3", "divId":"neighbors"},
+                ]
+{% endif %}
+</script>
+
+<h1>
+    <ul class="toolbar active">
+
+        {% if perms.manager.change_opus %}
+        <li class="edit"><a
+            href="{% url 'admin:manager_opus_change' opus.id %}"
+            title="edit this opus"> <span class="accessibility">edit</span>
+        </a></li> {% endif %}
+    </ul>
+
+{{opus.title}}</h1>
+
+<!-- 
+if request.session.search_context.pattern != "" 
+  <div class="pattern-summary">
+  <h2>{% trans "Search pattern" %} [<a href="{% url 'home:opus' opus.ref %}?pattern=">{% trans "Clear" %}</a>]</h2>
+  <div id="pattern_score"></div>
+  </div>
+  endif 
+ -->
+ 
+<dl class="description">
+	<dt>{% trans "Corpus" %}</dt>
+	<dd>
+		<a href="{% url 'home:corpus' opus.corpus.ref %}">{{opus.corpus.title}}</a>
+	</dd>
+	<dt>{% trans "Opus title" %}</dt>
+	<dd>{{opus.title}}</dd>
+	{% if opus.year != None %}
+	<dt>{% trans "Year" %}</dt>
+	<dd>{{opus.year}}&nbsp;</dd>
+	{% endif %} {% if opus.reference != None %}
+	<dt>{% trans "Reference" %}</dt>
+	<dd>{{opus.reference}}&nbsp;</dd>
+	{% endif %} 
+	{% if opus.composer != None %}
+	<dt>{% trans "Composer" %}</dt>
+	<dd>{{opus.composer}}&nbsp;</dd>
+	{% endif %} 
+	{% if opus.lyricist != None %}
+	<dt>{% trans "Lyricist" %}</dt>
+	<dd>{{opus.lyricist}}&nbsp;</dd>
+	{% endif %}
+    {% if opus.external_link != None %}
+    <dt>{% trans "External link" %}</dt>
+    <dd><a href="{{opus.external_link}}" target="_blank">{{opus.external_link}}</a>&nbsp;</dd>
+    {% endif %} 
+    
+    {% for meta_val in meta_values %} 
+         <dt>  {{meta_val.displayed_label}}</dt>
+    <dd>{{meta_val.meta_value}}</dd>
+
+    {% endfor %}
+    
+	<!--
+    <dt>{def.lyrics}</dt>
+    <dd>{Opus->lyrics}&nbsp;
+    </dd>
+    <dt>{feature_key}</dt>
+    <dd>{feature_value}</dd>
+    <dt>{def.bnf_link}</dt>
+    <dd>{bnf_link}</dd>
+-->
+	<dt>{% trans "Files"%}</dt>
+	<dd>
+		{% if opus.pdf %} 
+		 <a href="{{opus.pdf.url}}">PDF</a> 
+		 {% endif %} 
+		 {% if opus.mei %} 
+		|  <a target="_blank" href="{{opus.mei.url}}">MEI</a> 
+		{% endif %} 
+		{% if opus.musicxml %} | <a target="_blank"
+			href="{{opus.musicxml.url}}">MusicXML</a> 
+			{% endif %}
+        {% if opus.record %} | <a target="_blank"
+            href="{{opus.record.url}}">MP3</a> 
+            {% endif %}
+        {% if opus.summary %} | <a target="_blank"
+            href="{{opus.summary.url}}">Summary</a> 
+            {% endif %}
+           </dd>
+           
+
+            
+</dl>
+<!-- fin div .description -->
+
+           
+{% if explain %}
+<h5>Music summary</h5>
+
+<div>
+	<ul>
+		<li>Occurrences: 
+		{% for part_id, part in occurrences.items %} 
+		{% for voice_id, occ in part.items %} 
+		   {{part_id}} {{voice_id}}: {{occ}} | 
+			{% endfor %} 
+			{% endfor %}</li>
+		<li>Matching ids = {{matching_ids}}</li>
+		<ol>
+			{% for part_id, part in msummary.parts.items %}
+			<li>Part {{part_id}}</li>
+			<ol>
+				{% for voice_id, voice in part.items %}
+				<li>Voice {{voice_id}}. Items: {% for item in voice.items %}
+					{{item}} | 
+				{% endfor %} 
+			{% endfor %}
+			</ol>
+			{% endfor %}
+		</ol>
+	</ul>
+</div>
+{% endif %}
+
+<div>
+	<ul id="tabnav">
+		<li id="tab1" class="active"><a href="#"
+			onClick="TabClick(tabNames, 0);">Score</a></li>
+		<li id="tab2"><a href="#" onClick="TabClick(tabNames, 1);">Stats</a>
+        <li id="tab3"><a href="#" onClick="TabClick(tabNames, 2);">Neighbors</a>
+        {% if "import_corpus" in user_corpus_perms %}
+           <li id="tab4"><a href="#" onClick="TabClick(tabNames, 3);">Audio files</a></li>
+        {% endif %}
+		</li>
+	</ul>
+</div>
+
+<div class="clearer">&nbsp;</div>
+
+<div id="score" style="display: block">
+
+<!-- if request.session.search_context.pattern != "" and opus.mei  -->
+
+    {%if  opus.mei  %}
+
+	<ul id="links" class="paginator"></ul>
+
+	<div>
+		<div id="verovio"></div>
+	</div>
+ 
+	{% else %}
+	<ul class="toolbar">
+		<li class="download"><a href="{{opus.url_musicxml}}"
+			title="{% trans 'Download' %}"> <span class="accessibility">{%
+					trans 'Download' %}</span>
+		</a></li>
+	</ul>
+	{% if opus.png %} 
+	  <img src="{{opus.png.url}}" alt="{{opus.title}}" />
+	 {% else %}
+	 <p>No image</p>
+	{% endif %} 
+	
+ 
+	{% endif %}
+	
+	  <button onclick="play_midi(vrvToolkit, song)">Play</button> 
+	
+</div>
+
+<div class="clearer">&nbsp;</div>
+
+
+<div id="stats">
+	<h2>Statistics</h2>
+
+	<h4>Structure</h4>
+	
+include "home/score_structure_item.html"  
+   
+</div>
+
+<div class="clearer">&nbsp;</div>
+
+
+<div id="neighbors">
+    <h2>Neighbors</h2>
+
+<div>
+Choose the similarity measure for neighbors: 
+{% for measure in measures %}
+    <a href='{% url 'home:opus' opus.ref %}?sim_measure={{measure}}'>{{measure}}</a> | 
+{% endfor %}
+</div>
+
+<!    Nearest neighbors  -->
+
+    
+    {%include "home/score_neighbors.html" %}
+    
+</div>
+
+<div class="clearer">&nbsp;</div>
+
+<!--   Tab for management functions -->
+<div id="manage" style="display: none">
+  <h1>Audio files</h1>
+
+  
+  <table width="100%" border="0">
+    <tr>
+    <td width="30%">
+  <h3>{% trans "Current audio files for this opus" %}</h3>
+
+  Note: the player on this page does not play those files (yet).
+
+  <ul style="list-style-type: disc;margin-bottom:10px;">
+    {% for audio in audio_files %}
+    <li style="margin-bottom:10px;">Audio file {{ audio.id }}: {{audio.description}}<br/>
+      <a
+        href="{% url 'admin:manager_audio_change' audio.id %}"
+        title="edit this audio file">Edit |
+      </a>
+      <a
+        href="{% url 'transcription:opus' opus.ref audio.id %}" onClick=""
+        title="{%  trans 'Transcription settings' %}">Transcription settings</a>
+    </li>
+    {% endfor %}
+  </ul>
+  <hr>
+           <a
+        href="{% url 'home:opus_export_zip'  opus.ref %}"
+        title="">{% trans 'Export the files associated with this opus as a zip archive' %}
+      </a>
+  </td>
+  <td>
+  <h3>{% trans "Import a new audio file" %}</h3>
+   <form method="post" 
+   action="{% url 'home:upload_opus_audio' opus.ref %}" 
+   enctype="multipart/form-data"
+   onsubmit="return required_field('audio_description', 'Description must not be empty')">
+    {% csrf_token %}
+    <fieldset>
+     <label for="description">{% trans "Enter a short description of this file's content" %}</label>
+    <textarea rows="5" cols="20" id="audio_description" name="description"></textarea>
+    <br/>
+    <label for="opus_audiofile">{% trans "Select the audio file on your local disk" %}</label>
+    <input type="file" name="opus_audiofile"/>
+    <br/>
+    <input type="submit" name="{% trans 'Upload' %}"/>
+    </fieldset>
+  </form>
+  </td>
+  </tr>
+  </table>
+
+</div>
+{% endblock content %}
+
+ {% block opus_menu %}
+ 
+{%if request.session.search_context.pattern != "" %}
+  <h2>{% trans "Search pattern" %} [<a href="{% url 'home:opus' opus.ref %}?pattern=">{% trans "Clear" %}</a>]</h2>
+  <div id="pattern_score"></div>
+  {% endif %}
+  
+  <!-- Inclusion of templates for annotation management -->
+  {% include "annotation-templates.html" %}
+  {% include "annotation-infobox.html" %}
+
+
+       
+  <script type="text/javascript">
+   $(document).ready(function() {
+       
+	   // Show both the concepts, and the annotations for each concept
+       ShowModelConcepts("{{opus.ref}}", 'counterpoint')
+       
+       // ComputeAnnotations();
+       TabClick(tabNames,0);
+     }
+   );
+  </script>
+
+  <!-- Parameters supplied to the ComputeAnnotations() Ajax call -->
+<input id="compute_opus_ref" type="hidden" name="opus_ref" value="{{opus.ref}}"/>
+<input id="compute_model_code" type="hidden" name="model_code" value="counterpoint"/>
+
+
+{% endblock opus_menu %}
+
+
+
+  

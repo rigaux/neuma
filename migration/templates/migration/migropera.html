@@ -1,0 +1,14 @@
+{% extends "layout.html" %} 
+{% load i18n %}
+
+{% block content %}
+
+<h1>Migration of opera</h1>
+
+<ol>
+            {% for opus in opera %}
+                    <li>{{ opus.title }}</li>
+            {% endfor %}
+</ol>
+
+{% endblock content %}

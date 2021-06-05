@@ -1,0 +1,95 @@
+/*        < blank >       */
+/*     Nicolas Taffin     */
+/*  http://polylogue.com  */
+/*  licence CC: BY-NC-SA   */
+
+@import url("main.css");
+
+
+.printOnly
+{
+	display: block;
+}
+.screenOnly, .handHeldOnly
+{
+	display: none;
+}
+
+
+/****************************************/
+/*     	     CSS3 layout beta   	    */							
+/****************************************/
+
+@page {
+  size: A4 portrait
+  margin: 15mm;
+  counter-increment: page;
+}
+
+
+/* http://www.w3.org/TR/css3-gcpm/ */
+/* titre courant */
+/*h1, h2 { string-set: header self }*/
+@page :left { @top-left { content: string(header) }}
+@page :bottom { @bottom-center {
+    content: counter(page);
+    }
+    }
+    
+.page
+{
+/*	fit: meet;*/
+}
+
+/****************************************/
+/*     	      modifications      	    */							
+/****************************************/
+
+body
+{
+	color: black;
+	background-color: white;
+	background-image: none;
+}
+
+.pageWrapper, .habillePage
+{
+}
+
+.page
+{
+	color: black;
+	background-color: white;
+	background-image: none;	
+}
+.pageContent, .pageContenu
+{
+}
+
+.headerWrapper, .habilleTete
+{
+}
+
+.header, .tete
+{
+}
+
+
+.footerWrapper, .habillePied
+{
+}
+.footer, .pied
+{
+
+}
+
+
+.mainWrapper, .habilleVentre
+{
+}
+.main, .ventre
+{
+	color: black;
+	background-color: white;
+	background-image: none;	
+}

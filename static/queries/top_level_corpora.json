@@ -1,0 +1,20 @@
+{
+  "from": {from},
+  "size": {size},
+    "sort" : [
+        { "positionInParent" : {"order" : "asc"}},
+        { "title" : {"order" : "asc"}}
+    ],
+    "filter": {
+    "and": [
+          {
+          "missing" : { "field" : "parent" }
+        }, 
+        { 
+          "type" : {
+          "value" : "Corpus"
+          }
+        }   
+      ]
+   }
+}

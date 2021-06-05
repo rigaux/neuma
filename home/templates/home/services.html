@@ -1,0 +1,127 @@
+{% extends "layout.html" %} {% load i18n %} {% block content %}
+
+
+<h1 class="title">{% trans "Talking to NEUMA: our REST Services Interface" %}</h1>
+
+<div class="story">
+{% blocktrans %} 
+<p>
+Neuma proposes a RESTful interface to communicate with the digital library. All documents
+exchanged with Neuma are JSON-encoded. 
+</p>
+<ul>
+  <li>All services are rooted at <a href="/rest/" target="_blank">{{NEUMA_URL}}</a></li>
+<li>Follow <a href="/rest/swagger/">this link</i> to access to the
+Swagger interface of the services</a></li>
+<li>  <a href="/rest/swagger.json">JSOn OpenAPI Schema</i>
+</ul>
+{% endblocktrans %}</div>
+
+<h1>{% trans "Principles" %}</h1>
+
+<p>
+Neuma exposes to the REST API a structure  based on two types of resources: <it>Corpus</it> and <it>Opus</it>. Each 
+corpus is a container with (sub-)<it>corpora</it> and/or a list of <it>opera</it>. The structure of a collection
+is therefore a hierarchy root at as pseudo-corpus <tt>_all</tt>. Internal nodes
+are corpuses, leaves are opuses.
+</p>
+
+<center>
+<img src="/static/images/rest-doc.png"/>
+</center>
+
+<ul>
+  <li><b>IDs</b>. Both Corpus and Opus resources are uniquely identified with an <tt>id</tt>
+  The form of an id is <tt>Ci:Cj:...:R</tt>: it is built from the sequence of Corpus ids from
+  the root to the resource <tt>R</tt>, separated by semicolons. For instance the id of resource <tt>o2</tt>
+    is <tt>c1:c4:o2</tt>
+  </li>
+  <li><b>Paths</b>. The path to a resource is expressed with the standard form <tt>Ci/Cj/Ck/.../R</tt>,
+where <tt>R</tt> is either a corpus or an opus id. On the above figure, <tt>/c1/c3</tt>
+refers to Corpus <tt>c3</tt>, and <tt>/c1/c4/o2</tt> refers to Opus <tt>o2</tt>. 
+Basically, the path is the resource's id, where semicolons are replaced by slashes.
+</li>
+<li><b>Services</b>. In addition to simple <tt>GET</tt> requests that retrieve a JSON representation,
+resources supply <it>services</it>, conventionally named with a leading underscore. So,
+for instance, <tt>/c1/c3/_opera</tt> returns the list of opera in corpus <tt>c3</tt>.
+</li>
+</ul>
+<p>
+That's all there is to know. </p>
+
+<h2>Collections access services</h2>
+
+All collections access services are rooted at <a href="/rest/collections/" target="_blank">{{NEUMA_URL}}/collections</a>
+<h3>Corpora</h3>
+<p>Given a corpus, you can retrieve the list of sub-corpora with the <tt>_corpora</tt>
+service. The top-level corpora are obtained by calling the service:
+<code>
+curl -X GET "/rest/collections/_corpora/" 
+</code>
+<p>
+Test it: <a href="{{NEUMA_URL}}/collections/_corpora" target="_blank">/rest/collections/_corpora</a>
+</p>
+<p>
+Given a corpus id, replace all the semicolons by a slash top to obtain the path. A <tt>GET</tt>
+retrieves the corpus representation.
+<code>
+curl -X GET "/rest/collections/psautiers" 
+</code>
+<p>
+Test it: <a href="{{NEUMA_URL}}/collections/psautiers" target="_blank">/rest/collections/psautiers</a>
+</p>
+
+<p>
+Sub-corpora can it turn be obtained by calling the <tt>_corpora</tt> service, and so on so 
+forth.</p> 
+<code>
+curl -X GET "/rest/collections/psautiers/_corpora" 
+</code>
+
+<p>Test it: <a href="{{NEUMA_URL}}/collections/psautiers/_corpora" target="_blank">/rest/collections/psautiers/_corpora</a>.</p>
+
+<h3>Opera</h3>
+
+<p>The list of opera in a corpus is obtained with the <tt>_opera</tt> service.</p>
+
+<p>
+Test it: <a href="{{NEUMA_URL}}/collections/psautiers/godeau1656/_opera" target="_blank">/rest/collections/psautiers/godeau1656/_opera</a>.
+</p>
+
+<p>
+The <tt>_opera</tt> request can be paginated thanks to the <tt>from</tt> and 
+<tt>size</tt> parameters. 
+</p>
+<code>
+curl -X GET "/rest/collections/psautiers/godeau1656/_opera?from=10&size=30" 
+</code>
+<p>
+An Opus stores a set of files: the MusicXML document, the MEI document, the PDF and PNG 
+rendering obtained from Lilypond, etc. You can check the list of files available 
+with the <tt>_files</tt> Opus service.
+</p>
+
+<code>
+curl -X GET "/rest/collections/psautiers/godeau1656/1/_files" 
+</code>
+
+<p>
+Test it: <a href="{{NEUMA_URL}}/collections/psautiers/godeau1656/1/_files" target="_blank">/rest/collections/psautiers/godeau1656/1/_files</a>.
+</p>
+<p>
+Here is the list of possible files names.
+<ol>
+<li><tt>score.xml</tt>. The MusicXML document.</li>
+<li><tt>mei.xml</tt>. The MEI document.</li>
+<li><tt>score.ly</tt>. The Lilypond document.</li>
+<li><tt>score.pdf</tt>. The PDF rendering (Lilypond).</li>
+<li><tt>score.png</tt>. The PNG rendering (Lilypond).</li>
+<li><tt>preview.png</tt>. The first line of the score (Lilypond).</li>
+</ol>
+
+</p>
+
+<h3>Search service</h3>
+
+<p>To come soon</p>
+{% endblock content %}

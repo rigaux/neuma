@@ -1,0 +1,28 @@
+
+
+Pb with incomplete implementation of music21 / MEI
+
+Files exported from Verovio contain "sameas" attributes
+
+    <clef xml:id="clef-0000000433116814" sameas="#clef-0000001214623909" />
+
+Not implemented in music21. Fix: edit "base.py", find the def clefFromElement(elem, slurBundle=None) 
+function and add a test (DO BETTER)
+
+    **Contained Elements not Implemented:** none
+    '''
+    if 'perc' == elem.get('shape'):
+        theClef = clef.PercussionClef()
+    elif 'TAB' == elem.get('shape'):
+        theClef = clef.TabClef()
+    elif elem.get("sameas") is not None:
+        theClef = clef.clefFromString("F4")
+    else:
+        theClef = clef.clefFromString(elem.get('shape') + elem.get('line'),
+                                      octaveShift=_getOctaveShift(elem.get('dis'),
+                                                                  elem.get('dis.place')))
+
+
+Hi there
+
+Thanks a lot again and again for the great tool. I just tried the online conversion from MusicXML to MEI with Verovio. It looks fine in the verovio viewer. Then I import in in our library, and then the verovio display is wrong for some staves: the clef is missing and it seems that the G2 is assumed. See: 

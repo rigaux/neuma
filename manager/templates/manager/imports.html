@@ -1,0 +1,12 @@
+{% extends "layout.html" %} 
+{% load i18n %}
+
+{% block content %}
+
+<h1>List of uploads</h1>
+
+<a href="{% url 'manager:index' %}">Back to the manager menu</a>
+
+{% include "manager/upload_item.html" %}
+
+{% endblock content %}

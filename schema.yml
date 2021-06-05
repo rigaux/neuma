@@ -1,0 +1,36 @@
+local settings .... ok
+info:
+  description: ''
+  title: ''
+  version: ''
+openapi: 3.0.0
+paths:
+  /rest/collections/{full_neuma_ref}/:
+    get:
+      description: Receives a path to a corpus or an Opus,
+      operationId: collections_read
+      parameters:
+      - in: path
+        name: full_neuma_ref
+        required: true
+        schema:
+          description: ''
+          title: ''
+          type: string
+      tags:
+      - collections
+    post:
+      description: Receives a path to a corpus or an Opus,
+      operationId: collections_create
+      parameters:
+      - in: path
+        name: full_neuma_ref
+        required: true
+        schema:
+          description: ''
+          title: ''
+          type: string
+      tags:
+      - collections
+servers:
+- url: ''

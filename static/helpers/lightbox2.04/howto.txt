@@ -1,0 +1,17 @@
+PART 1 - SETUP
+	1.	Lightbox 2 uses the Prototype Framework and Scriptaculous Effects Library. You will need to include these three Javascript files in your header (in this order). <script type="text/javascript" src="js/prototype.js"></script>
+	2.	<script type="text/javascript" src="js/scriptaculous.js?load=effects,builder"></script>
+	3.	<script type="text/javascript" src="js/lightbox.js"></script>
+	4.	
+	5.	Include the Lightbox CSS file (or append your active stylesheet with the Lightbox styles). <link rel="stylesheet" href="css/lightbox.css" type="text/css" media="screen" />
+	6.	
+	7.	Check the CSS and make sure the referenced prev.gif and next.gif files are in the right location. Also, make sure the loading.gif and close.gif files as referenced near the top of the lightbox.js file are in the right location.
+PART 2 - ACTIVATE
+	1.	Add a rel="lightbox" attribute to any link tag to activate the lightbox. For example: <a href="images/image-1.jpg" rel="lightbox" title="my caption">image #1</a>
+	2.	
+Optional: Use the title attribute if you want to show a caption.
+	3.	If you have a set of related images that you would like to group, follow step one but additionally include a group name between square brackets in the rel attribute. For example: <a href="images/image-1.jpg" rel="lightbox[roadtrip]">image #1</a>
+	4.	<a href="images/image-2.jpg" rel="lightbox[roadtrip]">image #2</a>
+	5.	<a href="images/image-3.jpg" rel="lightbox[roadtrip]">image #3</a>
+	6.	
+No limits to the number of image sets per page or how many images are allowed in each set. Go nuts!

@@ -1,0 +1,22 @@
+{% extends "layout.html" %} {% load i18n %} {% block content %}
+
+
+<h1>{% trans "All collection" %}</h1>
+            {% for corpus in view.top_level_corpora %}
+          
+            <div class="collections">
+                <div class="item">  <a href="{% url 'home:corpus' corpus.ref %}"> 
+                  {% if corpus.cover %}
+                   <img class="illustration" 
+                      src="{{ corpus.cover.url }}" alt="{{corpus.title}}" width="200" height="213" /></a>
+                      {% endif %}
+                    <h2>{{corpus.title}}</h2>
+                    <h4>{{corpus.short_description}}</h4>
+                    <div class="clearer">&nbsp;</div>
+                </div>
+              </div>
+
+            {% endfor %}
+        
+            </div>
+{% endblock content %}

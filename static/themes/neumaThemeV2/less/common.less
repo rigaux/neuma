@@ -1,0 +1,296 @@
+/*        < blank >       */
+/*     Nicolas Taffin     */
+/*  http://polylogue.com  */
+/* 	 licence CC: BY-SA    */
+
+/**
+*		Blankless tools
+**/
+
+@import (reference) url("../blankless/blank-basics.less");
+@import (reference) url("../blankless/blank-grids.less");
+@import (reference) url("../blankless/blank-colorsets.less");
+
+
+/**
+*	
+* Variables
+*	
+*/
+
+/* sizes */
+
+@pageWidth: 1000px;
+@fullWidth: 100%;
+
+@pageHeaderHeight: 50px;
+@pageFooterHeight: 100px;
+
+@menuHeight: 40px;
+@hamburgerHeight: 25px;
+
+@labelWidth: 100%;
+@inputWidth: default;
+@textareaWidth: 100%;
+
+
+
+
+/****************************************/
+/*     	 palette des couleurs			*/							
+/****************************************/
+
+/*   du foncé au clair             */
+
+@rouge0: #9F3723;
+@rouge1: #C83A24;
+@rouge2: #E64F3E;
+@rouge3: #EA6253;
+@rouge4: #EE7467;
+@rouge5: #F4978E;
+@rouge6: #F8B3AB;
+@rouge7: #F8D8D5;
+
+@noir: #000000; 
+@gris1: #4D4D4C;
+@gris2: #575756;
+@gris3: #616160;
+@gris4: #696968;
+@gris5: #737372;
+@gris6: #7C7C7B;
+@gris7: #969696;
+@gris8: #CBCBCB;
+@gris: #DFDFDF;
+
+@bleu: #63B8E8;
+@jaune: #DDA145;
+@vert: #83dda6;
+
+
+
+
+
+
+
+/* custom colors */
+
+@back: #e5e5e5;
+
+@white: white;
+@lightest: #fff;
+@light: #ccc;
+@neutral: #888;
+@dark: #444;
+@darkest: #222;
+@black: black;
+
+@alt: #59534f;
+@fluo: #FFFFB2;
+@ok: #72bd1a;
+@pb: red;
+@mid: orange;
+@sky: cyan;
+
+
+/* document colors */
+
+@text: #444;
+@title: @text;
+@header: @alt;
+@link: @alt;
+@body: @back;
+@pageBack: @lightest;
+
+@pageHeader: @light;
+@pageHeaderText: @text;
+
+@pageFooter: @pageHeader;
+@pageFooterText: @pageHeaderText;
+
+@main: transparent;
+@mainText: @text;
+
+@code: fade(@sky, 10%);
+@even: fade(@sky, 20%); /* pair */
+@odd: fade(@white, 10%);	/* impair */		
+
+@tabBar: lighten(@light, 10%);
+
+@nav: @darkest;
+
+@menu: white;
+@subMenu: @light;
+@subMenuText: @darkest;
+@menuText: lighten(@text,15%);
+@menuHover: darken(@light,5%);
+@menuHoverText: @text;
+@menuSelect:  @darkest;
+@menuSelectText: @lightest;
+
+@tab : lighten(@light, 10%);
+@tabText : #888;
+@tabHover: lighten(@light, 0%);
+@tabHoverText: @tabText;
+@tabSelect : white;
+@tabSelectText: @tabText;
+
+@breadcrumb: @sky;
+
+@field : @white;
+@fieldText : lighten(@text, 15%);
+@fieldBorder : lighten(@light, 5%);
+@fieldActive : fade( @sky, 5%);
+@fieldActiveText : @text;
+@fieldActiveBorder : @sky;
+
+@submit: @ok;
+@submitText: @white;
+@submitShadow: @text;
+@submitBorder: @ok;
+
+@reset: @light;
+@resetText: @text;
+@resetShadow: @white;
+@resetBorder: @light;
+
+@button: lighten(@light, 15%);
+@buttonText: @text;
+@buttonShadow: @white;
+@buttonBorder: @light;
+
+@cta: #0d59bc;
+@ctaText: @white;
+@ctaShadow: @text;
+@ctaBorder: @cta;
+
+
+@social: fade(@lightest, 40%); 
+@socialText: @lightest;
+
+@language: fade(@lightest, 40%); 
+@languageText: @lightest;
+
+@disclaimer: @fluo;
+@disclaimerText: @text;
+
+
+
+
+/**
+*
+*	font style triggers
+*
+*/
+
+
+.fin, .light, .lighter  { 
+	font-weight: 300;
+}
+
+
+
+
+/**
+*	
+*	mixins
+*
+*/
+
+.light-text {
+	font-weight: 300;
+}
+.normal-text {
+	
+}
+.awesome {
+	font-family: "FontAwesome";
+}
+
+.gradient (@startColor: #eee, @endColor: white) {
+	background-color: @startColor;
+	background: -webkit-gradient(linear, left top, left bottom, from(@startColor), to(@endColor));
+	background: -webkit-linear-gradient(top, @startColor, @endColor);
+	background: -moz-linear-gradient(top, @startColor, @endColor);
+	background: -ms-linear-gradient(top, @startColor, @endColor);
+	background: -o-linear-gradient(top, @startColor, @endColor);
+	background: linear-gradient(top, @startColor, @endColor);
+}
+.horizontal-gradient (@startColor: #eee, @endColor: white) {
+ 	background-color: @startColor;
+	background-image: -webkit-gradient(linear, left top, right top, from(@startColor), to(@endColor));
+	background-image: -webkit-linear-gradient(left, @startColor, @endColor);
+	background-image: -moz-linear-gradient(left, @startColor, @endColor);
+	background-image: -ms-linear-gradient(left, @startColor, @endColor);
+	background-image: -o-linear-gradient(left, @startColor, @endColor);
+	background-image: linear-gradient(left, @startColor, @endColor);
+}
+
+.animation (@name, @duration: 300ms, @delay: 0.5s, @ease: ease) {
+	-webkit-animation: @name @duration @delay @ease;
+	-moz-animation:    @name @duration @delay @ease;
+	-ms-animation:     @name @duration @delay @ease;
+	animation:     @name @duration @delay @ease;
+}
+
+.transition (@transition) {
+	-webkit-transition: @transition;  
+	-moz-transition:    @transition;
+	-ms-transition:     @transition; 
+	-o-transition:      @transition; 
+	transition:      @transition;  
+}
+.transform(@string){
+	-webkit-transform: @string;
+	-moz-transform: 	 @string;
+	-ms-transform: 		 @string;
+	-o-transform: 		 @string;
+	transform: 		 @string;
+}
+.scale (@factor) {
+	-webkit-transform: scale(@factor);
+	-moz-transform: 	 scale(@factor);
+	-ms-transform: 		 scale(@factor);
+	-o-transform: 		 scale(@factor);
+	transform: 		 scale(@factor);
+}
+.rotate (@deg) {
+	-webkit-transform: rotate(@deg);
+	-moz-transform: 	 rotate(@deg);
+	-ms-transform: 		 rotate(@deg);
+	-o-transform: 		 rotate(@deg);
+	transform: 		 rotate(@deg);
+}
+.skew (@deg, @deg2) {
+	-webkit-transform:       skew(@deg, @deg2);
+	-moz-transform: 	 skew(@deg, @deg2);
+	-ms-transform: 		 skew(@deg, @deg2);
+	-o-transform: 		 skew(@deg, @deg2);
+	transform: 		 skew(@deg, @deg2);
+}
+.translate (@x, @y:0) {
+	-webkit-transform:       translate(@x, @y);
+	-moz-transform: 	 translate(@x, @y);
+	-ms-transform: 		 translate(@x, @y);
+	-o-transform: 		 translate(@x, @y);
+	transform: 		 translate(@x, @y);
+}
+.translate3d (@x, @y: 0, @z: 0) {
+	-webkit-transform:       translate3d(@x, @y, @z);
+	-moz-transform: 	 translate3d(@x, @y, @z);
+	-ms-transform: 		 translate3d(@x, @y, @z);
+	-o-transform: 		 translate3d(@x, @y, @z);
+	transform: 		 translate3d(@x, @y, @z);
+}
+.perspective (@value: 1000) {
+	-webkit-perspective: 	@value;
+	-moz-perspective: 	@value;
+	-ms-perspective: 	@value;
+	perspective: 		@value;
+}
+.transform-origin (@x:center, @y:center) {
+	-webkit-transform-origin: @x @y;
+	-moz-transform-origin:    @x @y;
+	-ms-transform-origin:     @x @y;
+	-o-transform-origin:      @x @y;
+	transform-origin:      @x @y;
+}

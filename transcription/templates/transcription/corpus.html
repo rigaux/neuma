@@ -1,0 +1,401 @@
+{% extends "layout_opus.html" %} 
+{% load i18n %} 
+{% block content %} 
+{% load extras %} 
+{% load guardian_tags %}
+
+<!-- Load the user/object permissions for the current corpus -->
+{% get_obj_perms request.user for corpus as "user_corpus_perms" %}
+
+
+ <script src="/static/js/verovio-toolkit.js"></script>
+
+<script>
+    var vrvToolkit = new verovio.toolkit();
+    </script>
+    
+<style type="text/css">
+   li.functions { display: inline; list-style-type: none; }
+   li.functions:after { content: " | "; }
+   li.functions:last-child:after { content: " "; }
+
+   /* li.functions:after { content: ", "; }
+   li.functions:last-child:before { content: "and "; }
+   li.functions:last-child:after { content: "."; } */
+  </style>
+
+<link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/default.min.css">
+<script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+
+<script type="text/javascript" src="/static/js/chart.min.js"></script>
+<script type="text/javascript">
+      function insertText(elemID, text)
+      {
+        var elem = document.getElementById(elemID);
+        elem.innerHTML = text;
+      }
+    </script>
+<script language="JavaScript" type="text/JavaScript">
+   /* Declare the list of tabs in the current page */
+
+
+{% if "import_corpus" in user_corpus_perms  %}
+var tabNames = [{"tabId": "tab1", "divId": "subcorpus"}, 
+                {"tabId": "tab2", "divId":"opus"},
+                {"tabId": "tab3", "divId":"stats"},
+                {"tabId": "tab4", "divId":"manage"},
+                {"tabId": "tab5", "divId":"query"},
+                ]
+ {% else %}
+ var tabNames = [{"tabId": "tab1", "divId": "subcorpus"}, 
+                 {"tabId": "tab2", "divId":"opus"},
+                 {"tabId": "tab3", "divId":"stats"},
+                {"tabId": "tab5", "divId":"query"},
+               
+                 ]
+{% endif %}
+ 
+{% if scoreql %}
+  $(document).ready(function() {
+    var tab5 = document.getElementById("tab5");
+    tab5.classList.add('active');
+    document.getElementById("query").style.display = "block";
+
+    var tab2 = document.getElementById("tab2");
+    tab2.classList.remove('active');
+    document.getElementById("tab1").classList.remove('active');
+    document.getElementById("subcorpus").style.display = "none";
+    document.getElementById("opus").style.display = "none";
+  });
+{% endif %}
+    /* Replaces a long desctiption by a short
+    initial text with a link */
+    function getBeginText()
+    {
+    var limit = 120,
+    text    = $('#display-description').text().split(/\s+/),
+    word_count = 0,
+    trunc = '',
+    i = 0;
+    while (i < text.length && word_count < limit) { 
+    trunc += text[i++] + ' ';
+    word_count++;
+    }
+
+   // No content? hide the div
+   if (i == 1) {
+      $('#description').hide();
+   }
+   else {
+    // Sets the content     
+      $('p.shorttext').text(trunc)
+      }
+    }
+</script>
+
+
+<!-- CORPUS -->
+
+
+<h1>
+	<!-- BEGIN admin_link -->
+	<ul class="toolbar">
+
+		{% if perms.manager.change_corpus %}
+		<li class="edit"><a
+			href="{% url 'admin:manager_corpus_change' corpus.id %}"
+			title="edit this corpus"> <span class="accessibility">edit</span>
+		</a></li> {% endif %}
+	</ul>
+	<!-- END admin_link -->
+	{{ corpus.title }}
+</h1>
+
+<div class="block margins right small insert">
+
+	{% if corpus_cover != "" %} 
+	<img width="200" height="213"
+		src="{{ corpus_cover.url }}" alt="Image" /> {% endif %} 
+		{% if corpus.parent != None %} 
+		 {% trans "Parent" %} :<a
+		href="{% url 'home:corpus' corpus.parent.ref %}">{{corpus.parent.title}}</a>
+	{% endif %}
+</div>
+
+
+<div id="description" style="display: block">
+	<p class="shorttext"></p>
+	<a href="#" onClick="toggle('description');"> (...)</a>
+</div>
+<div id="display-description" style="display: none">
+{% autoescape	off %}
+{{corpus.description}}
+{% endautoescape %}</div>
+
+<dl class="description">
+	<dt>{% trans "Nb opera" %}</dt>
+	<dd>{{ nb_opera }}</dd>
+</dl>
+<div class="clearer">&nbsp;</div>
+
+
+<!--
+<hr />
+<p>{nbHits} {def.summary_search} : '{trueKeywords}'
+	({form.keywords}) / '{truePattern}' ({form.melodic_pattern})</p>
+ -->
+
+<div>
+	<ul id="tabnav">
+		<li id="tab1"><a href="#" onClick="TabClick(tabNames, 0);">Sub-corpora ({{ nb_children }})</a></li>
+		<li id="tab2" class="active"><a href="#" onClick="TabClick(tabNames, 1);">Opus ({{ nb_opera }})</a></li>
+		<li id="tab3"><a href="#" onClick="TabClick(tabNames, 2);">Statistics</a></li>
+		{% if "import_corpus" in user_corpus_perms %}
+		<li id="tab4"><a href="#" onClick="TabClick(tabNames, 3);">Management</a></li>
+		<li id="tab5"><a href="#" onClick="TabClick(tabNames, 4);">ScoreQL query</a></li>
+		{% else %}		
+		<li id="tab5"><a href="#" onClick="TabClick(tabNames, 3);">ScoreQL query</a></li>
+		{% endif %}
+	</ul>
+</div>
+
+<div id="subcorpus" style="display: none">
+
+	<ul class="souscorpus">
+		{% for child in children %}
+		<li><a href="{% url 'home:corpus' child.ref %}"> 
+		{{	child.title }}</a> {{ child.short_description }}</li> 
+		{% endfor %}
+	</ul>
+
+</div>
+
+
+<div class="clearer">&nbsp;</div>
+
+
+<div id="opus" style="display: block">
+
+	{%if corpus %}
+	<ul class="paginator">
+		<li class="leftend"><a
+			href="{% url 'home:corpus' corpus.ref %}?page=1" title="First"></a></li>
+		{%if opera.has_previous %}
+		<li class="left"><a
+			href="{% url 'home:corpus' corpus.ref %}?page={{opera.previous_page_number}}"
+			title="Previous"></a></li> 
+			{% endif %} 
+			{% for i in opera.paginator.page_range %}
+		<li><a href="{% url 'home:corpus' corpus.ref %}?page={{i}}">{{i}}</a></li>
+		{% endfor %} 
+		{%if opera.has_next %}
+		<li class="nextRight"><a
+			href="{% url 'home:corpus' corpus.ref %}?page={{opera.next_page_number}}"></a>
+		</li> {% endif %}
+		<li class="lastRight"><a
+			href="{% url 'home:corpus' corpus.ref %}?page={{opera.paginator.num_pages}}"
+			title="last page"></a></li>
+	</ul>
+	{% endif %}
+	<div class="clearer">&nbsp;</div>
+
+	{% for opus in opera %}
+	 {% include "home/opus_item.html" with opus=opus%} 
+	{% endfor %}
+
+</div>
+
+
+<div class="clearer">&nbsp;</div>
+
+<div id="stats" style="display: none">
+	<h1>Statistics</h1>
+	<ul>
+		{% for cell in corpus.get_matrix_data %}
+		<li>Opus 1 = {{cell.opus1.ref}} Opus 2 = {{cell.opus2.ref}} Value
+			= {{cell.value}} {% endfor %}
+	</ul>
+
+
+
+	<div>
+		<table class="corpus-medoids-selectbox">
+			<thead>
+				<td></td>{% for k in class_number_range %}
+				<td>{{k}}</td>{% endfor %}
+			</thead>
+			<tbody>
+				{% for measure in measures %}
+				<tr>
+					<td>{{measure}}</td> 
+					{% for k in class_number_range %}
+					<td><a href='{% url '
+						home:corpus' corpus.ref %}?sim_measure={{measure}}&nb_class={{k}}'>go</a></td>
+					{% endfor %}
+				</tr>
+				{% endfor %}
+			</tbody>
+		</table>
+		<br />
+	</div>
+<!-- 
+	<h4>Medoids ({{measure}}, {{nbclass}} medoids)</h4>
+	<p></p>
+
+	<div style="clear: both; width: 100%; display: inline-block">
+		<span style="width: 49; display: inline-block;"> 
+		{% autoescape	off %} 
+		{% for medoid_voice in medoids %}
+			<div style="width: 49%; display: inline-block">
+				<span style="font-weight: bold; width: 100%; clear: both">
+					{{medoid_voice.0}} </span> 
+					medoid_voice.1|print_histogram
+			</div> 
+			{% endfor %} 
+			{% endautoescape %}
+		</span>
+	</div>
+	 -->
+</div>
+
+<!--   Tab for management functions -->
+<div id="manage" style="display: none">
+  <h1>Manage corpus</h1>
+  
+  <table width="100%" border="0">
+    <tr>
+    <td width="30%">
+  <h3>{% trans "List of uploaded ZIP files" %}</h3>
+  <ol>
+    {% for upload in uploads %}
+    <li>{{upload.description}}<br/>
+      {% if perms.corpus.change_upload %}
+      <a
+        href="{% url 'admin:manager_upload_change' upload.id %}"
+        title="edit this import file">Edit |
+      </a>
+      {% endif %}        
+      {% if "import_corpus" in user_corpus_perms  %}
+      <a
+        href="#" onClick="ImportFile('{{corpus_ref}}', '{{upload.id}}')"
+        title="{%  trans 'Import this file in the corpus' %}">Import |
+      </a>
+      {% endif %}
+    </li>
+    {% endfor %}
+  </ol>
+           
+  </td>
+  <td>
+    <h3>{% trans "Actions" %}</h3>
+  
+   <ul>
+    <li><a href="{% url 'home:create_corpus_child' corpus.ref %}">{% trans "Create a child corpus" %}</a></li>
+    <li><a
+        href="{% url 'home:corpus_export_zip'  corpus.ref %}"
+        title="">{% trans 'Export this corpus as a zip file' %}
+      </a></li>
+   </ul>
+   
+  <h3>{% trans "Upload a new ZIP file" %}</h3>
+   <form method="post" 
+   action="{% url 'home:upload_corpus_zip' corpus.ref %}" 
+   enctype="multipart/form-data"
+   onsubmit="return required_field('zip_description', 'Description must not be empty')">
+    {% csrf_token %}
+    <fieldset>
+     <label for="description">{% trans "Enter a short description of this file's content" %}</label>
+    <textarea rows="5" cols="20" id="zip_description" name="description"></textarea>
+    <br/>
+    <label for="corpus_zipfile">{% trans "Select the ZIP file on your local disk" %}</label>
+    <input type="file" name="corpus_zipfile"/>
+    <br/>
+    <input type="submit" value="{% trans 'Upload' %}"/>
+    </fieldset>
+  </form>
+  </td>
+  </tr>
+
+  </table>
+</div>
+
+<!--   Tab for scoreql queries -->
+<div id="query" style="display: none">
+  <div id="left">
+    <h3>Query</h3>
+    <br/>
+    <form  id="scoreqlquery" method="post" action="/home/corpus/{{ corpus_ref }}/#query">
+      {% csrf_token %} 
+      <textarea style="font-size:80%;margin: 0px; width: 95%; height: 233px;" id="queryarea" name="query">
+{% if query %}{{ query }}{% else %}import module namespace s = "fr.cnam.vertigo.scoreql.ScoreQL";
+let $j := for $i in fn:collection("ScoreMView")/score[contains(@id, "Neuma:{{ corpus_ref }}")] 
+    return $i
+return s:Score("1st voice", $j[1]/music/*[1])
+        {% endif %}
+      </textarea>
+      <br/>
+      <div style="width:50%;margin-left:25%;">
+      <input type="submit" value="Submit query">
+    </div>
+    </form>
+    <br>
+    </div>
+
+    <div id="right">
+      <div>
+        <h3>Documentation</h3>
+        <ul style="list-style:disc;margin:0;"><li>Link to the <a href="http://cchum-kvm-scorelibneuma.in2p3.fr/ScoreQL/">ScoreQL API documentation</a></li></ul>
+        <h3>Available query templates</h3>
+        {% if templates %}
+        <ul style="list-style:disc;margin:0;">
+          {% for key,value in templates.items %}
+          <li><a href="javascript:insertText('queryarea','{{ value }}')">{{ key }}</a> </li>
+
+        {% endfor %}
+      </ul>
+        {% else %}
+        not yet implemented
+        {% endif %}
+
+        <h3>Available mappings</h3>
+        <ul style="list-style:disc;margin:0;">
+        {% if mappings %}
+          {% for map in mappings %}
+          <li><a target="_blank" href="http://cchum-kvm-scorelibneuma.in2p3.fr/ScoreQL/rest/mapping?corpus={{ map }}">{{ map }}</a></li> 
+          {% endfor %}
+        {% else %}
+        <li>the list of mappings is currently unavailable</li>
+        {% endif %}
+        </ul>
+
+        <h3>Available functions</h3>
+        <ul style="list-style:disc;margin:0px;">
+        {% if functions %}
+          {% for f in functions %}
+            <li class="functions">{{ f }}</li>
+          {% endfor %}
+        {% else %}
+        <li>the list of functions is currently unavailable</li>
+        {% endif %}
+          </ul>
+        </ul>
+
+      </div>
+    </div>
+    <div class="clear"></div>
+</div>
+
+<script type="text/javascript">
+    TabClick(tabNames, {{current_tab}});
+    getBeginText();
+    //clonePattern("seepartition", "pattern_score")
+
+    </script>
+<div class="clearer">&nbsp;</div>
+
+{% endblock content %}
+
+
+
+

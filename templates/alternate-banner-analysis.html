@@ -1,0 +1,37 @@
+{% load i18n %}
+
+<div id="alternate-banner" class="banner access alternate-banner">
+
+  
+  <div class="options">
+    <input type="checkbox" id="playOnClick" name="playOnClick">
+    <label for="playOnClick">Play on click</label>
+  </div>
+  
+  <div class="concepts">
+    <a class="concepts-trigger">{% trans 'Analytic Concepts' %}</a>
+    <div class="concepts-palette">
+       <a class="close-palette" title="close">×</a>
+       <div id="concepts_list">
+       </div>
+       <div id="waiting_gif">
+       </div>
+       
+       <!--  
+       <div id="compute_annotation_form" style="display:none">
+          <form onsubmit="event.preventDefault(); ComputeAnnotations(); ">
+             {% csrf_token %}
+             <input id="compute_opus_ref" type="hidden" name="opus_ref" value="{{opus.ref}}"/>
+             <input id="compute_model_code" type="hidden" name="model_code" value=""/>
+             <input type="submit" value="Compute"/>
+          </form>
+         <div id="waiting_gif">
+        </div>
+      </div>   
+      -->
+      
+    </div>
+  </div>
+  
+
+</div><!-- ending banner access -->

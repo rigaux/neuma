@@ -1,0 +1,15 @@
+
+<script type='text/javascript' src='helpers/flash_player/swfobject.js'></script>
+
+
+
+<p id='preview'>The player will show in this paragraph</p>
+
+<script type='text/javascript'>
+  var s1 = new SWFObject('helpers/flash_player/player.swf','ply','320','240','9','#ffffff');
+  s1.addParam('allowfullscreen','true');
+  s1.addParam('allowscriptaccess','always');
+  s1.addParam('wmode','opaque');
+  s1.addParam('flashvars','file=content/videos/video.mov&image=content/videos/poster.jpg&controlbar=over&stretching=fill&skin=helpers/flash_player/dangdang.swf&logo=ui/images/incruste.png');
+  s1.write('preview');
+</script>

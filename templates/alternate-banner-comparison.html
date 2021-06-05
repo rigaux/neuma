@@ -1,0 +1,45 @@
+{% load i18n %}
+
+<div id="alternate-banner-comparison" class="banner access alternate-banner-comparison">
+  <div class="location"><span class="label">{% trans "Original:" %}</span>
+    <form id="form_submit_score" class="quality-ref" action="{% url 'comparison:index' %}" method="get">
+      <input type="hidden" name="urlForm" value="1" />
+      <fieldset>
+          <input id="url_score" type="text" name="url_score" placeholder="{% trans 'Enter the URL of the original score' %}" value ="{{url_score}}"/>
+          <input id="url_score_compare" type="text" name="url_score_compare" placeholder="{% trans 'Enter the URL of the score to compare' %}" value ="{{url_score_compare}}"/>
+          <input id="submitButton" type="submit" value="{% trans 'Submit' %}" />
+      </fieldset>
+    </form>
+  </div>
+
+
+  <!-- List of score to test quality rules-->
+    <div class="location"><span class="label">{% trans "Test suite:" %}</span>
+    <form class="quality-ref" onsubmit="event.preventDefault(); SelectSampleScore(this);" method="get">
+      <fieldset>
+          <select id="selected_sample_score" type="text" name="url_score">
+             {% for opus_test in test_suite %}
+              <option value="{{opus_test.url}}">{{opus_test.label}}</option>
+               {% endfor %}
+           </select>
+          <input id="submitButton" type="submit" value="{% trans 'Check' %}" />
+      </fieldset>
+    </form>
+  </div>
+  
+  <div class="options">
+    <input type="checkbox" id="playOnClick" name="playOnClick">
+    <label for="playOnClick">Play on click</label>
+  </div>
+  
+  <div class="concepts">
+    <a class="concepts-trigger">{% trans 'Quality Concepts…' %}</a>
+    <div class="concepts-palette">
+       <a class="close-palette" title="close">×</a>
+       <div id="concepts_list">
+       </div>
+       <div id="waiting_gif">
+       </div>
+    </div>
+  </div>
+</div><!-- ending banner access -->

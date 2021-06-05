@@ -1,0 +1,39 @@
+{% load i18n %}
+
+<div class="quality-palette loading">
+  <div class="buttons">
+    <a class="playHere"><span class="awesome">&#xf144;</span> Play Here</a>
+    <a class="annotateHere">{% trans "Annotate" %}</a>
+    <a class="annotList selected">{% trans "List" %}</a>
+    <a class="edit">{% trans "Edit" %}</a>
+  </div>
+
+  <!-- The infobox proposes several tabs to manage annotation on a score element -->
+  <div id="infobox" class="infobox" style="display:none">
+  
+   <!-- Tab with a form to create a new annotation -->
+    <div class="annotation-create-tab">
+       <div id="annotation-create-form"></div>
+    </div>
+
+    <div class="annotation-list-tab">
+      <h4>{% trans "Element description " %}</h4> 
+      Element id (MEI): <span id="annotation_element_id"></span>
+      <h4>{% trans "Annotations " %}</h4>
+      <div id="annotations_list" class="annotations-list">
+      </div>
+    </div>
+
+    <div class="xml-edit-tab" id="xml_edit_tab">
+        <h4>{% trans "Edit the following XML fragment" %}</h4>
+        <div id="xml_edit" class="xml-edit">XML snippet</div>
+        <div id="annotation-xmlfragment"></div>
+     </div>
+
+  </div><!-- ending infobox -->
+    
+
+</div><!-- ending quality palette -->
+
+<div class="note-highlighter"></div> 
+  

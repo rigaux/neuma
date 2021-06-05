@@ -1,0 +1,54 @@
+{% extends "layout.html" %} {% load i18n %} 
+
+{% block content %}
+
+<script src="/static/js/verovio-toolkit-light-0.9.9.js"></script>
+
+<h5>Music summary</h5>
+
+<div>
+       {% if opus.music_summary %}
+         <!--  <pre>{{opus.music_summary}}</pre> -->
+        {% endif %}
+      <ul>
+         <li>Opus id: {{msummary.opus_id}}</li>
+         <li>Pattern: {{pattern}}. Intervals: {{pattern.get_intervals_as_string}}</li>
+         <li>Occurrences: 
+           {% for part_id, part in occurrences.items %}
+           {% for voice_id, occ in part.items %}
+               {{part_id}} {{voice_id}}: {{occ}} |
+           {% endfor %}
+           {% endfor %}
+           </li>
+           <li>Matching ids = {{matching_ids}}</li>
+         <ol>
+         {% for part_id, part in msummary.parts.items %}
+           <li> Part {{part_id}}</li>   
+             <ol>
+             {% for voice_id, voice in part.items %}
+              <li> Voice {{voice_id}}. Intervals: {{voice.get_intervals_as_string}} </li>
+            {% endfor %}
+            </ol>
+            {% endfor %}
+         </ol>
+      </ul>  
+</div>
+
+
+<div id="links"></div>
+
+<div>
+<div id="score"/>
+</div>
+
+<script  type="text/javascript">
+
+target = "score";
+meiUrl = getURLParameter("mei_url")
+matches_param = getURLParameter("matches")
+highlights = JSON.parse(matches_param)
+ displayWithVerovio("{{opus.ref}}", meiUrl, target, highlights)
+</script>
+
+
+{% endblock content %}

@@ -1,0 +1,36 @@
+{% extends "layout.html" %} {% load i18n %} {% block content %}
+
+
+<h1 class="title">{% trans "About us" %}</h1>
+
+<div class="story">
+{% blocktrans %} 
+
+
+Neuma is issued from a 3-years research project (2009-2011) funded by 
+the French Agence Nationale de la Recherche as part of the Contenu 
+et interactions (CONTINT) call for project. The initial partnership 
+involved the Institut de Recherche sur le Patrimoine Musical Français (IRPMF), the faculty of Conservatoire National des Arts et Métiers, the LE2I Computer Science lab., Univ. Bourgogne, Dijon, France, and the Patrimoines et Langages Musicaux Musicology laboratory, Univ. Paris IV Sorbonne, Paris, France.
+
+NEUMA is now developed and maintained through a joint effort of both 
+the IReMus institue, a Musicology lab., co-founded by 
+the CNRS and the Bibiothèque Nationale de France, and the CNAM/CEDRIC lab.
+{% endblocktrans %}</div>
+
+
+
+<h1 class="title">{% trans "The Neuma team" %}</h1>
+
+
+<dl>
+  <dt>{% trans "Scientific committee" %}</dt> <dd>
+     Nathalie Berton-Blivet (IReMus),
+     Cécile Davy-Rigaux (IReMus), Philippe Rigaux (CNAM, philippe.rigaux@cnam.fr), 
+     Alice Tacaille (IReMus).</dd>
+  <dt>{% trans "Collection manager" %}</dt>
+     <dd>Alban Framboisier (IReMus).</dd>
+  <dt>{% trans "Graphic design" %}</dt><dd><a href="http://www.polylogue.org/">Atelier Polylogue.</a></dd>
+</dl>
+
+
+{% endblock content %}

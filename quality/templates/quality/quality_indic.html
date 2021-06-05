@@ -1,0 +1,28 @@
+{% extends "layout_opus.html" %} 
+
+{% load i18n %}
+{% load admin_urls %}
+
+{% block content %}
+
+<!-- ACCUEIL -->
+<h2>Quality management</h2>
+
+<div class="clearer">&nbsp;</div>
+
+<h3>Manage the schema </h3>
+
+<a target="_blank" href="{% url 'admin:quality_qtdimension_add' %}">Add a dimension</a> | 
+<a target="_blank" href="{% url 'admin:quality_qtmetric_add' %}">Add a metric</a>
+<table>
+{% for dimension_ref, values in dimensions.items %}
+     <tr><th colspan="4">{{values.dimension.name}} 
+         <a target="_blank" href="{% url 'admin:quality_qtdimension_change' values.dimension.id %}">[update]</a></th></tr>
+    {% for metric in values.metrics %}
+      <tr> <td>Metric</td> <td>{{metric.name}} </td><td>{{metric.description}}</td>
+         <td> <a target="_blank" href="{% url 'admin:quality_qtmetric_change' metric.id %}">[update]</a></td></tr>
+    {% endfor %} 
+{% endfor %}
+</table>
+
+{% endblock content %}

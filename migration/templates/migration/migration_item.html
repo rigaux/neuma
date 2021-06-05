@@ -1,0 +1,18 @@
+<ol>
+     {% for mdict in migrations %}
+      <li>({{mdict.migration.corpus.ref}}). {{mdict.migration.corpus.title}}. <b>Tag:</b> {{mdict.migration.tag}}
+          <b>Nb opera imported:</b> {{mdict.migration.count_imported_opera}}
+         <ul>
+            <li>First migration:  {{mdict.migration.corpus.creation_timestamp}}.</li>
+            <li>Last migration:  {{mdict.migration.corpus.update_timestamp}}.</li>
+              {% if mdict.children %}
+            <li>
+               {% with migrations=mdict.children %}
+                {% include "migration/migration_item.html" %}
+              {% endwith %}
+            </li>             
+          {% endif %}
+         </ul>
+     </li>
+     {% endfor %}
+ </ol>

@@ -1,0 +1,725 @@
+/*        < blank >       */
+/*     Nicolas Taffin     */
+/*  http://polylogue.com  */
+/*    licence CC: BY-SA   */
+
+
+/**
+*
+*	Four grid systems :
+*	1. the easyest grosso-modo grid : name what you want
+*	2. flex-box V1
+*	3. 12 grid with responsive support (2 breakpoints)
+* 	with default (table) and block variant
+*	4. "A l'ancienne" grid, counting pixels, yes...
+*
+*/
+
+
+
+
+/**
+*
+*	Grosso-modo grid : qualify regions			
+*
+*/
+
+.full {
+	width: 100%;
+}
+.almost-full {
+	width: 99%;
+}
+.large {
+	width: 70%;
+}
+.anti-large {
+	width: 29%;
+}
+.medium, .half {
+	width: 50%;
+}
+.anti-medium, .anti-half {
+	width: 49%;
+}
+.third {
+	width: 33%;
+}
+.real-third {
+	width: 33.33333%;
+}
+.anti-third {
+	width: 66%;
+}
+.quarter {
+	width: 25%;
+}
+.anti-quarter {
+	width: 74%;
+}
+.small {
+	width: 20%;
+}
+.anti-small {
+	width: 79%;
+}
+.tiny {
+	width: 10%;
+}
+.anti-tiny {
+	width: 89%;
+}
+
+
+.full-height {
+	height: 100%;
+}
+.half-height {
+	height: 50%;
+}
+.third-height {
+	height: 33.3333%;
+}
+
+/**
+*
+*	Flex-box v1 learning
+*	2012 syntax
+*	may need autoprefixer for older browsers
+*					
+*/
+
+/* 
+*	default flex 
+*/
+
+.flex {
+	 display: flex;
+	 flex-direction: row;
+	 flex-wrap: wrap;
+	 justify-content : space-between;
+	 align-items: stretch;
+	 align-content: flex-start;
+}
+
+.flex.inline {
+	 display: inline-flex;
+}
+.flex.column {
+	flex-direction: column;
+}
+.flex.row-reverse {
+	flex-direction: row-reverse;
+}
+.flex.column-reverse {
+	flex-direction: column-reverse;
+}
+
+.flex.nowrap {
+	flex-wrap: nowrap;
+}
+.flex.wrap-reverse {
+	flex-wrap: wrap-reverse;
+}
+
+/** 
+*
+*	main axis alignment
+*
+**/
+
+.flex.start {
+	 justify-content : flex-start;
+}
+.flex.end {
+	 justify-content : flex-end;
+}
+.flex.center {
+	 justify-content : center;
+}
+.flex.around {
+	 justify-content : space-around;
+}
+
+/**
+*
+*	perpendicular alignment 
+*
+*/
+
+.flex.align-start {
+		align-items: flex-start;
+}
+.flex.align-end {
+		align-items: flex-end;
+}
+.flex.align-center {
+		align-items: center;
+}
+.flex.align-baseline {
+		align-items: baseline;
+}
+
+/** 
+*
+*	multiple lines alignment 
+*
+*/
+
+.flex.align-content-end {
+	align-content: flex-end;
+}
+.flex.align-content-center {
+	align-content: center;
+}
+.flex.align-content-space-between {
+	align-content: space-between;
+}
+.flex.align-content-space-around {
+	align-content: space-around;
+}
+.flex.align-content-stretch {
+	align-content: stretch;
+}
+
+/** 
+* 
+*	flex children classes
+*
+*/
+
+.flex > * {
+	text-align: center;
+	flex-grow: 1;
+	flex-shrink: 0;
+	overflow: hidden;
+	vertical-align: middle;
+}
+
+.flex.grow > * {
+	flex-grow: 1;
+}
+.flex > .grow {
+	flex-grow: 1 !important;
+}
+
+.flex.no-grow > * {
+	flex-grow: 0;
+}
+.flex > .no-grow {
+	flex-grow: 0 !important;
+}
+
+.flex.shrink > * {
+	flex-shrink: 1;
+}
+.flex > .shrink {
+	flex-shrink: 1 !important;
+}
+
+.flex.no-shrink > * {
+	flex-shrink: 0;
+}
+.flex > .no-shrink {
+	flex-shrink: 0 !important;
+}
+
+.flex.basis-1 > * {
+	flex-basis: 100%;
+}
+.flex > .basis-1 {
+	flex-basis: 100% !important;
+}
+
+.flex.basis-2 > * {
+	flex-basis: 50%;
+}
+.flex > .basis-2 {
+	flex-basis: 50% !important;
+}
+
+.flex.basis-3 > * {
+	flex-basis: 33.333333%;
+}
+.flex > .basis-3 {
+	flex-basis: 33.333333% !important;
+}
+
+.flex.basis-4 > * {
+	flex-basis: 25%;
+}
+.flex > .basis-4 {
+	flex-basis: 25% !important;
+}
+
+.flex.basis-5 > * {
+	flex-basis: 20%;
+}
+.flex > .basis-5 {
+	flex-basis: 20% !important;
+}
+
+.flex.basis-6 > * {
+	flex-basis: 16.66666%;
+}
+.flex > .basis-6 {
+	flex-basis: 16.66666% !important;
+}
+
+
+
+
+/**
+*
+* fluid 12 cols flex grid responsive
+*	responsiveness with 2 breakpoints moved 
+*	to responsive.less
+*
+*/
+
+
+.grid {
+	width: 100%;
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: space-between;
+}
+
+
+.grid-guides {
+	background: transparent url(../images/grid.png) 0 0 repeat-y;
+	background-size: 100%;
+
+	& > .grid > * {
+		background-color: fade(white, 40%);
+		margin-bottom: 1em;
+	}
+}
+
+.grid > * {
+	display: block;
+	flex-align: top;
+	text-align: center;
+	flex-shrink: 0;
+}
+
+.grid > div:last-child, .grid > .last {
+	margin-right: 0;
+}
+
+
+
+/**
+*
+*	12 col grid Width 
+*
+*/
+
+/* calculation rounding buggy in safari and ie */
+
+
+.grid > .col1 {
+	flex-basis: 6.5%;
+}
+.grid > .col2 {
+	flex-basis: 15%;
+}
+.grid > .col3 {
+	flex-basis: 23.5%;
+}
+.grid > .col4 {
+	flex-basis: 32%;
+}
+.grid > .col5 {
+	flex-basis: 40.5%;
+}
+.grid > .col6 {
+	flex-basis: 49%;
+}
+.grid > .col7 {
+	flex-basis: 57.5%;
+}
+.grid > .col8 {
+	flex-basis: 66%;
+}
+.grid > .col9 {
+	flex-basis: 74.5%;
+}
+.grid > .col10 {
+	flex-basis: 83%;
+}
+.grid > .col11 {
+	flex-basis: 91.5%;
+}
+.grid > .col12 {
+	flex-basis: 100%;
+}
+
+
+
+
+/**
+*
+* fluid 12 cols flex grid responsive
+*	responsiveness with 2 breakpoints moved 
+*	to responsive.less
+*
+*/
+.grid-gut(@columns: 2, @gutter: 20px) {
+	width: 100%;
+	display: grid;
+	grid-template-columns: repeat(@columns, 1fr);
+	grid-column-gap: @gutter;
+}
+.grid-gut > * {
+}
+.grid-guides > * > * {
+	background-color: fade(white, 40%);
+	margin-bottom: 1em;
+}
+
+.grid-gut-2 {
+	.grid-gut(2, 20px);
+}
+.grid-gut-3 {
+	.grid-gut(3, 20px);
+}
+.grid-gut-4 {
+	.grid-gut(4, 20px);
+}
+.grid-gut-5 {
+	.grid-gut(5, 20px);
+}
+.grid-gut-6 {
+	.grid-gut(6, 20px);
+}
+.grid-gut-7 {
+	.grid-gut(7, 20px);
+}
+.grid-gut-8 {
+	.grid-gut(8, 20px);
+}
+.grid-gut-9 {
+	.grid-gut(9, 20px);
+}
+.grid-gut-10 {
+	.grid-gut(10, 20px);
+}
+.grid-gut-11 {
+	.grid-gut(11, 20px);
+}
+.grid-gut-12 {
+	.grid-gut(12, 20px);
+}
+
+
+
+/**
+*
+* fluid 12 cols blockgrid responsive
+*	responsiveness with 2 breakpoints moved 
+*	to responsive.less
+*
+*/
+
+
+.block-grid {
+	display: block;
+	width: 100%;
+	float: left;
+}
+
+/**
+ * Clearfix for block-grid
+ */
+
+.block-grid:before,
+.block-grid:after {
+    content: " ";
+    display: table;
+}
+
+.block-grid:after {
+    clear: both;
+}
+
+/**
+ * For IE 6/7 only
+ * Include this rule to trigger hasLayout and contain floats.
+ */
+
+.block-grid {
+    *zoom: 1;
+}
+
+.block-grid-guides {
+	background: transparent url(../images/grid.png) 0 0 repeat-y;
+	background-size: 100%;
+	float: left;
+	width: 100%;
+}
+
+.block-grid > * {
+	display: block;
+	float: left;
+	margin-right: 2%;
+	text-align: left;
+	min-height: 2em;
+	margin-bottom: 1em;
+}
+
+.block-grid > div:last-child, .block-grid > .last {
+
+	margin-right: 0;
+	
+}
+
+/* cheating a bit for safari */
+
+@media screen and (-webkit-min-device-pixel-ratio:0) {
+	.block-grid > div:last-child, .block-grid > .last
+	{
+		float: right;	
+	}
+}
+
+
+
+/**
+*
+*	12 col block-grid Width 
+*
+*/
+
+/* calculation rounding buggy in safari and ie */
+
+
+.block-grid > .col1 {
+	width: 6.5%;
+}
+.block-grid > .col2 {
+	width: 15%;
+}
+.block-grid > .col3 {
+	width: 23.5%;
+}
+.block-grid > .col4 {
+	width: 32%;
+}
+.block-grid > .col5 {
+	width: 40.5%;
+}
+.block-grid > .col6 {
+	width: 49%;
+}
+.block-grid > .col7 {
+	width: 57.5%;
+}
+.block-grid > .col8 {
+	width: 66%;
+}
+.block-grid > .col9 {
+	width: 74.5%;
+}
+.block-grid > .col10 {
+	width: 83%;
+}
+.block-grid > .col11 {
+	width: 91.5%;
+}
+.block-grid > .col12 {
+	width:100%;
+	margin-right: 0%;
+	margin-left: 0%;
+	float: none;
+}
+
+
+/**
+*
+*	A l'ancienne grid					
+*
+*/
+
+
+.width10 {
+	width: 10px;
+}
+.width20 {
+	width: 20px;
+}
+.width30 {
+	width: 30px;
+}
+.width40 {
+	width: 40px;
+}
+.width50 {
+	width: 50px;
+}
+.width60 {
+	width: 60px;
+}
+.width70 {
+	width: 70px;
+}
+.width80 {
+	width: 80px;
+}
+.width90 {
+	width: 90px;
+}
+.width100 {
+	width: 100px;
+}
+.width110 {
+	width: 110px;
+}
+.width120 {
+	width: 120px;
+}
+.width130 {
+	width: 130px;
+}
+.width140 {
+	width: 140px;
+}
+.width150 {
+	width: 150px;
+}
+.width160 {
+	width: 160px;
+}
+.width170 {
+	width: 170px;
+}
+.width180 {
+	width: 180px;
+}
+.width190 {
+	width: 190px;
+}
+.width200 {
+	width: 200px;
+}
+.width250 {
+	width: 250px;
+}
+.width300 {
+	width: 300px;
+}
+.width350 {
+	width: 350px;
+}
+.width400 {
+	width: 400px;
+}
+.width450 {
+	width: 450px;
+}
+.width500 {
+	width: 500px;
+}
+.width550 {
+	width: 550px;
+}
+.width600 {
+	width: 600px;
+}
+.width650 {
+	width: 650px;
+}
+.width700 {
+	width: 700px;
+}
+.width750 {
+	width: 750px;
+}
+.width800 {
+	width: 800px;
+}
+.width850 {
+	width: 850px;
+}
+.width900 {
+	width: 900px;
+}
+.width950 {
+	width: 950px;
+}
+
+.height10 {
+	height: 10px;
+}
+.height20 {
+	height: 20px;
+}
+.height30 {
+	height: 30px;
+}
+.height40 {
+	height: 40px;
+}
+.height50 {
+	height: 50px;
+}
+.height60 {
+	height: 60px;
+}
+.height70 {
+	height: 70px;
+}
+.height80 {
+	height: 80px;
+}
+.height90 {
+	height: 90px;
+}
+.height100 {
+	height: 100px;
+}
+.height110 {
+	height: 110px;
+}
+.height120 {
+	height: 120px;
+}
+.height130 {
+	height: 130px;
+}
+.height140 {
+	height: 140px;
+}
+.height150 {
+	height: 150px;
+}
+.height200 {
+	height: 200px;
+}
+.height250 {
+	height: 250px;
+}
+.height300 {
+	height: 300px;
+}
+.height350 {
+	height: 350px;
+}
+.height400 {
+	height: 400px;
+}
+.height500 {
+	height: 500px;
+}
+.height600 {
+	height: 600px;
+}
+.height700 {
+	height: 700px;
+}
+.height800 {
+	height: 800px;
+}
+.height900 {
+	height: 900px;
+}

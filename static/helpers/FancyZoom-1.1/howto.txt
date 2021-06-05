@@ -1,0 +1,14 @@
+Add the following two lines of code to the <head> section at the top of your web page(s):
+
+<script src="helpers/FancyZoom-1.1/js-global/FancyZoom.js" type="text/javascript"></script>
+<script src="helpers/FancyZoom-1.1/js-global/FancyZoomHTML.js" type="text/javascript"></script>
+
+4
+Add onload="setupZoom()" inside your page's existing <body> tag. For example:
+
+<body id="whatever" [...] onload="setupZoom()">
+
+5
+Whoah. You're done! The rest is automatic - links to images in your page will automatically zoom the images. For example:
+
+<a href="image.jpg"><img src="image-thumbnail.jpg" /></a> will zoom up image.jpg when clicked.

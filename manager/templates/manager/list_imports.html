@@ -1,0 +1,23 @@
+{% extends "layout.html" %} 
+{% load i18n %}
+
+{% block content %}
+
+
+<a href="{% url 'manager:index' %}">Back to the manager menu</a><br/>
+<a href="{% url 'manager:list_imports' upload.id True%}">Do import this file</a><br/>
+
+{% if do_import %}
+<h1>List and import the content of an upload file </h1>
+{% else %}
+<h1>List the content of an upload file (no import done)</h1>
+{% endif %}
+File for corpus {{upload.corpus.ref}}. Created {{upload.creation_timestamp}}. {{upload.description}}.
+Size: {{upload.zip_file.size}} bytes. {{message}}.
+
+<ul>
+{% for file in filenames %}
+  <li>File {{file}}</li>
+{%endfor %}
+</ul>
+{% endblock content %}

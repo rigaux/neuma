@@ -1,0 +1,12 @@
+{% extends "layout_opus.html" %} {% load i18n %}
+
+
+ {% block content %}
+
+<script type="text/javascript" src="/static/js/chart.min.js"></script>
+
+<h1>{% trans "Quality model" %}</h1>
+
+      {% include "quality/show_concept.html" %}
+
+{% endblock content %}

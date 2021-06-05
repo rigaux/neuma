@@ -1,0 +1,1500 @@
+/*        < blank >       */
+/*     Nicolas Taffin     */
+/*  http://polylogue.com  */
+/*  licence CC: BY-NC-SA   */
+
+
+/*
+* LESS COMMONS : COLORS, FONTS, MIXINS
+*/
+
+@import (reference) url("common.less");
+
+
+
+
+
+
+
+/****************************************/
+/*  customisation  des elmnts generaux  */							
+/****************************************/
+
+body
+{
+	background-color: #CBCBCB;
+	font-family: "IBM Plex Sans", Helvetica, Arial, sans-serif;
+	font-weight: 400;
+	font-size: 10pt;
+	line-height: 1.4em;
+	text-align: center;
+}
+
+#page, .page
+{
+	display: flex;
+	flex-direction: column;
+	flex-wrap: nowrap;
+	width: 100%;
+	min-height: 100%;
+	height: auto;
+	margin: 0px 0px 0px 0px;
+	padding: 0px 0px 0px 0px;
+	background-color: transparent;	
+	border: none;	
+	text-align: center;
+}
+body.opus .page, body.mining .page {
+	width: @fullWidth;
+}
+
+header
+{
+	height: 110px;
+	flex-grow: 0;
+
+	justify-content: flex-start;
+	align-items: stretch;
+	
+	margin: 0px 0px 0px 0px;
+	padding: 0px 0px 0px 0px;
+	background-color: #4D4D4C;
+	
+	border: none;
+	text-align: left;
+}
+
+
+footer {
+	flex-grow: 0;
+	max-width: @pageWidth;
+	width: 100%;
+	margin: 0px auto 10px auto;
+	padding: 40px 15px 0px 15px;
+	background-color: white;
+/*	background-color: #FBF4E4;	*/
+/*	background-image: url(../images/);	*/
+	background-position: left top;
+	background-repeat: no-repeat;
+	border-top: none;
+	text-align: center;
+}
+body.opus footer, body.mining footer {
+	max-width: @fullWidth;
+}
+
+main, .main {
+	flex-grow: 1;
+	height: auto;
+	max-width: @pageWidth;
+	width: 100%;
+	margin: 0px auto 0px auto;
+	background-color: white;
+/*	background-color: #FBF4E4; */
+/*	background-image: url(../images/);*/
+	background-position: left top;
+	background-repeat: no-repeat;
+	border: none;
+	padding: 40px 110px 40px 120px;
+	text-align: left;
+	line-height: 1.4em;
+}
+body.opus main, body.mining main {
+	max-width: @fullWidth;
+}
+
+
+
+/****************************************/
+/*     	        blank patch      		*/							
+/****************************************/
+
+.antiThird {
+	.anti-third;
+}
+#footer img {
+	display: inline-block;
+}
+.awesome {
+	font-family: "FontAwesome";
+}
+/****************************************/
+/*     	            document      		*/							
+/****************************************/
+
+.grid > * {
+    text-align: left;
+
+}
+.document .bigger {
+	font-size: 1.1em;
+}
+.document .biggest {
+	font-size: 1.2em;
+}
+.document .smaller {
+	font-size: 0.85em;
+}
+.document .smallest {
+	font-size: 0.75em;
+}
+
+/****************************************/
+/*     	 construction spécifique		*/							
+/****************************************/
+
+
+header a
+{
+	text-decoration: none;
+	color: inherit;
+}
+
+
+/****************************************/
+/*     	 premier étage : langages		*/							
+/****************************************/
+
+header .langages
+{
+	background-color: #000;
+	width: 100%;
+	height: 10px;
+	overflow: hidden;
+	color: #969696;
+	font-size: 7pt;
+	line-height: 7.5pt;
+	text-transform: uppercase;
+	text-align: right;
+}
+.langSelector
+{
+	margin-right: 10px;
+	color: #616160;
+}
+.langSelector li
+{
+	display: inline;
+}
+.langSelector a
+{
+	text-decoration: none;
+	color: #696968;
+}
+.langSelector a:hover
+{
+	text-decoration: none;
+	color: #969696;
+}
+
+
+
+/****************************************/
+/*     	 deuxième étage : platform		*/							
+/****************************************/
+
+.platform {
+	display: flex;
+	flex-direction: row;
+	flex-wrap: nowrap;
+	justify-content: space-between;
+	background-color: #4D4D4C;
+	height: 50px;
+	color: #DFDFDF;
+	background-image: url(../images/logoNeuma.png);
+	background-repeat: no-repeat;
+	background-position: center 4px;
+	text-align: center;
+	font-size: 1.15em;
+	text-shadow: -1px -1px 0px #4D4D4C;
+	line-height: 4.5em;
+}
+
+a.logo
+{
+	display: block;
+	align-self: center;
+	width: 126px;
+	height: 50px;
+	text-decoration: none;
+	margin: 0;
+	background-image: url(../images/logo-neuma.svg);
+	background-repeat: no-repeat;
+	background-position: 50% 50%;
+	background-size: contain;
+}
+a.logo:hover
+{
+	background-image: url(../images/logo-neuma-white.svg);
+}
+
+
+
+/****************************************/
+/*     	 		connexion				*/							
+/****************************************/
+
+#connexionLink
+{
+	display: block;
+	width: 130px;
+	height: 50px;
+	text-align: right;
+	padding-right: 10px;
+	background: transparent url(../images/connexionBigArrows.png)  0px 0px no-repeat;
+}
+
+
+#connexionZone
+{
+	display: none;
+	position: absolute;
+	right: 120px;
+	top: 10px;
+	width: 400px;
+	height: auto;
+	text-align : left;
+	color: #575756;
+	text-shadow: none;
+	z-index: 20000;
+	line-height: 1.3em;
+	background: #dcdcdc url(../images/connexionBack.png)  right top no-repeat;
+}
+#connexionZone .content
+{
+	margin: 8px 8px 8px 8px;
+}
+#connexionZone.visible
+{
+	display: block;
+}
+
+/****************************************/
+/*     	 troisième étage : access		*/							
+/****************************************/
+.access {
+	display: flex;
+	flex-direction: row;
+	flex-wrap: nowrap;
+	justify-content: space-between;
+	background-color: #C84E3A;
+	height: 50px;
+	color: #F8D8D5;
+	font-size: 1.15em;
+	text-shadow: -1px -1px 0px #9F3723;
+	line-height: 4.5em;
+}
+
+
+/****************************************/
+/*     	       Paginateur       */							
+/****************************************/
+
+.document ul.paginator
+{
+	width: 100%;
+	float: left;
+	margin: -15px 0 15px 0;
+	padding: 0 0 3px 0;
+	font-weight: bold;
+	font-size: 1em;
+	line-height: 13px;
+	list-style-image: none;
+	background-color:  #c84e3a;
+	text-align: center;
+	font-size: 0;
+}
+.document ul.paginator .left,
+.document ul.paginator .right {
+	float: none;
+}
+.document ul.paginator li
+{	
+	display: inline;
+	margin: 0;
+	padding: 0 0.2em;
+	text-align: center;
+	font-size: 16px;
+	line-height: 1em;
+	width: auto;
+}
+.document ul.paginator li a
+{	
+	display: inline-block;
+	width: auto;
+	height: 16px;
+	min-width: 16px;
+	width: auto;
+	margin: 0;
+	background-color: none;
+	background-color: transparent;
+	background-position: 0em 0em;
+	background-repeat: no-repeat;
+	background-size: 16px 48px;
+	padding: 0;
+	color: #cacaca;
+	vertical-align: middle;
+	text-align: center;
+}
+.document ul.paginator .nextRight, 
+.document ul.paginator .lastRight,
+.document ul.paginator .nextLeft, 
+.document ul.paginator .lastLeft {
+	width: 16px;
+	padding: 0;
+	a {
+		width: 16px;
+	}
+}
+.document ul.paginator li.nextLeft {
+	padding-right: 10px;
+}
+.document ul.paginator li.nextRight {
+	padding-left: 10px;
+}
+
+
+.document ul.paginator li a:hover
+{
+	color: #fff;
+}
+.document ul.paginator li.nextRight a
+{
+	background-image: url(../images/spriteRight.png);
+}
+.document ul.paginator li.nextRight a:hover
+{
+	background-position: 0px -16px;
+}
+
+.document ul.paginator li.lastRight a
+{
+	background-image: url(../images/spriteRightEnd.png);
+}
+.document ul.paginator li.lastRight a:hover
+{
+	background-position: 0px -16px;
+}
+
+
+
+.document ul.paginator li.left a
+{
+	background-image: url(../images/spriteLeft.png);
+}
+.document ul.paginator li.left a:hover
+{
+	background-position: 0px -16px;
+}
+
+
+.document ul.paginator li.leftend a
+{
+	background-image: url(../images/spriteLeftEnd.png);
+}
+.document ul.paginator li.leftend a:hover
+{
+	background-position: 0px -16px;
+}
+
+
+
+/****************************************/
+/*     	       toolbar d'outils        */							
+/****************************************/
+
+.document ul.toolbar
+{
+	width: auto;
+	width: 40px;
+	float: left;
+	margin-left: -50px;
+	margin-top: 20px;
+	margin-bottom: 0px;
+	padding-left: 0px;
+	font-weight: normal;
+	font-size: 0.9em;
+	line-height: 22px;
+	list-style-image: none;
+	text-align: right;
+	opacity: 0.6;
+	cursor: pointer
+}
+
+.document ul.player-toolbar
+{
+	margin-top: 3px;
+	margin-left: 0px;
+	margin-right: 10px;
+	font-weight: normal;
+	opacity: 1;
+}
+.document #opus > div:hover  ul.toolbar, 
+.document .previews > div:hover  ul.toolbar,
+.document ul.toolbar.active
+{	
+	opacity: 1;
+}
+.document ul.toolbar li
+{	
+	display: inline;
+}
+.document ul.toolbar li a
+{	
+	display: inline-block;
+	width: 16px;
+	height: 16px;
+	margin-left: 4px;
+	background-color: none;
+	background-size: 16px 48px;
+	background-repeat: no-repeat;
+	background-position: 0 0;
+	cursor: pointer;
+}
+.document ul.toolbar li a:first-child {
+	margin-left: 0px;
+}
+
+
+.document ul.toolbar li.edit a
+{
+	background-image: url(../images/spriteEdit.png);
+}
+.document ul.toolbar li.edit a:hover
+{
+	background-position: 0px -16px;
+}
+.document ul.toolbar li.edit a:active
+{
+	background-position: 0px -32px;
+}
+
+.document ul.toolbar li.download a
+{
+	background-image: url(../images/spriteDwl.png);
+}
+.document ul.toolbar li.download a:hover
+{
+	background-position: 0px -16px;
+}
+.document ul.toolbar li.download a:active
+{
+	background-position: 0px -32px;
+}
+
+.document ul.toolbar li.play a
+{
+	background-image: url(../images/spritePlay.png);
+}
+.document ul.toolbar li.play a:hover
+{
+	background-position: 0px -16px;
+}
+.document ul.toolbar li.play a:active
+{
+	background-position: 0px -32px;
+}
+
+.document ul.toolbar li.comment a
+{
+	background-image: url(../images/spriteComment.png);
+}
+.document ul.toolbar li.comment a:hover
+{
+	background-position: 0px -16px;
+}
+.document ul.toolbar li.comment a:active
+{
+	background-position: 0px -32px;
+}
+
+.document ul.toolbar li.add a
+{
+	background-image: url(../images/spritePlus.png);
+}
+.document ul.toolbar li.add a:hover
+{
+	background-position: 0px -16px;
+}
+.document ul.toolbar li.add a:active
+{
+	background-position: 0px -32px;
+}
+
+.document ul.toolbar li.suppress a
+{
+	background-image: url(../images/spriteTrash.png);
+}
+.document ul.toolbar li.suppress a:hover
+{
+	background-position: 0px -16px;
+}
+.document ul.toolbar li.suppress a:active
+{
+	background-position: 0px -32px;
+}
+
+.document ul.toolbar li.mei a
+{
+    background-image: url(../images/spriteMEI.png);
+}
+.document ul.toolbar li.mei a:hover
+{
+    background-position: 0px -16px;
+}
+.document ul.toolbar li.mei a:active
+{
+    background-position: 0px -32px;
+}
+
+
+.document ul.toolbar li.print a
+{
+    background-image: url(../images/spritePrint.png);
+}
+.document ul.toolbar li.print a:hover
+{
+    background-position: 0px -16px;
+}
+.document ul.toolbar li.print a:active
+{
+    background-position: 0px -32px;
+}
+.document ul.toolbar li.zoom a
+{
+    opacity: 0.4;
+}
+.document ul.toolbar li.zoom a:hover
+{
+   opacity: 0.7;
+}
+.document ul.toolbar li.zoom a:active
+{
+
+}
+
+
+.document .collections h2
+{
+	font-size: 1.8em;
+	line-height: 1em;
+}
+
+
+/*
+* ajout pour les tableaux de philippe
+*
+*/
+.document table.preview {
+    border: none;
+    
+}
+.document .preview td {
+	border: none;
+	
+}
+
+.zoom-icon {
+    vertical-align: middle;
+    
+}
+
+
+.fancybox-overlay {
+	z-index: 10000;
+	background-color: rgba(0,0,0,0.3);
+}
+
+.pattern-summary {
+	display: block;
+	width: auto;
+	height: auto;
+	float: right;
+	margin: 0 0 0 1em;
+
+}
+
+
+/****************************************/
+/*               accueil                */							
+/****************************************/
+
+
+.welcome img
+{
+	margin: 5px 20px 15px 0px;	
+	display: inline;
+	float: left;
+	max-width: 360px;
+}
+
+.inline-player {
+	height: 80px;
+}
+/****************************************/
+/*     	           slider              */							
+/****************************************/
+
+
+.slider
+{
+	display: block;
+	background-color: #4D4D4C;
+	width: 100%;
+	overflow-x: auto;
+	overflow-y: hidden;
+	margin: 0px 0px 0px 0px;
+	padding: 0px 0px 0px 0px;
+	height: 350px;
+	position: relative;
+}
+.train
+{
+	position: absolute;
+}
+.slider .wagon
+{	
+	display: block;
+	float: left;
+	overflow: hidden;
+	width: 200px;
+	height: 330px;
+	padding: 10px 10px 10px 10px;
+	background: transparent url(../images/ajax-loader.gif) 50% 30% no-repeat;
+}
+
+
+.wagon .collTitre
+{
+display: block;
+font-weight: 500;
+font-size: 1.2em;
+line-height: 1.3em;
+color: #FFF;	 
+padding-top: 5px;
+padding-bottom: 0px;
+}
+
+.wagon .collSoustitre
+{
+display: block;
+font-weight: 500;
+font-size: 1em;
+line-height: 1.3em;
+color: #FFF;	 
+padding-top: 5px;
+padding-bottom: 8px;
+}
+.homeColls
+{
+	position: relative;
+}
+.button
+{
+	display: block;
+	width: 40px;
+	height: 40px;
+	position: absolute;
+	top: 135px;
+	z-index: 1000;
+	cursor: pointer;
+	background-size: 40px 120px;
+	background-color: transparent;
+	background-position: 0px 0px;
+	background-repeat: no-repeat;
+}
+.buttonLeft
+{
+	left: -20px;
+	background-image: url(../images/buttonLeft.png);
+
+}
+.buttonLeft:hover
+{
+	background-position: 0px -40px;
+}
+.buttonLeft:active
+{
+	background-position: 0px -80px;
+}
+.buttonRight
+{
+	right: -20px;
+	background-image: url(../images/buttonRight.png);
+}
+.buttonRight:hover
+{
+	background-position: 0px -40px;
+}
+.buttonRight:active
+{
+	background-position: 0px -80px;
+}
+
+.shadow
+{
+	display: block;
+	width: 30px;
+	height: 350px;
+	position: absolute;
+	top: 0px;
+	z-index: 500;
+}
+.shadowLeft
+{
+	left: 0px;
+	background: transparent url(../images/sliderLeftShadow.png)  0px 0px no-repeat;
+}
+.shadowRight
+{
+	right: 0px;
+	background: transparent url(../images/sliderRightShadow.png)  0px 0px no-repeat;
+}
+
+/****************************************/
+/*     	    ventre de l'accueil          */							
+/****************************************/
+
+.homeGauche
+{
+	margin-top: 10px;
+}
+.homeDroite
+{
+	width: 225px;
+	margin-top: 35px;
+	font-size: 0.9em;
+	line-height: 1.3em;
+}
+
+
+.homeDroite h5
+{
+	color: #FFF;
+	background-color: #4D4D4C; 
+	padding: 10px 5px 10px 10px;
+	text-transform: uppercase;
+}
+
+.homeDroite .content
+{
+	background-color: #969696; 
+	color: #FFF;
+	padding: 5px 5px 20px 10px;
+	background-image: url(../images/coincourbe.png);
+	background-repeat: no-repeat;
+	background-position: right bottom;
+}
+
+
+
+/****************************************/
+/*     	         liste de collections          */							
+/****************************************/
+
+.document div.collections
+{
+	margin-left: 0px;
+	margin-top: 0px;
+	margin-bottom: 0px;
+	padding-left: 0px;
+	font-weight: normal;
+	font-size: 0.9em;
+	line-height: 1.45em;
+}
+.document div.item
+{	
+	display: block;
+}
+.document div.item img
+{	
+	display: block;
+	float: left;
+	margin-right: 20px;
+	margin-bottom: 20px;
+}
+
+.document div.item a
+{	
+
+}
+
+/****************************************/
+/*     	            sous corpus        */							
+/****************************************/
+
+.path {
+	text-align: right;
+	color: @gris5;
+	margin-bottom: -0.7em;
+	a {
+		color: inherit;
+	}
+	.icon {
+		float: right;
+		margin: -8px 0px 0 10px;
+		width: 40px;
+		height: 40px;
+		border-radius: 20px;
+	}
+}
+.document ul.souscorpus 
+{
+	display: block;
+	width: 100%;
+	min-height: 200px;
+	list-style-type: none;
+	margin: 5px 0px 0px 0px;
+	padding: 0px 0px 0px 0px;
+	column-count: 3;  
+	column-gap: 2em;
+	-webkit-column-count: 3;  
+	-webkit-column-gap: 1em;
+	-moz-column-count: 3;  
+	-moz-column-gap: 1em;
+	font-size: 0.85em;
+}
+
+.document ul.souscorpus li
+{
+	display: inline-block;
+	vertical-align: top;
+	min-height: 150px;
+	margin: 0;
+	width: 100%;
+	margin: 0 0 1em 0;
+	color: #737372; 
+	padding: 10px 10px 10px 10px;
+	background-color: #f5f5f5;
+}
+
+
+.document ul.souscorpus a
+{
+	color: #616160;	
+	margin: -10px -10px 10px -10px;
+	padding: 10px 10px 10px 70px;
+	font-size: 1.2em;
+	line-height: 1.3em;
+	display: block;
+	background-color: #eee;
+	min-height: 60px;
+}
+.document ul.souscorpus a:hover
+{
+	color: #4D4D4C;	
+	background-color: #ddd;
+}
+.document ul.souscorpus a:active
+{
+	color: #C84E3A;	
+}
+.icon {
+	display: block;
+	float: left;
+	width: 60px;
+	height: 60px;
+	margin: -10px 10px 0px -70px;
+	background-color: transparent;
+	background-position:  0em 0em;
+	background-repeat: no-repeat;
+	background-size: cover;
+}
+
+/****************************************/
+/*     	          pied	                */							
+/****************************************/
+#footer img {
+	vertical-align: middle;
+}
+ul.partners
+{
+	display: block;
+	width: 100%;
+	list-style-type: none;
+	list-style-image: none;
+	background-color: white;
+	padding: 0 0 15px 0;
+}
+ul.partners li
+{
+	display: inline;
+}
+ul.partners li a
+{
+	display: inline;
+	text-decoration: none;
+}
+ul.partners img
+{
+	display: inline-block;
+	vertical-align: middle;
+	max-width: 90px;
+	max-height: 50px;
+	margin: 2px;
+}
+ul.partners img.iremus
+{
+	max-width: 80px;
+	max-height: 60px;
+	margin: 2px;
+}
+ul.partners .deco
+{
+	display: inline-block;
+	vertical-align: middle;
+	width: 123px;
+	height: 48px;
+	background-color: transparent;
+	background-image: url('../images/motifneumaGauche.png');
+	background-position:  0em 0em;
+	background-repeat: no-repeat;
+	background-size: cover;
+	&.droite
+	{
+		background-image: url('../images/motifneumaDroite.png');
+	}
+	&.gauche
+	{
+		background-image: url('../images/motifneumaGauche.png');
+	}
+}
+
+
+
+
+/****************************************/
+/*     	         miniForm               */							
+/****************************************/
+
+.loginForm
+{
+	padding: 5px 15px 15px 15px;
+	font-size: 0.9em;
+	text-align: center;
+}
+.loginForm label
+{
+    display: block;
+    float: none;
+    width: 100%;
+    margin: 0 0 0 0;
+}
+.document .loginForm ul
+{
+	margin-top: 0px;
+}
+.loginForm input[type="text"],
+.loginForm input[type="password"]
+ {
+	width: 70%;
+	max-width: auto;
+	color: #444;
+	font-size: 1em;
+	line-height: 2em;
+	padding: 3px;
+	margin-bottom: 4px;
+	border: 1px solid #888;
+}
+.document input[type="submit"] {
+	width: 70%;
+    padding: 8px;
+    font-weight: 500;
+    color: white;
+    background-color: @vert;
+    border: none;
+    cursor: pointer;
+}
+
+
+/****************************************/
+/*     	   classes documentaires          */							
+/****************************************/
+
+body.collection h1, body.collection h2, body.collection h3, body.collection h4, body.collection h5, body.collection h6
+{
+	color: #E64F3E;
+	text-transform: none;
+}
+body.about h1, body.about h2, body.about h3, body.about h4, body.about h5, body.about h6
+{
+	color: #4D4D4C;
+	text-transform: none;
+}
+
+.chapo, .document .chapo
+{
+	font-weight: 500;
+	color: #737372;
+	font-size: 1.1em;
+}
+
+.encadre, .framed
+{
+	display: block;
+	width: 20%;
+	padding: 6px;
+	border: 1px solid #AAA;
+}
+
+.caption, .legende
+{
+	margin-top: 5px;
+	margin-left: 10px;
+	font-size: 0.8em;
+	line-height: 1.4em;
+	color: #737372;
+}
+
+.incise, .insert
+{
+	color: #6F4F55;
+	font-style: italic;
+}
+.signature
+{
+	display: block;
+	text-transform: uppercase;
+	font-style: normal;
+	font-size: 0.6em;
+	text-align: right;
+}
+
+.stabilo { background-color: #F8B3AB; }
+
+.justify { text-align: justify; }
+
+.petit, .smallText 
+{ 
+	font-size: 0.7em; 
+	line-height: 1.4em; 
+}
+.gros, .bigText 
+{ 
+	font-size: 1.3em; 
+	line-height: 1.3em; 
+}
+
+
+
+/******************* QUALITY ************/
+.quality main {
+	padding: 40px 10% 40px 10%;
+}
+.quality header{
+	height: auto;
+}
+
+.alternate-banner {
+	display: none;
+	background-color: lighten(@rouge5,5%);
+	overflow: visible;
+	color: white;
+	text-shadow: -1px -1px 0 fade(black, 15%);
+}
+body.no-access .alternate-banner {
+	background-color: @rouge4;
+}
+.alternate-banner > * {
+	padding: 0 10px;
+}
+.page-header .alternate-banner {
+	display: flex;
+}
+.alternate-banner .location {
+	flex:1;
+}
+.concepts {
+	position: relative;
+}
+.concepts-trigger {
+	cursor: pointer;
+	&.on {
+		color: white;
+	}
+}
+.concepts-palette {
+	display: none;
+	text-shadow: none;
+	position: absolute;
+	padding: 1em 0.7em 1.5em 1em;
+	width: 290px;
+	top: 50px;
+	right: 0;
+	// height: ~"calc(100vmin - 50px)";
+	height: auto;
+	background-color: fade(#fafafa, 95%);
+	z-index: 100;
+	border-bottom-left-radius: 30px;
+}
+.close-palette {
+	display: block;
+	float: right;
+	font-size: 2em;
+	line-height: 1em;
+	color: @rouge1;
+	cursor: pointer;
+	opacity: 0.5;
+	&:hover {
+		opacity: 1;
+	}
+}
+.close-parent {
+	display: block;
+	float: right;
+	font-size: 2em;
+	line-height: 0.8em;
+	color: white;
+	cursor: pointer;
+	opacity: 0.5;
+	&:hover {
+		opacity: 1;
+	}
+}
+/******************* CONCEPTS ************/
+#concepts_list {
+	font-size: 0.85em;
+	line-height: 1.5em;
+}
+#concepts_list ul {
+	margin-left: 0px;
+    margin-top: 0px;
+    margin-bottom: 0px;
+    padding-left: 0px;
+    list-style-image: none;
+}
+#concepts_list ul ul {
+	margin-left: 15px;
+}
+
+ /* Tooltip container */
+
+.tooltip {
+    position: relative;
+    display: inline-block;
+}
+
+/* Tooltip text */
+.tooltip .tooltiptext {
+    visibility: hidden;
+    width: 120px;
+    background-color: @gris6;
+    color: #fff;
+    text-align: center;
+    border-radius: 6px;
+    font-size: 0.7em;
+    line-height: 1.4em;
+    padding: 1em;
+
+    /* Position the tooltip text */
+    position: absolute;
+    z-index: 1;
+    bottom: 125%;
+    right: -1em;
+    margin-left: 0;
+
+    /* Fade in tooltip */
+    opacity: 0;
+    transition: opacity 0.5s;
+}
+
+/* Tooltip arrow */
+.tooltip > img.question-mark {
+	display: inline-block;
+	vertical-align: middle;
+	width: 12px;
+	height: 12px;
+	opacity: 0;
+	cursor: pointer;
+	transition: opacity 0.5s;
+	margin: 0 0 0 3px;
+}
+.tooltip:hover > img.question-mark {
+	display: inline-block;
+	opacity: 0.7;
+}
+
+.tooltip .tooltiptext::after {
+    content: "";
+    position: absolute;
+    top: 100%;
+    right: 1em;
+    margin-left: -5px;
+    border-width: 5px;
+    border-style: solid;
+    border-color: @gris6 transparent transparent transparent;
+}
+
+/* Show the tooltip text when you mouse over the tooltip container */
+.tooltip.hovered .tooltiptext {
+    visibility: visible;
+    opacity: 1;
+} 
+span.control {
+	font-size: 0.8em;
+	font-weight: 400;
+}
+svg:not(.svg-icon) {
+	max-width: 100% !important;
+	height: auto !important;
+}
+span.svg-icon-container {
+	display: inline-block;
+	vertical-align: middle;
+	width: 16px;
+	height: 16px;
+	position: relative;
+	margin: 0 1px 0 3px;
+	.svg-icon {
+		position: absolute;
+		top: 0;
+		left: 0;
+		width: 100%;
+		height: 100%;
+	}
+
+}
+.quality .opusmain svg {
+	width: 100% !important;
+}
+
+.welcome-help {
+	position: fixed;
+	z-index: 10000;
+	width: 70%;
+	left: 50%;
+	top: 50%;
+	.translate (-50%, -50%);
+	background-color: fade(lighten(@rouge4, 20%), 95%);
+	padding: 10px 15px 25px 25px;
+	h2 {
+		font-weight: 500;
+	}
+}
+
+/* quality player */
+
+.quality .player-ribbon {
+	position: sticky;
+	top: 0;
+	margin-top: -40px;
+	margin-bottom: 40px;
+	width: 100% !important;
+}
+.player-ribbon #player {
+	left: 50%;
+	margin-left: -225px;
+}
+.player-ribbon ul.toolbar {
+	margin-top: 10px;
+}
+
+/* quality palette */
+
+ 
+svg circle, svg .note {
+    position: relative;
+    cursor: pointer;
+}
+.note-highlighter {
+	display: none;
+	position: absolute; 
+	width: 2vw;
+	height: 2vw;
+	position: absolute;
+	top: 0;
+	left: 0;
+	margin-left: -0.5%;
+	margin-top: -0.5%;
+	border-radius: 50%;
+	border: 5px solid red;
+	z-index: 4000;
+}
+
+.quality-palette {
+	display: none;
+    width: 300px;
+    height: 400px;
+    background-color: fade(white, 95%);
+    box-shadow: 5px 5px 20px fade(black, 30%);
+    padding: 0px;
+    border-radius: 6px;
+    
+    color: #333;
+    font-size: 0.7em;
+    line-height: 1.4em;
+    text-align: left;
+
+    /* Position the palette */
+    position: absolute;
+    z-index: 5;
+    margin-left: -150px;
+
+    overflow-x: hidden;
+    overflow-y: hidden;
+    z-index: 3000;
+}
+.quality-palette.loading {
+	background-image: url('../images/loader.svg');
+	background-position:  50% 50%;
+	background-repeat: no-repeat;
+}
+
+
+/* palette arrow */
+/*
+.quality-palette::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 50%;
+    margin-left: 150px;
+    border-width: 5px;
+    border-style: solid;
+    border-color: transparent transparent @gris6 transparent;
+}
+*/
+
+/* palette buttons */
+
+.buttons {
+	position: absolute;
+	width: 100%;
+	height: 40px;
+	top: 0;
+	left: 0;
+
+	display: flex;
+	flex-direction: row;
+	flex-wrap: nowrap;
+	justify-content: stretch;
+
+	a {
+		display: block;
+		flex: 1;
+		text-align: center;
+		vertical-align: middle;
+		line-height: 40px;
+		cursor: pointer;
+		border-right: 1px solid @gris7;
+		background-color: @gris8;
+		border-bottom: 1px solid @gris7;
+		&:hover {
+			background-color: @gris7;
+		}
+	}
+	a:last-child {
+		border-right: none;
+	}
+	a.selected {
+		background-color: transparent;
+		border-bottom: none;
+	}
+	a.playing {
+		background-color: @bleu;
+		border-bottom: none;
+	}
+}
+.annotation-create-tab {
+	display: none;
+	position: absolute;
+	top: 40px;
+	left: 0;
+	width: 100%;
+	height: 360px;
+	overflow-y: auto;
+	padding: 20px;
+}
+.annotation-list-tab {
+	position: absolute;
+	top: 40px;
+	left: 0;
+	width: 100%;
+	height: 360px;
+	overflow-y: auto;
+	padding: 20px;
+}
+.xml-edit-tab {
+	display: none;
+	position: absolute;
+	top: 40px;
+	left: 0;
+	width: 100%;
+	height: 360px;
+	overflow-y: auto;
+	padding: 20px;
+}
+.annotation-description {
+	margin-left: -20px;
+	margin-right: -20px;
+	padding: 8px 20px;
+	border-bottom: 1px solid #ddd;
+}
+.document .annotation-list-tab > h4:first-child, 
+.document .annotation-create-tab > h4:first-child 
+{
+	padding-top: 0;
+}
+.annotation-update {
+
+	box-sizing: border-box;
+	margin-left: -20px;
+	margin-right: -20px;
+
+	input[type=submit] {
+	   margin-top: 0.8em;
+	}
+}
+.annotation-update-form {
+	display: none;
+	padding: 0px 20px 8px 20px;
+	border-bottom: 1px solid #ddd;
+}
+.update-this {
+	margin-top: -2em;
+	margin-right: 20px;
+	display: block;
+	cursor: pointer;
+	float: right;
+	opacity: 0.8;
+	&:hover {
+		opacity: 1;
+	}
+}
+.annotation-create-feedback a {
+	cursor: pointer;
+}
+
+
+/* xml edit */
+
+.quality-palette div.xml-edit {
+	display: block;
+    box-sizing: border-box;
+    margin: 0 0 10px 0;
+    overflow: auto;
+    width: 100%!important;
+    height: 260px!important;
+    border: 1px solid #ccc;
+}
+.xonomy.nerd {
+    font-size: 0.8rem;
+    line-height: 1.4;
+    padding: 5px;
+}
+#xonomyBubble.nerd {
+    z-index: 10000;
+}
+#xonomyBubble.nerd #xonomyBubbleContent form {
+    background-color: white;
+}
+#xonomyBubble.nerd > div.inside {
+    box-shadow: 0px 0px 5px fade(@darkest, 30%);
+    border: none;
+    background-color: white;
+    border-radius: 2px;
+    margin-top: 8px;
+}
+#xonomyBubble.nerd #xonomyBubbleContent input.textbox {
+    width: 150px !important;
+}

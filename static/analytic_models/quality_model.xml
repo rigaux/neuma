@@ -1,0 +1,169 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<?xml-stylesheet href="html_style.xsl" type="text/xsl"?>
+
+
+<analytic_model id="quality">
+    <name>Quality</name>
+    <description>Quality measures
+    </description>
+
+    <!-- Tree of concepts -->
+    <concepts>
+        <!-- CONTENT ISSUES -->
+        <concept id="content">
+            <name>Music content issues</name>
+            <description>
+                Quality issues related to the content of the score, and
+                not to its engraving or rendering
+            </description>
+            <color name="content1"/>
+            <concepts>
+                <concept id="structure">
+                    <name>Structural issues</name>
+                    <description>
+                        Issues related to the score organization in parts and voices
+                    </description>
+                   <color name="content2"/>
+                    <concepts>
+                    </concepts>
+                </concept>
+                <concept id="stream">
+                    <name>Voice issues</name>
+                    <description>
+                        Issues related to voices
+                    </description>
+                   <color name="content3"/>
+                    <concepts>
+                        <concept id="rhythm">
+                            <name>Rhythmic issues</name>
+                            <description>
+                                Rhythmic contentt
+                            </description>
+                             <color name="content4"/>
+                            <concepts>
+                                <concept id="incompletebars">
+                                    <name>Measure duration issues</name>
+                                    <description>The bars duration is different from what is specified in the tempo signature.</description>
+                       <icon name="diamond"/>
+                                    <concepts>
+                                    </concepts>
+                                </concept>
+                            </concepts>
+                        </concept>
+                        <concept id="pitch">
+                            <name>Pitch issues</name>
+                            <description>
+                                TO DO
+                            </description>
+                       <icon name="square"/>
+                            <color name="content5"/>
+                
+                            <concepts>
+                            </concepts>
+                        </concept>
+                        <concept id="lyrics">
+                            <name>Lyrics issues</name>
+                            <description>
+                                Issues related to lyrics (if any) and their
+                                relationship to music
+                            </description>
+                            <color name="content6"/>
+                            <concepts>
+                                <concept id="invalidlyrics">
+                                    <name>Invalid lyrics text encoding</name>
+                                    <description>
+                                        The lyrics text contains invalid characters.
+                                    </description>
+                                    <icon name="spade"/>
+                                </concept>
+                                 <concept id="invalidsyllabmd">
+                                    <name>Invalid syllable metadata</name>
+                                    <description>
+                                        A syllable, part of a word, must be correctly encoded as 'single',
+                                        'start', 'end' or 'middle'.
+                                    </description>
+                                     <icon name="heart"/>
+                                  </concept>
+                                <concept id="missinglyrics">
+                                    <name>Missing lyrics</name>
+                                    <description>
+                                        In a sung voice, each note should  be associated with a syllab.
+                                    </description>
+                                    <icon name="moon"/>
+                                </concept>
+                            </concepts>
+                        </concept>
+                    </concepts>
+                </concept>
+
+            </concepts>
+        </concept>
+        <!-- ENGRAVING ISSUES -->
+        <concept id="engraving">
+            <name>Score engraving issues</name>
+            <description>
+                Quality issues related to the disposition of notes on staves
+            </description>
+            <color name="engraving1"/>
+             <concepts>
+                <concept id="invalidbeamingsubdivision">
+                    <name>Beaming issues</name>
+                    <description>Beaming rules (according to "Behind bars") are not respected.</description>
+                     <color name="engraving2"/>
+                       <icon name="square"/>
+                   <concepts>
+                    </concepts>
+                </concept>
+                <concept id="staff">
+                    <name>Staves organization</name>
+                    <description> </description>
+                    <color name="engraving3"/>
+                   <concepts>
+                        <concept id="key">
+                            <name>Key issues</name>
+                            <description> </description>
+                      <icon name="diamond"/>
+                          <concepts>
+                            </concepts>
+                        </concept>
+                    </concepts>
+                </concept>
+            </concepts>
+        </concept>
+        <!-- METADATA ISSUES -->
+        <concept id="metadata">
+            <name>Metadata issues</name>
+            <description>
+                Issues related to metadata
+            </description>
+             <color name="metadata1"/>
+            <concepts>
+                <concept id="title">
+                    <name>Title</name>
+                    <description> </description>
+                    <color name="metadata2"/>
+                    <icon name="clover"/>
+                    <concepts>
+                    </concepts>
+                </concept>
+                <concept id="composer">
+                    <name>Composer</name>
+                    <description> </description>
+                    <color name="metadata3"/>
+                     <icon name="cross"/>
+                   <concepts>
+                    </concepts>
+                </concept>
+                <concept id="copyright">
+                    <name>Copyright</name>
+                    <description> </description>
+                    <color name="metadata4"/>
+                     <icon name="triangle"/>
+                    <concepts>
+                    </concepts>
+                </concept>
+            </concepts>
+        </concept>
+    </concepts>
+</analytic_model>

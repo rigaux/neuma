@@ -1,0 +1,34 @@
+{% extends "layout_transcription.html" %} 
+{% load i18n %} 
+{% load extras %} 
+{% load guardian_tags %}
+
+{% block content %}
+
+<h1>Transcription result for {{ audiofile.filename }} ({{opus.corpus}} {{opus}})</h1>
+
+<div id="transcription_settings" style="margin-top:20px;">
+Settings:
+<ul>
+  <li style="margin-bottom:10px;">
+  {{ transcription_form.grammar.label }} : {{ transcription_form.grammar.value }}
+  </li>
+  <li style="margin-bottom:10px;">
+  {{ transcription_form.bar_duration.label }} : {{ transcription_form.bar_duration.value }}
+  </li>
+  <li style="margin-bottom:10px;">
+  {{ transcription_form.bar_metric_denominator.label }} : {{ transcription_form.bar_metric_denominator.value }}
+  </li>
+  <li style="margin-bottom:10px;">
+  {{ transcription_form.time_signature.label }} : {{ transcription_form.time_signature.value }}
+  </li>
+</ul>
+
+{{ transcribed_opus.name }}
+{{ transcribed_opus.ref }}
+{{ transcribed_opus.mei.url }}
+
+		<div id="verovio"></div>
+	</div>
+
+{% endblock content %}

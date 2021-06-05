@@ -1,0 +1,93 @@
+Qyeries sent with POST to 
+
+http://localhost:9200/neuma/Opus/_search
+
+Avec query string
+
+{
+  "query": {
+    "query_string": {
+      "query": "blondel"
+    }
+  }
+}
+
+Avec term
+
+{
+  "query": {
+    "term": {
+      "title": "jesu"
+    }
+  }
+}
+
+{
+  "query": {
+    "term": {
+      "composer": "blondel"
+    }
+  }
+}
+
+
+Les Corpus: http://localhost:9200/neuma/Corpus/_search
+{
+  "query": {
+    "match_all": {}
+  }
+}
+
+Les Opus du corpus motetimprime
+{
+  "query": {
+    "term": {
+      "corpus.corpus": "motetimprime"
+    }
+  }
+}
+
+Recherche mélodique
+{
+  "query": {
+    "match_phrase": {
+      "descriptors.value": "cmcf mcfh fhmh hmhmb"
+    }
+  }
+}
+
+Recherche mélodique dans un corpus
+
+{
+  "query": {
+    "and": [
+        "match_phrase": {
+          "descriptors.value": "cmcf mcfh fhmh hmhmb"
+         },
+         "term": {
+           "corpus.corpus": "motetimprime"
+          }      
+      ]
+  }
+}
+
+Avec composition Booléenne
+
+{
+  "query": {
+    "bool": {
+      "must": [
+        {
+          "match_phrase": {
+            "descriptors.value": "cmcf mcfh fhmh hmhmb"
+          }
+        },
+        {
+          "term": {
+            "corpus.corpus": "motetimprime"
+          }
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,63 @@
+<head>
+
+	<script src="helpers/Smooth-Gallery-2.0/scripts/mootools.v1.11.js" type="text/javascript"></script>
+	<script src="helpers/Smooth-Gallery-2.0/scripts/jd.gallery.js" type="text/javascript"></script>
+	<link rel="stylesheet" href="helpers/Smooth-Gallery-2.0/css/jd.gallery.css" type="text/css" media="screen" />
+</head>
+
+<body>
+<div id="myGallery">
+<!-- diaporama smoothGallery 2 -->
+<!-- http://smoothgallery.jondesign.net/ -->
+
+<script type="text/javascript">
+function startGallery() {
+var myGallery = new gallery($('myGallery'), {
+timed: true,
+showArrows: false,
+showCarousel: false
+});
+}
+window.addEvent('domready', startGallery);
+</script>
+
+<!-- produire des images 675px x 292px -->
+
+<div class="imageElement">
+<h3>Un beau Pélikan</h3>
+<p>Il a les pieds dans l'eau...</p>
+<a href="mypage1.html" title="Voir la page" class="open"></a>
+<img src="../../testDiapo/DSC_0232.jpg" alt="pelikan" class="full" />
+<img src="../../testDiapo/DSC_0232.jpg" alt="pelikan" class="thumbnail" />
+</div>
+<div class="imageElement">
+<h3>Deux moutons</h3>
+<p>On ne va pas les manger tout de même !</p>
+<a href="mypage1.html" title="Voir la page" class="open"></a>
+<img src="../../testDiapo/DSC_1873.jpg" alt="moutons" class="full" />
+<img src="../../testDiapo/DSC_1873.jpg" alt="moutons" class="thumbnail" />
+</div>
+<div class="imageElement">
+<h3>Un joli poisson</h3>
+<p>Il a la tête sous l'eau...</p>
+<a href="mypage1.html" title="Voir la page" class="open"></a>
+<img src="../../testDiapo/DSC_3050.JPG.jpg" alt="poisson" class="full" />
+<img src="../../testDiapo/DSC_3050.JPG.jpg" alt="poisson" class="thumbnail" />
+</div>
+<div class="imageElement">
+<h3>Marguerite dans son pré</h3>
+<p>Elle broutte l'herbe verte</p>
+<a href="mypage1.html" title="Voir la page" class="open"></a>
+<img src="../../testDiapo/DSC00343.JPG.jpg" alt="marguerite" class="full" />
+<img src="../../testDiapo/DSC00343.JPG.jpg" alt="marguerite" class="thumbnail" />
+</div>
+<div class="imageElement">
+<h3>Winnie et ses amis</h3>
+<p>Ils sont tous gentils.</p>
+<a href="mypage1.html" title="open image" class="open"></a>
+<img src="../../testDiapo/DSC_3384.JPG.jpg" alt="winnie" class="full" />
+<img src="../../testDiapo/DSC_3384.JPG.jpg" alt="winnie" class="thumbnail" />
+</div>
+<div class="clearer">&nbsp;</div>
+</div><!-- fin myGallery -->
+</body>

@@ -1,0 +1,10 @@
+To train a grammar use the following instructions:
+    1) Create a corpus of ref $corpus_ref with some opus inside. E.g. $corpus_ref = all:grm_test
+    2) Generate grammar with "python manage.py create_long_grammar -f $grammar_name"
+        First change the name of the new grammar in create_long_grammar.py
+    3) Set settings.NEUMA_TRANSCRIPTION_CORPUS_REF = $corpus_ref
+    4) Import the grammar with "python manage.py import_grammar -f $grammar_name"
+    5) Learn the weight from corpus with "python manage.py scan_corpus -a cptgrammar -c $corpus_ref"
+
+Compile "schemas" with cmake .., make schemas in qparselib
+Change the path in Workflow function "compute_grammar()" as the qparselib build folder

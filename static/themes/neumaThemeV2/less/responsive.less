@@ -1,0 +1,199 @@
+/*        < blank >       */
+/*     Nicolas Taffin     */
+/*  http://polylogue.com  */
+/*  licence CC: BY-NC-SA   */
+
+@import url("main.css");
+
+.handHeldOnly
+{
+	display: block;
+}
+.screenOnly, .printOnly
+{
+	display: none;
+}
+/****************************************/
+/****************************************/
+/****************************************/
+
+
+/**
+* Responsive grids breaking points
+*/
+
+/**
+* wide Screen
+*/
+
+@media only screen and (min-width: 1201px) {
+	.quality main {
+		padding: 40px 15% 40px 15%;
+	}
+
+}
+
+/**
+* computer
+*/
+
+@media only screen and (min-width: 1025px) {
+
+}
+
+/**
+* Small computer, ipad landscape
+*/
+
+@media only screen and (max-width: 1024px) {
+	.homeGauche {
+    	width: 63%;
+	}
+	.homeDroite {
+    	width: 30%;
+	}
+	span.label {
+		display: none;
+	}
+}
+
+/**
+* Pad portrait
+*/
+
+@media only screen and (max-width: 800px) {
+	main, .main, .quality main {
+		padding: 40px 50px 40px 50px;
+	}
+	.document ul.souscorpus 
+	{
+		column-count: 2;  
+		column-gap: 2em;
+		-webkit-column-count: 2;  
+		-webkit-column-gap: 1em;
+		-moz-column-count: 2;  
+		-moz-column-gap: 1em;
+	}
+	.homeGauche {
+    	width: 100%;
+    	float: none;
+	}
+	.homeDroite {
+    	width: 100%;
+    	float: none;
+	}
+	ul.partners .deco {
+		display: none;
+	}
+	.small {
+	    width: 30%;
+	}
+	ul.menuAccess ul li ul li {
+		display: none !important;
+	}
+	.document ul.toolbar
+	{
+		width: auto;
+		margin-left: 0px;
+		margin-right: 10px;
+		font-weight: normal;
+		opacity: 1;
+	}
+	.document h1 ul.toolbar {
+		margin-right: 0px;
+	}
+	.inline-player {
+		height: 120px;
+	}
+	#midiPlayer_div {
+		max-width: 270px !important;
+		#midiPlayer_bar {
+			max-width: 80px !important;
+		}
+	}
+
+}
+
+/**
+* iPhone landscape ONLY
+*/
+
+@media only screen and (max-width: 667px) and (orientation:landscape) {
+
+}
+
+
+/****************************************/
+/*     	        	Phones				*/
+/* 	incl. Gal. 360px and iphn6 375px  	*/
+/* 			note : iphone6+ is 414px	*/
+/*				iphone is 320px			*/
+/****************************************/
+
+@media screen and (max-width: 500px) {
+	.platform {
+		background-image: none;
+	}
+	a.logo
+	{
+		width: 90px;
+	}
+	main, .main, .quality main {
+		padding: 40px 20px 40px 20px;
+	}
+	.document ul.souscorpus 
+	{
+		column-count: 1;  
+		column-gap: 2em;
+		-webkit-column-count: 1;  
+		-webkit-column-gap: 1em;
+		-moz-column-count: 1;  
+		-moz-column-gap: 1em;
+	}
+	ul.menuAbout, ul.menuAccess, ul.menu a, #connexionLink {
+		width: 100px;
+	}
+	.menuAccess ul, .menuAbout ul {
+		left: 90px;
+	}
+	.menuAccess ul li a  {
+		width: 130px;
+	}
+	ul.menuAccess ul:not(.shadow) li.selected,
+	ul.menuAccess ul li ul li {
+		display: none !important;
+	}
+	a#keyboardLink {
+		display: none;
+	}
+	.searchForm {
+		width: auto;
+	}
+	input#expression {
+    	width: 100px;
+    }
+	.small {
+	    width: 40%;
+	}
+	ul#tabnav {
+	    border-top: 3px solid #c84e3a;
+	}
+	#tabnav a {
+	    display: block;
+	    text-decoration: none;
+	    padding: 0.3em 0.8em 0.3em 0.8em;
+	}
+	.col1 { display: none;}
+	.grid > * {
+		flex-basis: 100% !important;
+	}
+	#connexionZone {
+		right: 0px;
+		top: 60px;
+		width: 100%;
+	    background-image: none	}
+}
+
+@media only screen and (max-width: 421px) {
+
+}

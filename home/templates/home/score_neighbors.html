@@ -1,0 +1,69 @@
+{% load extras %}
+
+       
+            <ul>
+                {% for voice in score.get_all_voices %}
+                    <li>
+                        <div style="clear: both; width: 100%; display: inline-block">
+                            <span style="width: 49; display: inline-block;">
+                                <span style="font-weight: bold; width: 100%; clear: both">
+                                    Référence : {{opus.title}}
+                                </span>
+                                {% autoescape off %}
+                                    {% if measure == 'pitches' %}
+                                        {{voice.get_pitches_histogram|print_histogram}}
+                                    {% elif measure == 'intervals' %}
+                                        {{voice.get_intervals_histogram|print_histogram}}
+                                    {% elif measure == 'degrees' %}
+                                        {{voice.get_degrees_histogram|print_histogram}}
+                                    {% elif measure == 'rhythms' %}
+                                        {{voice.get_rhythms_histogram|print_histogram}}
+                                    {% endif %}
+                                {% endautoescape %}
+                            </span>
+                        </div>
+                    </li>
+                {% endfor %}
+            </ul>
+
+            <hr />
+
+            <div style="clear: both; width: 100%; display: inline-block">
+                <span style="width: 49; display: inline-block;">
+                    {% autoescape off %}
+                        {% for voice in neighbor_voices %}
+                            <div style="width: 49%; display: inline-block">
+                                <span style="font-weight: bold; width: 100%; clear: both">
+                                    {{voice.0}}
+                                </span>
+                                        {{voice.1|print_histogram}}
+                            </div>
+                        {% endfor %}
+                    {% endautoescape %}
+
+                </span>
+            </div>
+
+        <ol>
+        {% for neighbor in neighbors %}
+          <li>Neighbor: 
+          <a target="_blank" href="{% url 'home:opus' neighbor.opus2.ref %}"> {{neighbor.opus2.title}}</a>
+         . Distance = {{neighbor.value}} 
+        {% endfor %}
+        </ol>
+
+<!--  
+    { if score.get_sub_scores }
+        <h4>Sub-scores</h4>
+        <ol>
+            { for sub in score.get_sub_scores }
+                <li>
+                    { with score=sub }
+                        {include "home/score_neighbors.html" }
+                    { endwith }
+                </li>
+            { endfor }
+        </ol>
+    { endif }
+  -->
+

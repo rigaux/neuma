@@ -1,0 +1,31 @@
+{  
+  "_source": {
+    "exclude": [
+      "descriptors",
+      "_rev"
+    ]
+  },
+  "from": {from},
+  "size": {size},
+  "query": {
+    "bool": {
+      "must": [
+             {
+          "match": {
+            "_all": "{keywords}"
+          }
+        },
+       {
+          "match_phrase": {
+            "descriptor.value": "{melodicPhrase}"
+          }
+        },
+       {
+          "prefix": {
+            "corpus": "{corpus_id}"
+          }
+        }
+      ]
+    }
+  }
+}

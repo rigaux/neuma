@@ -1,0 +1,81 @@
+{% load extras %}
+
+{% if score.get_voices %}
+    <h4>Voices</h4>
+    <ol>
+        {% for voice in score.get_voices %}
+            <li>
+                Voice {{voice.id}},<br />
+
+                <div style="clear: both; width: 100%; display: inline-block">
+                    <span style="width: 20%; display: inline-block;">
+                        {% autoescape off %}
+                            {{voice.get_pitches_histogram|print_histogram}}
+                        {% endautoescape %}
+                    </span>
+                   <!--  <span style="width: 20%; display: inline-block;">
+                        autoescape off 
+                            {{voice.get_rhythms_histogram|print_histogram}}
+                        endautoescape
+                    </span> -->
+                </div>
+
+                <div style="clear: both; width: 100%; display: inline-block">
+                    <span style="width: 20%; display: inline-block;">
+                        {% autoescape off %}
+                            {{voice.get_intervals_histogram|print_histogram}}
+                        {% endautoescape %}
+                    </span>
+                 </div>
+                <div style="clear: both; width: 100%; display: inline-block">
+                     <span style="width: 20%; display: inline-block;">
+                        {% autoescape off %}
+                            {{voice.get_degrees_histogram|print_histogram}}
+                        {% endautoescape %}
+                    </span>
+                </div>
+
+                <br />
+
+                <span style="font-size: 12px"><span style="font-weight: bold">Ambitus :</span> {{voice.get_ambitus}} semitones</span><br /><br /><br />
+                <span style="font-size: 12px"><span style="font-weight: bold">Key signature (Krumhansl Schmuckler) :</span> {{voice.get_keysignature.0}} ({{voice.get_keysignature.1|percent}})</span><br />
+
+
+                Mesures incomplètes :<br />{{voice.get_incomplete_bars}}<br />
+
+                <div style="display: inline-block; width: 100%; overflow-x: scroll;">
+                    <div style="display: block; padding:10px; width: 4000px;clear:both"><!-- fixme : width should be based on beat count -->
+                        {% for i in voice.list_rhythms %}
+                            <div class="rhythm-dot" style="float: left; border-left: 2px solid #fff;  margin: 0; display: inline-block; height: 1px; width: {{i|sp36}}px"></div>
+                        {% endfor %}
+                    </div><br />
+                    <div style="display: block; padding-left: 10px; width: 4000px; clear:both"><!-- fixme : width should be based on beat count -->
+                        {% for i in voice.count_measures|nrange %}
+                            <div style="float: left; border-left: 2px solid #000; margin: 0; display: inline-block; height: 36px; width: 36px"></div>
+                        {% endfor %}
+                    </div>
+                </div>
+
+
+            </li>
+
+        {% endfor %}
+    </ol>
+{% endif %}
+
+{% if score.get_sub_scores %}
+    <h4>Sub-scores</h4>
+    <ol>
+        {% for sub in score.get_sub_scores %}
+            <li>
+                Sub score : {{sub.id}}
+                {% with score=sub %}
+                    {%include "home/score_structure_item.html" %}
+                {% endwith %}
+            </li>
+        {% endfor %}
+    </ol>
+{% endif %}
+</script>
+
+

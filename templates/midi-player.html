@@ -1,0 +1,16 @@
+{% load i18n %} 
+    <!--//////////////////////////////////////////////////////-->         
+        <!-- The div where we are going to insert the MIDI Player -->
+        <!--//////////////////////////////////////////////////////--> 
+        <div class="player-ribbon" style="height: 30px;">
+            <div id="player" style="z-index: 20; position: absolute; display: block;">
+        <ul class="toolbar">
+          <li class="play"><a href="javascript:play_midi(vrvToolkit)"
+              title="{% trans 'Play' %}"> <span class="accessibility">
+              {% trans 'Play' %}</span>
+          </a></li>
+        </ul>
+            </div>
+            <div class="spacer20">&nbsp;</div>
+        </div>
+

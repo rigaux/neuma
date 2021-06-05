@@ -1,0 +1,25 @@
+    {
+    "query": {
+        "function_score": {
+         "query": {
+            "match": {
+            "body": "foo"
+            }
+        },
+        "functions": [
+            {
+            "script_score": {
+                "script": {
+                "source": "scorelib",
+                "lang" : "ScoreSim",
+                "params": {
+                    "query": [{"index":5, "duration":3}, {"index":6, "duration":2}],
+                    "type": 1
+                }
+                }
+              }
+            }
+          ]
+        }
+      }   
+    }

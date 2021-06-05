@@ -1,0 +1,99 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN"
+        "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+
+{% load i18n %}
+
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="fr">
+
+
+{% include "part-html-header.html" %}
+
+
+<!-- Inclusion of alternate banner -->
+{% include "alternate-banner-analysis.html" %}
+
+
+<body class="opus quality">
+	<div class="attrape-clic"></div>
+	   <div class="attrape-clic leger"></div>
+	<div class="page">
+		<!-- Header -->
+		{% include "part-header.html" %}
+
+		<!-- Main -->
+			<main class="main document opusmain">
+			   <div class="grid">
+					<div class="col8">{% block content %}{% endblock content %}</div>
+					<div class="col1"></div>
+                    <div class="col3">{% block opus_menu %}{% endblock opus_menu %}</div>
+                </div>
+			</main>
+			<!-- fin main -->
+		</div>
+		<!-- fin div .mainWrapper -->
+
+
+		<!-- Footer -->
+		{% include "part-footer.html" %}
+		<!-- fin footer .page-footer -->
+
+		<div class="clearer">&nbsp;</div>
+
+	</div>
+	<!-- fin div .page -->
+
+	<!-- The Ajax code to show the connexion zone -->
+	<script language="Javascript">
+		$("#connexionZone").load("{% url 'home:form_login' %}");
+	</script>
+
+
+    {% if opus.mei %} 
+    
+  <!-- Parameters supplied to the ComputeAnnotations() Ajax call -->
+  <input id="compute_opus_ref" type="hidden" name="opus_ref" value="{{opus.ref}}"/>
+  <input id="compute_model_code" type="hidden" name="model_code" value="comparison"/>
+       
+  <script type="text/javascript">
+   $(document).ready(function() {
+     }
+   );
+  </script>
+  
+	<script type="text/javascript">
+	 
+	 var isPlaying = false;
+	 var ids = [];
+	 var vrvToolkit;
+	 var page = 1
+	 
+	 // Call JS function when the document is loaded
+	 $(document).ready(function() {
+
+		 /* remove access header and replace by alternative header */
+	       $('.page-header .banner.access').remove();
+		  $("#alternate-banner").appendTo(".page-header");
+
+		  ShowModelConcepts("{{opus.ref}}", 'counterpoint')
+
+	        // Copy the pattern in the page 
+	        clonePattern("seepartition", "pattern_score");
+
+	        // Display the score with Verovio
+	        var highlights =[];
+	        highlights = {{matching_ids}}
+	        vrvToolkit= displayWithVerovio("{{opus.ref}}", "{{opus.mei.url}}", "verovio", highlights, "comparison");
+
+	        // Create the MIDI player
+	        $("#player").midiPlayer({
+	            color: "#c00",
+	            onUnpdate: midiUpdate,
+	            onStop: midiStop,
+	            width: 250
+	        });
+	      
+	    });    
+	 </script>
+	{% endif %}
+</body>
+</html>

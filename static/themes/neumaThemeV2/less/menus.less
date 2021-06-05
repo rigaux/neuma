@@ -1,0 +1,586 @@
+/*        < blank >       */
+/*     Nicolas Taffin     */
+/*  http://polylogue.com  */
+/*  licence CC: BY-NC-SA   */
+
+/*
+* LESS COMMONS : COLORS, FONTS, MIXINS
+*/
+
+@import (reference) url("common.less");
+
+
+
+.attrape-clic {
+	display: none;
+	position: fixed;
+	width: 100%;
+	height: 100%;
+	background-color: fade(black, 40%);
+	z-index: 2000;
+	&.leger {
+		background-color: fade(black, 10%);
+	}
+}
+
+
+/****************************************/
+/*     	       navigation	            */							
+/****************************************/
+
+
+.menu
+{	
+	display: block;
+	height: auto;
+	width: auto;
+	margin: 0px 0px 0px 0px;
+	padding: 0px 0px 0px 0px;
+	list-style-type: none;
+}
+.menu li
+{
+	margin: 0px 0px 0px 0px;
+	padding: 0px 0px 0px 0px;
+}
+
+.menu a {
+
+	display: block;
+	height: 50px;
+	width: 130px;
+	margin: 0px 0px 0px 0px;
+	padding: 0px 3px 0px 10px;
+	.ellipsis;
+}
+
+.menu ul a {
+
+	width: 130px;
+	margin: 0px 0px 0px 0px;
+	padding: 0px 5px 0px 17px;
+}
+
+
+/****************************************/
+/*     	       menu About	            */							
+/****************************************/
+
+.menuAbout
+{
+	width: 130px;
+	text-align: left;
+	z-index: 10000;
+	position: relative;
+}
+.menuAbout li a
+{
+	position: absolute;
+	z-index: 11000;
+	background: transparent url(../images/menuAboutArrows.png) right 0px no-repeat;
+}
+.menuAbout li a:hover
+{
+	background: transparent url(../images/menuAboutArrows.png) right -50px no-repeat;
+}
+.menuAbout li.selected a
+{
+	background: transparent url(../images/menuAboutArrows.png) right 0px no-repeat;
+}
+.menuAbout li.selected a:hover
+{
+	background: transparent url(../images/menuAboutArrows.png) right -100px no-repeat;
+}
+
+.menuAbout ul
+{
+	display: block;
+	position: absolute;
+	top: 0px;
+	left: 120px;
+	list-style-type: none;
+	z-index: 10000;
+	height: auto;
+	width: auto;
+}
+.menuAbout ul.shadow
+{
+	box-shadow: 10px 10px 20px fade(black, 30%);
+}
+
+.menuAbout ul li a, .menuAbout li.selected ul li a
+{
+	width: 160px;
+	position: relative;
+	background: #7C7C7B none right -100px no-repeat;
+}
+.menuAbout ul li a:hover, .menuAbout li.selected ul li a:hover
+{
+	position: relative;
+	background: #969696 none right -100px no-repeat;
+}
+.menuAbout ul li.selected a
+{
+	width: 135px;
+	display: block;
+	background: transparent url(../images/menuAboutArrows.png) right -100px no-repeat;
+}
+.menuAbout ul li.selected a:hover
+{
+	background: transparent url(../images/menuAboutArrows.png) right -150px no-repeat;
+}
+
+
+.menuAbout ul li
+{
+	display: none;
+}
+.menuAbout ul li.selected
+{
+	display: block;
+}
+.menuAbout ul.shadow li.selected a
+{
+	width: 160px;
+}
+
+
+/****************************************/
+/*     	       menu Access	            */							
+/****************************************/
+
+.menuAccess
+{
+	width: 130px;
+	text-align: left;
+	z-index: 9000;
+	position: relative;
+}
+
+.menuAccess li a
+{
+	position: absolute;
+	z-index: 9000;
+	background: transparent url(../images/menuAccessArrows.png) right -50px no-repeat;
+}
+.menuAccess li > a:hover
+{
+	background-position: right 0px;
+}
+
+/* 2e niveau */
+
+.menuAccess ul
+{
+	display: none;
+	position: absolute;
+	top: 0px;
+	left: 120px;
+	list-style-type: none;
+	z-index: 8000;
+	height: auto;
+	width: auto;
+}
+.menuAccess ul.shadow
+{
+	box-shadow: -20px 10px 20px fade(black, 30%);
+}
+
+.menuAccess ul li a
+{
+	position: relative;
+	background: #C84E3A none right -100px no-repeat;
+}
+.menuAccess ul li:not(.selected) a:hover
+{
+	position: relative;
+	background: #9F3723 none right -100px no-repeat;
+}
+.menuAccess ul li > a
+{
+	display: block;
+	background-position: right -150px;
+}
+.menuAccess ul li > a:hover
+{
+	background-color: #C84E3A;
+	background-position: right -100px;
+}
+
+.menuAccess li.selected ul li
+{
+	display: none;
+}
+.menuAccess li.selected ul li.selected
+{
+	display: list-item;
+}
+.menuAccess li.selected ul li.selected a {
+	background-color: transparent;
+	background-image:	url(../images/menuAccessArrows.png)
+}
+
+/* 3e niveau */
+
+.menuAccess ul ul
+{
+	display: none;
+	position: absolute;
+	top: 0px;
+	left: 120px;
+	list-style-type: none;
+	z-index: 7000;
+}
+
+.menuAccess li li li
+{
+	display: none;
+}
+.menuAccess li li li.selected
+{
+	display: block;
+}
+
+.menuAccess ul ul li > a
+{
+	background-position: right -200px;
+}
+.menuAccess ul ul li > a:hover
+{
+	background-position: right -100px;
+}
+
+/* 4e niveau */
+
+.menuAccess ul ul ul
+{
+	display: none;
+	position: absolute;
+	top: 0px;
+	left: 120px;
+	list-style-type: none;
+	z-index: 7000;
+}
+
+.menuAccess li li li li
+{
+	display: none;
+}
+.menuAccess ul ul ul li > a
+{
+	background-position: right -250px;
+}
+.menuAccess ul ul ul li > a:hover
+{
+	background-position: right -150px;
+}
+
+/* 5e niveau */
+
+.menuAccess ul ul ul ul
+{
+	display: none;
+	position: absolute;
+	top: 0px;
+	left: 120px;
+	list-style-type: none;
+	z-index: 7000;
+}
+
+.menuAccess li li li li
+{
+	display: none;
+}
+.menuAccess ul ul ul ul li > a
+{
+	background-position: right -300px;
+}
+.menuAccess ul ul ul ul li > a:hover
+{
+	background-position:right -200px;
+}
+
+
+/****************************************/
+/*     	        simple tabs    	       	*/
+/****************************************/
+
+ul.tabBar
+{
+	display: block;
+	clear: both;
+	width: 100%;
+	float: left;
+	list-style-type: none;
+	text-align: left;
+	background-color: #EEE;
+}
+
+ul.tabBar li
+{
+	clear: none;
+	display: inline;
+	margin-left: 7px;
+	height:100%;
+	width: auto;
+}
+/*display: inline-block;*/
+
+ul.tabBar li a
+{
+	text-decoration: none;
+	clear: none;
+	display: inline-block;
+	width:auto;
+	padding: 3px 5px 3px 5px;
+	color: white;
+	background-color: #AAA;
+	-moz-border-radius-topright: 0.7em;
+	-webkit-border-top-right-radius: 0.7em;
+	border-top-right-radius: 0.7em;
+	border: none;
+}
+ul.tabBar li a:hover
+{
+
+	color: white;
+	background-color: #BBB;
+	border: none;
+}
+ul.tabBar li.selected a
+{
+	color: #555;
+	background-color: #CCC;
+	border: none;
+}
+
+
+/****************************************/
+/*     	      menuBar vertical	       	*/
+/****************************************/
+
+ul.menuBar.vertical
+{
+	display: block;
+	clear: both;
+	width: 100%;
+	float: left;
+	list-style-type: none;
+	text-align: left;
+	
+
+}
+
+ul.menuBar.vertical li
+{
+	display: block;
+	width: 100%;
+	height:100%;
+	margin: 0px;
+}
+
+
+ul.menuBar.vertical li a
+{
+	text-decoration: none;
+	display: block;
+	padding: 3px 5px 3px 5px;
+	color: #333;
+	background-color: #CCC;
+	margin:0px;
+}
+ul.menuBar.vertical li a:hover
+{
+
+	padding: 3px 5px 3px 7px;
+	
+	color: black;
+	background-color: #BBB;
+}
+ul.menuBar.vertical li.selected a
+{
+
+	padding: 3px 5px 3px 7px;
+	
+	color: #555;
+	background-color: #AAA;
+}
+
+
+/****************************************/
+/*     	    menus deroulants    		*/
+/****************************************/
+
+
+ul.menuBar.horizontal
+{
+	display: block;
+	clear: both;
+	width: 100%;
+	float: left;
+	list-style-type: none;
+	text-align: left;
+	background-color: #CCC;
+
+}
+
+ul.menuBar.horizontal li
+{
+	display: block;
+	width: auto;
+	float: left;
+	position: relative;
+	line-height: 1.4em;
+	height:100%;
+}
+/*display: inline-block;*/
+
+ul.menuBar.horizontal li a
+{
+	text-decoration: none;
+	display: block;
+	padding: 0.4em;
+	color: white;
+	background-color: #CCC;
+	border-right: 1px dotted white;
+}
+ul.menuBar.horizontal li a:hover
+{
+	color: white;
+	background-color: #BBB;
+}
+ul.menuBar.horizontal li.selected a
+{
+	color: #555;
+	background-color: #AAA;
+}
+ul.menuBar.horizontal li ul
+{
+	display: none;
+}
+
+
+
+
+
+ul.menuBar.horizontal li:hover > ul
+{
+	display: block;
+	background-color: red;
+	width: auto;
+	position: absolute;
+	top: 2.1em;
+	left: 0.5em;
+	z-index: 100;
+}
+
+ul.menuBar.horizontal li ul li
+{
+	display: block;
+	clear: both;
+	width: 100%;
+	white-space: nowrap;
+}
+ul.menuBar.horizontal li ul li a
+{
+	text-decoration: none;
+	display: block;
+	width: auto;
+	padding: 0.4em;
+	color: white;
+	background-color: #CCC;
+	border-top: 1px dotted white;
+}
+ul.menuBar.horizontal li.selected ul li a
+{
+	color: white;
+	background-color: #CCC;
+}
+ul.menuBar.horizontal li ul li a:hover
+{
+	color: white;
+	background-color: #BBB;
+}
+
+/****************************************/
+/*     	        fil d'Ariane  	       	*/
+/****************************************/
+
+
+ul.filAriane, ul.breadCrumb,
+.document ul.filAriane, .document ul.breadCrumb {
+	display: inline;
+	text-align: center;
+	list-style-type: none;
+	color: #737373;
+	padding: 15px 0px 15px 0px;
+}
+
+ul.filAriane li, ul.breadCrumb li,
+.document ul.filAriane li, .document ul.breadCrumb li
+{
+	display: inline;
+	font-size: 0.8em;
+	height: 100%;
+	color: #737373;
+	padding: 0 15px 0 15px;
+}
+ul.filAriane li:after, ul.breadCrumb li:after,
+.document ul.filAriane li:after, .document ul.breadCrumb li:after
+{
+	content:" | "; 
+}
+ul.filAriane li:last-child:after, ul.breadCrumb li:last-child:after, ul.filAriane li.last:after, ul.breadCrumb li.last:after, .document ul.filAriane li.last:after, .document ul.breadCrumb li.last:after
+{
+	content:""; 
+}
+ul.filAriane li a, ul.breadCrumb li a,
+.document ul.filAriane li a, .document ul.breadCrumb li a
+{
+	color: #737373;
+	text-decoration: none;
+	padding: 0px 3px 0px 3px;
+}
+
+
+ul.filAriane li a:hover, ul.breadCrumb li a:hover,
+.document ul.filAriane li a:hover, .document ul.breadCrumb li a:hover {
+	color: #E73D2B;
+	text-decoration: underline;
+}
+
+/****************************************/
+/*     	       		 tabnav	 	       	*/
+/****************************************/
+
+ul#tabnav {
+    list-style-image:none;
+    list-style-type: none;
+	padding: 0;
+    border-bottom: 3px solid #c84e3a;
+    margin: 1em 0 15px 0;
+    font-size: 1em;
+}
+
+ul#tabnav li {
+    display: inline;
+}
+
+#tabnav a {
+	color: #aaa;
+    display: inline-block;
+    text-decoration: none;
+    padding: 0.55em 1em 0.45em 1em;
+    margin: 0;
+    text-transform: uppercase;
+}
+
+ul#tabnav li.active a {
+   color: white;
+   background-color: #c84e3a;
+ }
+ 
+#tabnav a:hover {
+    background: #eee;
+    color: #c84e3a;
+}

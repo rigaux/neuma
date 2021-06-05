@@ -1,0 +1,426 @@
+/*        < blank >       */
+/*     Nicolas Taffin     */
+/*  http://polylogue.com  */
+/*  licence CC: BY-NC-SA   */
+
+/*
+* LESS COMMONS : COLORS, FONTS, MIXINS
+*/
+
+@import (reference) url("common.less");
+
+
+
+
+
+/****************************************/
+/*     	        formulaires	            */
+/****************************************/
+/* used against spam */
+.piege,.textFieldKey {
+	display: none;
+}
+
+.document label {
+	display: block;
+	float: left;
+	width: 100px;
+	font-size: 0.8em;
+	margin-right: 15px;
+}
+
+.document label.piege {
+	display: none;
+}
+
+/* html5 */
+input[type=range] {
+	
+}
+
+input[type=search] {
+	
+}
+
+/* attribut html autofocus */
+.document input[type=text] {
+	max-width: 500px;
+    color: #444;
+    font-size: 1em;
+	line-height: 2em;
+    padding: 3px;
+    margin-bottom: 4px;
+    border: 1px solid #CCC;
+}
+
+.document .textField {
+	width: 220px;
+	color: #444;
+	font-size: 1em;
+	line-height: 1.3em;
+	background-color: white;
+	padding: 3px;
+	margin-bottom: 4px;
+	border: 1px solid #CCC;
+}
+
+.document .textField:focus {
+	width: 220px;
+	color: #444;
+	background-color: #FDFFAE;
+	padding: 3px;
+	margin-bottom: 4px;
+	border: 1px #CDC618 solid;
+}
+
+.document textarea {
+	width: 100%;
+	margin: 0.5em 0;
+	padding: 0.5em;
+	color: #444;
+	font-size: 1em;
+	line-height: 1.3em;
+	background-color: white;
+	border: 1px solid #CCC;
+}
+
+.document textarea:focus {
+	background-color: #FDFFAE;
+}
+
+.document input[type=submit] {
+	-webkit-appearance: none;
+   -moz-appearance: none;
+   appearance: none; 
+   border-radius: 0;
+   background: none; 
+	width: 50%;
+    padding: 8px;
+    font-weight: 500;
+    color: white;
+    font-size: 1em;
+	line-height: 2em;
+    background-color: @vert;
+	border: none;
+    cursor: pointer;
+}
+
+.document input[type=submit]:hover {
+	background-color: darken(@vert, 10%);
+}
+
+
+
+
+/****************************************/
+/*     	      search gizmos             */
+/****************************************/
+.searchForm {
+	display: block;
+	width: 285px;
+	position: relative;
+	height: 50px;
+	margin: 0px;
+	padding: 0px;
+	font-size: 1em;
+}
+
+.searchForm form,.searchForm fieldset,.searchForm input {
+	margin: 0px;
+	padding: 0px;
+}
+
+#scoreSnippet {
+	float: left;
+	margin: 0px 5px 0px 0px;
+	padding: 0px;
+	background-color: #EA6253;
+	background-position: right 50%;
+	background-repeat: no-repeat;
+}
+
+#scoreSnippet.active {
+	background-image: url(../images/scoreSnippet.png);
+}
+
+input#expression {
+	display: block;
+	font-size: 1em;
+	height: 50px;
+	width: 150px;
+	background-color: transparent;
+	border: none;
+	padding: 0px 5px 0px 5px;
+	color: #F8D8D5;
+	line-height: 4.5em;
+}
+input#expression::placeholder { /* Chrome, Firefox, Opera, Safari 10.1+ */
+    color: #F8D8D5;
+    opacity: 1; /* Firefox */
+}
+
+input#expression:focus {
+	background-color: transparent;
+	color: white;
+}
+
+a#keyboardLink {
+	display: block;
+	float: left;
+	height: 50px;
+	width: 40px;
+	background: #EA6253 url(../images/rech-piano.svg) center center
+		no-repeat;
+	opacity: 0.7;
+	cursor: pointer;
+	margin-right: 5px;
+}
+
+#keyboardLink:hover {
+	opacity: 1;
+}
+
+#keyboardLink.active {
+	background-color: #EE7467;
+	opacity: 1;
+}
+
+a#collectionsLink {
+	display: block;
+	float: left;
+	height: 50px;
+	width: 30px;
+	background: #EA6253 url(../images/rechCorpusTrans.png) center center
+		no-repeat;
+	opacity: 0.7;
+	cursor: pointer;
+	margin-right: 5px;
+}
+
+a#collectionsLink:hover {
+	opacity: 1;
+}
+
+#collectionsLink.active {
+	background-color: #EE7467;
+	opacity: 1;
+}
+
+.searchForm #submitButton {
+	-webkit-appearance: none;
+   -moz-appearance: none;
+   appearance: none;  
+	display: block;
+	float: right;
+	height: 50px;
+	width: 65px;
+	background-color: #EA6253;
+	line-height: 4.5em;
+	color: #F8D8D5;
+	opacity: 0.9;
+	cursor: pointer;
+	border: none;
+}
+
+.searchForm #submitButton:hover {
+	color: white;
+	opacity: 1;
+}
+
+
+/****************************************/
+/*     	      keyboard zone             */
+/****************************************/
+#keyboardZone {
+	display: none;
+	position: absolute;
+	right: 80px;
+	top: 50px;
+	width: auto;
+	height: auto;
+	text-align: left;
+	color: #575756;
+	text-shadow: none;
+	z-index: 18000;
+	line-height: 1.3em;
+	background-color: white;
+	box-shadow: 0px 10px 10px rgba(0, 0, 0, 0.4);
+}
+
+#keyboardZone .content {
+	margin: 0px;
+}
+
+#keyboardZone.visible {
+	display: block;
+}
+
+.document.keyboardWrap {
+	font-size: 1em;
+}
+
+.document.keyboardWrap table {
+	font-size: 1em;
+	border: none;
+	border-collapse: collapse;
+	margin: 0px;
+}
+
+.document.keyboardWrap input.right {
+	height: auto;
+	padding: 0px 5px 0px 5px;
+}
+
+.document.keyboardWrap tr {
+	border: none;
+}
+
+.document.keyboardWrap td {
+	border: none;
+	padding: 0px;
+	text-align: left;
+}
+
+.document.keyboardWrap td td td {
+	padding: 0px 5px 0px 5px;
+}
+
+.document.keyboardWrap tr.underlined {
+	border-bottom: 4px solid #333;
+}
+
+.document.keyboardWrap td.withPadding {
+	height: auto;
+	padding: 0px 20px 5px 20px;
+}
+
+/****************************************/
+/*          collections zone           */
+/****************************************/
+#collectionsZone {
+	display: none;
+	position: absolute;
+	right: 45px;
+	top: 50px;
+	width: 150px;
+	height: auto;
+	overflow: auto;
+	text-align: left;
+	color: #575756;
+	text-shadow: none;
+	z-index: 20000;
+	line-height: 1.4em;
+	color: #F8D8D5;
+	background-color: #EA6253;
+	box-shadow: 0px 10px 10px rgba(0, 0, 0, 0.4);
+}
+
+#collectionsZone .content {
+	margin: 8px 8px 8px 8px;
+}
+
+#collectionsZone.visible {
+	display: block;
+}
+
+.document.collectionsSearch {
+	font-size: 1em;
+}
+
+.collectionItem {
+	padding: 5px 0px 5px 0px;
+}
+
+.document.collectionsSearch label {
+	display: inline;
+	float: none;
+	padding: 0px 0px 0px 10px;
+	cursor: pointer;
+	width: auto;
+}
+
+/****************************************/
+/*          quality ref          */
+/****************************************/
+
+form.quality-ref, form.quality-ref fieldset {
+	display: inline;
+}
+
+.quality-ref #submitButton {
+	-webkit-appearance: none;
+   	-moz-appearance: none;
+   	appearance: none;  
+   	width: auto;
+	display: inline-block;
+	vertical-align: middle;
+	padding: 0.2em 0.8em;
+	background-color: #EA6253;
+	border: 1px solid #EA6253;
+	color: #F8D8D5;
+	opacity: 0.9;
+	cursor: pointer;
+}
+
+.quality-ref #submitButton:hover {
+	color: white;
+	opacity: 1;
+}
+.quality-ref input#url_score {
+	display: inline-block;
+	vertical-align: baseline;
+	min-width: 200px;
+	max-width: 700px;
+    width: 40%;
+    background-color: fade(white, 0%);
+    color: white;
+    border: 1px solid fade(white, 20%);
+    padding: 0.2em 0.5em;
+
+    &:hover {
+    	background-color: fade(white, 20%);
+    	border: 1px solid fade(white, 30%);
+    }
+    &:focus {
+    	background-color: fade(white, 70%);
+		color: #333;    	
+    }
+}
+.quality .options label {
+	font-size: 0.8em;
+}
+
+/* annotations list */
+
+
+#annotation_form_div input[type=submit] {
+	border: none;
+	margin-top:0.8em;
+	border-radius: 1em;
+	padding: 0.1em 1em;
+}
+#annotations_list input[type=submit], 
+.document .xml-edit-tab input[type=submit]
+ {
+	width: auto;
+	border: none;
+	border-radius: 1em;
+	padding: 0.1em 1em;
+}
+.quality-palette textarea {
+	box-sizing: border-box;
+	width: 100% !important;
+	height: 5em !important;
+}
+.document .annotations-list ul {
+	margin-left: 0;
+	list-style-image: none;
+	font-size: 1.15em;
+	b {
+		display: inline-block;
+		width: 4.5em;
+		opacity: 0.5;
+		font-size: 0.8em;
+	}
+}
+

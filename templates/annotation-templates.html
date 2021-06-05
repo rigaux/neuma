@@ -1,0 +1,65 @@
+{% load i18n %}
+
+<!--  Templates for displaying / inserting / updating annotation -->
+
+   <!--  Template for inserting an annotation -->
+        <div id="annotation_form_div" style="display:none">
+              <h4>{% trans "Element description " %}</h4> 
+            Element id (MEI): <span id="score_element_id"></span>
+            <h4>{% trans "Your new annotation" %}</h4>
+        
+          <form  id="create_annotation_form" onsubmit="event.preventDefault(); InsertAnnotation(this);" class="create-annotation-form" >
+            {% csrf_token %}
+           <input id="create_annotation_opus_ref" type="hidden" name="opus_ref" value="{{opus.ref}}"/>
+            <input id="create_annotation_note_id" type=hidden name="annotation_note_id" value=""/>
+            <textarea id="create_annotation_comment" placeholder="Add your comment here…"></textarea>
+            <select id="create_annotation_concept_list" name="concept"/>
+            <br/>
+            <input type="submit" value="Submit" />
+          </form>
+          <div id="annotation_create_feedback" class="annotation-create-feedback" style="display: none;">
+            <h5>Annotation saved!</h5>
+            <a class="new-annotation">Create a new annotation…</a>
+          </div>
+        </div>
+
+   <!--  Template for showing an annotation -->
+    <div id="annotation_description" style="display:none">
+        <ul>
+            <li><b>{% trans "Type " %}</b> <span id="annotation_concept"></span></li>
+            <li><b>{% trans "User " %}</b> <span id="annotation_user"></span></li>
+            <li><b>{% trans "Offset " %}</b> <span id="annotation_offset"></span></li>
+            <li><b>{% trans "Comment " %}</b> <span id="annotation_comment"></span></li>
+            <li><b>{% trans "Created " %}</b> <span id="annotation_created_at"></span></li>
+            <li><b>{% trans "Updated " %}</b> <span id="annotation_updated_at"></span></li>
+        </ul>
+    </div>
+
+   <!--  Template for updating an annotation -->
+    <div id="annotation_update" style="display:none">
+          <a class="update-this">Update…</a>
+          <form class="annotation-update-form" onsubmit="event.preventDefault(); UpdateAnnotation(this);" >
+            {% csrf_token %}
+            <h4>{% trans "Update annotation" %}</h4>
+           <input id="update_annotation_opus_ref" type="hidden" name="opus_ref" value="{{opus.ref}}"/>
+            <input id="update_annotation_note_id" type="hidden" name="annotation_note_id" value=""/>
+            <input id="update_annotation_id" type="text" name="annotation_id" value=""/>
+            <textarea id="update_annotation_comment" placeholder="Add your comment here…"></textarea>
+            <select id="update_annotation_concept_list" name="concept"/>
+            <br/>
+            <input type="submit" value="Submit" />
+          </form>
+     </div>
+     
+   <!--  Template for inserting/updating an XML fragment-->
+        <div id="xmlfragment_form_div" style="display:none">
+          <form  id="xmlfragment_form" onsubmit="event.preventDefault(); InsertXmlFragment(this, Xonomy.harvest());" class="create-annotation-form" >
+            {% csrf_token %}
+           <input id="xmlfragment_opus_ref" type="hidden" name="opus_ref" value="{{opus.ref}}"/>
+            <input id="xmlfragment_note_id" type="hidden" name="annotation_note_id" value=""/>
+            <input id="xmlfragment_annotation_id" type="hidden" name="annotation_id" value=""/>
+            <br/>
+            <input type="submit" value="Submit" />
+          </form>
+         </div>
+     

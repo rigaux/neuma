@@ -1,0 +1,20 @@
+{% extends "layout.html" %}
+
+{% block content %}
+
+<h1>Migration module</h1>
+
+
+<ul>
+  <li><a href="{% url 'migration:migrate'  %}">Migrate all corpora from CouchDB</a></li>
+  <li>To migrate all the opera of a corpus with ref 'corpusRef', run the script (in <tt>scorelib/scripts</tt>)
+   <pre>
+       python3 migrate.py -c corpusRef -t someTag
+   </pre>  
+  
+  </li>
+    <li><a href="{% url 'migration:show'  %}">Show migrations</a></li>
+  
+</ul>
+
+{% endblock content %}

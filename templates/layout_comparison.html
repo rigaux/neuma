@@ -1,0 +1,80 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN"
+        "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+
+{% load i18n %}
+
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="fr">
+
+{% include "part-html-header.html" %}
+
+<body class="opus quality">
+	<div class="attrape-clic"></div>
+	<div class="attrape-clic leger"></div>
+	<div class="page">
+
+		<!-- Header -->
+		{% include "part-header.html" %}
+
+		
+
+		<!-- Main -->
+			<main class="main document opusmain">
+			   {% block content %}{% endblock content %}
+			   {% block opus_menu %}{% endblock opus_menu %}
+			</main>
+			<!-- fin main -->
+		</div>
+		<!-- fin div .mainWrapper -->
+
+
+		<!-- Footer -->
+		{% include "part-footer.html" %}
+
+
+		<!-- fin footer .page-footer -->
+			
+
+		<div class="clearer">&nbsp;</div>
+
+	</div>
+	<!-- fin div .page -->
+
+	<!-- The Ajax code to show the connexion zone -->
+	<script language="Javascript">
+		$("#connexionZone").load("{% url 'home:form_login' %}");
+	</script>
+
+
+    {% if opus1.mei %}
+	<script type="text/javascript">
+	 
+	 var isPlaying = false;
+	 var ids = [];
+	 var vrvToolkit;
+	 var page = 1
+	 
+	 // Call JS function when the document is loaded
+	 $(document).ready(function() {
+
+	        // Copy the pattern in the page 
+	        clonePattern("seepartition", "pattern_score");
+
+	        // Display the score with Verovio
+	        var highlights =[];
+	        highlights = {{matching_ids}}
+            vrvToolkit= displayComparisonWithVerovio("{{opus2.ref}}", "{{opus2.mei.url}}", "verovio_comparison2", highlights);
+	        vrvToolkit= displayComparisonWithVerovio("{{opus1.ref}}", "{{opus1.mei.url}}", "verovio_comparison", highlights);
+	        // Create the MIDI player
+	        $("#player").midiPlayer({
+	            color: "#c00",
+	            onUnpdate: midiUpdate,
+	            onStop: midiStop,
+	            width: 250
+	        });
+	      
+	    });    
+	 </script>
+	{% endif %}
+</body>
+</html>

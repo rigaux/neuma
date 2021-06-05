@@ -1,0 +1,16 @@
+{% load i18n %}
+
+<ol >
+      {% for concept in concepts %}
+     <li>
+          <h3>{{concept.name}}</h3>
+          <div>{{concept.description}}</div>
+          {% if concept.children.count > 0 %}
+           <h4>{% trans "Sub concepts of " %} {{concept.name}}</h4>
+              {% with concepts=concept.children.all %}
+                  {% include "quality/show_concept.html" %}
+              {% endwith %}
+          {% endif %}
+     </li>
+     {% endfor %}
+ </ol>
