@@ -37,7 +37,10 @@ class Sequence:
  
     def add_item(self, item):
         self.items.append(item)
-        
+    
+    def get_items_from_sequence(self):
+        return self.items
+
     def set_from_pattern(self, str_pattern):
         """
         Take a string representing the pattern, as supplied by the piano: A4-8;G5-4, etc.
@@ -314,12 +317,14 @@ class Sequence:
          Find the position(s) of a pattern in the sequence
         """
         occurrences = []
+
         if search_type == settings.RHYTHMIC_SEARCH:
             p_intervals = pattern.get_rhythms()
             s_intervals = self.get_rhythms()
         elif search_type == settings.MELODIC_SEARCH:
             p_intervals = pattern.get_intervals(settings.MELODY_DESCR)
             s_intervals = self.get_intervals(settings.MELODY_DESCR)
+
         elif search_type == settings.EXACT_SEARCH:
             p_intervals = pattern.get_notes()
             s_intervals = self.get_notes()

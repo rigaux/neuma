@@ -55,6 +55,8 @@ class Voice:
                     item.alteration = int(event.pitch.accidental.alter)
                 else:
                     item.alteration = 0
+                if event.lyric != None:
+                    item.lyric = event.lyric
                 sequence.add_item(item)
             elif isinstance(event, m21.note.Rest):
                 item.id = event.id
@@ -82,6 +84,25 @@ class Voice:
     def get_lyrics(self):
         if self.has_lyrics():
             return m21.text.assembleLyrics(self.m21_stream).replace('-', '')
+
+    def search_in_lyrics(self, keyword):
+        ls = m21.search.lyrics.LyricSearcher(self.m21_stream)
+        keyword_results = ls.search(keyword)
+
+        id_list = []
+        for result in keyword_results:
+            #Within every match of keyword
+            #print("measure start, end: ", result.mStart, result.mEnd)
+
+            #Get Music21 Note ID of the note that matched
+            #print("note:", result.els[0])
+            #print("note measurenumber", result.els[0].measureNumber)
+            #print("note offset", result.els[0].offset)
+            #print("note duration", result.els[0].duration.quarterLength)
+            for item in result.els:
+                id_list.append(item.id)
+
+        return len(keyword_results), id_list
 
     def get_intervals(self):
         ''' Returns the number of occurrences for each interval in Voice '''

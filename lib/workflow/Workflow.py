@@ -313,11 +313,11 @@ class Workflow:
                         descriptor.save()
                
                 # Hack: the M21 parser does not supply lyrics. Use the MusicXML for the moment                   
-                ###
+                
                 if opus.musicxml:
                     score = Score()
                     score.load_from_xml(opus.musicxml.path, "musicxml")
-                ###
+                
                 voices = score.get_all_voices()
                 for voice in voices:
                         if voice.has_lyrics():

@@ -32,7 +32,7 @@ class Item:
             m21_note = self.step+'-'+str(self.octave)
 
         return m21.note.Note(m21_note)
-
+        
     def decode(self, json_obj):
         """ Decode from a JSON object"""
         if "id" in json_obj:

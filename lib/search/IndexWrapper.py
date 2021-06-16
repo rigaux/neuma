@@ -151,7 +151,7 @@ class IndexWrapper:
         # for member in members:
         #    print ("Member " + str(member))
 
-        if search_context.keywords == 'Keywords':
+        if search_context.keywords == "Keywords":
             # Sometimes the default text is sent as such
             search_context.keywords = ''
 
@@ -185,7 +185,7 @@ class IndexWrapper:
                     matching_ids = []
                     distance = 0
                     best_occurrence = None
-                    # Find the occurrences
+                    # Find the occurrences in MusicSummary, if search type is pattern search
                     if search_context.is_pattern_search():
                         msummary = MusicSummary()
                         if opus.summary:
@@ -193,18 +193,49 @@ class IndexWrapper:
                                 msummary_content = summary_file.read()
                             msummary.decode(msummary_content)
                             pattern_sequence = search_context.get_pattern_sequence()
-                            # Find best occurrence for each search result
 
                             if search_context.search_type == settings.MELODIC_SEARCH or search_context.search_type == settings.DIATONIC_SEARCH or search_context.search_type == settings.RHYTHMIC_SEARCH:
+                                #return the sequences that match and the distances
                                 best_occurrence, distance = msummary.get_best_occurrence(pattern_sequence, search_context.search_type, search_context.mirror_search)
+                                
                                 logger.info ("Found best occurrence : " + str(best_occurrence) + " with distance " + str(distance))
 
                             matching_ids = msummary.find_matching_ids(pattern_sequence, search_context.search_type)
-                            #print(matching_ids)
+
+                            #best_occurrence is a pattern sequence
+
                         else:
                             logger.warning("No summary for Opus " + opus.ref)
-                        
-                    # OK put the Opus and its matching occurrences in the result
+                    #If search by keywords
+                    elif search_context.is_keyword_search():
+
+                        '''
+                            Instead of getting MusicSummary and locate the pattern when it is pattern search, 
+                            directly get scores from the opus that match in the search
+                            and find if the keyword is in the lyrics
+                        '''
+                        best_occurrence = ""
+                        #always "" in keyword search mode because it is supposed to be a pattern sequence
+                        distance = 1000000 
+                        #No distance calculation for keyword search
+                        matching_ids = []
+                        #IDs of matching M21 objects
+                        print("#######################################")
+                        score = opus.get_score()
+                        #Find the matching id by locating keywords in the score
+                        for voice in score.get_all_voices():
+                            #get lyrics of the current voice
+                            curr_lyrics = voice.get_lyrics()
+                            if search_context.keywords in curr_lyrics:
+                                #There is a match within the current lyrics
+                                occurrences, curr_matching_ids = voice.search_in_lyrics(search_context.keywords)
+                                if occurrences > 0:
+                                    #If there is a match
+                                    print("Found occurrence in opus_id:  ", opus.id)
+                                    print("Appeared in voice: ", voice.id, ", occurrences: ", occurrences)
+                                    for m_id in curr_matching_ids:
+                                        matching_ids.append(m_id)
+
                     opera.append({"opus": opus, "matching_ids": json.dumps(matching_ids), "distance": distance, "best_occurrence": str(best_occurrence)})
             except Opus.DoesNotExist:
                 logger.warning ("Opus " +  hit["_id"] + " found in ES but not in the DB")
@@ -212,11 +243,13 @@ class IndexWrapper:
         # Sort results by score
         if settings.ES_RANKED_SEARCH:
             #print("Ranked within elasticsearch!")
-            if search_context.search_type == settings.MELODIC_SEARCH:
+            #If search type is melodic/rhythmic, so the rhythmic/melodic distance is calculatable
+            if search_context.search_type == settings.MELODIC_SEARCH or search_context.search_type == settings.RHYTHMIC_SEARCH or search_context.search_type == settings.DIATONIC_SEARCH:
                 opera = sorted(opera, key=itemgetter('distance'))
                 for o in opera:
                     print(str(o["best_occurrence"]) + " : " + str(o["distance"]))
-                    
+        
+
         return opera
 
     def get_search(self, search_context):
@@ -257,9 +290,12 @@ class IndexWrapper:
                 else:
                     #Otherwise only search for the original melody patterns
                     search = search.query("match_phrase", melody__value=search_context.get_melodic_pattern())
+
             elif search_context.search_type == settings.EXACT_SEARCH:
                 search = search.query("match_phrase", notes__value=search_context.get_notes_pattern())
+
             elif search_context.search_type == settings.DIATONIC_SEARCH:
+
                 if search_context.is_mirror_search() == True:
                     #If is_mirror_search() == True, search mirror patterns too
                     #it returns patterns+mirror patterns
@@ -272,8 +308,7 @@ class IndexWrapper:
                 else:
                     #Otherwise only search for the original diatonic patterns
                     search = search.query("match_phrase", diatonic__value=search_context.get_diatonic_pattern())
-            
-        # Done
+
         return search
 
     def bulk_indexing():

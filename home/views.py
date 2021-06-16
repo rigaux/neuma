@@ -338,6 +338,26 @@ class OpusView(NeumaView):
             # Put in the session until it is cleared or replaced
             self.request.session["search_context"].pattern = self.request.GET['pattern']
 
+        if 'keywords' in self.request.GET:
+            self.request.session["search_context"].keywords = self.request.GET['keywords']
+
+            if self.request.session["search_context"].keywords != "":
+                #There is a keyword to search
+                score = opus.get_score()
+                for voice in score.get_all_voices():
+                    #get lyrics of the current voice
+                    curr_lyrics = voice.get_lyrics()
+                    if search_context.keywords in curr_lyrics:
+                        #There is a match within the current lyrics
+                        occurrences, m21_objects = voice.search_in_lyrics(search_context.keywords)
+
+                #context["occurrences"] = 
+                #if self.request.session["search_context"].pattern == "":
+                    #If there is no pattern being searched in the meantime, it's a pure keyword search
+                
+                    # occurrences etc to make it show on the webpage TODO TIANGE
+
+
         # Looking for the pattern if any
         if self.request.session["search_context"].pattern != "":
             pattern_sequence = Sequence()
@@ -493,7 +513,6 @@ class SearchView(NeumaView):
 
         # Run the search
         index = IndexWrapper()
-        # Documents are sorted by rhythm similarity
         all_opera = index.search(search_context)
 
         paginator = Paginator(all_opera, settings.ITEMS_PER_PAGE)

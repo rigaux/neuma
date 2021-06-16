@@ -68,6 +68,7 @@ class MusicSummary:
             The pattern parameter is a Sequence object
             If 'rhythm' is True, the pattern will be decoded as a rhythm, otherwise, as a melody
         """
+
         occurrences = dict()
         for part_id, part in self.parts.items():
             occurrences[part_id] = dict()
@@ -77,7 +78,7 @@ class MusicSummary:
 
     def find_matching_ids(self, pattern, search_type):
         ids = list()
-        for part_id, part  in self.parts.items():
+        for part_id, part in self.parts.items():
             for voice_id, voice in part.items():
                 occurrences = voice.find_positions(pattern, search_type)
                 for occ in occurrences: 
@@ -88,8 +89,13 @@ class MusicSummary:
 
     def find_sequences(self, pattern, search_type):
         sequences = list()
-        for part_id, part  in self.parts.items():
+        for part_id, part in self.parts.items():
+            #Iterate over parts in MusicSummary
             for voice_id, voice in part.items():
+                #In every part, iterate over sequences of several voices
+                #Note that the "voice" here is not a Voice object, but Sequence
+                #If iterating over items within sequence is needed,
+                #Use: for item in voice.get_items_from_sequence()
                 occurrences = voice.find_positions(pattern, search_type)
                 for o in occurrences:
                     s = Sequence()
@@ -101,8 +107,9 @@ class MusicSummary:
     def get_best_occurrence(self, pattern, search_type, mirror_setting = False):
         """
           Get the best matching occurrence (wrt its distance from pattern)
+          When it is a pattern search, i.e. melodic search, rhythmic search, diatonic search
         """
-
+        
         occurrences = self.find_sequences(pattern, search_type)
         distances = list()
 
