@@ -350,7 +350,7 @@ class Opus(models.Model):
 
     class Meta:
         db_table = "Opus"
-
+    
     def get_url(self):
         """
           Get the URL to the Web opus page, taken from urls.py

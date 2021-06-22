@@ -1,5 +1,13 @@
 {% extends "layout.html" %} {% load i18n %} {% block content %}
 
+<h1>General statistics on collections</h1>
+
+ <ul>
+  <li><b>Total nb of collections</b>: {{ view.top_level_stats.total_corpus}}</li>
+  <li><b>Total nb of scores</b>: {{ view.top_level_stats.total_opus}}</li>
+ </ul>
+
+
 <h1>List of collections</h1>
      {% for corpus in view.top_level_corpora %}
        {% include "./stats_collection.html" with corpus=corpus%}
