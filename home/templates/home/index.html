@@ -119,22 +119,14 @@
 
 	<h5>{% trans "Infos/news" %}</h5>
 	<div class="content">
-		<b>{% trans "Get an account" %}</b><br />
-		{% blocktrans trimmed %}
-        Participate to the creation and management of collections.
-      {% endblocktrans %}
-      
-		<hr />
-		<b>{% trans "Manage your own collections" %}</b>  <br />
-		{% trans "You can use Neuma to create and manage your own collections" %} 
-		<hr />
-		<b>{% trans "Navigation" %}</b> <br /> {% trans "How collections are organized, and how to navigate" %}
-		 <br />
-		<hr />
-		<b>{% trans "Search" %}</b> <br />
-		{% trans "Understanding structured and unstructured search."%} 
-
-	</div>
+        <a href="{% url 'home:services' %}"><font color="white"><b>REST Services</b></font></a>
+		<br/>
+           Neuma proposes a RESTful interface to communicate with the digital library. 
+        <hr/>
+        <a href="{% url 'home:collections' %}"><font color="white"><b>Our collections</b></font></a>
+        <br/>
+         Stats on Neuma collections (or <i>corpora</i>), their content and metadata.
+         <hr/>	</div>
 </div>
 <!-- FIN COLONNE DE DROITE -->
 
