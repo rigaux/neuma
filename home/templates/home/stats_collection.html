@@ -1,0 +1,25 @@
+           <div class="collections">
+                <div class="item">  <a href="{% url 'home:corpus' corpus.ref %}"> 
+                    <h3>{{corpus.title}}</h3>
+                    
+                    <div>
+                        <ul
+                          <li><b>Description</</b>: {{corpus.short_description}}
+                          <li><b>Stats</</b>: {% if corpus.is_public %}public{% else %}private{% endif %}, 
+                        {{ corpus.get_nb_opera_and_descendants }} scores,
+                         {{corpus.get_nb_children}} direct children,
+                         {{corpus.get_nb_children}} sub-colllections.</li>
+                     {% if corpus.get_nb_children > 0 %}
+                         <li>
+                         {% for child in corpus.get_direct_children %}
+                           {% include "home/stats_collection.html" with corpus=child %}
+                         {% endfor %}
+                         </li>
+                    {% endif %}
+
+                         </ul>
+                          </div>
+                    
+                    <div class="clearer">&nbsp;</div>
+                </div>
+              </div>

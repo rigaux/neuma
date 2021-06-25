@@ -13,6 +13,11 @@ class NeumaView(TemplateView):
     '''Override the view class to always add the list of t
     top-level corpora to the context '''
 
+    def top_level_stats(self):
+
+        return {"total_corpus": Corpus.objects.all().count(),
+                "total_opus" : Opus.objects.all().count()}
+
     def top_level_corpora(self):
         
         # Check that the Root corpus does exist
