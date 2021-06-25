@@ -331,33 +331,37 @@ class OpusView(NeumaView):
 
         # By default, the tab shown is the first one (with the score)
         context['tab'] = 0
+        #initialize ?
+        context["matching_ids"] = ""
 
         # The pattern: it comes either from the search form (and takes priority)
         # or from the session
-        if 'pattern' in self.request.GET:
-            # Put in the session until it is cleared or replaced
-            self.request.session["search_context"].pattern = self.request.GET['pattern']
 
-        if 'keywords' in self.request.GET:
-            self.request.session["search_context"].keywords = self.request.GET['keywords']
+        #NOT necessary because the keyword is already saved in self.request.session["search_context"].keywords
+        #self.request.GET and self.request.POST are empty
 
-            if self.request.session["search_context"].keywords != "":
-                #There is a keyword to search
-                score = opus.get_score()
-                for voice in score.get_all_voices():
-                    #get lyrics of the current voice
-                    curr_lyrics = voice.get_lyrics()
-                    if search_context.keywords in curr_lyrics:
-                        #There is a match within the current lyrics
-                        occurrences, m21_objects = voice.search_in_lyrics(search_context.keywords)
-
-                #context["occurrences"] = 
-                #if self.request.session["search_context"].pattern == "":
-                    #If there is no pattern being searched in the meantime, it's a pure keyword search
-                
-                    # occurrences etc to make it show on the webpage TODO TIANGE
-
-
+        if self.request.session["search_context"].keywords != "":
+            #There is a keyword to search
+            matching_ids = []
+            keyword_in_search = self.request.session["search_context"].keywords
+            score = opus.get_score()
+            for voice in score.get_all_voices():
+                #get lyrics of the current voice
+                curr_lyrics = voice.get_lyrics()
+                if curr_lyrics != None:
+                    #There is a match within the current lyrics
+                    if keyword_in_search in curr_lyrics:
+                        occurrences, curr_matching_ids = voice.search_in_lyrics(keyword_in_search)
+                        if occurrences > 0:
+                            for m_id in curr_matching_ids:
+                                matching_ids.append(m_id)
+            context["msummary"] = ""
+            context["pattern"] = ""
+            #Could be improved if necessary: context["occurrences"] in the same format as what it is for pattern search,
+            #speicifying the voices and occurrences in each voices instead of a total number of occurrences
+            context["occurrences"] = len(matching_ids)
+            context["matching_ids"] = mark_safe(json.dumps(matching_ids))
+        
         # Looking for the pattern if any
         if self.request.session["search_context"].pattern != "":
             pattern_sequence = Sequence()
@@ -372,15 +376,15 @@ class OpusView(NeumaView):
                 logger.warning ("No summary for Opus " + opus.ref)
 
             search_type = self.request.session["search_context"].search_type
-            occurrences = msummary.find_positions(pattern_sequence, search_type)
-            matching_ids = msummary.find_matching_ids(pattern_sequence, search_type)
+            mirror_setting = self.request.session["search_context"].mirror_search
+
+            occurrences = msummary.find_positions(pattern_sequence, search_type, mirror_setting)
+            matching_ids = msummary.find_matching_ids(pattern_sequence, search_type, mirror_setting)
+            
             context["msummary"] = msummary
             context["pattern"] = self.request.session["search_context"].pattern
             context["occurrences"] = occurrences
             context["matching_ids"] = mark_safe(json.dumps(matching_ids))
-        else:
-            # print ("No pattern required")
-            context["matching_ids"] = ""
         
         # Analyze the score
         score = opus.get_score()
@@ -428,7 +432,7 @@ class OpusView(NeumaView):
             context["explain"] = True
         else:
             context["explain"] = False
-            
+
         return context
 
 
@@ -475,8 +479,11 @@ class SearchView(NeumaView):
             search_context.pattern = self.request.GET['pattern']
             # Check that the pattern is long enough
             if not search_context.check_pattern_length():
-                print ("Pattern ignored : it must contain at least three intervals")
-                search_context.info_message  = "Pattern ignored : it must contain at least three intervals"
+                if search_context.keywords != "":
+                    print("We are in keyword search mode")
+                else:
+                    print ("Pattern ignored : it must contain at least three intervals")
+                    search_context.info_message  = "Pattern ignored : it must contain at least three intervals"
                 search_context.pattern = ""
 
         #Initialize search_context.mirror_search according to the search request
