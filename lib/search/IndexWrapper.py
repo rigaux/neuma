@@ -192,15 +192,18 @@ class IndexWrapper:
                             with open(opus.summary.path, "r") as summary_file:
                                 msummary_content = summary_file.read()
                             msummary.decode(msummary_content)
+
                             pattern_sequence = search_context.get_pattern_sequence()
 
                             if search_context.search_type == settings.MELODIC_SEARCH or search_context.search_type == settings.DIATONIC_SEARCH or search_context.search_type == settings.RHYTHMIC_SEARCH:
                                 #return the sequences that match and the distances
-                                best_occurrence, distance = msummary.get_best_occurrence(pattern_sequence, search_context.search_type, search_context.mirror_search)
+                                mirror_setting = search_context.is_mirror_search()
+
+                                best_occurrence, distance = msummary.get_best_occurrence(pattern_sequence, search_context.search_type, mirror_setting)
                                 
                                 logger.info ("Found best occurrence : " + str(best_occurrence) + " with distance " + str(distance))
 
-                            matching_ids = msummary.find_matching_ids(pattern_sequence, search_context.search_type)
+                            matching_ids = msummary.find_matching_ids(pattern_sequence, search_context.search_type, mirror_setting)
 
                             #best_occurrence is a pattern sequence
 
@@ -216,7 +219,7 @@ class IndexWrapper:
                         '''
                         best_occurrence = ""
                         #always "" in keyword search mode because it is supposed to be a pattern sequence
-                        distance = 1000000 
+                        distance = 0
                         #No distance calculation for keyword search
                         matching_ids = []
                         #IDs of matching M21 objects
@@ -226,15 +229,16 @@ class IndexWrapper:
                         for voice in score.get_all_voices():
                             #get lyrics of the current voice
                             curr_lyrics = voice.get_lyrics()
-                            if search_context.keywords in curr_lyrics:
-                                #There is a match within the current lyrics
-                                occurrences, curr_matching_ids = voice.search_in_lyrics(search_context.keywords)
-                                if occurrences > 0:
-                                    #If there is a match
-                                    print("Found occurrence in opus_id:  ", opus.id)
-                                    print("Appeared in voice: ", voice.id, ", occurrences: ", occurrences)
-                                    for m_id in curr_matching_ids:
-                                        matching_ids.append(m_id)
+                            if curr_lyrics != None:
+                                if search_context.keywords in curr_lyrics:
+                                    #There is a match within the current lyrics
+                                    occurrences, curr_matching_ids = voice.search_in_lyrics(search_context.keywords)
+                                    if occurrences > 0:
+                                        #If there is a match
+                                        print("Found occurrence in opus_id:  ", opus.id)
+                                        print("Appeared in voice: ", voice.id, ", occurrences: ", occurrences)
+                                        for m_id in curr_matching_ids:
+                                            matching_ids.append(m_id)
 
                     opera.append({"opus": opus, "matching_ids": json.dumps(matching_ids), "distance": distance, "best_occurrence": str(best_occurrence)})
             except Opus.DoesNotExist:
@@ -249,7 +253,6 @@ class IndexWrapper:
                 for o in opera:
                     print(str(o["best_occurrence"]) + " : " + str(o["distance"]))
         
-
         return opera
 
     def get_search(self, search_context):
@@ -270,10 +273,12 @@ class IndexWrapper:
             q_lyrics = Q("match_phrase", lyrics__value=search_context.keywords)
             #Combine the search
             search = search.query(q_title | q_lyrics)
+
         # Do we search a melodic pattern
         if search_context.is_pattern_search():
             if search_context.search_type == settings.RHYTHMIC_SEARCH:
                 search = search.query("match_phrase", rhythm__value=search_context.get_rhythmic_pattern())
+
             elif search_context.search_type == settings.MELODIC_SEARCH:
                 if search_context.is_mirror_search() == True:
                     #If is_mirror_search() == True, search the mirror patterns too.

@@ -61,33 +61,38 @@ class MusicSummary:
         '''
         return jsonpickle.encode(self, unpicklable=False)
 
-    def find_positions(self, pattern, search_type):
+    
+    def find_positions(self, pattern, search_type, mirror_setting = False):
         """ 
             Find the position of a pattern in the voices
             
             The pattern parameter is a Sequence object
             If 'rhythm' is True, the pattern will be decoded as a rhythm, otherwise, as a melody
+            Called by views.py
         """
-
         occurrences = dict()
         for part_id, part in self.parts.items():
             occurrences[part_id] = dict()
             for voice_id, voice in part.items():
-                occurrences[part_id][voice_id] = voice.find_positions(pattern, search_type)
+                #Calling find_positions() in Sequence.py
+                occurrences[part_id][voice_id] = voice.find_positions(pattern, search_type, mirror_setting)
         return occurrences
 
-    def find_matching_ids(self, pattern, search_type):
+    def find_matching_ids(self, pattern, search_type, mirror_setting = False):
+
         ids = list()
         for part_id, part in self.parts.items():
             for voice_id, voice in part.items():
-                occurrences = voice.find_positions(pattern, search_type)
+                #Calling find_positions() in Sequence.py
+                occurrences = voice.find_positions(pattern, search_type, mirror_setting)
                 for occ in occurrences: 
                     for i in occ:
                         # print ("Item match  " + str(i) + " : " + str(voice.items[i]))
                         ids.append(voice.items[i].id)
         return ids
 
-    def find_sequences(self, pattern, search_type):
+    def find_sequences(self, pattern, search_type, mirror_setting = False):
+
         sequences = list()
         for part_id, part in self.parts.items():
             #Iterate over parts in MusicSummary
@@ -95,8 +100,9 @@ class MusicSummary:
                 #In every part, iterate over sequences of several voices
                 #Note that the "voice" here is not a Voice object, but Sequence
                 #If iterating over items within sequence is needed,
-                #Use: for item in voice.get_items_from_sequence()
-                occurrences = voice.find_positions(pattern, search_type)
+                #Use "for item in voice.get_items_from_sequence()"
+                #Calling find_positions() in Sequence.py
+                occurrences = voice.find_positions(pattern, search_type, mirror_setting)
                 for o in occurrences:
                     s = Sequence()
                     for ir in o:
@@ -109,8 +115,8 @@ class MusicSummary:
           Get the best matching occurrence (wrt its distance from pattern)
           When it is a pattern search, i.e. melodic search, rhythmic search, diatonic search
         """
-        
-        occurrences = self.find_sequences(pattern, search_type)
+
+        occurrences = self.find_sequences(pattern, search_type, mirror_setting)
         distances = list()
 
         if len(occurrences) > 0 :
