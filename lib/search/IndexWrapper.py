@@ -186,6 +186,7 @@ class IndexWrapper:
                     distance = 0
                     best_occurrence = None
                     # Find the occurrences in MusicSummary, if search type is pattern search
+                    # Using MusicSummary to locate hits in the results returned by elasticsearch
                     if search_context.is_pattern_search():
                         msummary = MusicSummary()
                         if opus.summary:
@@ -194,18 +195,23 @@ class IndexWrapper:
                             msummary.decode(msummary_content)
 
                             pattern_sequence = search_context.get_pattern_sequence()
+                            
+                            #No mirror search mode for exact search
+                            if search_context.search_type == settings.EXACT_SEARCH:
+                                mirror_setting = False
 
                             if search_context.search_type == settings.MELODIC_SEARCH or search_context.search_type == settings.DIATONIC_SEARCH or search_context.search_type == settings.RHYTHMIC_SEARCH:
                                 #return the sequences that match and the distances
                                 mirror_setting = search_context.is_mirror_search()
 
+                                # Find the occurrences of matches within the opus, 
+                                # and measure the melodic or rhythmic distance depending on context
+                                # If there is more than one match in an opus,
+                                # we only take the distance between the best match(with least distance with the query)
+                                # The "best_occurrence" here should be a pattern sequence.
                                 best_occurrence, distance = msummary.get_best_occurrence(pattern_sequence, search_context.search_type, mirror_setting)
-                                
                                 logger.info ("Found best occurrence : " + str(best_occurrence) + " with distance " + str(distance))
-
                             matching_ids = msummary.find_matching_ids(pattern_sequence, search_context.search_type, mirror_setting)
-
-                            #best_occurrence is a pattern sequence
 
                         else:
                             logger.warning("No summary for Opus " + opus.ref)
@@ -213,14 +219,14 @@ class IndexWrapper:
                     elif search_context.is_keyword_search():
 
                         '''
-                            Instead of getting MusicSummary and locate the pattern when it is pattern search, 
-                            directly get scores from the opus that match in the search
-                            and find if the keyword is in the lyrics
+                            Instead of getting MusicSummary and locate the pattern when the search type is pattern search, 
+                            here we directly get scores from the opus that match in the search,
+                            and find if the keyword is in the lyrics of the opus.
                         '''
                         best_occurrence = ""
                         #always "" in keyword search mode because it is supposed to be a pattern sequence
                         distance = 0
-                        #No distance calculation for keyword search
+                        #No distance measurement for keyword search
                         matching_ids = []
                         #IDs of matching M21 objects
                         print("#######################################")
@@ -267,11 +273,11 @@ class IndexWrapper:
 
         # Do we search for keywords?
         if search_context.keywords:
-            #Searching for the keywords in titles and composers
+            # Searching for the keywords in titles and composers
             q_title = Q("multi_match", query=search_context.keywords, fields=['lyrics', 'composer', 'title'])
-            #Searching for the keywords in lyrics
+            # Searching for the keywords in lyrics
             q_lyrics = Q("match_phrase", lyrics__value=search_context.keywords)
-            #Combine the search
+            # Combine the search
             search = search.query(q_title | q_lyrics)
 
         # Do we search a melodic pattern
@@ -280,20 +286,20 @@ class IndexWrapper:
                 search = search.query("match_phrase", rhythm__value=search_context.get_rhythmic_pattern())
 
             elif search_context.search_type == settings.MELODIC_SEARCH:
+                # If mirror search mode is on, search the mirror patterns too.
                 if search_context.is_mirror_search() == True:
-                    #If is_mirror_search() == True, search the mirror patterns too.
-                    #get_melodic_pattern function returns a tuple of 2 lists
+                    # calling get_melodic_pattern function returns a tuple of 2 lists here
                     mel_patterns = search_context.get_melodic_pattern(True)
                     og_patterns = mel_patterns[0]
                     mr_patterns = mel_patterns[1]
-                    #Search for the original patterns
+                    # Search for the original patterns
                     q_og = Q("match_phrase", melody__value=og_patterns)
-                    #Search for the mirror patterns
+                    # Search for the mirror patterns
                     q_mr = Q("match_phrase", melody__value=mr_patterns)
-                    #Combine the search
+                    # Combine the search
                     search = search.query(q_og | q_mr)
                 else:
-                    #Otherwise only search for the original melody patterns
+                    # Otherwise only search for the original melody patterns
                     search = search.query("match_phrase", melody__value=search_context.get_melodic_pattern())
 
             elif search_context.search_type == settings.EXACT_SEARCH:
@@ -301,17 +307,19 @@ class IndexWrapper:
 
             elif search_context.search_type == settings.DIATONIC_SEARCH:
 
+                # If mirror search mode is on
                 if search_context.is_mirror_search() == True:
-                    #If is_mirror_search() == True, search mirror patterns too
-                    #it returns patterns+mirror patterns
+                    # dia_patterns includes two lists, a list of original patterns and a list of mirror patterns
                     dia_patterns = search_context.get_diatonic_pattern(True)
+                    # original patterns
                     og_patterns = dia_patterns[0]
+                    # mirror patterns
                     mr_patterns = dia_patterns[1]
                     q_og = Q("match_phrase", diatonic__value=og_patterns)
                     q_mr = Q("match_phrase", diatonic__value=mr_patterns)
                     search = search.query(q_og | q_mr)
                 else:
-                    #Otherwise only search for the original diatonic patterns
+                    # Otherwise only search for the original diatonic patterns
                     search = search.query("match_phrase", diatonic__value=search_context.get_diatonic_pattern())
 
         return search
