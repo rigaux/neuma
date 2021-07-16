@@ -17,7 +17,12 @@ class Distance_neuma:
 
     @staticmethod
     def distance(s1, s2):
-        """Special distance measure for Neuma. The input consists of two sequences
+        """
+        Should be renamed as def rhythmic_distance
+
+        Rhythmic distance based on blocks for ranking of melodic search result. 
+
+        The input consists of two sequence
         that share the same melodic profile: we know that the sucession of intervals is the same.
         The functions cuts each sequence in blocks of constant-pitch notes. Two successive
         blocks correspond to distinct pitches, and, as explained, the intervals between
@@ -68,13 +73,17 @@ class Distance_neuma:
 
     @staticmethod
     def melodic_distance(s1, s2):
-    # To be finished, Tiange
-
-        # Check: are number of blocks the same
+        '''
+         We measure melodic distance for ranking of rhythmic search, using Levenshtein distance
+         Given two sequences(the query and the current match) of pitch intervals as melodic information,
+         the distance between two blocks should be the number of notes that has different pitch intervals.
+         Note: pitch intervals here are diatonic intervals, not semitones.
+        '''
        
         blocks1 = Distance_neuma.simplified_interval_for_blocks(s1)
         blocks2 = Distance_neuma.simplified_interval_for_blocks(s2)
 
+        # Check if the query pattern and the matched pattern has same amount of blocks
         if len(blocks1) != len(blocks2):
             raise ValueError("Distance computation between the pattern and an occurrence: the number of intervals is inconsistent")
         
@@ -94,8 +103,7 @@ class Distance_neuma:
             intervals_blocks1.append(block1["value"])
             intervals_blocks2.append(block2["value"])
 
-            # The sum of the normalized durations gaps represents the cost of aligning the 
-        # two sequences of durations
+        #Measure the levenshtein distance between the match and the query
         cost_alignment = Distance_neuma.distance_levenshtein_for_blocks(intervals_blocks1, intervals_blocks2)
         
         return cost_alignment
@@ -176,7 +184,7 @@ class Distance_neuma:
 
         #In our case, distance of deletion and insertion should always be 0
 
-        #normalize the distance into [0,1] range...necessary?
+        #normalize the distance into [0,1] range...
         distance = distance_substitution/len(s1)
 
         return distance
