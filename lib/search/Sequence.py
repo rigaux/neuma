@@ -98,6 +98,7 @@ class Sequence:
                     pitch_change = True
 
                 #gap is the ratio between the current note length and the previous one
+
                 gap = Fraction(Fraction.from_float(item.duration), Fraction.from_float(previous_item.duration)).limit_denominator(max_denominator=10000)
 
                 rhythm = {"start_pos": str(current_pos), "end_pos": str(i_pos), 
@@ -107,8 +108,8 @@ class Sequence:
                     rhythms.append(rhythm)
                 else:
                     rhythm = {"start_pos": str(current_pos), "end_pos": str(i_pos), 
-                          "value": str(100), "pitch_change": pitch_change}
-                    #Set value to 100, to make sure that the rest is not ignored, and it disrupts a consecutive "rhythm pattern"
+                          "value": str(-1), "pitch_change": pitch_change}
+                    #Set value to -1, to make sure that the rest is not ignored, and it disrupts a consecutive "rhythm pattern"
                     rhythms.append(rhythm)
 
                 previous_item = item
@@ -178,7 +179,8 @@ class Sequence:
             The list "diatonic_intervals" stores diatonic intervals(for example, an ascending fifth is a diatonic interval),
             while the list "intervals" stores the number of semitones as value.
         """
-        dict_wordtonum = {"Unison": '0', "Second": '2', "Third": '3', "Fourth": '4', "Fifth": '5', "Sixth": '6', "Seventh": '7'}
+        dict_wordtonum = {"Unison": '2', "Second": '2', "Third": '3', "Fourth": '4', "Fifth": '5', "Sixth": '6', "Seventh": '7'}
+        #P.S.: Unison as "2" instead of "0" for a reason, see explanation later
         intervals = []
         diatonic_intervals = []
         previous_item = None
@@ -226,6 +228,7 @@ class Sequence:
                         """
                             "directedSimpleNiceName" examples: "Descending Doubly-Diminished Fifth", "Ascending Perfect Fourth", "Ascending Doubly-Augmented Fourth"
                             "simpleName" examples: dd5, P5, AA4. There's no direction information
+                            Since the program only executes here when a new note with different pitch is detected, the "unison" here should be an augmented unison, a.k.a minor second
                         """
                         m21_interval_directed = m21.interval.Interval(noteStart=m21_pre_item, noteEnd=m21_item).directedSimpleNiceName
                         
@@ -315,17 +318,17 @@ class Sequence:
     def find_positions(self, pattern, search_type, mirror_setting = False):
         """
          Find the position(s) of a pattern in the sequence
-         p_intervals: the encoded intervals(sequence) to search for
-         s_intervals: all intervals from each voice
+         p_intervals: the encoded pattern to search for
+         s_intervals: all the intervals/sequences from each voice
          m_intervals: mirror pattern of the original pattern
-
+         the goal is to find p_intervals_list in s_intervals_list
         """
         occurrences = []
 
         if search_type == settings.RHYTHMIC_SEARCH:
             p_intervals = pattern.get_rhythms()
-            m_intervals = p_intervals #TO BE EDITED
             s_intervals = self.get_rhythms()
+            m_intervals = ""
 
         elif search_type == settings.MELODIC_SEARCH:
             p_intervals = pattern.get_intervals(settings.MELODY_DESCR)
@@ -341,6 +344,7 @@ class Sequence:
             m_intervals = pattern.get_mirror_intervals(p_intervals)
             s_intervals = self.get_intervals(settings.DIATONIC_DESCR)
         else:
+            #if search type is not defined, default setting is melody search
             p_intervals = pattern.get_intervals(settings.MELODY_DESCR)
             s_intervals = self.get_intervals(settings.MELODY_DESCR)
 
@@ -356,6 +360,8 @@ class Sequence:
         # Find patterns positions in list
         occurrences_indexes = self.find_sub_list(p_intervals_list, s_intervals_list)
 
+        #print("p_intervals", p_intervals_list)
+        #print("s_intervals", s_intervals_list)
         #If it is mirror search, the function also finds the positions of mirror patterns
         if mirror_setting == True:
             mirror_occ_indexes = self.find_sub_list(m_intervals_list, s_intervals_list)
@@ -563,13 +569,13 @@ class Sequence:
 
     def get_melodic_distance(self, s1, s2):
 
-        #get the diatonic intervals of both to calculate melodic distance
+        #Get the diatonic intervals of both query and the match to calculate melodic distance
         m1 = s1.get_intervals(settings.DIATONIC_DESCR)
         m2 = s2.get_intervals(settings.DIATONIC_DESCR)
         if not m1 or not m2:
             return 100
 
-        #Get melodic distance, computed by modified edit distance
+        #Use modified edit distance to represent the melodic distance between two sequences
         m_distance = Distance_neuma.melodic_distance(s1, s2)
 
         print("Melodic distance between the pattern and occurrence " + str(s1) + " : "+ str(round(m_distance, 4)))
