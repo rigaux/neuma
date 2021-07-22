@@ -175,7 +175,7 @@ class IndexWrapper:
         # Create the result by decoding the opus got from ElasticSearch
         opera = []
         # Utiliser scan() au lieu de parcourir 'results' pour obtenir tous les résultats
-
+        count_match_for_exact_search = 0
         # Philippe la boucle  "for hit in search.scan()" plante sur Humanum...
         for hit in search:
             try:
@@ -195,10 +195,12 @@ class IndexWrapper:
                             msummary.decode(msummary_content)
 
                             pattern_sequence = search_context.get_pattern_sequence()
-                            
+
                             #No mirror search mode for exact search
                             if search_context.search_type == settings.EXACT_SEARCH:
                                 mirror_setting = False
+                                count_match_for_exact_search+=1
+                                occurrences = msummary.find_exact_matches(pattern_sequence, search_context.search_type)
 
                             if search_context.search_type == settings.MELODIC_SEARCH or search_context.search_type == settings.DIATONIC_SEARCH or search_context.search_type == settings.RHYTHMIC_SEARCH:
                                 #return the sequences that match and the distances
@@ -211,8 +213,10 @@ class IndexWrapper:
                                 # The "best_occurrence" here should be a pattern sequence.
                                 best_occurrence, distance = msummary.get_best_occurrence(pattern_sequence, search_context.search_type, mirror_setting)
                                 logger.info ("Found best occurrence : " + str(best_occurrence) + " with distance " + str(distance))
-                            matching_ids = msummary.find_matching_ids(pattern_sequence, search_context.search_type, mirror_setting)
 
+                            #Find matching ids for the matches to be highlighted
+                            matching_ids = msummary.find_matching_ids(pattern_sequence, search_context.search_type, mirror_setting)
+                            print("matching_ids", matching_ids)###
                         else:
                             logger.warning("No summary for Opus " + opus.ref)
                     #If search by keywords
@@ -306,7 +310,6 @@ class IndexWrapper:
                 search = search.query("match_phrase", notes__value=search_context.get_notes_pattern())
 
             elif search_context.search_type == settings.DIATONIC_SEARCH:
-
                 # If mirror search mode is on
                 if search_context.is_mirror_search() == True:
                     # dia_patterns includes two lists, a list of original patterns and a list of mirror patterns
@@ -350,7 +353,7 @@ class OpusIndex(Document):
      Encoding of informations related to an Opus, stored in ElasrticSearch
     '''
     corpus_ref = Text()
-    id = Integer()
+    Id = Integer()
     ref = Text()
     title = Text()
     lyricist = Text()
@@ -390,7 +393,7 @@ class OpusIndex(Document):
         elif descriptor.type == settings.NOTES_DESCR:
             self.notes = self.update_list(self.notes, descriptor.to_dict(), 'voice')
         elif descriptor.type == settings.DIATONIC_DESCR:
-            self.notes = self.update_list(self.diatonic, descriptor.to_dict(), 'voice')
+            self.diatonic = self.update_list(self.diatonic, descriptor.to_dict(), 'voice')
 
 
     @staticmethod
