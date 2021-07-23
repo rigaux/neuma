@@ -33,6 +33,7 @@ KMEANS="kmeans"# -c corpus -k nb_class -t tag(id) -d descriptor -m metric
 QUALEVAL="qualeval"
 FIX_PERMISSIONS_ACTION="fix_permissions"
 CPT_GRAMMAR="cptgrammar"
+TEST_ACTION="test"
 
 class Command(BaseCommand):
     """Scan a corpus specified as input, and apply some action"""
@@ -64,11 +65,19 @@ class Command(BaseCommand):
             opusref = options['opus_ref']
         except Corpus.DoesNotExist:
                 raise CommandError('Corpus "%s" does not exist' % options['corpus_ref'])
-                
+
 #        exit(1)
 
-        if not opusref: # on travaille sur tout un corpus
-            if action == None:
+        if not opusref:  # on travaille sur tout un corpus
+            # print("coucou")
+            # corpora = Corpus.objects.all()
+            # for c in corpora:
+                # print(c.ref)
+                # opera = c.get_opera()
+                # for opus in opera:
+                    # print(opus.ref)
+
+            if action is None:
                 self.stdout.write("Please supply an action ")
                 return
             self.stdout.write('Scanning corpus "%s" with action: %s' % (corpus.title,action))            
@@ -189,8 +198,12 @@ class Command(BaseCommand):
             else:
                 self.stdout.write("Warning: unknown action : " +  action)
         else: # il y a un opus précis sur lequel travailler
+
+            # opera = corpus.get_opera()
+            # for opus in opera:
+                # print(opus.ref)
             try:
-                opusref = options['corpus_ref'] + ":" + opusref
+                # opusref = options['corpus_ref'] + ":" + opusref
                 opus = Opus.objects.get(ref=opusref)
             except Opus.DoesNotExist:
                 raise CommandError('Opus "%s" does not exist' % opusref)
@@ -222,6 +235,11 @@ class Command(BaseCommand):
             elif action == QUALEVAL:
                 """Evaluate the quality of an opus"""
                 Workflow.quality_check(opus)
+                print("Done. ")
+            elif action == TEST_ACTION:
+                """test"""
+                # Workflow.produce_opus_descriptor(opus,affiche=True)
+                Workflow.createJsonDescriptors(opus)
                 print("Done. ")
             elif action == INDEX_ACTION:
                 """Index a specific opus"""
