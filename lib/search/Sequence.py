@@ -282,8 +282,11 @@ class Sequence:
                 if item_duration == 0 or previous_item_duration == 0:
                     continue
                 rhythm = Fraction(item_duration, previous_item_duration).limit_denominator(max_denominator=100)
-                pitch = item.get_index() - previous_item.get_index()
-                
+                pitch_temp = item.get_index() - previous_item.get_index()
+                if pitch_temp > 0:
+                    pitch = str(pitch_temp)+'A'
+                else:
+                    pitch = str(abs(pitch_temp))+'D'
                 note = {"start_pos": str(current_pos), "end_pos": str(i_pos), "rhythm": str(rhythm), "pitch": str(pitch)}
                 notes.append(note)
                 previous_item = item
@@ -360,8 +363,6 @@ class Sequence:
         # Find patterns positions in list
         occurrences_indexes = self.find_sub_list(p_intervals_list, s_intervals_list)
 
-        #print("p_intervals", p_intervals_list)
-        #print("s_intervals", s_intervals_list)
         #If it is mirror search, the function also finds the positions of mirror patterns
         if mirror_setting == True:
             mirror_occ_indexes = self.find_sub_list(m_intervals_list, s_intervals_list)
@@ -457,6 +458,7 @@ class Sequence:
         note_encoding = self.to_ngrams(self.notes_to_symbols(self.get_notes()))
         return note_encoding
 
+    """
     def rhythms_to_symbols(self, dict):
         symbols = list()
         for r in dict:
@@ -468,6 +470,7 @@ class Sequence:
         for interval in dict:
             symbols.append(str(interval["value"]) + ";")
         return symbols
+    """
 
     @staticmethod
     def notes_to_symbols(dict):
@@ -487,7 +490,7 @@ class Sequence:
             for j in range(i, i + NGRAM_SIZE):
                 # Surround ratios with parentheses
                 ngram += "(" + str(dict[j]["value"]) + ")"
-            text += ngram + " "
+            text += ngram + " N "
         return text
 
     def intervals_to_ngrams(self, dict):
@@ -501,7 +504,7 @@ class Sequence:
             ngram = ""
             for j in range(i, i + NGRAM_SIZE): 
                 ngram = ngram + str(dict[j]["value"]) + ";"
-            phrase += ngram + " "
+            phrase += ngram + " N "
         return phrase
 
     def to_ngrams(self, symbols, hash=False):
@@ -511,16 +514,15 @@ class Sequence:
         nb_codes = len(symbols)
         phrase = ""
         for i in range(nb_codes - NGRAM_SIZE + 1):
-            # Begin with a separator (otherwise '7' and '-7' both match)
             ngram = ""
             for j in range(i, i + NGRAM_SIZE):
                 ngram = ngram + str(symbols[j]) + ""
-            if hash:
-                phrase += self.hash_ngrams(ngram) + " "
+            #if hash:
+            #    phrase += self.hash_ngrams(ngram) + " "
             else:
-                phrase += ngram + " "
+                phrase += ngram + " N "
         return phrase
-    
+    """
     @staticmethod
     def hash_ngrams(ngram):
         before = {";": "", "-": "m"}
@@ -534,7 +536,7 @@ class Sequence:
         for c1, c2 in before.items():
             hashed = hashed.replace(c1, c2)
         return hashed
-    
+    """
     @staticmethod
     def find_sub_list(sub_list, l):
         # Find sublists in list

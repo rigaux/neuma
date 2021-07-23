@@ -179,6 +179,7 @@ class IndexWrapper:
         # Philippe la boucle  "for hit in search.scan()" plante sur Humanum...
         for hit in search:
             try:
+               if hit.corpus_ref == 'all:composers:liyanfei': continue
                # Nicolas rajout de ce test car des documents de mappings peuvent apparaitre dans elasticsearch 6.1.2
                if "ref" in hit:
                     opus = Opus.objects.get(ref=hit["ref"])
@@ -214,9 +215,8 @@ class IndexWrapper:
                                 best_occurrence, distance = msummary.get_best_occurrence(pattern_sequence, search_context.search_type, mirror_setting)
                                 logger.info ("Found best occurrence : " + str(best_occurrence) + " with distance " + str(distance))
 
-                            #Find matching ids for the matches to be highlighted
+                            #Find matching ids for the matches to highlight
                             matching_ids = msummary.find_matching_ids(pattern_sequence, search_context.search_type, mirror_setting)
-                            print("matching_ids", matching_ids)###
                         else:
                             logger.warning("No summary for Opus " + opus.ref)
                     #If search by keywords
@@ -249,7 +249,6 @@ class IndexWrapper:
                                         print("Appeared in voice: ", voice.id, ", occurrences: ", occurrences)
                                         for m_id in curr_matching_ids:
                                             matching_ids.append(m_id)
-
                     opera.append({"opus": opus, "matching_ids": json.dumps(matching_ids), "distance": distance, "best_occurrence": str(best_occurrence)})
             except Opus.DoesNotExist:
                 logger.warning ("Opus " +  hit["_id"] + " found in ES but not in the DB")
@@ -353,7 +352,7 @@ class OpusIndex(Document):
      Encoding of informations related to an Opus, stored in ElasrticSearch
     '''
     corpus_ref = Text()
-    Id = Integer()
+    id = Integer()
     ref = Text()
     title = Text()
     lyricist = Text()
