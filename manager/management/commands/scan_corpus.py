@@ -33,7 +33,7 @@ KMEANS="kmeans"# -c corpus -k nb_class -t tag(id) -d descriptor -m metric
 QUALEVAL="qualeval"
 FIX_PERMISSIONS_ACTION="fix_permissions"
 CPT_GRAMMAR="cptgrammar"
-TEST_ACTION="test"
+DESCRIPTORJSON_ACTION="descriptorjson"
 
 class Command(BaseCommand):
     """Scan a corpus specified as input, and apply some action"""
@@ -236,9 +236,8 @@ class Command(BaseCommand):
                 """Evaluate the quality of an opus"""
                 Workflow.quality_check(opus)
                 print("Done. ")
-            elif action == TEST_ACTION:
-                """test"""
-                # Workflow.produce_opus_descriptor(opus,affiche=True)
+            elif action == DESCRIPTORJSON_ACTION:
+                """Produces a file with the descriptors, in json format"""
                 Workflow.createJsonDescriptors(opus)
                 print("Done. ")
             elif action == INDEX_ACTION:
