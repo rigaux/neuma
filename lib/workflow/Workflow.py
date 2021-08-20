@@ -1,3 +1,4 @@
+
 from manager.models import Corpus, Opus, Descriptor, Annotation, AnalyticModel, AnalyticConcept
 import os
 import re
@@ -51,7 +52,6 @@ class Workflow:
     def __init__(self) :
          return
     
-
 
     @staticmethod
     def produce_mei(corpus, recursion=True):
@@ -225,6 +225,109 @@ class Workflow:
         index_wrapper.index_opus(opus)
 
     @staticmethod
+    def analyze_patterns(corpus, recursion = True):
+        '''
+        Analyze all pattern to get statistical data of frequent patterns
+        '''
+        for opus in Opus.objects.filter(corpus__ref=corpus.ref):
+            Workflow.analyze_patterns_in_opus(opus)
+
+        # Recursive call
+        if recursion:
+            children = corpus.get_children(False)
+            for child in children:
+                Workflow.analyze_patterns(child, recursion)
+
+    @staticmethod
+    def analyze_patterns_in_opus(opus):
+        '''
+        Analyze melodic, diatonic and rhythmic patterns within an opus and store statistics
+        '''
+        print ("Analyze patterns in opus " + opus.ref)
+        try:
+                score = opus.get_score()
+        
+                # First, compute the music summary and store it as a file
+                music_summary = score.get_music_summary()
+                music_summary.opus_id = opus.ref
+                opus.summary.save("summary.json", ContentFile(music_summary.encode()))
+
+                # Clean the current descriptors
+                Patterns.objects.filter(opus=opus).delete()
+
+                # Next, find patterns within each Voice of an Opus
+                for part_id, part in music_summary.parts.items():
+                    for voice_id, voice in part.items():
+                        # Melody descriptor
+                        mel_descr = voice.get_melody_encoding()
+
+                        # 'N' is used as segregation between patterns in descriptor
+                        pattern_list = mel_descr.split("N")
+
+                        pattern_list.get_patterns_from_descr(opus, part_id, voice_id, settings.MELODY_DESCR)
+
+                        #Diatonic descriptor
+                        dia_descr = voice.get_diatonic_encoding()
+                        
+                        pattern_list = dia_descr.split("N")
+
+                        pattern_list.get_patterns_from_descr(opus, part_id, voice_id, settings.DIATONIC_DESCR)
+ 
+                        # Rhythm descriptor
+                        rhy_descr = voice.get_rhythm_encoding()
+                        
+                        pattern_list = rhy_descr.split("N")
+                        
+                        pattern_list.get_patterns_from_descr(opus, part_id, voice_id, settings.RHYTHM_DESCR)
+
+    @staticmethod
+    def get_patterns_from_descr(pattern_list, opus, part_id, voice_id, descriptor):
+        """
+        Iterate over the list of patterns to get statistical information of every pattern in a voice
+        """
+        # First get rid of the last element in list which is ''
+        pattern_list.pop()
+
+        for curr_pattern in pattern_list:                            
+            pattern = Patterns()
+            pattern.opus = opus
+            pattern.part = part_id
+            pattern.voice = voice_id
+            pattern.content_type = descriptor
+            
+            #Strip spaces in the beginning and the end to get the pattern in a "clean" way
+            clean_pat = curr_pattern.strip()
+            pattern.value = clean_pat
+
+            if descriptor == settings.MELODY_DESCR:
+                #If the pattern is already in dictionary, total number +=1
+                if clean_pat in Patterns.mel_pattern_dict[clean_pat]:
+                    Patterns.mel_pattern_dict[clean_pat] += 1
+                    #Otherwise save the pattern
+                else:
+                    Patterns.mel_pattern_dict[clean_pat] = 1
+                    pattern.save()
+
+            elif descriptor == settings.DIATONIC_DESCR:
+                #If the pattern is already in dictionary, total number +=1
+                if clean_pat in Patterns.dia_pattern_dict[clean_pat]:
+                    Patterns.dia_pattern_dict[clean_pat] += 1
+                    #Otherwise save the pattern
+                else:
+                    Patterns.dia_pattern_dict[clean_pat] = 1
+                    pattern.save()
+            
+            elif descriptor == settings.RHYTHM_DESCR:
+                #If the pattern is already in dictionary, total number +=1
+                if clean_pat in Patterns.rhy_pattern_dict[clean_pat]:
+                    Patterns.rhy_pattern_dict[clean_pat] += 1
+                    #Otherwise save the pattern
+                else:
+                    Patterns.rhy_pattern_dict[clean_pat] = 1
+                    pattern.save()
+
+    
+    @staticmethod
     def produce_descriptors(corpus, recursion=True):
         """
         Produce the descriptors used for indexing the opuses of a corpus
@@ -240,7 +343,7 @@ class Workflow:
                 Workflow.produce_descriptors(child, recursion)
 
     @staticmethod
-    def produce_opus_descriptor(opus, affiche=False):
+    def produce_opus_descriptor(opus):
         """
         Produce the descriptors for an opus.
         
@@ -262,11 +365,6 @@ class Workflow:
                 opus.summary.save("summary.json", ContentFile(music_summary.encode()))
                 #print (json.dumps(json_summary, indent=4, separators=(',', ': ')))
 
-                descriptors_dict = {}
-                types = "melodic", "diatonic", "rhythmic", "notes"
-                for atype in types:
-                    descriptors_dict[atype] = {}
-
                 # Clean the current descriptors
                 Descriptor.objects.filter(opus=opus).delete()
         
@@ -283,11 +381,7 @@ class Workflow:
                         descriptor.voice = voice_id
                         descriptor.type = settings.MELODY_DESCR
                         descriptor.value = music_descr
-                        if not affiche:
-                            descriptor.save()
-                        else:
-                            # print(descriptor.to_dict())
-                            descriptors_dict["melodic"][str(voice_id)]=descriptor.to_dict()
+                        descriptor.save()
 
                         #Diatonic descriptor, store in Postgres
                         diatonic_descr = voice.get_diatonic_encoding()
@@ -297,11 +391,7 @@ class Workflow:
                         descriptor.voice = voice_id
                         descriptor.type = settings.DIATONIC_DESCR
                         descriptor.value = diatonic_descr
-                        if not affiche:
-                            descriptor.save()
-                        else:
-                            # print(descriptor.to_dict())
-                            descriptors_dict["diatonic"][str(voice_id)]=descriptor.to_dict()
+                        descriptor.save()
                         
                         # Rhythm descriptor
                         rhythm_descr = voice.get_rhythm_encoding()
@@ -311,11 +401,7 @@ class Workflow:
                         descriptor.voice = voice_id
                         descriptor.type = settings.RHYTHM_DESCR
                         descriptor.value = rhythm_descr
-                        if not affiche:
-                            descriptor.save()
-                        else:
-                            # print(descriptor.to_dict())
-                            descriptors_dict["rhythmic"][str(voice_id)]=descriptor.to_dict()
+                        descriptor.save()
                         
                         # Notes descriptor
                         notes_descr = voice.get_note_encoding()
@@ -325,11 +411,7 @@ class Workflow:
                         descriptor.voice = voice_id
                         descriptor.type = settings.NOTES_DESCR
                         descriptor.value = notes_descr
-                        if not affiche:
-                            descriptor.save()
-                        else:
-                            # print(descriptor.to_dict())
-                            descriptors_dict["notes"][str(voice_id)]=descriptor.to_dict()
+                        descriptor.save()
                
                 # Hack: the M21 parser does not supply lyrics. Use the MusicXML for the moment                   
                 
@@ -352,8 +434,6 @@ class Workflow:
         except  Exception as ex:
             print ("Exception for opus " + opus.ref + " Message:" + str(ex))
             print ("Are you running elasticsearch?")
-        
-        return descriptors_dict
 
     @staticmethod 
     def import_zip(upload, do_import=True):
@@ -671,30 +751,6 @@ class Workflow:
         with open(os.path.join('transcription', 'grammars', 'weighted_grammar.txt'), 'w') as f:
             f.write(grammar_str)
 
-    def createJsonDescriptors(opus):
-        """returns the Json representation of an opus"""
-        opusdict = {}
-        opusdict["opusref"] = str(opus.ref)
-        opusdict["opusurl"] = "http://neuma.huma-num.fr/home/opus/"+str(opus.ref)
-
-        types = "melodic", "diatonic", "rhythmic", "notes"
-
-        descriptors = Workflow.produce_opus_descriptor(opus,affiche=True)
-        # print(descriptors.items())
-
-        for atype in types: 
-            l = []
-            for voice, descrip in descriptors[atype].items():
-                l.append(descrip["value"])
-
-            opusdict[atype] = l
-
-        # Serializing json 
-        json_object = json.dumps(opusdict, indent = 4)
-        # Writing to sample.json
-        filename = str(opus.ref).replace(":", "-") + ".json"
-        with open(filename, "w") as outfile:
-            outfile.write(json_object)
 
 #
 # A top level function that calls import zip. Necessary for multi thearing, otherwise
@@ -715,4 +771,3 @@ def decompose_zip_name (fname):
             sep = "-"
         opus_ref += components[i] + sep
     return (opus_ref, extension)
-
