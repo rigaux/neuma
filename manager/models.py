@@ -150,10 +150,8 @@ class Corpus(models.Model):
         self.children = Corpus.objects.filter(parent=self)
         for child in self.children:
             child.get_children(recursive)
-        return self.children
 
-    def get_direct_children(self):
-        return self.get_children(False)
+        return self.children
 
     def get_nb_children(self):
         return Corpus.objects.filter(parent=self).count()
@@ -166,8 +164,6 @@ class Corpus(models.Model):
 
     def get_nb_opera(self):
         return Opus.objects.filter(corpus=self).count()
-    def get_nb_opera_and_descendants(self):
-        return Opus.objects.filter(ref__startswith=self.ref).count()
 
     def get_opera(self):
         return Opus.objects.filter(corpus=self).order_by('ref')
@@ -350,7 +346,7 @@ class Opus(models.Model):
 
     class Meta:
         db_table = "Opus"
-    
+
     def get_url(self):
         """
           Get the URL to the Web opus page, taken from urls.py
@@ -593,6 +589,37 @@ class OpusMeta(models.Model):
     class Meta:
         db_table = "OpusMeta"
 
+class Patterns(models.Model):
+
+    '''
+    #TODO TIANGE: IS it necessary to store in postgres?
+    Patterns class is used for storing the statistical information of patterns appeared in the dataset.
+    
+    Pattern_dict stores the occurrence number of every pattern within the dataset,
+    so that we could find the most frequent, least frequent patterns existing in the whole dataset
+    '''
+
+    opus = models.ForeignKey(Opus,on_delete=models.CASCADE)
+    part = models.CharField(max_length=30)
+    voice = models.CharField(max_length=30)
+
+    #content_type: melodic, diatonic or rhythmic
+    content_type = models.CharField(max_length=30)
+    value = models.TextField()
+
+    #A dictionary of melodic patterns
+    mel_pattern_dict = {}
+    #A dictionary of diatonic patterns
+    dia_pattern_dict = {}
+    #A dictionary of rhythmic patterns
+    rhy_pattern_dict = {}
+
+    class Meta:
+        db_table = "Patterns"
+
+    def __str__(self):
+        return self.content_type + " " + str(self.opus.ref) + " " + str(self.opus.corpus)
+        #Apart from corpus, we can also get title, composer using opus information
 
 class Descriptor(models.Model):
     '''A descriptor is a textual representation for some musical feature, used for full text indexing'''
@@ -610,7 +637,6 @@ class Descriptor(models.Model):
 
     def __str__(self):
         return self.type + " " + str(self.opus.ref) + " " + str(self.opus.corpus)
-
 
 class Bookmark(models.Model):
     '''Record accesses from user to opera'''
