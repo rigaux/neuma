@@ -152,6 +152,10 @@ class Corpus(models.Model):
             child.get_children(recursive)
 
         return self.children
+    
+    def get_direct_children(self):
+        return self.get_children(False)
+        return self.children
 
     def get_nb_children(self):
         return Corpus.objects.filter(parent=self).count()
@@ -164,6 +168,9 @@ class Corpus(models.Model):
 
     def get_nb_opera(self):
         return Opus.objects.filter(corpus=self).count()
+
+    def get_nb_opera_and_descendants(self):
+        return Opus.objects.filter(ref__startswith=self.ref).count()
 
     def get_opera(self):
         return Opus.objects.filter(corpus=self).order_by('ref')
