@@ -343,7 +343,7 @@ class Workflow:
                 Workflow.produce_descriptors(child, recursion)
 
     @staticmethod
-    def produce_opus_descriptor(opus):
+    def produce_opus_descriptor(opus, affiche=False):
         """
         Produce the descriptors for an opus.
         
@@ -365,6 +365,11 @@ class Workflow:
                 opus.summary.save("summary.json", ContentFile(music_summary.encode()))
                 #print (json.dumps(json_summary, indent=4, separators=(',', ': ')))
 
+                descriptors_dict = {}
+                types = "melodic", "diatonic", "rhythmic", "notes"
+                for atype in types:
+                    descriptors_dict[atype] = {}
+
                 # Clean the current descriptors
                 Descriptor.objects.filter(opus=opus).delete()
         
@@ -381,7 +386,11 @@ class Workflow:
                         descriptor.voice = voice_id
                         descriptor.type = settings.MELODY_DESCR
                         descriptor.value = music_descr
-                        descriptor.save()
+                        if not affiche:
+                            descriptor.save()
+                        else:
+                            # print(descriptor.to_dict())
+                            descriptors_dict["melodic"][str(voice_id)]=descriptor.to_dict()
 
                         #Diatonic descriptor, store in Postgres
                         diatonic_descr = voice.get_diatonic_encoding()
@@ -391,7 +400,11 @@ class Workflow:
                         descriptor.voice = voice_id
                         descriptor.type = settings.DIATONIC_DESCR
                         descriptor.value = diatonic_descr
-                        descriptor.save()
+                        if not affiche:
+                            descriptor.save()
+                        else:
+                            # print(descriptor.to_dict())
+                            descriptors_dict["diatonic"][str(voice_id)]=descriptor.to_dict()
                         
                         # Rhythm descriptor
                         rhythm_descr = voice.get_rhythm_encoding()
@@ -401,7 +414,11 @@ class Workflow:
                         descriptor.voice = voice_id
                         descriptor.type = settings.RHYTHM_DESCR
                         descriptor.value = rhythm_descr
-                        descriptor.save()
+                        if not affiche:
+                            descriptor.save()
+                        else:
+                            # print(descriptor.to_dict())
+                            descriptors_dict["rhythmic"][str(voice_id)]=descriptor.to_dict()
                         
                         # Notes descriptor
                         notes_descr = voice.get_note_encoding()
@@ -411,7 +428,11 @@ class Workflow:
                         descriptor.voice = voice_id
                         descriptor.type = settings.NOTES_DESCR
                         descriptor.value = notes_descr
-                        descriptor.save()
+                         if not affiche:
+                            descriptor.save()
+                        else:
+                            # print(descriptor.to_dict())
+                            descriptors_dict["notes"][str(voice_id)]=descriptor.to_dict()
                
                 # Hack: the M21 parser does not supply lyrics. Use the MusicXML for the moment                   
                 
@@ -434,6 +455,7 @@ class Workflow:
         except  Exception as ex:
             print ("Exception for opus " + opus.ref + " Message:" + str(ex))
             print ("Are you running elasticsearch?")
+        return descriptors_dict
 
     @staticmethod 
     def import_zip(upload, do_import=True):
@@ -751,6 +773,30 @@ class Workflow:
         with open(os.path.join('transcription', 'grammars', 'weighted_grammar.txt'), 'w') as f:
             f.write(grammar_str)
 
+def createJsonDescriptors(opus):
+        """returns the Json representation of an opus"""
+        opusdict = {}
+        opusdict["opusref"] = str(opus.ref)
+        opusdict["opusurl"] = "http://neuma.huma-num.fr/home/opus/"+str(opus.ref)
+
+        types = "melodic", "diatonic", "rhythmic", "notes"
+
+        descriptors = Workflow.produce_opus_descriptor(opus,affiche=True)
+        # print(descriptors.items())
+
+        for atype in types: 
+            l = []
+            for voice, descrip in descriptors[atype].items():
+                l.append(descrip["value"])
+
+            opusdict[atype] = l
+
+        # Serializing json 
+        json_object = json.dumps(opusdict, indent = 4)
+        # Writing to sample.json
+        filename = str(opus.ref).replace(":", "-") + ".json"
+        with open(filename, "w") as outfile:
+            outfile.write(json_object)
 
 #
 # A top level function that calls import zip. Necessary for multi thearing, otherwise
