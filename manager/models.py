@@ -598,10 +598,11 @@ class Patterns(models.Model):
 
     '''
     #TODO TIANGE: IS it necessary to store in postgres?
+
     Patterns class is used for storing the statistical information of patterns appeared in the dataset.
     
-    Pattern_dict stores the occurrence number of every pattern within the dataset,
-    so that we could find the most frequent, least frequent patterns existing in the whole dataset
+    pattern_dict stores the occurrence number of every pattern within the dataset/corpus/opus,
+    so that the most frequent patterns existing in the dataset/corpus/opus could be found.
     '''
 
     opus = models.ForeignKey(Opus,on_delete=models.CASCADE)
