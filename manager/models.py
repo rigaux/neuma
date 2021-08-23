@@ -150,12 +150,10 @@ class Corpus(models.Model):
         self.children = Corpus.objects.filter(parent=self)
         for child in self.children:
             child.get_children(recursive)
-
         return self.children
     
     def get_direct_children(self):
         return self.get_children(False)
-        return self.children
 
     def get_nb_children(self):
         return Corpus.objects.filter(parent=self).count()
@@ -615,11 +613,11 @@ class Patterns(models.Model):
     value = models.TextField()
 
     #A dictionary of melodic patterns
-    mel_pattern_dict = {}
+    mel_pattern_dict = dict()
     #A dictionary of diatonic patterns
-    dia_pattern_dict = {}
+    dia_pattern_dict = dict()
     #A dictionary of rhythmic patterns
-    rhy_pattern_dict = {}
+    rhy_pattern_dict = dict()
 
     class Meta:
         db_table = "Patterns"

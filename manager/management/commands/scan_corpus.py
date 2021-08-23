@@ -34,6 +34,8 @@ QUALEVAL="qualeval"
 FIX_PERMISSIONS_ACTION="fix_permissions"
 CPT_GRAMMAR="cptgrammar"
 DESCRIPTORJSON_ACTION="descriptorjson"
+ANALYZE_CORPUS_ACTION = "analyze"
+ANALYZE_OPUS_ACTION = "analyze_opus"
 
 class Command(BaseCommand):
     """Scan a corpus specified as input, and apply some action"""
@@ -85,15 +87,18 @@ class Command(BaseCommand):
             if action == TO_MEI_ACTION:
                 Workflow.produce_mei(corpus)
                 print ("MEI conversion completed for " + corpus.title)
+
             elif action == INDEX_ACTION:
                 Workflow.index_corpus(corpus)
                 print ("Indexing completed for corpus '" + corpus.title + "'")
+
             elif action == COMPILE_ACTION:
                 try:
                     Workflow.compile(corpus)
                 except  Exception as ex:
                     print ("Exception for corpus " + corpus.ref + " Message:" + str(ex))
                 print ("Compilation completed for " + corpus.title)
+
             elif action == CHORALS_ACTION:
                 print ("Collect chorals titles")
                 with open(settings.BASE_DIR +  '/static/chorals_titles.txt') as titles_file:
@@ -115,6 +120,7 @@ class Command(BaseCommand):
                             print ("Found !!!")
                         except:
                             print ("Unable to find opus with ref " + clean)
+
             elif action == TITLE_ACTION:        
                 for opus in Opus.objects.filter(corpus__ref=corpus.ref):
                     self.stdout.write("Found opus " + opus.title)
@@ -142,6 +148,17 @@ class Command(BaseCommand):
                             self.stdout.write("Warning: invalid MusicXML file path for " + opus.title)
                     else:
                         self.stdout.write("Warning: no MusicXML for opus " + opus.title)
+
+            elif action == ANALYZE_CORPUS_ACTION:
+                """
+                Analyze all patterns in corpus to get the most frequent ones
+                """
+                try:
+                    Workflow.analyze_patterns(corpus)
+                    print("Done.")
+                except corpus.DoesNotExist:
+                    raise CommandError('corpus "%s" does not exist' % corpusref)
+
             elif action == CPTDIST:
                 print("Generating SimMatrix ... this may takes a while")
                 try: 
@@ -150,6 +167,7 @@ class Command(BaseCommand):
                     print ("Something wrong with corpus " + corpus.ref +  " : "
                            + str(e))
                 print("done.")
+
             elif action == KMEANS:
                 try:
                     class_number = options['class_number']
@@ -165,6 +183,7 @@ class Command(BaseCommand):
 
                 print("Computing Kmeans for corpus ... this may takes a while")
                 corpus.generate_kmeans(measure,class_number)
+
             elif action == QUALEVAL:
                 """Evaluate the quality of a corpus"""
                 opera = corpus.get_opera()
@@ -172,10 +191,12 @@ class Command(BaseCommand):
                 for opus in opera:
                     Workflow.quality_check(opus)
                 print("Done. ")
+
             elif action == CPT_GRAMMAR:
                 """Evaluate the quality of a corpus"""
                 Workflow.compute_grammar(corpus)
                 print("Done. ")
+
             elif action == DISSONANCE_ACTION:
                 """ Compute the dissonances of a Corpus"""
                 opera = corpus.get_opera()
@@ -240,6 +261,17 @@ class Command(BaseCommand):
                 """Produces a file with the descriptors, in json format"""
                 Workflow.createJsonDescriptors(opus)
                 print("Done. ")
+
+            elif action == ANALYZE_OPUS_ACTION:
+                """
+                Analyze all patterns in corpus to get the most frequent ones
+                """
+                try:
+                    Workflow.analyze_patterns_in_opus(opus)
+                    print("Done.")
+                except Opus.DoesNotExist:
+                    raise CommandError('Opus "%s" does not exist' % opusref)
+
             elif action == INDEX_ACTION:
                 """Index a specific opus"""
                 Workflow.index_opus(opus)
