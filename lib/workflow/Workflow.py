@@ -284,9 +284,6 @@ class Workflow:
         music_summary.opus_id = opus.ref
         opus.summary.save("summary.json", ContentFile(music_summary.encode()))
 
-        # SHOULD WE CLEAN CURRENT PATTERN???
-        #Patterns.objects.filter(opus=opus).delete()
-
         # Find patterns within each Voice of an Opus
         for part_id, part in music_summary.parts.items():
             for voice_id, voice in part.items():
