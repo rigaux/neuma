@@ -1,5 +1,5 @@
 
-from manager.models import Corpus, Opus, Descriptor, Annotation, AnalyticModel, AnalyticConcept
+from manager.models import Corpus, Opus, Descriptor, Annotation, AnalyticModel, AnalyticConcept, Patterns
 import os
 import re
 import subprocess
@@ -225,12 +225,42 @@ class Workflow:
         index_wrapper.index_opus(opus)
 
     @staticmethod
+    def patterns_statistics_analyze(mel_dict, dia_dict, rhy_dict):
+        """
+        Analyze statistics based on all patterns in the opus/corpus/library, 
+        such as top 10 common patterns, patterns that appeared more than 50 times
+        """
+
+        print("Melodic patterns that appeared more than 50 times in corpus:")
+        for ele in sorted(mel_dict, key=mel_dict.get, reverse=True):
+            if mel_dict[ele] >= 50:
+                print(ele, mel_dict[ele])
+        
+        print("Diatonic patterns that appeared more than 50 times in corpus:")
+        for ele in sorted(dia_dict, key=dia_dict.get, reverse=True):
+            if dia_dict[ele] >= 50:
+                print(ele, dia_dict[ele])
+
+        print("Rhythmic patterns that appeared more than 50 times in corpus:")
+        for ele in sorted(rhy_dict, key=rhy_dict.get, reverse=True):
+            if rhy_dict[ele] >= 50:
+                print(ele, rhy_dict[ele])
+
+        """
+        #Print all patterns existing 
+        
+        print("All melodic patterns: ", mel)
+        print("All diatonic patterns:", dia)
+        print("All rhythmic patterns:", rhy)
+        """
+
+    @staticmethod
     def analyze_patterns(corpus, recursion = True):
         '''
         Analyze all pattern to get statistical data of frequent patterns
         '''
         for opus in Opus.objects.filter(corpus__ref=corpus.ref):
-            Workflow.analyze_patterns_in_opus(opus)
+            mel_pat_dict, dia_pat_dict, rhy_pat_dict = Workflow.analyze_patterns_in_opus(opus)
 
         # Recursive call
         if recursion:
@@ -238,57 +268,61 @@ class Workflow:
             for child in children:
                 Workflow.analyze_patterns(child, recursion)
 
+        Workflow.patterns_statistics_analyze(mel_pat_dict, dia_pat_dict, rhy_pat_dict)
+
     @staticmethod
     def analyze_patterns_in_opus(opus):
         '''
         Analyze melodic, diatonic and rhythmic patterns within an opus and store statistics
         '''
         print ("Analyze patterns in opus " + opus.ref)
-        try:
-                score = opus.get_score()
-        
-                # First, compute the music summary and store it as a file
-                music_summary = score.get_music_summary()
-                music_summary.opus_id = opus.ref
-                opus.summary.save("summary.json", ContentFile(music_summary.encode()))
 
-                # Clean the current descriptors
-                Patterns.objects.filter(opus=opus).delete()
+        score = opus.get_score()
 
-                # Next, find patterns within each Voice of an Opus
-                for part_id, part in music_summary.parts.items():
-                    for voice_id, voice in part.items():
-                        # Melody descriptor
-                        mel_descr = voice.get_melody_encoding()
+        # First, compute the music summary and store it as a file
+        music_summary = score.get_music_summary()
+        music_summary.opus_id = opus.ref
+        opus.summary.save("summary.json", ContentFile(music_summary.encode()))
 
-                        # 'N' is used as segregation between patterns in descriptor
-                        pattern_list = mel_descr.split("N")
+        # SHOULD WE CLEAN CURRENT PATTERN???
+        #Patterns.objects.filter(opus=opus).delete()
 
-                        pattern_list.get_patterns_from_descr(opus, part_id, voice_id, settings.MELODY_DESCR)
+        # Find patterns within each Voice of an Opus
+        for part_id, part in music_summary.parts.items():
+            for voice_id, voice in part.items():
+                # Melody descriptor
+                mel_descr = voice.get_melody_encoding()
 
-                        #Diatonic descriptor
-                        dia_descr = voice.get_diatonic_encoding()
+                # 'N' is used as segregation between patterns in descriptor
+                pattern_list = mel_descr.split("N")
+
+                mel_pat_dict = Workflow.get_patterns_from_descr(pattern_list, opus, part_id, voice_id, settings.MELODY_DESCR)
+
+                #Diatonic descriptor
+                dia_descr = voice.get_diatonic_encoding()
                         
-                        pattern_list = dia_descr.split("N")
+                pattern_list = dia_descr.split("N")
 
-                        pattern_list.get_patterns_from_descr(opus, part_id, voice_id, settings.DIATONIC_DESCR)
+                dia_pat_dict = Workflow.get_patterns_from_descr(pattern_list, opus, part_id, voice_id, settings.DIATONIC_DESCR)
  
-                        # Rhythm descriptor
-                        rhy_descr = voice.get_rhythm_encoding()
+                # Rhythm descriptor
+                rhy_descr = voice.get_rhythm_encoding()
                         
-                        pattern_list = rhy_descr.split("N")
+                pattern_list = rhy_descr.split("N")
                         
-                        pattern_list.get_patterns_from_descr(opus, part_id, voice_id, settings.RHYTHM_DESCR)
+                rhy_pat_dict = Workflow.get_patterns_from_descr(pattern_list, opus, part_id, voice_id, settings.RHYTHM_DESCR)
 
-    @staticmethod
+        return mel_pat_dict, dia_pat_dict, rhy_pat_dict
+
+        @staticmethod
     def get_patterns_from_descr(pattern_list, opus, part_id, voice_id, descriptor):
         """
         Iterate over the list of patterns to get statistical information of every pattern in a voice
         """
-        # First get rid of the last element in list which is ''
-        pattern_list.pop()
 
-        for curr_pattern in pattern_list:                            
+        for curr_pattern in pattern_list:
+            if curr_pattern == '': continue
+            
             pattern = Patterns()
             pattern.opus = opus
             pattern.part = part_id
@@ -296,35 +330,45 @@ class Workflow:
             pattern.content_type = descriptor
             
             #Strip spaces in the beginning and the end to get the pattern in a "clean" way
-            clean_pat = curr_pattern.strip()
+            clean_pat = curr_pattern
+            clean_pat = clean_pat.strip()
             pattern.value = clean_pat
 
             if descriptor == settings.MELODY_DESCR:
                 #If the pattern is already in dictionary, total number +=1
-                if clean_pat in Patterns.mel_pattern_dict[clean_pat]:
-                    Patterns.mel_pattern_dict[clean_pat] += 1
+                if clean_pat in pattern.mel_pattern_dict:
+                    pattern.mel_pattern_dict[clean_pat] += 1
                     #Otherwise save the pattern
                 else:
-                    Patterns.mel_pattern_dict[clean_pat] = 1
-                    pattern.save()
-
+                    pattern.mel_pattern_dict[clean_pat] = 1
+                    #pattern.save()
+                
             elif descriptor == settings.DIATONIC_DESCR:
                 #If the pattern is already in dictionary, total number +=1
-                if clean_pat in Patterns.dia_pattern_dict[clean_pat]:
-                    Patterns.dia_pattern_dict[clean_pat] += 1
+                if clean_pat in pattern.dia_pattern_dict:
+                    pattern.dia_pattern_dict[clean_pat] += 1
                     #Otherwise save the pattern
                 else:
-                    Patterns.dia_pattern_dict[clean_pat] = 1
-                    pattern.save()
-            
+                    pattern.dia_pattern_dict[clean_pat] = 1
+                    #pattern.save()
+                
             elif descriptor == settings.RHYTHM_DESCR:
                 #If the pattern is already in dictionary, total number +=1
-                if clean_pat in Patterns.rhy_pattern_dict[clean_pat]:
-                    Patterns.rhy_pattern_dict[clean_pat] += 1
+                if clean_pat in pattern.rhy_pattern_dict:
+                    pattern.rhy_pattern_dict[clean_pat] += 1
                     #Otherwise save the pattern
                 else:
-                    Patterns.rhy_pattern_dict[clean_pat] = 1
-                    pattern.save()
+                    pattern.rhy_pattern_dict[clean_pat] = 1
+                    #pattern.save()
+
+        if descriptor == settings.MELODY_DESCR:
+            return pattern.mel_pattern_dict   
+        
+        elif descriptor == settings.DIATONIC_DESCR:
+            return pattern.dia_pattern_dict
+        
+        elif descriptor == settings.RHYTHM_DESCR:
+            return pattern.rhy_pattern_dict
 
     
     @staticmethod
@@ -428,7 +472,7 @@ class Workflow:
                         descriptor.voice = voice_id
                         descriptor.type = settings.NOTES_DESCR
                         descriptor.value = notes_descr
-                         if not affiche:
+                        if not affiche:
                             descriptor.save()
                         else:
                             # print(descriptor.to_dict())
