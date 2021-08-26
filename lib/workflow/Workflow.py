@@ -225,26 +225,65 @@ class Workflow:
         index_wrapper.index_opus(opus)
 
     @staticmethod
-    def patterns_statistics_analyze(mel_dict, dia_dict, rhy_dict):
+    def patterns_statistics_analyze(corpus, mel_dict, dia_dict, rhy_dict):
         """
         Analyze statistics based on all patterns in the opus/corpus/library, 
-        such as top 10 common patterns, patterns that appeared more than 50 times
+        such as top 15 common patterns, patterns that appeared more than 50 times
         """
 
-        print("Melodic patterns that appeared more than 50 times in corpus:")
-        for ele in sorted(mel_dict, key=mel_dict.get, reverse=True):
-            if mel_dict[ele] >= 50:
-                print(ele, mel_dict[ele])
+        print("Finished analysis of corpus:" + corpus.title)
         
-        print("Diatonic patterns that appeared more than 50 times in corpus:")
-        for ele in sorted(dia_dict, key=dia_dict.get, reverse=True):
-            if dia_dict[ele] >= 50:
-                print(ele, dia_dict[ele])
+        print("Top 15 melodic patterns appeared in corpus(so far):")
+        cnt = 0
+        #sort elements by their occurrance
+        for ele in sorted(mel_dict, key=mel_dict.get, reverse=True):
+            print(ele, mel_dict[ele])
+            cnt += 1
+            #only print the top 15 results
+            if cnt >= 15: break
 
-        print("Rhythmic patterns that appeared more than 50 times in corpus:")
+        print("Top 15 diatonic patterns appeared in corpus(so far):")
+        cnt = 0
+        #sort elements by their occurrance
+        for ele in sorted(dia_dict, key=dia_dict.get, reverse=True):
+            print(ele, dia_dict[ele])
+            cnt += 1
+            #only print the top 15 results
+            if cnt >= 15: break
+
+        print("Top 15 rhythmic patterns appeared in corpus(so far):")
+        cnt = 0
+        #sort elements by their occurrance
         for ele in sorted(rhy_dict, key=rhy_dict.get, reverse=True):
-            if rhy_dict[ele] >= 50:
+            print(ele, rhy_dict[ele])
+            cnt += 1
+            #only print the top 15 results
+            if cnt >= 15: break
+        
+        '''
+        #print all patterns that appeared more than 200 times
+
+        print("Melodic patterns that appeared more than 200 times in corpus so far:")
+        for ele in sorted(mel_dict, key=mel_dict.get, reverse=True):
+            if mel_dict[ele] >= 200:
+                print(ele, mel_dict[ele])
+            else:
+                break
+        
+        print("Diatonic patterns that appeared more than 200 times in corpus so far:")
+        for ele in sorted(dia_dict, key=dia_dict.get, reverse=True):
+            if dia_dict[ele] >= 200:
+                print(ele, dia_dict[ele])
+            else:
+                break
+
+        print("Rhythmic patterns that appeared more than 200 times in corpus so far:")
+        for ele in sorted(rhy_dict, key=rhy_dict.get, reverse=True):
+            if rhy_dict[ele] >= 200:
                 print(ele, rhy_dict[ele])
+            else:
+                break
+        '''
 
         """
         #Print all patterns existing 
@@ -260,6 +299,8 @@ class Workflow:
         Analyze all pattern to get statistical data of frequent patterns
         '''
         for opus in Opus.objects.filter(corpus__ref=corpus.ref):
+            #Avoid an opus with error
+            if opus.ref == "composers:praetorius:terpsichore:195": continue
             mel_pat_dict, dia_pat_dict, rhy_pat_dict = Workflow.analyze_patterns_in_opus(opus)
 
         # Recursive call
@@ -268,7 +309,8 @@ class Workflow:
             for child in children:
                 Workflow.analyze_patterns(child, recursion)
 
-        Workflow.patterns_statistics_analyze(mel_pat_dict, dia_pat_dict, rhy_pat_dict)
+        try:
+            Workflow.patterns_statistics_analyze(corpus, mel_pat_dict, dia_pat_dict, rhy_pat_dict)
 
     @staticmethod
     def analyze_patterns_in_opus(opus):
@@ -316,10 +358,14 @@ class Workflow:
         """
         Iterate over the list of patterns to get statistical information of every pattern in a voice
         """
+        #if pattern list is empty, return:
+        if pattern_list == [""]:
+            return
 
         for curr_pattern in pattern_list:
-            if curr_pattern == '': continue
-            
+            #if it is an invalid pattern, skip
+            if curr_pattern == '' or curr_pattern == ' ': continue
+                        
             pattern = Patterns()
             pattern.opus = opus
             pattern.part = part_id
@@ -358,15 +404,18 @@ class Workflow:
                     pattern.rhy_pattern_dict[clean_pat] = 1
                     #pattern.save()
 
-        if descriptor == settings.MELODY_DESCR:
-            return pattern.mel_pattern_dict   
-        
-        elif descriptor == settings.DIATONIC_DESCR:
-            return pattern.dia_pattern_dict
-        
-        elif descriptor == settings.RHYTHM_DESCR:
-            return pattern.rhy_pattern_dict
+        try:
+            if descriptor == settings.MELODY_DESCR:
+                return pattern.mel_pattern_dict
 
+            elif descriptor == settings.DIATONIC_DESCR:
+                return pattern.dia_pattern_dict
+
+            elif descriptor == settings.RHYTHM_DESCR:
+                return pattern.rhy_pattern_dict
+
+        except Exception as ex:
+            print ("Exception for opus " + opus.ref + " Message:" + str(ex))
     
     @staticmethod
     def produce_descriptors(corpus, recursion=True):

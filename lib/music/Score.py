@@ -22,19 +22,23 @@ class Score:
     
     def load_from_xml(self, xml_path, format):
         """Get the score representation from a MEI or MusicXML document"""
+
+        try:        
+            #If the score is in MEI format, convert it to Music21 stream
+            if format == "mei":
+                with open (xml_path, "r") as meifile:
+                    meiString = meifile.read()
+                #print ("MEI file: " + meiString[0:40])
+                conv = mei.MeiToM21Converter(meiString)
+                self.m21_score = conv.run()
+            else:
+                #If the score is in XML format
+                self.m21_score = m21.converter.parseFile(xml_path,format=format)
         
-        #If the score is in MEI format, convert it to Music21 stream
-        if format == "mei":
-            with open (xml_path, "r") as meifile:
-                meiString = meifile.read()
-            #print ("MEI file: " + meiString[0:40])
-            conv = mei.MeiToM21Converter(meiString)
-            self.m21_score = conv.run()
-        else:
-            #If the score is in XML format
-            self.m21_score = m21.converter.parseFile(xml_path,format=format)
-        
-        self.load_component(self.m21_score)
+            self.load_component(self.m21_score)
+
+        except Exception as ex:
+                print ("Error while loading from xml:" + str(ex))
                 
     def load_component(self, m21stream):
         '''Load the components from a M21 stream'''
