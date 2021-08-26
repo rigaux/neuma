@@ -311,7 +311,7 @@ class Workflow:
 
         return mel_pat_dict, dia_pat_dict, rhy_pat_dict
 
-        @staticmethod
+    @staticmethod
     def get_patterns_from_descr(pattern_list, opus, part_id, voice_id, descriptor):
         """
         Iterate over the list of patterns to get statistical information of every pattern in a voice
