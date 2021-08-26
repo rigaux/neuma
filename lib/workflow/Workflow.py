@@ -232,7 +232,7 @@ class Workflow:
         """
 
         print("Finished analysis of corpus:" + corpus.title)
-        
+
         print("Top 15 melodic patterns appeared in corpus(so far):")
         cnt = 0
         #sort elements by their occurrance
@@ -311,6 +311,9 @@ class Workflow:
 
         try:
             Workflow.patterns_statistics_analyze(corpus, mel_pat_dict, dia_pat_dict, rhy_pat_dict)
+        except:
+            #When the analysis finish, no value would be assigned to mel_pat_dict etc.. thus simply return void
+            return
 
     @staticmethod
     def analyze_patterns_in_opus(opus):
