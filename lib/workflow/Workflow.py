@@ -225,15 +225,13 @@ class Workflow:
         index_wrapper.index_opus(opus)
 
     @staticmethod
-    def patterns_statistics_analyze(corpus, mel_dict, dia_dict, rhy_dict):
+    def patterns_statistics_analyze(mel_dict, dia_dict, rhy_dict):
         """
         Analyze statistics based on all patterns in the opus/corpus/library, 
         such as top 15 common patterns, patterns that appeared more than 50 times
         """
 
-        print("Finished analysis of corpus:" + corpus.title)
-
-        print("Top 15 melodic patterns appeared in corpus(so far):")
+        print("Top 15 melodic patterns appeared so far:")
         cnt = 0
         #sort elements by their occurrance
         for ele in sorted(mel_dict, key=mel_dict.get, reverse=True):
@@ -242,7 +240,7 @@ class Workflow:
             #only print the top 15 results
             if cnt >= 15: break
 
-        print("Top 15 diatonic patterns appeared in corpus(so far):")
+        print("Top 15 diatonic patterns appeared so far:")
         cnt = 0
         #sort elements by their occurrance
         for ele in sorted(dia_dict, key=dia_dict.get, reverse=True):
@@ -251,7 +249,7 @@ class Workflow:
             #only print the top 15 results
             if cnt >= 15: break
 
-        print("Top 15 rhythmic patterns appeared in corpus(so far):")
+        print("Top 15 rhythmic patterns appeared so far:")
         cnt = 0
         #sort elements by their occurrance
         for ele in sorted(rhy_dict, key=rhy_dict.get, reverse=True):
@@ -310,7 +308,7 @@ class Workflow:
                 Workflow.analyze_patterns(child, recursion)
 
         try:
-            Workflow.patterns_statistics_analyze(corpus, mel_pat_dict, dia_pat_dict, rhy_pat_dict)
+            Workflow.patterns_statistics_analyze(mel_pat_dict, dia_pat_dict, rhy_pat_dict)
         except:
             #When the analysis finish, no value would be assigned to mel_pat_dict etc.. thus simply return void
             return
