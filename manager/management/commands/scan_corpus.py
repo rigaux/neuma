@@ -264,10 +264,11 @@ class Command(BaseCommand):
 
             elif action == ANALYZE_OPUS_ACTION:
                 """
-                Analyze all patterns in corpus to get the most frequent ones
+                Analyze all patterns in an opus to get the most frequent 15 patterns
                 """
                 try:
-                    Workflow.analyze_patterns_in_opus(opus)
+                    mel_pat_dict, dia_pat_dict, rhy_pat_dict = Workflow.analyze_patterns_in_opus(opus)
+                    Workflow.patterns_statistics_analyze(mel_pat_dict, dia_pat_dict, rhy_pat_dict)
                     print("Done.")
                 except Opus.DoesNotExist:
                     raise CommandError('Opus "%s" does not exist' % opusref)
