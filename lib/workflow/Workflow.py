@@ -330,27 +330,30 @@ class Workflow:
         # Find patterns within each Voice of an Opus
         for part_id, part in music_summary.parts.items():
             for voice_id, voice in part.items():
-                # Melody descriptor
-                mel_descr = voice.get_melody_encoding()
+                #Get n-grams, n = 3 to 12
+                for n in range(3, 12):
+                    # Melody descriptor
+                    mel_descr = voice.get_melody_encoding(False, n)
+            
+                    # 'N' is used as segregation between patterns in descriptor
+                    pattern_list = mel_descr.split("N")
 
-                # 'N' is used as segregation between patterns in descriptor
-                pattern_list = mel_descr.split("N")
+                    mel_pat_dict = Workflow.get_patterns_from_descr(pattern_list, opus, part_id, voice_id, settings.MELODY_DESCR)
 
-                mel_pat_dict = Workflow.get_patterns_from_descr(pattern_list, opus, part_id, voice_id, settings.MELODY_DESCR)
+                    #Diatonic descriptor
+                    dia_descr = voice.get_diatonic_encoding(False, n)
+                
+                    pattern_list = dia_descr.split("N")
 
-                #Diatonic descriptor
-                dia_descr = voice.get_diatonic_encoding()
-                        
-                pattern_list = dia_descr.split("N")
-
-                dia_pat_dict = Workflow.get_patterns_from_descr(pattern_list, opus, part_id, voice_id, settings.DIATONIC_DESCR)
+                    dia_pat_dict = Workflow.get_patterns_from_descr(pattern_list, opus, part_id, voice_id, settings.DIATONIC_DESCR)
  
-                # Rhythm descriptor
-                rhy_descr = voice.get_rhythm_encoding()
-                        
-                pattern_list = rhy_descr.split("N")
-                        
-                rhy_pat_dict = Workflow.get_patterns_from_descr(pattern_list, opus, part_id, voice_id, settings.RHYTHM_DESCR)
+                    # Rhythm descriptor
+                    rhy_descr = voice.get_rhythm_encoding(n)
+                
+                    ###rhythm_encoding = self.rhythms_to_ngrams(self.get_rhythms())
+                    pattern_list = rhy_descr.split("N")
+                
+                    rhy_pat_dict = Workflow.get_patterns_from_descr(pattern_list, opus, part_id, voice_id, settings.RHYTHM_DESCR)
 
         return mel_pat_dict, dia_pat_dict, rhy_pat_dict
 
