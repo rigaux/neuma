@@ -7,7 +7,6 @@ from .Distance_neuma import *
 from django.conf import settings
 import music21 as m21
 
-NGRAM_SIZE = 3
 INTERVAL_SEPARATOR = "|"
 DURATION_UNIT = 16
 
@@ -408,7 +407,7 @@ class Sequence:
 
         return mirror_intervals
 
-    def get_melody_encoding(self, mirror_setting = False):
+    def get_melody_encoding(self, mirror_setting = False, NGRAM_SIZE = 3):
         """
             Get melody and decompose in ngram text for melodic search.
             
@@ -419,7 +418,7 @@ class Sequence:
 
         """
         melody_list = self.get_intervals(settings.MELODY_DESCR)
-        melody_encoding = self.intervals_to_ngrams(melody_list)
+        melody_encoding = self.intervals_to_ngrams(melody_list, NGRAM_SIZE)
 
         if mirror_setting == False:
             return melody_encoding
@@ -427,7 +426,7 @@ class Sequence:
             mirror_melody = self.get_mirror_intervals(melody_list)
             return melody_encoding, self.intervals_to_ngrams(mirror_melody)
 
-    def get_diatonic_encoding(self, mirror_setting = False):
+    def get_diatonic_encoding(self, mirror_setting = False, NGRAM_SIZE = 3):
         """
             Get diatonic interval names and decompose in ngram text for diatonic search.
 
@@ -436,7 +435,7 @@ class Sequence:
 
         """
         dia_list = self.get_intervals(settings.DIATONIC_DESCR)
-        dia_encoding = self.intervals_to_ngrams(dia_list)
+        dia_encoding = self.intervals_to_ngrams(dia_list, NGRAM_SIZE)
 
         if mirror_setting == False:
             return dia_encoding
@@ -444,18 +443,18 @@ class Sequence:
             mirror_dia = self.get_mirror_intervals(dia_list)
             return dia_encoding, self.intervals_to_ngrams(mirror_dia)
 
-    def get_rhythm_encoding(self):
+    def get_rhythm_encoding(self, NGRAM_SIZE = 3):
         """
             Get rhythm and decompose in ngram text for rhythmic search
         """
-        rhythm_encoding = self.rhythms_to_ngrams(self.get_rhythms())
+        rhythm_encoding = self.rhythms_to_ngrams(self.get_rhythms(), NGRAM_SIZE)
         return rhythm_encoding
 
-    def get_note_encoding(self):
+    def get_note_encoding(self, NGRAM_SIZE = 3):
         """
             Get note and decompose in ngram text for exact search
         """
-        note_encoding = self.to_ngrams(self.notes_to_symbols(self.get_notes()))
+        note_encoding = self.to_ngrams(self.notes_to_symbols(self.get_notes()), NGRAM_SIZE)
         return note_encoding
 
     """
@@ -479,7 +478,7 @@ class Sequence:
             symbols.append('(' + str(note['pitch']) + '|' + str(note['rhythm']) + ')')
         return symbols
 
-    def rhythms_to_ngrams(self, dict):
+    def rhythms_to_ngrams(self, dict, NGRAM_SIZE = 3):
         #
         #   Splits rhythms ratios into ngrams with size NGRAM_SIZE, e.g : (3/4)(2/3)(1/2) (2/3)(1/2)(1/2) ...
         #
@@ -493,7 +492,7 @@ class Sequence:
             text += ngram + " N "
         return text
 
-    def intervals_to_ngrams(self, dict):
+    def intervals_to_ngrams(self, dict, NGRAM_SIZE = 3):
         #
         #   Splits intervals into ngrams with size NGRAM_SIZE, for both melodic and diatonic searches
         #
@@ -507,7 +506,7 @@ class Sequence:
             phrase += ngram + " N "
         return phrase
 
-    def to_ngrams(self, symbols, hash=False):
+    def to_ngrams(self, symbols, hash=False, NGRAM_SIZE = 3):
         #
         #   Splits symbol list into ngrams with size NGRAM_SIZE, used for exact search
         #
