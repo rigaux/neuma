@@ -263,18 +263,20 @@ class Command(BaseCommand):
                 print("Done. ")
 
             elif action == ANALYZE_OPUS_ACTION:
-                """
-                Analyze all patterns in an opus to get the most frequent 15 patterns
+"""
+                Analyze all patterns in an opus to get the most frequent patterns
                 """
                 try:
-                    mel_pat_dict, dia_pat_dict, rhy_pat_dict = Workflow.analyze_patterns_in_opus(opus)
-                    Workflow.patterns_statistics_analyze(mel_pat_dict, dia_pat_dict, rhy_pat_dict)
+                    mel_pat_dict, dia_pat_dict, rhy_pat_dict, mel_opus_dict, dia_opus_dict, rhy_opus_dict = Workflow.analyze_patterns_in_opus(opus)
+                    Workflow.patterns_statistics_analyze(mel_pat_dict, dia_pat_dict, rhy_pat_dict, mel_opus_dict, dia_opus_dict, rhy_opus_dict)
+                    #Note: since we are analyzing just one opus, mel/dia/rhy_opus_dict will be either empty or contain the opus ref. 
                     print("Done.")
                 except Opus.DoesNotExist:
                     raise CommandError('Opus "%s" does not exist' % opusref)
 
             elif action == INDEX_ACTION:
                 """Index a specific opus"""
+                print(opus, corpus)
                 Workflow.index_opus(opus)
                 print("Done. ")
             else:

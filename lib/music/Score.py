@@ -38,7 +38,9 @@ class Score:
             self.load_component(self.m21_score)
 
         except Exception as ex:
-                print ("Error while loading from xml:" + str(ex))
+            self.m21_score = None
+            print ("Error while loading from xml:" + str(ex))
+            print ("Some error raised while attempting to transform MEI to XML.")
                 
     def load_component(self, m21stream):
         '''Load the components from a M21 stream'''
