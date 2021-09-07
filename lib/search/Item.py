@@ -30,6 +30,11 @@ class Item:
             m21_note = self.step+'#'+str(self.octave)
         elif self.alteration == -1:
             m21_note = self.step+'-'+str(self.octave)
+        #Double alteration
+        elif self.alteration == 2:
+            m21_note = self.step+'##'+str(self.octave)
+        elif self.alteration == -2:
+            m21_note = self.step+'--'+str(self.octave)
 
         return m21.note.Note(m21_note)
         
