@@ -85,4 +85,7 @@ urlpatterns = [
     url (r'^collections/(?P<full_neuma_ref>(.*))/*.xml$', views.handle_neuma_ref_request, name='handle_files_reauest'),
     # Generic request to a corpus or an opus 
     url (r'^collections/(?P<full_neuma_ref>(.*))/$', views.handle_neuma_ref_request, name='handle_neuma_ref_request'),
+    # OTF Transcription
+    url(r'transcription/midi_message', views.receive_midi_messages, name="midi_message"),
+    url(r'transcription/test_midi_message', views.test_midi_messages, name='test_midi_message'),
 ]
