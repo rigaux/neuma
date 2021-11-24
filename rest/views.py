@@ -1154,3 +1154,31 @@ def qparse(request):
         return JSONResponse({"message": "Exception raised while trying to un QParse. "+ str(e)}, 
                             status=status.HTTP_400_BAD_REQUEST)
 
+
+###################
+# OTF TRANSCRIPTION
+###################
+@csrf_exempt
+@api_view(["POST"])
+def receive_midi_messages(request):
+    data = json.loads(request.body)
+    flags=[]
+    keys=[]
+    velocities=[]
+    timestamps=[]
+    #check if the body is correctly formatted
+    try:
+        for event in data:
+            flags.append(event["flag"])
+            keys.append(event["key"])
+            velocities.append(event["velocity"])
+            timestamps.append(event["timestamp"])
+    except:
+        JSONResponse({"error": "Incorrect midi message format"}, status=status.HTTP_400_BAD_REQUEST)
+    
+    return JSONResponse({"flag": flags, "key": keys, "velocity": velocities, "timestamp": timestamps}, status=status.HTTP_200_OK)
+
+@csrf_exempt
+@api_view(["GET"])
+def test_midi_messages(request):
+    return JSONResponse({"Response": "Working"}, status=status.HTTP_200_OK)
