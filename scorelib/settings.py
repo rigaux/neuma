@@ -272,6 +272,8 @@ ELASTIC_SEARCH = {"host": "cchumweb05.in2p3.fr", "port": 11420, "index": "scorel
 # List of similarity measures
 SIMILARITY_MEASURES = ["pitches","intervals","degrees","rhythms"]
 
+DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
+
 try:
     from scorelib.local_settings import *
     print("local settings .... ok")

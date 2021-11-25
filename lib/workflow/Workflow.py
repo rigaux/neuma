@@ -288,7 +288,8 @@ class Workflow:
                 Workflow.analyze_patterns(child, recursion)
 
         try:
-            Workflow.patterns_statistics_analyze(mel_pat_dict, dia_pat_dict, rhy_pat_dict, mel_opus_dict, dia_opus_dict, rhy_opus_dict)        except:
+            Workflow.patterns_statistics_analyze(mel_pat_dict, dia_pat_dict, rhy_pat_dict, mel_opus_dict, dia_opus_dict, rhy_opus_dict) 
+        except:
             #When the analysis finish, no value would be assigned to mel_pat_dict etc.. thus simply return void
             return
 
