@@ -21,8 +21,8 @@ from lib.music.Voice import IncompleteBarsError
 
 TO_MEI_ACTION = "mei"
 INDEX_ACTION="index"
+PROPAGATE_LICENCE_ACTION="propagate_licence"
 INDEX_ALL_ACTION = "index_all"
-LILYPOND_ACTION="lilypond"
 COMPILE_ACTION="compile"
 CHORALS_ACTION="chorals"
 STATS_ACTION="stats"
@@ -60,7 +60,12 @@ class Command(BaseCommand):
             for c in corpora:
                 if not c.parent_ref(c.ref):
                     Workflow.index_corpus(c)
-            return True
+            return 
+        elif action == PROPAGATE_LICENCE_ACTION:
+        	root_corpus = Corpus(ref=settings.NEUMA_ROOT_CORPUS_REF)
+        	Workflow.propagate_licence(root_corpus)
+        	print ("Licences propagated from top-level corpora to children")
+        	return 
 
         try:
             corpus = Corpus.objects.get(ref=options['corpus_ref'])
@@ -70,15 +75,7 @@ class Command(BaseCommand):
 
 #        exit(1)
 
-        if not opusref:  # on travaille sur tout un corpus
-            # print("coucou")
-            # corpora = Corpus.objects.all()
-            # for c in corpora:
-                # print(c.ref)
-                # opera = c.get_opera()
-                # for opus in opera:
-                    # print(opus.ref)
-
+        if not opusref: 
             if action is None:
                 self.stdout.write("Please supply an action ")
                 return
@@ -87,11 +84,9 @@ class Command(BaseCommand):
             if action == TO_MEI_ACTION:
                 Workflow.produce_mei(corpus)
                 print ("MEI conversion completed for " + corpus.title)
-
             elif action == INDEX_ACTION:
                 Workflow.index_corpus(corpus)
                 print ("Indexing completed for corpus '" + corpus.title + "'")
-
             elif action == COMPILE_ACTION:
                 try:
                     Workflow.compile(corpus)
@@ -263,7 +258,7 @@ class Command(BaseCommand):
                 print("Done. ")
 
             elif action == ANALYZE_OPUS_ACTION:
-"""
+                """
                 Analyze all patterns in an opus to get the most frequent patterns
                 """
                 try:
