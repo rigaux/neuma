@@ -121,8 +121,9 @@ var tabNames = [{"tabId": "tab1", "divId": "subcorpus"},
 
 	{% if corpus_cover != "" %} 
 	<img width="200" height="213"
-		src="{{ corpus_cover.url }}" alt="Image" /> {% endif %} 
-
+		src="{{ corpus_cover.url }}" alt="Image" /> 
+	{% endif %} 
+    <p>{{corpus.licence_notice | safe}}</p>
 </div>
 
 

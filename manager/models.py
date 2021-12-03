@@ -49,6 +49,7 @@ class Corpus(models.Model):
     creation_timestamp = models.DateTimeField('Created',auto_now_add=True)
     update_timestamp = models.DateTimeField('Updated',auto_now=True)
     ref = models.CharField(max_length=255,unique=True)
+    licence_notice =  models.TextField(default='')
 
     def upload_path(self, filename):
         '''Set the path where corpus-related files must be stored'''
