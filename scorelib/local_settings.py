@@ -1,3 +1,10 @@
+
+# Build paths inside the project like this: os.path.join(BASE_DIR, ...)
+import os
+
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+
 #
 # Access to ElasticSearch
 #
@@ -28,3 +35,5 @@ NEUMA_COMPARISON_TEST = "all:comparison"
 
 
 NEUMA_COMPARISON_TEST = "all:comparison"
+# For script files (bash, XSL, etc.)
+SCRIPTS_ROOT = os.path.join(os.path.dirname(BASE_DIR), 'neuma','scripts')

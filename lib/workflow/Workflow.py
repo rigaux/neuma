@@ -18,6 +18,8 @@ import zipfile, os.path, io
 
 import logging
 
+import verovio
+
 # Get an instance of a logger
 logger = logging.getLogger(__name__)
 
@@ -570,19 +572,32 @@ class Workflow:
 		# Check the zip
 		if zipfile.is_zipfile(upload.zip_file.path):
 			zf = zipfile.ZipFile(upload.zip_file.path, 'r')
+			
 			opus_files = {}
 			
+			# Scan the content of the ZIP file to find the directory name
+			cur_dir_name = ""
+			for fname in zf.namelist():
+				file_info = zf.getinfo(fname)
+				if file_info.is_dir():
+					sub_dirs = os.path.dirname(fname).split (os.sep)
+					if (len(sub_dirs) == 1):
+						cur_dir_name = os.path.dirname(fname)
+					# We could check that the dir name is that of the corpus
+		
 			# Scan the content of the ZIP file to find the list of opus
 			for fname in zf.namelist():
-				opus_ref, extension = decompose_zip_name (fname)
 				# Skip files with weird names
+				opus_ref, extension = decompose_zip_name (fname)
 				if opus_ref == "" or opus_ref.startswith('_') or  opus_ref.startswith('.'):
 					continue
 				# OK, there is an Opus there
 				opus_files[opus_ref] = {"mei": "", 
 								   "musicxml": "",
 								   "compressed_xml": "",
-								   "json": ""}
+								   "json": "",
+								   "kern": ""}
+
 			# Second scan: we note the files present for each opus
 			for fname in zf.namelist():
 				(opus_ref, extension) = decompose_zip_name (fname)
@@ -596,11 +611,19 @@ class Workflow:
 					opus_files[opus_ref]["mei"] = fname
 				elif extension == '.json':
 					opus_files[opus_ref]["json"] = fname
+				elif extension == '.mid':
+					opus_files[opus_ref]["midi"] = fname
+				elif extension == '.krn':
+					opus_files[opus_ref]["kern"] = fname
 
-		# OK, now in opus_files, we know whether we have the MusicXML, MEI or both
+		# OK, now in opus_files, we know whether we have the MusicXML, MEI or any other
 		list_imported = []
 		for opus_ref, opus_files_desc in opus_files.items():			
 				print ("Import opus with ref " + opus_ref + " in corpus " + upload.corpus.ref)
+				if opus_ref == "deut5153" or  opus_ref == "deut5154" :
+					# Problem with that one....
+					continue
+
 				full_opus_ref = upload.corpus.ref + settings.NEUMA_ID_SEPARATOR + opus_ref
 				try:
 					opus = Opus.objects.get(ref=full_opus_ref)
@@ -631,6 +654,29 @@ class Workflow:
 					logger.info ("Found MusicXML content")
 					xml_content = zf.read(opus_files_desc["musicxml"])
 					opus.musicxml.save("score.xml", ContentFile(xml_content))
+				if opus_files_desc["kern"] != "":
+					logger.info ("Found KERN content")
+					kern_content = zf.read(opus_files_desc["kern"])
+					# We need to write in a tmp file, probably 
+					tmp_file = "/tmp/tmp_kern.txt"
+					f = open(tmp_file, "wb")
+					f.write(kern_content)
+					f.close()
+					try:
+						tk = verovio.toolkit()
+						tk.loadFile(tmp_file)
+						mei_content = tk.getMEI()
+						opus.mei.save("mei.xml", ContentFile(mei_content))
+						doc = minidom.parseString(mei_content)
+						titles = doc.getElementsByTagName("title")
+						for title in titles:
+							for txtnode in title.childNodes:
+								opus.title = str(txtnode.data)
+								break
+							break
+					except Exception as e:
+						print ("Exception : " + str(e))
+
 				if opus_files_desc["mei"] != "":
 					logger.info ("Found MEI content")
 					# Add the MEI file
@@ -666,6 +712,16 @@ class Workflow:
 							opus.title = str(txtnode.data)
 							break
 						break
+				elif opus_files_desc["compressed_xml"]!="" or opus_files_desc["musicxml"]!="":
+					# Get MusicXML metadata
+					doc = minidom.parseString(xml_content)
+					titles = doc.getElementsByTagName("movement-title")
+					for title in titles:
+						for txtnode in title.childNodes:
+							opus.title = str(txtnode.data)
+							break
+						break
+					
 				try:
 					if opus.title == opus_ref:
 						#print ("Title = " + opus.title + " Try to obtain metadata")
@@ -837,6 +893,8 @@ def workflow_import_zip(upload, do_import=True):
 
 # Get the Opus ref and extension from a file name
 def decompose_zip_name (fname):
+	dirname = os.path.dirname(fname)
+	dircomp = dirname.split(os.sep)
 	basename = os.path.basename(fname)
 	components = os.path.splitext(basename) 
 	extension = components[len(components)-1]
