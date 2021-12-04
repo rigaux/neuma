@@ -225,6 +225,17 @@ def export_corpus_as_zip (request, corpus_ref):
 	# The zip compressor
 	zf = zipfile.ZipFile(s, "w")
 	
+	# Add a JSON file with meta data
+	corpus_json = json.dumps(corpus.to_json())
+	zf.writestr(Corpus.local_ref(corpus.ref) + ".json", corpus_json)
+
+	# Write the cover file
+	cover = corpus.get_cover() 
+	if cover is not None:
+		with open (cover.path, "r") as coverfile:
+			zf.writestr("cover.jpg", cover.read())
+			
+
 	opera = Opus.objects.filter(corpus=corpus)
 	for opus in opera:
 		# Add MusicXML file

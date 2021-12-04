@@ -7,9 +7,9 @@ from neuma.rest import Client
 
 
 class CorpusMigration(models.Model):
-    corpus = models.OneToOneField(Corpus, unique=True,on_delete=models.PROTECT)
+    corpus = models.OneToOneField(Corpus, unique=True,on_delete=models.CASCADE)
     tag = models.TextField()
-    parent = models.ForeignKey('self', null=True,on_delete=models.PROTECT)
+    parent = models.ForeignKey('self', null=True,on_delete=models.CASCADE)
     creation_timestamp = models.DateTimeField('Created',auto_now_add=True)
     update_timestamp = models.DateTimeField('Updated',auto_now=True)
 
@@ -146,7 +146,7 @@ class CorpusMigration(models.Model):
 
 
 class OpusMigration(models.Model):
-    opus = models.OneToOneField(Opus,unique=True,on_delete=models.PROTECT)
+    opus = models.OneToOneField(Opus,unique=True,on_delete=models.CASCADE)
     tag = models.TextField()
     creation_timestamp = models.DateTimeField('Created',auto_now_add=True)
     update_timestamp = models.DateTimeField('Updated',auto_now=True)
