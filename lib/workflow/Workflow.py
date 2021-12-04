@@ -575,7 +575,8 @@ class Workflow:
 			
 			opus_files = {}
 			
-			# Scan the content of the ZIP file to find the directory name
+			# Scan the content of the ZIP file to find the 
+			# directory name and the JSON corpus description
 			cur_dir_name = ""
 			for fname in zf.namelist():
 				file_info = zf.getinfo(fname)
