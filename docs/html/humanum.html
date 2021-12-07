@@ -1,0 +1,253 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17: http://docutils.sourceforge.net/" />
+
+    <title>Appendix: deploying at Humanum &#8212; Neuma dev. guide 1.0 documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="_static/agogo.css" />
+    <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="prev" title="Analysis" href="analysis.html" /> 
+  </head><body>
+    <div class="header-wrapper" role="banner">
+      <div class="header">
+        <div class="headertitle"><a
+          href="index.html">Neuma dev. guide 1.0 documentation</a></div>
+        <div class="rel" role="navigation" aria-label="related navigation">
+          <a href="analysis.html" title="Analysis"
+             accesskey="P">previous</a> |
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a>
+        </div>
+       </div>
+    </div>
+
+    <div class="content-wrapper">
+      <div class="content">
+        <div class="document">
+            
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <section id="appendix-deploying-at-humanum">
+<span id="chap-humanum"></span><h1>Appendix: deploying at Humanum<a class="headerlink" href="#appendix-deploying-at-humanum" title="Permalink to this headline">¶</a></h1>
+<p>Contact chez HumaNum:  Joël Marchand, <a class="reference external" href="mailto:joel&#46;marchand&#37;&#52;&#48;huma-num&#46;fr">joel<span>&#46;</span>marchand<span>&#64;</span>huma-num<span>&#46;</span>fr</a>
+et l’équipe des sysadmins: <a class="reference external" href="mailto:sysadmin&#37;&#52;&#48;huma-num&#46;fr">sysadmin<span>&#64;</span>huma-num<span>&#46;</span>fr</a>.</p>
+<section id="serveur">
+<h2>Serveur<a class="headerlink" href="#serveur" title="Permalink to this headline">¶</a></h2>
+<p>On travaille dans une VM Ubuntu, pour le moment 18.04 LTS. Elle dispose de 20Go
+d’espace (j’ai enlevé qq Go de backup pour pouvoir installer tensorflow, mais il
+reste maintenant 5 Go de libres).</p>
+<section id="environnement">
+<h3>Environnement<a class="headerlink" href="#environnement" title="Permalink to this headline">¶</a></h3>
+<p>Le serveur Web est Nginx, et non apache. Les infos importantes pour Nginx se
+trouvent dans <code class="docutils literal notranslate"><span class="pre">/etc/nginx/`</span></code>, notamment dans <code class="docutils literal notranslate"><span class="pre">/etc/nginx/sites-available/</span></code>
+(configurations équivalentes aux <em>Virtual hosts</em> d’apache), voir les
+<code class="docutils literal notranslate"><span class="pre">scorelib-webdjango</span></code> et <code class="docutils literal notranslate"><span class="pre">scorelib-dev-webdjango</span></code> (avec liens symboliques dans
+<code class="docutils literal notranslate"><span class="pre">/etc/nginx/sites-enabled</span></code>. Les logs (access et error) sont dans
+<code class="docutils literal notranslate"><span class="pre">/usr/share/nginx/logs/</span></code>.</p>
+<p>On a conservé deux applis django, scorelib et scorelib-dev, qui
+localement sont résolues avec les noms de domaines scorelib.test et
+scorelib-dev.test (cf /etc/hosts), et huma-num nous fournit respectivement les
+deux sous-domaines <a class="reference external" href="http://neuma.huma-num.fr">http://neuma.huma-num.fr</a> et <a class="reference external" href="http://neuma-dev.huma-num.fr">http://neuma-dev.huma-num.fr</a>
+.</p>
+<p>Les fichiers des applis sont dans <code class="docutils literal notranslate"><span class="pre">/home/scorelibadmin</span></code>, dossiers
+<code class="docutils literal notranslate"><span class="pre">scorelib-django</span></code> et <code class="docutils literal notranslate"><span class="pre">scorelib-dev-django</span></code>. Donc faire:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span> /home/scorelibadmin/scorelib-django
+</pre></div>
+</div>
+<p>Pour l’appli principale.</p>
+<p>Les droits d’accès
+sont accordés à l’utilisateur <code class="docutils literal notranslate"><span class="pre">scorelibadmin</span></code>: <strong>ne pas
+en utiliser un autre sous peine de problèmes</strong>. La commande:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>sudo chown -R scorelibadmin:scorelibadmin ./*
+</pre></div>
+</div>
+<p>dans le dossier <code class="docutils literal notranslate"><span class="pre">~/scorelib-django</span></code> devrait les résoudre.</p>
+<p>Il y a des environnements virtuels pour
+les installations de package, penser à faire</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">source</span> env/bin/activate
+</pre></div>
+</div>
+<p>pour
+activer l’environnement quand on travaille en local. On peut ensuite lancer</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python3 manage.py runserver <span class="m">0</span>.0.0.0:8080
+</pre></div>
+</div>
+<p>Attention, dans les fichiers
+versionnés, je crois que “0.0.0.0” n’a pas été ajouté au fichier
+scorelib/settings.py, de même que “neuma.huma-num.fr”, je les ai ajoutés en dur
+sur le serveur). Ça permet de tester si les migrations ont bien été faites et si
+tous les paquets nécessaires sont présents dans l’environnement virtuel. Là, il
+manquait notamment python_log_indenter et tensorflow. Une fois que django a
+démarré, on peut le consulter avec une aute connexion sur le serveur avec “links
+<a class="reference external" href="http://0.0.0.0:8080">http://0.0.0.0:8080</a>”, par exemple.</p>
+</section>
+<section id="gunicorn">
+<h3>Gunicorn<a class="headerlink" href="#gunicorn" title="Permalink to this headline">¶</a></h3>
+<p>Gunicorn se charge ensuite de faire le lien entre une appli wsgi comme django et
+le serveur Nginx. Il faut utiliser</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>systemctl restart gunicorn-scorelib nginx
+</pre></div>
+</div>
+<p>pour relancer gunicorn et nginx. Ou, très radical:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>systemctl reboot -i
+</pre></div>
+</div>
+<p>On peut consulter les logs de gunicorn depuis
+le dernier boot avec</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>journalctl -u gunicorn-scorelib.service -b --no-pager
+</pre></div>
+</div>
+<p>Ce <code class="docutils literal notranslate"><span class="pre">service</span> <span class="pre">systemd</span></code> repose sur une configuration dans
+<code class="docutils literal notranslate"><span class="pre">/etc/systemd/system/gunicorn-scorelib.service</span></code>. Il fonctionne avec une “socket
+unix”, qui se trouve là : <code class="docutils literal notranslate"><span class="pre">/home/scorelibadmin/scorelib-django/scorelib.sock</span></code>.</p>
+</section>
+<section id="codes-d-acces">
+<h3>Codes d’accès<a class="headerlink" href="#codes-d-acces" title="Permalink to this headline">¶</a></h3>
+<p>Voir le fichier dédié.</p>
+<p>Neuma est dans <code class="docutils literal notranslate"><span class="pre">/home/scorelibadmin/scorelib-django/</span></code>.</p>
+<p>Une fois connecté dans la VM, pour devenir administrateur (root),
+il suffit de faire</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>sudo bash
+</pre></div>
+</div>
+<p>Le systeme de la VM est Ubuntu 18.04.4 LTS. Cf</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>cat /etc/issue
+</pre></div>
+</div>
+<p>Ne pas oublier de relancer le serveur XSGI après un déploiement:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>systemctl restart gunicorn-scorelib-dev gunicorn-scorelib nginx
+</pre></div>
+</div>
+</section>
+</section>
+<section id="elasticsearch">
+<h2>ElasticSearch<a class="headerlink" href="#elasticsearch" title="Permalink to this headline">¶</a></h2>
+<p>J’ai suivi ce mode d’emploi [1], ce qui permet de redémarrer ElasticSearch comme
+un service avec :</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>sudo systemctl restart elasticsearch.service
+</pre></div>
+</div>
+<p>(les commandes start et stop sont aussi utilisables, évidemment)</p>
+<p>La configuration se trouve dans /etc/elasticsearch/elasticsearch.yml (nom du
+cluster, nodes, binding sur IP ou port spécifique). On peut ajuster la mémoire
+prise par ElasticSearch dans /etc/elasticsearch/jvm.options, en passant “-Xms1g”
+à “-Xms512m” (idem pour -Xmx).</p>
+</section>
+<section id="postgres">
+<h2>Postgres<a class="headerlink" href="#postgres" title="Permalink to this headline">¶</a></h2>
+<p>Le serveur est installé sur la VM. Le compte d’accès est dans le fichier des infos
+sensibles. Créer un pont SSH sur notre machine virtuelle:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>ssh -L <span class="m">63333</span>:localhost:5432 scorelibadmin@neuma.huma-num.fr
+</pre></div>
+</div>
+<p>On peut alors se connecter au serveur postgres sur le port <code class="docutils literal notranslate"><span class="pre">localhost:63333</span></code>.</p>
+</section>
+<section id="sequentia">
+<h2>Sequentia<a class="headerlink" href="#sequentia" title="Permalink to this headline">¶</a></h2>
+<p>Accès: voir le fichier dédié.</p>
+<p>Ne pas oublier de relancer le serveur XSGI après un déploiement:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>touch /sites/neumsequ/www/scorelib/scorelib/wsgi.py
+</pre></div>
+</div>
+<p>Pour relancer les serveurs Apache, il suffit donc de mettre le mot clef</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>restart
+</pre></div>
+</div>
+<dl class="simple">
+<dt>dans les fichiers</dt><dd><ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">httpd_web03</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">httpd_web04</span></code></p></li>
+</ul>
+</dd>
+</dl>
+<p>du dossier <code class="docutils literal notranslate"><span class="pre">/sites/neumsequ/resource/order</span></code>, et d’attendre au plus 2 minutes.</p>
+<p><a class="reference external" href="mailto:neumseq&#37;&#52;&#48;cchumuser01&#46;in2p3&#46;fr">neumseq<span>&#64;</span>cchumuser01<span>&#46;</span>in2p3<span>&#46;</span>fr</a></p>
+<p>Accès aux services, dont phpMyAdmin</p>
+<p><a class="reference external" href="https://mygrid.huma-num.fr/board/link/">https://mygrid.huma-num.fr/board/link/</a></p>
+<p>Accès base: voir le fichier dédié.</p>
+</section>
+</section>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+        </div>
+        <div class="sidebar">
+          
+          <h3>Table of Contents</h3>
+          <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="intro.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="data.html">Data management</a></li>
+<li class="toctree-l1"><a class="reference internal" href="utils.html">Utilities</a></li>
+<li class="toctree-l1"><a class="reference internal" href="searching.html">Searching Neuma collections</a></li>
+<li class="toctree-l1"><a class="reference internal" href="analysis.html">Analysis</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Appendix: deploying at Humanum</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#serveur">Serveur</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#environnement">Environnement</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#gunicorn">Gunicorn</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#codes-d-acces">Codes d’accès</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#elasticsearch">ElasticSearch</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#postgres">Postgres</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#sequentia">Sequentia</a></li>
+</ul>
+</li>
+</ul>
+
+          <div role="search">
+            <h3 style="margin-top: 1.5em;">Search</h3>
+            <form class="search" action="search.html" method="get">
+                <input type="text" name="q" />
+                <input type="submit" value="Go" />
+            </form>
+          </div>
+
+        </div>
+        <div class="clearer"></div>
+      </div>
+    </div>
+
+    <div class="footer-wrapper">
+      <div class="footer">
+        <div class="left">
+          <div role="navigation" aria-label="related navigaton">
+            <a href="analysis.html" title="Analysis"
+              >previous</a> |
+            <a href="genindex.html" title="General Index"
+              >index</a>
+          </div>
+          <div role="note" aria-label="source link">
+              <br/>
+              <a href="_sources/humanum.rst.txt"
+                rel="nofollow">Show Source</a>
+          </div>
+        </div>
+
+        <div class="right">
+          
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016-2021 Philippe et al..
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.0.1.
+    </div>
+        </div>
+        <div class="clearer"></div>
+      </div>
+    </div>
+
+  </body>
+</html>

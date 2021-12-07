@@ -18,7 +18,6 @@ import zipfile, os.path, io
 
 import logging
 
-import verovio
 
 # Get an instance of a logger
 logger = logging.getLogger(__name__)
@@ -573,177 +572,10 @@ class Workflow:
 		if zipfile.is_zipfile(upload.zip_file.path):
 			zf = zipfile.ZipFile(upload.zip_file.path, 'r')
 			
-			opus_files = {}
-			
-			# Scan the content of the ZIP file to find the 
-			# directory name and the JSON corpus description
-			cur_dir_name = ""
-			for fname in zf.namelist():
-				file_info = zf.getinfo(fname)
-				if file_info.is_dir():
-					sub_dirs = os.path.dirname(fname).split (os.sep)
-					if (len(sub_dirs) == 1):
-						cur_dir_name = os.path.dirname(fname)
-					# We could check that the dir name is that of the corpus
+		list_imported = Corpus.import_from_zip(zf, upload.corpus)
 		
-			# Scan the content of the ZIP file to find the list of opus
-			for fname in zf.namelist():
-				# Skip files with weird names
-				opus_ref, extension = decompose_zip_name (fname)
-				if opus_ref == "" or opus_ref.startswith('_') or  opus_ref.startswith('.'):
-					continue
-				# OK, there is an Opus there
-				opus_files[opus_ref] = {"mei": "", 
-								   "musicxml": "",
-								   "compressed_xml": "",
-								   "json": "",
-								   "kern": ""}
-
-			# Second scan: we note the files present for each opus
-			for fname in zf.namelist():
-				(opus_ref, extension) = decompose_zip_name (fname)
-				if opus_ref=='' or  opus_ref.startswith('_') or  opus_ref.startswith('.'):
-					continue
-				if extension == '.mxl':
-					 opus_files[opus_ref]["compressed_xml"] = fname
-				elif (extension == '.xml' or extension == '.musicxml'):
-					opus_files[opus_ref]["musicxml"] = fname
-				elif extension == '.mei':
-					opus_files[opus_ref]["mei"] = fname
-				elif extension == '.json':
-					opus_files[opus_ref]["json"] = fname
-				elif extension == '.mid':
-					opus_files[opus_ref]["midi"] = fname
-				elif extension == '.krn':
-					opus_files[opus_ref]["kern"] = fname
-
-		# OK, now in opus_files, we know whether we have the MusicXML, MEI or any other
-		list_imported = []
-		for opus_ref, opus_files_desc in opus_files.items():			
-				print ("Import opus with ref " + opus_ref + " in corpus " + upload.corpus.ref)
-				if opus_ref == "deut5153" or  opus_ref == "deut5154" :
-					# Problem with that one....
-					continue
-
-				full_opus_ref = upload.corpus.ref + settings.NEUMA_ID_SEPARATOR + opus_ref
-				try:
-					opus = Opus.objects.get(ref=full_opus_ref)
-				except Opus.DoesNotExist as e:
-					# Create the Opus
-					opus = Opus(corpus=upload.corpus, ref=full_opus_ref, title=opus_ref)
-				list_imported.append(opus)
-
-				# If a json exists, then it should contain the relevant metadata
-				if opus_files_desc["json"] != "":
-					logger.info ("Found JSON metadata file %s" % opus_files_desc["json"])
-					json_file = zf.open(opus_files_desc["json"])
-					json_doc = json_file.read()
-					opus.load_from_dict (upload.corpus, json.loads(json_doc.decode('utf-8')))
-				if opus_files_desc["compressed_xml"] != "":
-					logger.info ("Found compressed MusicXML content")
-					# Compressed XML
-					container = io.BytesIO(zf.read(opus_files_desc["compressed_xml"]))
-					xmlzip = zipfile.ZipFile(container)
-					# Keep the file in the container with the same basename
-					for name2 in xmlzip.namelist():
-						basename2 = os.path.basename(name2)
-						ref2 = os.path.splitext(basename2)[0]
-						if opus_files_desc["opus_ref"]  == ref2:
-							xml_content = xmlzip.read(name2)
-					opus.musicxml.save("score.xml", ContentFile(xml_content))
-				if opus_files_desc["musicxml"] != "":
-					logger.info ("Found MusicXML content")
-					xml_content = zf.read(opus_files_desc["musicxml"])
-					opus.musicxml.save("score.xml", ContentFile(xml_content))
-				if opus_files_desc["kern"] != "":
-					logger.info ("Found KERN content")
-					kern_content = zf.read(opus_files_desc["kern"])
-					# We need to write in a tmp file, probably 
-					tmp_file = "/tmp/tmp_kern.txt"
-					f = open(tmp_file, "wb")
-					f.write(kern_content)
-					f.close()
-					try:
-						tk = verovio.toolkit()
-						tk.loadFile(tmp_file)
-						mei_content = tk.getMEI()
-						opus.mei.save("mei.xml", ContentFile(mei_content))
-						doc = minidom.parseString(mei_content)
-						titles = doc.getElementsByTagName("title")
-						for title in titles:
-							for txtnode in title.childNodes:
-								opus.title = str(txtnode.data)
-								break
-							break
-					except Exception as e:
-						print ("Exception : " + str(e))
-
-				if opus_files_desc["mei"] != "":
-					logger.info ("Found MEI content")
-					# Add the MEI file
-					try:
-							mei_file = zf.open(opus_files_desc["mei"])
-							mei_raw  = mei_file.read()
-							encoding = "utf-8"
-							try:
-								logger.info("Attempt to read in UTF 8")
-								mei_raw.decode(encoding)
-							except Exception as ex:
-								logger.info("Read in UTF 16")
-								encoding = "utf-16"
-								mei_raw.decode(encoding)
-							logger.info("Correct encoding: " + encoding)
-							mei_content = mei_raw.decode(encoding)
-							logger.info ("Save the MEI file.")
-							opus.mei.save("mei.xml", ContentFile(mei_content))
-					except Exception as ex:
-							logger.error ("Error processing MEI  " + str(ex))
-				else:
-					# Produce the MEI from the MusicXML
-					logger.info ("Apply XSLT to produce the MEI.")
-					Workflow.produce_opus_mei(opus)	 
-
-				# Now try to obtain metadata
-				if opus_files_desc["compressed_xml"]!="" or opus_files_desc["musicxml"]!="":
-					# Get MusicXML metadata
-					doc = minidom.parseString(xml_content)
-					titles = doc.getElementsByTagName("movement-title")
-					for title in titles:
-						for txtnode in title.childNodes:
-							opus.title = str(txtnode.data)
-							break
-						break
-				elif opus_files_desc["compressed_xml"]!="" or opus_files_desc["musicxml"]!="":
-					# Get MusicXML metadata
-					doc = minidom.parseString(xml_content)
-					titles = doc.getElementsByTagName("movement-title")
-					for title in titles:
-						for txtnode in title.childNodes:
-							opus.title = str(txtnode.data)
-							break
-						break
-					
-				try:
-					if opus.title == opus_ref:
-						#print ("Title = " + opus.title + " Try to obtain metadata")
-						# Try to find metadata in the XML file with music21
-						score = opus.get_score()
-						if score.get_title() != None and len(score.get_title()) > 0:
-							opus.title = score.get_title()
-						if score.get_composer() != None and len(score.get_composer()) > 0:
-							opus.composer = score.get_composer()
-							
-					# Produce descriptors and index the opus in ElasticSearch
-					Workflow.index_opus(opus)
-					
-					if do_import:
-						opus.save()
-				except Exception as ex:
-					print ("Error processing MEI  " + str(ex))
-					logger.error ("Error processing MEI  " + str(ex))
-					
-				print ("Opus ref " + opus_ref + " imported in corpus " + upload.corpus.ref+ "\n")
- 
+		# Produce descriptors and index the opus in ElasticSearch
+		Workflow.index_corpus(upload.corpus, True)
 		return list_imported
 	
 	@staticmethod
@@ -891,18 +723,3 @@ def createJsonDescriptors(opus):
 
 def workflow_import_zip(upload, do_import=True):
 	Workflow.import_zip(upload, do_import)
-
-# Get the Opus ref and extension from a file name
-def decompose_zip_name (fname):
-	dirname = os.path.dirname(fname)
-	dircomp = dirname.split(os.sep)
-	basename = os.path.basename(fname)
-	components = os.path.splitext(basename) 
-	extension = components[len(components)-1]
-	opus_ref = ""
-	sep = ""
-	for i in range(len(components)-1):
-		if i >0:
-			sep = "-"
-		opus_ref += components[i] + sep
-	return (opus_ref, extension)
