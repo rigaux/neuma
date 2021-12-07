@@ -1,0 +1,55 @@
+.. _chap-infossensibles:
+
+
+###########################
+Site de déploiement Humanum
+###########################
+
+*************
+Accès serveur
+*************
+
+		#. server : neuma.huma-num.fr
+		#. login : scorelibadmin
+		#. passwd : !2xnn>QZT
+		#. ssh scorelibadmin@neuma.huma-num.fr
+		#. acces aux droits administrateurs : sudo bash
+
+
+********
+Postgres
+********
+
+Pour postgres, les droits d'accès
+
+  #. User: user_scorelib 
+  #. Mot de passe: jAcHethu7utE
+  #. Base: scorelib
+
+Donc, pour se connecter.
+
+.. code-block:: bash
+
+      psql -U user_scorelib -h localhost scorelib --password
+ 
+
+*************
+ElasticSearch
+*************
+
+
+*********
+Sequentia
+*********
+
+
+  #. host: neumsequ@cchumuser01.in2p3.fr
+  #. login : neumsequ
+  #. passe : drt7823dfata
+
+Base MySQL:
+
+    #. Serveur: mysql.db.huma-num.fr
+    #. Base:  iremus_sequentia
+    #. Compte: iremus_sequentia
+    #. Mot de passse: 9rtyK7xPTUJpLUGG

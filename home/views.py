@@ -217,42 +217,9 @@ def export_corpus_as_zip (request, corpus_ref):
 	""" Export the list of XML files of this corpus"""
 	
 	corpus = Corpus.objects.get(ref=corpus_ref)
-	zip_filename = Corpus.local_ref (corpus.ref) + ".zip"
-
-	# Write the ZIP file in memory
-	s = BytesIO()
-
-	# The zip compressor
-	zf = zipfile.ZipFile(s, "w")
-	
-	# Add a JSON file with meta data
-	corpus_json = json.dumps(corpus.to_json())
-	zf.writestr(Corpus.local_ref(corpus.ref) + ".json", corpus_json)
-
-	# Write the cover file
-	cover = corpus.get_cover() 
-	if cover is not None:
-		with open (cover.path, "r") as coverfile:
-			zf.writestr("cover.jpg", cover.read())
-			
-
-	opera = Opus.objects.filter(corpus=corpus)
-	for opus in opera:
-		# Add MusicXML file
-		if opus.musicxml:
-			if os.path.exists(opus.musicxml.path):
-				zf.write(opus.musicxml.path, opus.local_ref() + ".xml")
-		if opus.mei:
-			if os.path.exists(opus.mei.path):
-				zf.write(opus.mei.path, opus.local_ref() + ".mei")
-		 # Add a JSON file with meta data
-		opus_json = json.dumps(opus.to_json())
-		zf.writestr(opus.local_ref() + ".json", opus_json)
-		 
-	zf.close()
-
-	resp = HttpResponse(s.getvalue(), content_type = "application/x-zip-compressed")
-	resp["Content-Disposition"] = "attachment; filename=%s" % zip_filename
+	zip_bytes = corpus.export_as_zip()
+	resp = HttpResponse(zip_bytes.getvalue(), content_type = "application/x-zip-compressed")
+	resp["Content-Disposition"] = "attachment; filename=%s.zip" % Corpus.local_ref(corpus_ref) 
 
 	return resp
 
@@ -306,8 +273,7 @@ class CorpusEditView(NeumaView):
 				local_ref = request.POST['ref']
 				parent_ref = self.kwargs['corpus_ref']
 				child.parent =  Corpus.objects.get(ref=parent_ref)
-				child.ref= child.make_ref_from_local_and_parent(local_ref, parent_ref)
-				print ("Corpus ref = " + child.ref)
+				child.ref= Corpus.make_ref_from_local_and_parent(local_ref, parent_ref)
 				child.save()
 		return render(request, "home/corpus_edit.html", context=context)
 	

@@ -1,0 +1,303 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17: http://docutils.sourceforge.net/" />
+
+    <title>Analysis &#8212; Neuma dev. guide 1.0 documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="_static/agogo.css" />
+    <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Appendix: deploying at Humanum" href="humanum.html" />
+    <link rel="prev" title="Searching Neuma collections" href="searching.html" /> 
+  </head><body>
+    <div class="header-wrapper" role="banner">
+      <div class="header">
+        <div class="headertitle"><a
+          href="index.html">Neuma dev. guide 1.0 documentation</a></div>
+        <div class="rel" role="navigation" aria-label="related navigation">
+          <a href="searching.html" title="Searching Neuma collections"
+             accesskey="P">previous</a> |
+          <a href="humanum.html" title="Appendix: deploying at Humanum"
+             accesskey="N">next</a> |
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a>
+        </div>
+       </div>
+    </div>
+
+    <div class="content-wrapper">
+      <div class="content">
+        <div class="document">
+            
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <section id="analysis">
+<span id="chap-analysis"></span><h1>Analysis<a class="headerlink" href="#analysis" title="Permalink to this headline">¶</a></h1>
+<p>The chapter describes all the operations that produce analytic features from
+corpora and opera.</p>
+<section id="analytic-models">
+<h2>Analytic models<a class="headerlink" href="#analytic-models" title="Permalink to this headline">¶</a></h2>
+<p>An analysis is run with respect to an <em>analytic model</em>. Essentially, such a model
+is a forest of concepts, and each concept has a specific semantics. For
+instance:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>in the <em>counterpoint</em> analytic model, one finds a taxonomy of dissonances
+found in Medieval/Renaissance counterpoint.</p></li>
+<li><p>in the <em>quality</em> analytic model, one finds a forest of quality measures
+such as metadata issues, rendering issues, etc.</p></li>
+</ul>
+</div></blockquote>
+<section id="defining-analytic-models">
+<h3>Defining analytic models<a class="headerlink" href="#defining-analytic-models" title="Permalink to this headline">¶</a></h3>
+<p>An analytic model is defined in an XML file, located in <code class="docutils literal notranslate"><span class="pre">static/analytic_models</span></code>.
+The following is an excerpt of the <code class="docutils literal notranslate"><span class="pre">quality_model.xml</span></code> document.</p>
+<div class="highlight-xml notranslate"><div class="highlight"><pre><span></span><span class="cp">&lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot; ?&gt;</span>
+
+<span class="nt">&lt;analytic_model</span> <span class="na">id=</span><span class="s">&quot;quality&quot;</span><span class="nt">&gt;</span>
+    <span class="nt">&lt;name&gt;</span>Quality<span class="nt">&lt;/name&gt;</span>
+    <span class="nt">&lt;description&gt;</span>Quality measures
+    <span class="nt">&lt;/description&gt;</span>
+
+
+    <span class="c">&lt;!-- Tree of concepts --&gt;</span>
+    <span class="nt">&lt;concepts&gt;</span>
+        <span class="nt">&lt;concept</span> <span class="na">id=</span><span class="s">&quot;content&quot;</span><span class="nt">&gt;</span>
+            <span class="nt">&lt;name&gt;</span>Music content issues<span class="nt">&lt;/name&gt;</span>
+            <span class="nt">&lt;description&gt;</span>
+                Quality issues related to the content of the score, and
+                not to its rendering
+            <span class="nt">&lt;/description&gt;</span>
+            <span class="nt">&lt;concepts&gt;</span>
+                <span class="nt">&lt;concept</span> <span class="na">id=</span><span class="s">&quot;structure&quot;</span><span class="nt">&gt;</span>
+                   ...
+                <span class="nt">&lt;/concept&gt;</span>
+                 <span class="nt">&lt;concept</span> <span class="na">id=</span><span class="s">&quot;voice&quot;</span><span class="nt">&gt;</span>
+                ...
+                <span class="nt">&lt;/concept&gt;</span>
+                <span class="nt">&lt;concept</span> <span class="na">id=</span><span class="s">&quot;lyrics&quot;</span><span class="nt">&gt;</span>
+                    <span class="nt">&lt;name&gt;</span>Lyrics issues<span class="nt">&lt;/name&gt;</span>
+                    <span class="nt">&lt;description&gt;</span>
+                        Issues related to lyrics (if any) and their
+                        relationship to music
+                    <span class="nt">&lt;/description&gt;</span>
+                    <span class="nt">&lt;concepts&gt;</span>
+                      <span class="nt">&lt;concept</span> <span class="na">id=</span><span class="s">&quot;invalidlyrics&quot;</span><span class="nt">&gt;</span>
+                        <span class="nt">&lt;name&gt;</span>Invalid lyrics encoding<span class="nt">&lt;/name&gt;</span>
+                        <span class="nt">&lt;description&gt;</span>
+                            The lyrics text contains invalid characters.
+                        <span class="nt">&lt;/description&gt;</span>
+                       <span class="nt">&lt;/concept&gt;</span>
+                    <span class="nt">&lt;/concepts&gt;</span>
+             <span class="nt">&lt;/concept&gt;</span>
+        <span class="nt">&lt;/concepts&gt;</span>
+    <span class="nt">&lt;/concept&gt;</span>
+  <span class="nt">&lt;/concepts&gt;</span>
+<span class="nt">&lt;/analytic_model&gt;</span>
+</pre></div>
+</div>
+<p>Each concept has an id, a name (displayed in interfaces) and a description
+(used in tooltips windows). The id has to be unique.</p>
+<p>A model has to be imported in the database. This is done by running the following
+command.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python3 manage.py setup_neuma
+</pre></div>
+</div>
+<p>A concept has also a semantic: it associates some meaning to some elements
+in a music score (usually a note). For instance, a <code class="docutils literal notranslate"><span class="pre">missing</span> <span class="pre">lyrics</span></code> concept
+associated to a note tells that the note should have a syllable, and that
+this syllable is missing.</p>
+<p>Running an analysis means discovering all the meanings of the elements
+of a score with respect to the concepts of an analytic model. This
+produces <em>annotations</em>.</p>
+</section>
+<section id="annotations">
+<h3>Annotations<a class="headerlink" href="#annotations" title="Permalink to this headline">¶</a></h3>
+<p>An annotation stores the list of associations between scores elements
+and concepts of an analytic model. An annotation is stored in table <code class="docutils literal notranslate"><span class="pre">Annotation</span></code>
+and is produced by a procedure (usually a Python function) that implements
+the meaning of each concept.</p>
+<p>Here is a basic example of such a function. It identifies missing lyrics
+in a voice.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="nd">@staticmethod</span>
+<span class="k">def</span> <span class="nf">missing_lyrics</span><span class="p">(</span><span class="n">opus</span><span class="p">,</span> <span class="n">voice</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Missing lyrics metrics&quot;&quot;&quot;</span>
+
+    <span class="k">for</span> <span class="n">event</span> <span class="ow">in</span> <span class="n">voice</span><span class="o">.</span><span class="n">m21_stream</span><span class="o">.</span><span class="n">notes</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">event</span><span class="o">.</span><span class="n">hasLyrics</span><span class="p">():</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">db_concept</span> <span class="o">=</span> <span class="n">AnalyticConcept</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">code</span><span class="o">=</span><span class="n">AC_QUAL_MISSING_LYRICS</span><span class="p">)</span>
+                <span class="n">annot</span> <span class="o">=</span> <span class="n">Annotation</span><span class="p">(</span><span class="n">opus</span><span class="o">=</span><span class="n">opus</span><span class="p">,</span> <span class="n">ref</span><span class="o">=</span><span class="n">event</span><span class="o">.</span><span class="n">id</span><span class="p">,</span>
+                           <span class="n">analytic_concept</span><span class="o">=</span><span class="n">db_concept</span><span class="p">,</span>
+                           <span class="n">fragment</span><span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">([</span><span class="n">event</span><span class="o">.</span><span class="n">id</span><span class="p">]))</span>
+                <span class="n">annot</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
+            <span class="k">except</span> <span class="n">AnalyticConcept</span><span class="o">.</span><span class="n">DoesNotExist</span><span class="p">:</span>
+                <span class="nb">print</span> <span class="p">(</span><span class="s2">&quot;Unknown concept : &quot;</span> <span class="o">+</span> <span class="n">AC_QUAL_MISSING_LYRICS</span><span class="p">)</span>
+    <span class="k">return</span>
+</pre></div>
+</div>
+<p>So the function looks at events (notes, chords, rests, etc.) and determines, for each,
+if it matches to concept (here, missing lyrics). If yes, an annotation
+is created with:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>The Opus</p></li>
+<li><p>The concept</p></li>
+<li><p>The fragment qualified by the concept, i.e., the list if event ids
+That together matches the concept meaning</p></li>
+<li><p>The id of a specific event in the fragment, that will be used to display the concept
+in a graphic representation.</p></li>
+</ul>
+</div></blockquote>
+<p>Ids are taken from the MEI file.</p>
+<p>The code refers to a <code class="docutils literal notranslate"><span class="pre">AC_QUAL_MISSING_LYRICS</span></code> constant: this is the id of the
+concept, declared in <code class="docutils literal notranslate"><span class="pre">/scorelib/analytic_concepts.py</span></code>. This id must match
+the id of the concept in the XML file: see above.</p>
+</section>
+<section id="cookbook">
+<h3>Cookbook<a class="headerlink" href="#cookbook" title="Permalink to this headline">¶</a></h3>
+<p>In order to define a new concept, you must:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>describe it in the the corresponding XML analytic model file;</p></li>
+<li><p>insert in the DB with <code class="docutils literal notranslate"><span class="pre">python3</span> <span class="pre">manage.py</span> <span class="pre">setup_neuma</span></code>;</p></li>
+<li><p>declare the concept id in <code class="docutils literal notranslate"><span class="pre">/scorelib/analytic_concepts.py</span></code>;</p></li>
+<li><p>last, but no least, implement the concept semantic as a Python function
+(in general).</p></li>
+</ul>
+</div></blockquote>
+<p>Finally the function call has to be put in the analytic workflow
+of the model. These workflow are in <code class="docutils literal notranslate"><span class="pre">lib/workflow/Workflow.py</span></code>.</p>
+<p>For the quality model, the workflow is specifically found in <code class="docutils literal notranslate"><span class="pre">/quality//lib/Processor.py</span></code>.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<dl>
+<dt>A REST call can be used to obtain the forest of concepts</dt><dd><p>for a model. In JSON:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>curl http://neuma.huma-num.fr/rest/analysis/models/quality/concepts/json/
+</pre></div>
+</div>
+</dd>
+</dl>
+<p>or in Latex</p>
+<blockquote>
+<div><div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>curl http://neuma.huma-num.fr/rest/analysis/models/quality/concepts/latex/
+</pre></div>
+</div>
+</div></blockquote>
+</div>
+</section>
+</section>
+<section id="similarity-measures">
+<h2>Similarity measures<a class="headerlink" href="#similarity-measures" title="Permalink to this headline">¶</a></h2>
+<section id="measures">
+<h3>Measures<a class="headerlink" href="#measures" title="Permalink to this headline">¶</a></h3>
+<p>Evaluation of similarity is based on a measure. The list of measures is put in a DB
+table called <code class="docutils literal notranslate"><span class="pre">SimMeasure</span></code> that can be edited, via the <code class="docutils literal notranslate"><span class="pre">/neumadmin</span></code> interface. Insert
+at least one measure, called <code class="docutils literal notranslate"><span class="pre">pitches</span></code>.</p>
+</section>
+<section id="building-a-measure-matrix">
+<h3>Building a measure matrix<a class="headerlink" href="#building-a-measure-matrix" title="Permalink to this headline">¶</a></h3>
+<p>A matrix of similarities can be built for all the opera of a corpus thanks
+to the following command:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python3 manage.py scan_corpus -a cptdist -c &lt;corpus_id&gt;
+</pre></div>
+</div>
+<p>Par exemple:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python3 manage.py scan_corpus -a cptdist -c psautiers:godeau1658
+</pre></div>
+</div>
+<p>One matrix is produced for each of the similarity measures found in table <code class="docutils literal notranslate"><span class="pre">SimMeasure</span></code>.</p>
+</section>
+</section>
+<section id="clustering">
+<h2>Clustering<a class="headerlink" href="#clustering" title="Permalink to this headline">¶</a></h2>
+</section>
+</section>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+        </div>
+        <div class="sidebar">
+          
+          <h3>Table of Contents</h3>
+          <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="intro.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="data.html">Data management</a></li>
+<li class="toctree-l1"><a class="reference internal" href="utils.html">Utilities</a></li>
+<li class="toctree-l1"><a class="reference internal" href="searching.html">Searching Neuma collections</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Analysis</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#analytic-models">Analytic models</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#defining-analytic-models">Defining analytic models</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#annotations">Annotations</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#cookbook">Cookbook</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#similarity-measures">Similarity measures</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#measures">Measures</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#building-a-measure-matrix">Building a measure matrix</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#clustering">Clustering</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="humanum.html">Appendix: deploying at Humanum</a></li>
+</ul>
+
+          <div role="search">
+            <h3 style="margin-top: 1.5em;">Search</h3>
+            <form class="search" action="search.html" method="get">
+                <input type="text" name="q" />
+                <input type="submit" value="Go" />
+            </form>
+          </div>
+
+        </div>
+        <div class="clearer"></div>
+      </div>
+    </div>
+
+    <div class="footer-wrapper">
+      <div class="footer">
+        <div class="left">
+          <div role="navigation" aria-label="related navigaton">
+            <a href="searching.html" title="Searching Neuma collections"
+              >previous</a> |
+            <a href="humanum.html" title="Appendix: deploying at Humanum"
+              >next</a> |
+            <a href="genindex.html" title="General Index"
+              >index</a>
+          </div>
+          <div role="note" aria-label="source link">
+              <br/>
+              <a href="_sources/analysis.rst.txt"
+                rel="nofollow">Show Source</a>
+          </div>
+        </div>
+
+        <div class="right">
+          
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016-2021 Philippe et al..
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.0.1.
+    </div>
+        </div>
+        <div class="clearer"></div>
+      </div>
+    </div>
+
+  </body>
+</html>

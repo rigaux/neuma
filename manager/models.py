@@ -1,7 +1,12 @@
-from django.db import models
+
 from datetime import datetime
 from urllib.request import urlopen
+import io
+import json
+import zipfile
+import os
 
+from django.db import models
 from django.core.files import File
 from django.core.files.temp import NamedTemporaryFile
 from django.core.files.base import ContentFile
@@ -13,7 +18,7 @@ from django.db.models import Count
 from django.urls import reverse
 #from django.urls import reverse_lazy
 from django.conf import settings
-import json
+
 
 from lib.music.Score import *
 
@@ -24,6 +29,8 @@ from mptt.models import MPTTModel, TreeForeignKey
 import inspect
 from pprint import pprint
 import music21 as m21
+
+import verovio
 
 from xml.dom import minidom
 import itertools
@@ -37,6 +44,7 @@ from lib.neumautils.matrix_transform import matrix_transform
 from lib.neumautils.kmedoids import cluster
 from lib.music.Voice import IncompleteBarsError
 import transcription
+from abc import abstractstaticmethod
 
 
 class Corpus(models.Model):
@@ -56,11 +64,6 @@ class Corpus(models.Model):
 		return 'corpora/%s/%s' % (self.ref.replace(settings.NEUMA_ID_SEPARATOR, "/"), filename)
 	cover = models.FileField(upload_to=upload_path,null=True,storage=OverwriteStorage())
 
-	def make_ref_from_local_and_parent(self, local_ref, parent_ref):
-	   """
-		 Create the corpus reference from the local reference and parent reference
-	   """
-	   return parent_ref + settings.NEUMA_ID_SEPARATOR + local_ref
 
 	def __init__(self, *args, **kwargs):
 		super(Corpus, self).__init__(*args, **kwargs)
@@ -105,6 +108,13 @@ class Corpus(models.Model):
 		else:
 			# Top-level corpus
 			return ""
+		
+	@staticmethod
+	def make_ref_from_local_and_parent(local_ref, parent_ref):
+	   """
+		 Create the corpus reference from the local reference and parent reference
+	   """
+	   return parent_ref + settings.NEUMA_ID_SEPARATOR + local_ref
 
 	def get_cover(self):
 		"""
@@ -126,24 +136,12 @@ class Corpus(models.Model):
 
 	def load_from_dict(self, dict_corpus):
 		"""Load content from a dictionary. used to migrate from Neuma/CouchDB"""
-		self.ref = dict_corpus["id"]
 		self.title = dict_corpus["title"]
-		self.short_title = dict_corpus["shortTitle"]
+		self.short_title = dict_corpus["short_title"]
 		self.description = dict_corpus["description"]
-		self.is_public = dict_corpus["isPublic"]
-		self.short_description = dict_corpus["shortDescription"]
-
-		# Take the cover image
-		if dict_corpus["cover"] is not None:
-			file_temp = NamedTemporaryFile()
-			f = urlopen(dict_corpus["cover"])
-			content = f.read()
-			file_temp.write(content)
-			file_temp.flush()
-			self.cover.save("cover.jpg", File(file_temp))
-		else:
-			# Good to know: sets the file field to blank string
-			self.cover = None
+		self.short_description = dict_corpus["short_description"]
+		self.is_public = dict_corpus["is_public"]
+		self.licence_notice = dict_corpus["licence_notice"]
 
 		return
 	   
@@ -151,7 +149,7 @@ class Corpus(models.Model):
 		"""
 		  Create a dictionary that can be used for JSON exports
 		"""
-		return {"id": self.ref, 
+		return {"ref": Corpus.local_ref(self.ref), 
 				 "title": self.title, 
 				 "short_title": self.short_title, 
 				 "description": self.description, 
@@ -319,7 +317,262 @@ class Corpus(models.Model):
 		pprint(x)
 		return x
 
+	def export_as_zip(self):
+		''' Export a corpus, its children and all opuses in
+		    a recursive zip file 
+		'''
+		
+		# Write the ZIP file in memory
+		s = io.BytesIO()
 
+		# The zip compressor
+		zf = zipfile.ZipFile(s, "w")
+	
+		# Add a JSON file with meta data
+		zf.writestr("corpus.json", json.dumps(self.to_json()))
+
+		# Write the cover file
+		if self.cover is not None:
+			with open (self.cover.path, "r") as coverfile:
+				zf.writestr("cover.jpg", self.cover.read())
+			
+		# Add the zip files of the children
+		for child in self.get_direct_children():
+			zf.writestr(Corpus.local_ref(child.ref) + ".zip", child.export_as_zip().getvalue() )
+			
+		opera = Opus.objects.filter(corpus=self)
+		for opus in self.get_opera():
+			# Add MusicXML file
+			if opus.musicxml:
+				if os.path.exists(opus.musicxml.path):
+					zf.write(opus.musicxml.path, opus.local_ref() + ".xml")
+			if opus.mei:
+				if os.path.exists(opus.mei.path):
+					zf.write(opus.mei.path, opus.local_ref() + ".mei")
+		 	# Add a JSON file with meta data
+			opus_json = json.dumps(opus.to_json())
+			zf.writestr(opus.local_ref() + ".json", opus_json)
+		zf.close()
+		
+		return s
+	
+	@staticmethod
+	def import_from_zip(zfile, parent_corpus):
+		''' Import a corpus from a Neuma zip export. If necessary, the
+		     corpus is created, and its descriptions loaded from the json file
+		  '''
+		opus_files = {}
+		children = {}
+		found_corpus_data = False
+		found_cover = False
+		corpus_dict = {}
+		cover_data = ""
+		# Scan the content of the ZIP file to find the list of opus
+		for fname in zfile.namelist():
+			# Skip files with weird names
+			base, extension = decompose_zip_name (fname)
+			if base == "" or base.startswith('_') or  base.startswith('.'):
+				continue
+			# Look for the corpus data file
+			if base == "corpus" and extension == ".json":
+				found_corpus_data = True 
+				corpus_dict = json.loads(zfile.open(fname).read().decode('utf-8'))
+			elif base == "cover" and extension == ".jpg":
+				found_cover = True 
+				cover_data = zfile.open(fname).read()
+			elif extension == ".zip":
+				# A zip file with a sub corpus
+				children[base] = zipfile.ZipFile(io.BytesIO(zfile.open(fname).read()))
+			# OK, there is an Opus there
+			else:
+				opus_files[base] = {"mei": "", 
+						"musicxml": "",
+						"compressed_xml": "",
+						"json": "",
+						"kern": ""}
+
+		# Sanity
+		if not found_corpus_data:
+			logger.error ("Missing corpus JSON file. Cannot proceed")
+			return
+		if not found_cover:
+			logger.warning ("Missing cover for corpus " + corpus_dict['ref'])
+			
+		# Get the corpus, or create it
+		logger.info ("Importing corpus %s in %s" % (corpus_dict['ref'], parent_corpus.ref) )
+		print ("Importing corpus %s in %s" % (corpus_dict['ref'], parent_corpus.ref) )
+		full_corpus_ref = Corpus.make_ref_from_local_and_parent(corpus_dict['ref'], parent_corpus.ref)
+		try:
+			corpus = Corpus.objects.get(ref=full_corpus_ref)
+		except Corpus.DoesNotExist as e:
+			# Create this corpus
+			corpus = Corpus (parent=parent_corpus, ref=full_corpus_ref)
+		# Load / replace content from the dictionary
+		corpus.load_from_dict(corpus_dict)
+		corpus.save()
+		# Take the cover image
+		if found_cover :
+			corpus.cover.save("cover.jpg", ContentFile(cover_data))
+		else:
+			# Good to know: sets the file field to blank string
+			corpus.cover = None
+		
+		# Recursive import of the children
+		for base in children.keys():
+			corpus.import_from_zip(children[base], corpus)
+
+		# Second scan: we note the files present for each opus
+		for fname in zfile.namelist():
+			(opus_ref, extension) = decompose_zip_name (fname)
+			if opus_ref in opus_files:
+				if extension == '.mxl':
+					 opus_files[opus_ref]["compressed_xml"] = fname
+				elif (extension == '.xml' or extension == '.musicxml'):
+					opus_files[opus_ref]["musicxml"] = fname
+				elif extension == '.mei':
+					opus_files[opus_ref]["mei"] = fname
+				elif extension == '.json':
+					opus_files[opus_ref]["json"] = fname
+				elif extension == '.mid':
+					opus_files[opus_ref]["midi"] = fname
+				elif extension == '.krn':
+					opus_files[opus_ref]["kern"] = fname
+
+		# OK, now in opus_files, we know whether we have the MusicXML, MEI or any other
+		list_imported = []
+		for opus_ref, opus_files_desc in opus_files.items():			
+				full_opus_ref = corpus.ref + settings.NEUMA_ID_SEPARATOR + opus_ref
+				print ("Import opus with ref " + opus_ref + " in corpus " +  corpus_dict['ref'])
+				try:
+					opus = Opus.objects.get(ref=full_opus_ref)
+					
+				except Opus.DoesNotExist as e:
+					# Create the Opus
+					opus = Opus(corpus=corpus, ref=full_opus_ref, title=opus_ref)
+				list_imported.append(opus)
+
+				# If a json exists, then it should contain the relevant metadata
+				if opus_files_desc["json"] != "":
+					logger.info ("Found JSON metadata file %s" % opus_files_desc["json"])
+					json_file = zfile.open(opus_files_desc["json"])
+					json_doc = json_file.read()
+					opus.load_from_dict (corpus, json.loads(json_doc.decode('utf-8')))
+				# OK, we loaded metada : save
+				opus.save()
+				
+				if opus_files_desc["compressed_xml"] != "":
+					logger.info ("Found compressed MusicXML content")
+					# Compressed XML
+					container = io.BytesIO(zfile.read(opus_files_desc["compressed_xml"]))
+					xmlzip = zipfile.ZipFile(container)
+					# Keep the file in the container with the same basename
+					for name2 in xmlzip.namelist():
+						basename2 = os.path.basename(name2)
+						ref2 = os.path.splitext(basename2)[0]
+						if opus_files_desc["opus_ref"]  == ref2:
+							xml_content = xmlzip.read(name2)
+					opus.musicxml.save("score.xml", ContentFile(xml_content))
+				if opus_files_desc["musicxml"] != "":
+					logger.info ("Found MusicXML content")
+					xml_content = zfile.read(opus_files_desc["musicxml"])
+					opus.musicxml.save("score.xml", ContentFile(xml_content))
+				if opus_files_desc["kern"] != "":
+					logger.info ("Found KERN content")
+					kern_content = zfile.read(opus_files_desc["kern"])
+					# We need to write in a tmp file, probably 
+					tmp_file = "/tmp/tmp_kern.txt"
+					f = open(tmp_file, "wb")
+					f.write(kern_content)
+					f.close()
+					try:
+						tk = verovio.toolkit()
+						tk.loadFile(tmp_file)
+						mei_content = tk.getMEI()
+						opus.mei.save("mei.xml", ContentFile(mei_content))
+						doc = minidom.parseString(mei_content)
+						titles = doc.getElementsByTagName("title")
+						for title in titles:
+							for txtnode in title.childNodes:
+								opus.title = str(txtnode.data)
+								break
+							break
+					except Exception as e:
+						print ("Exception : " + str(e))
+
+				if opus.mei is None:
+					if opus_files_desc["mei"] != "":
+						logger.info ("Load MEI content")
+						# Add the MEI file
+						try:
+							mei_file = zfile.open(opus_files_desc["mei"])
+							mei_raw  = mei_file.read()
+							encoding = "utf-8"
+							try:
+								logger.info("Attempt to read in UTF 8")
+								mei_raw.decode(encoding)
+							except Exception as ex:
+								logger.info("Read in UTF 16")
+								encoding = "utf-16"
+								mei_raw.decode(encoding)
+							logger.info("Correct encoding: " + encoding)
+							mei_content = mei_raw.decode(encoding)
+							logger.info ("Save the MEI file.")
+							opus.mei.save("mei.xml", ContentFile(mei_content))
+						except Exception as ex:
+							logger.error ("Error processing MEI  " + str(ex))
+					else:
+						# Produce the MEI from the MusicXML
+						if opus_files_desc["musicxml"] != "":
+							logger.info ("Produce the MEI from MusicXML")
+							try:
+								tk = verovio.toolkit()
+								tk.loadFile(opus.musicxml.path)
+								mei_content = tk.getMEI()
+								opus.mei.save("mei.xml", ContentFile(mei_content))
+							except Exception as e:
+								print ("Exception : " + str(e))
+								# Workflow.produce_opus_mei(opus)	 
+						else:
+							logger.warning ("No MEI, no MusicXML: opus %s is incomplete" % opus.ref)
+
+				# Now try to obtain metadata
+				if opus_files_desc["compressed_xml"]!="" or opus_files_desc["musicxml"]!="":
+					# Get MusicXML metadata
+					doc = minidom.parseString(xml_content)
+					titles = doc.getElementsByTagName("movement-title")
+					for title in titles:
+						for txtnode in title.childNodes:
+							opus.title = str(txtnode.data)
+							break
+						break
+				elif opus_files_desc["compressed_xml"]!="" or opus_files_desc["musicxml"]!="":
+					# Get MusicXML metadata
+					doc = minidom.parseString(xml_content)
+					titles = doc.getElementsByTagName("movement-title")
+					for title in titles:
+						for txtnode in title.childNodes:
+							opus.title = str(txtnode.data)
+							break
+						break
+					
+				try:
+					if opus.title == opus_ref:
+						#print ("Title = " + opus.title + " Try to obtain metadata")
+						# Try to find metadata in the XML file with music21
+						score = opus.get_score()
+						if score.get_title() != None and len(score.get_title()) > 0:
+							opus.title = score.get_title()
+						if score.get_composer() != None and len(score.get_composer()) > 0:
+							opus.composer = score.get_composer()
+							
+					opus.save()
+				except Exception as ex:
+					print ("Error importing opus  " + str(ex))
+					logger.error ("Error importing opus " + str(ex))
+					
+				print ("Opus ref " + opus_ref + " imported in corpus " + corpus.ref+ "\n")
+		return list_imported
+	
 ####################################################
 
 class Opus(models.Model):
@@ -407,12 +660,12 @@ class Opus(models.Model):
 
 		"""
 		# The id can be named id or _id
-		if ("id" in dict_opus.keys()):
-			self.ref = dict_opus["id"].strip()
-		elif ("_id" in dict_opus.keys()):
-			self.ref = dict_opus["_id"].strip()
+		if ("ref" in dict_opus.keys()):
+			self.ref = Corpus.make_ref_from_local_and_parent(dict_opus["ref"].strip(), corpus.ref)
+		elif ("_ref" in dict_opus.keys()):
+			self.ref = Corpus.make_ref_from_local_and_parent(dict_opus["_ref"].strip(), corpus.ref)
 		else:
-			raise  KeyError('Missing id field in an Opus dictionary')
+			raise  KeyError('Missing ref field in an Opus dictionary')
 
 		self.title = dict_opus["title"]
 
@@ -572,7 +825,7 @@ class Opus(models.Model):
 		metas = []
 		for meta in self.get_metas ():
 			metas.append({"meta_key": meta.meta_key, "meta_value": meta.meta_value})
-		return {"id": self.ref, 
+		return {"ref": self.local_ref(), 
 				 "title": self.title, "composer": self.composer, 
 				 "lyricist": self.lyricist, 
 				 "corpus": self.corpus.ref,
@@ -838,3 +1091,19 @@ class Annotation(models.Model):
 		print ("Annotation from JSON")
 		print (str(form_data))
 		
+
+
+# Get the Opus ref and extension from a file name
+def decompose_zip_name (fname):
+	dirname = os.path.dirname(fname)
+	dircomp = dirname.split(os.sep)
+	basename = os.path.basename(fname)
+	components = os.path.splitext(basename) 
+	extension = components[len(components)-1]
+	opus_ref = ""
+	sep = ""
+	for i in range(len(components)-1):
+		if i >0:
+			sep = "-"
+		opus_ref += components[i] + sep
+	return (opus_ref, extension)
