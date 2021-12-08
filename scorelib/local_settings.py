@@ -13,7 +13,7 @@ ELASTIC_SEARCH = {"host": "localhost", "port": 9200, "index": "scorelib"}
 DATABASES = {
     'default': {
 	'ENGINE': 'django.db.backends.postgresql_psycopg2',
-	'NAME': 'neuma',
+	'NAME': 'scorelib',
 	'USER': 'neumadmin',
 	'PASSWORD': 'neuma',
 	'HOST': 'localhost',
