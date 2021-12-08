@@ -335,8 +335,11 @@ class Corpus(models.Model):
 
 		# Write the cover file
 		if self.cover is not None:
-			with open (self.cover.path, "r") as coverfile:
-				zf.writestr("cover.jpg", self.cover.read())
+			try:
+				with open (self.cover.path, "r") as coverfile:
+					zf.writestr("cover.jpg", self.cover.read())
+			except Exception as ex:
+				print ("Cannot read the cover file ?" + str(ex))
 			
 		# Add the zip files of the children
 		for child in self.get_direct_children():
