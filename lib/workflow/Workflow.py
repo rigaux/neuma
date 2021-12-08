@@ -575,7 +575,7 @@ class Workflow:
 		list_imported = Corpus.import_from_zip(zf, upload.corpus)
 		
 		# Produce descriptors and index the opus in ElasticSearch
-		Workflow.index_corpus(upload.corpus, True)
+		# Workflow.index_corpus(upload.corpus, True)
 		return list_imported
 	
 	@staticmethod

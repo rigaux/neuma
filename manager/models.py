@@ -45,6 +45,8 @@ from lib.neumautils.kmedoids import cluster
 from lib.music.Voice import IncompleteBarsError
 import transcription
 from abc import abstractstaticmethod
+from django.db.models.sql.where import OR
+from jinja2.nodes import Or
 
 
 class Corpus(models.Model):
@@ -384,12 +386,15 @@ class Corpus(models.Model):
 				# A zip file with a sub corpus
 				children[base] = zipfile.ZipFile(io.BytesIO(zfile.open(fname).read()))
 			# OK, there is an Opus there
-			else:
+			elif (extension ==".json" or extension == ".mei" or extension == ".xml"
+			     or extension == '.mxl' or extension=='.krn' or extension=='.mid'):
 				opus_files[base] = {"mei": "", 
 						"musicxml": "",
 						"compressed_xml": "",
 						"json": "",
 						"kern": ""}
+			else:
+				print ("Ignoring file %s.%s" % (base, extension))
 
 		# Sanity
 		if not found_corpus_data:
@@ -419,6 +424,7 @@ class Corpus(models.Model):
 		
 		# Recursive import of the children
 		for base in children.keys():
+			print ("*** Importing sub corpus " + base)
 			corpus.import_from_zip(children[base], corpus)
 
 		# Second scan: we note the files present for each opus
@@ -450,6 +456,7 @@ class Corpus(models.Model):
 					# Create the Opus
 					opus = Opus(corpus=corpus, ref=full_opus_ref, title=opus_ref)
 				list_imported.append(opus)
+				opus.mei = None
 
 				# If a json exists, then it should contain the relevant metadata
 				if opus_files_desc["json"] != "":
@@ -458,6 +465,7 @@ class Corpus(models.Model):
 					json_doc = json_file.read()
 					opus.load_from_dict (corpus, json.loads(json_doc.decode('utf-8')))
 				# OK, we loaded metada : save
+				opus.mei = None
 				opus.save()
 				
 				if opus_files_desc["compressed_xml"] != "":
@@ -499,7 +507,7 @@ class Corpus(models.Model):
 					except Exception as e:
 						print ("Exception : " + str(e))
 
-				if opus.mei is None:
+				if bool(opus.mei) == False:
 					if opus_files_desc["mei"] != "":
 						logger.info ("Load MEI content")
 						# Add the MEI file
