@@ -1,5 +1,7 @@
 from django.conf import settings
 
+import os
+
 from elasticsearch import Elasticsearch
 from elasticsearch_dsl import Search, Index
 from elasticsearch_dsl import Document, Integer, Text, Object, Nested, InnerDoc
@@ -263,6 +265,19 @@ class IndexWrapper:
                     print(str(o["best_occurrence"]) + " : " + str(o["distance"]))
         
         return opera
+
+    def export_all(self, output_dir):
+        es = Elasticsearch()
+        
+        res = es.search(index=settings.ELASTIC_SEARCH["index"], size=10000, query={"match_all": {}})
+        print("Got %d Hits:" % res['hits']['total']['value'])
+        for hit in res['hits']['hits']:
+            id = hit['_id'].replace(':', '_').replace('.','_')
+            file_path = os.path.join(output_dir, id +'.json')
+            print ("File : " + file_path)
+            with open(file_path, 'w', encoding='utf-8') as f:
+                json.dump(hit["_source"], f)
+        return
 
     def get_search(self, search_context):
         """

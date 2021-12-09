@@ -393,7 +393,7 @@ class Corpus(models.Model):
 		return s
 	
 	@staticmethod
-	def import_from_zip(zfile, parent_corpus):
+	def import_from_zip(zfile, parent_corpus, zip_name):
 		''' Import a corpus from a Neuma zip export. If necessary, the
 		     corpus is created, and its descriptions loaded from the json file
 		  '''
@@ -432,8 +432,16 @@ class Corpus(models.Model):
 
 		# Sanity
 		if not found_corpus_data:
-			logger.error ("Missing corpus JSON file. Cannot proceed")
-			return
+			logger.warning ("Missing corpus JSON file. Producing a skeleton with ref %s" % zip_name)
+			corpus_dict = {"ref": zip_name, 
+				 "title": "To be defined", 
+				 "short_title": "To be defined", 
+				 "description": "To be defined", 
+				 "is_public": True,
+				 "short_description": "To be defined",
+				 "copyright": "",
+				 "supervisors": ""
+				}
 		if not found_cover:
 			logger.warning ("Missing cover for corpus " + corpus_dict['ref'])
 			
@@ -459,7 +467,7 @@ class Corpus(models.Model):
 		# Recursive import of the children
 		for base in children.keys():
 			print ("*** Importing sub corpus " + base)
-			corpus.import_from_zip(children[base], corpus)
+			corpus.import_from_zip(children[base], corpus, base)
 
 		# Second scan: we note the files present for each opus
 		for fname in zfile.namelist():
@@ -523,8 +531,15 @@ class Corpus(models.Model):
 					kern_content = zfile.read(opus_files_desc["kern"])
 					# We need to write in a tmp file, probably 
 					tmp_file = "/tmp/tmp_kern.txt"
-					f = open(tmp_file, "wb")
-					f.write(kern_content)
+					f = open(tmp_file, "w")
+					lines = kern_content.splitlines()
+					for line in lines:
+						if not (line.startswith(b"!!!ARE: ") 
+							or line.startswith(b"!!!AGN: ")
+							or line.startswith(b"!!!OTL: ")
+							or line.startswith(b"!! ")
+							):
+							f.write (line.decode()  + os.linesep)
 					f.close()
 					try:
 						tk = verovio.toolkit()
@@ -539,7 +554,8 @@ class Corpus(models.Model):
 								break
 							break
 					except Exception as e:
-						print ("Exception : " + str(e))
+						print ("Exception pendant le traitement d'un fichier Kern: " + str(e))
+						return
 
 				if bool(opus.mei) == False:
 					if opus_files_desc["mei"] != "":
