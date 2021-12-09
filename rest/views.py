@@ -328,6 +328,9 @@ def handle_import_request(request, full_neuma_ref, upload_id):
         # task_id = async(workflow_import_zip, upload)
 
         answer_list = []
+        if list_imported == None:
+            return JSONResponse(
+            {"error": "Empty list to import"})
         for opus in list_imported:
             answer_list.append(opus_to_rest(opus))
         return JSONResponse(
