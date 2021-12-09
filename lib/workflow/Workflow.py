@@ -567,17 +567,25 @@ class Workflow:
 		return descriptors_dict
 
 	@staticmethod 
-	def import_zip(upload, do_import=True):
+	def import_zip(upload, corpus_ref):
 		# Check the zip
 		if zipfile.is_zipfile(upload.zip_file.path):
 			zf = zipfile.ZipFile(upload.zip_file.path, 'r')
-			
-		list_imported = Corpus.import_from_zip(zf, upload.corpus)
+		list_imported = Corpus.import_from_zip(zf, upload.corpus, corpus_ref)
 		
 		# Produce descriptors and index the corpus in ElasticSearch
-		Workflow.index_corpus(upload.corpus, True)
+		#Workflow.index_corpus(upload.corpus, True)
 		return list_imported
 	
+	@staticmethod 
+	def export_from_es(output_dir):
+		print ("Exporting all JSON files from Elastic search in dir %s" % output_dir)
+		index_wrapper = IndexWrapper()
+		index_wrapper.export_all(output_dir)
+
+		return
+
+
 	@staticmethod
 	def async_import (upload):
 		"""Create a task to run the import asynchronuously """

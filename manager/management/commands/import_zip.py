@@ -17,6 +17,7 @@ class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument('-u', dest='upload_id')
         parser.add_argument('-a', dest='async_mode')
+        parser.add_argument('-r', dest='corpus_ref')
 
     def handle(self, *args, **options):
         try:
@@ -28,10 +29,15 @@ class Command(BaseCommand):
         if not (zipfile.is_zipfile(upload.zip_file.path)):
             print ("Ce n'est pas un fichier ZIP")
 
+        if options['corpus_ref'] is None:
+            corpus_ref = "unknown_ref"
+        else:
+            corpus_ref = options['corpus_ref']
+
         if "async_mode" in options and options["async_mode"] == "1":
                 print ("Running in asynchronous mode")
-                Workflow.async_import (upload)
+                Workflow.async_import (upload, corpus_ref)
         else:
                 print ("Running in synchronous mode")
-                Workflow.import_zip(upload)                         
+                Workflow.import_zip(upload, corpus_ref)                         
  
