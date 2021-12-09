@@ -49,6 +49,20 @@ from django.db.models.sql.where import OR
 from jinja2.nodes import Or
 
 
+class Licence (models.Model):
+	'''Description of a licence'''
+	code = models.CharField(max_length=25,primary_key=True)
+	name = models.CharField(max_length=100)
+	url = models.CharField(max_length=255,null=True,blank=True)
+	notice =   models.TextField()
+	full_text =   models.TextField(null=True,blank=True)
+
+	class Meta:
+		db_table = "Licence"	
+
+	def __str__(self):  # __unicode__ on Python 2
+		return "(" + self.code + ") " + self.name
+
 class Corpus(models.Model):
 	title = models.CharField(max_length=255)
 	short_title = models.CharField(max_length=255)
@@ -60,6 +74,9 @@ class Corpus(models.Model):
 	update_timestamp = models.DateTimeField('Updated',auto_now=True)
 	ref = models.CharField(max_length=255,unique=True)
 	licence_notice =  models.TextField(default='', blank=True)
+	licence = models.ForeignKey(Licence, null=True,blank=True,on_delete=models.PROTECT)
+	copyright = models.CharField(max_length=255,null=True,blank=True)
+	supervisors = models.CharField(max_length=255,null=True,blank=True)
 
 	def upload_path(self, filename):
 		'''Set the path where corpus-related files must be stored'''
@@ -143,21 +160,35 @@ class Corpus(models.Model):
 		self.description = dict_corpus["description"]
 		self.short_description = dict_corpus["short_description"]
 		self.is_public = dict_corpus["is_public"]
-		self.licence_notice = dict_corpus["licence_notice"]
-
+		if "licence_code" in dict_corpus:
+			try:
+				self.licence = Licence.objects.get(code=dict_corpus["licence_code"])
+			except Licence.DoesNotExist:
+				print ("Unknown licence. Ignored. Did you run setup_neuma?")
+		if "copyright" in dict_corpus:
+			self.copyright = dict_corpus["copyright"]
+		if "supervisors" in dict_corpus:
+			self.supervisors = dict_corpus["supervisors"]
 		return
 	   
 	def to_json(self):
 		"""
 		  Create a dictionary that can be used for JSON exports
 		"""
+		if self.licence is not None:
+			licence_code = self.licence.code
+		else:
+			licence_code = None
+
 		return {"ref": Corpus.local_ref(self.ref), 
 				 "title": self.title, 
 				 "short_title": self.short_title, 
 				 "description": self.description, 
 				 "is_public": self.is_public,
 				 "short_description": self.short_description,
-				 "licence_notice":  self.licence_notice,
+				 "licence_code":  licence_code,
+				 "copyright": self.copyright,
+				 "supervisors": self.supervisors
 		}
 
 
@@ -1103,7 +1134,7 @@ class Annotation(models.Model):
 		print (str(form_data))
 		
 
-
+		
 # Get the Opus ref and extension from a file name
 def decompose_zip_name (fname):
 	dirname = os.path.dirname(fname)
