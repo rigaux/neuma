@@ -574,13 +574,13 @@ class Workflow:
 			
 		list_imported = Corpus.import_from_zip(zf, upload.corpus)
 		
-		# Produce descriptors and index the opus in ElasticSearch
-		# Workflow.index_corpus(upload.corpus, True)
+		# Produce descriptors and index the corpus in ElasticSearch
+		Workflow.index_corpus(upload.corpus, True)
 		return list_imported
 	
 	@staticmethod
 	def async_import (upload):
-		"""Create a task to run the import asynchrionuously """
+		"""Create a task to run the import asynchronuously """
 		
 		#task_id = async("workflow_import_zip", upload)
 		
