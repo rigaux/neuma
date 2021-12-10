@@ -461,6 +461,7 @@ class Workflow:
 		melodic profile of each voice. Optionally, we also store the lyrics if present.
 		"""
 		print ("Produce descriptors for opus " + opus.ref)
+		descriptors_dict = {}
 		try:
 				score = opus.get_score()
 
@@ -474,7 +475,6 @@ class Workflow:
 				opus.summary.save("summary.json", ContentFile(music_summary.encode()))
 				#print (json.dumps(json_summary, indent=4, separators=(',', ': ')))
 
-				descriptors_dict = {}
 				types = "melodic", "diatonic", "rhythmic", "notes"
 				for atype in types:
 					descriptors_dict[atype] = {}
@@ -563,7 +563,7 @@ class Workflow:
 
 		except  Exception as ex:
 			print ("Exception for opus " + opus.ref + " Message:" + str(ex))
-			print ("Are you running elasticsearch?")
+
 		return descriptors_dict
 
 	@staticmethod 

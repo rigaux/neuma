@@ -40,4 +40,6 @@ class Command(BaseCommand):
         else:
                 print ("Running in synchronous mode")
                 Workflow.import_zip(upload, corpus_ref)                         
+        
+        print ("Do not forget to index the new corpus (run scan_corpus with 'index' action)")
  

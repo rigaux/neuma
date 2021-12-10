@@ -97,13 +97,15 @@ var tabNames = [{"tabId": "tab1", "divId": "subcorpus"},
 
 <div class="block margins right small insert">
  <div class="path">
-  <a
-    href="{% url 'home:corpus' corpus.parent.ref %}">
+      {% if corpus.ref != 'all' %}
+
+      <a    href="{% url 'home:corpus' corpus.parent.ref %}">
     {% if corpus.parent.cover != "" %} 
-        <span class="icon" style="background-image: url({{ corpus.parent.cover.url }});"></span>
-     {% endif %}
-     Parent: {{corpus.parent.title}}
+           <span class="icon" style="background-image: url({{ corpus.parent.cover.url }});"></span>
+        {% endif %}
+             Parent: {{corpus.parent.title}}
    </a>
+        {% endif %}
   </div>
   	<hr/>
 	{% if corpus_cover != "" %} 
@@ -112,9 +114,7 @@ var tabNames = [{"tabId": "tab1", "divId": "subcorpus"},
 		</div>
 	
 	{% endif %} 
-	  {% if corpus.ref != 'all' %}
-  
-{% endif %}
+
     
 </div>
 
