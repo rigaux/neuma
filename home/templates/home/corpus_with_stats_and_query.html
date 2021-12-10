@@ -42,16 +42,31 @@
 {% if "import_corpus" in user_corpus_perms  or user.is_superuser  %}
 var tabNames = [{"tabId": "tab1", "divId": "subcorpus"}, 
                 {"tabId": "tab2", "divId":"opus"},
-                {"tabId": "tab3", "divId":"manage"},
-                {"tabId": "tab4", "divId":"infos"},
+                {"tabId": "tab3", "divId":"stats"},
+                {"tabId": "tab4", "divId":"manage"},
+                {"tabId": "tab5", "divId":"infos"},
                 ]
  {% else %}
  var tabNames = [{"tabId": "tab1", "divId": "subcorpus"}, 
                  {"tabId": "tab2", "divId":"opus"},
-                {"tabId": "tab4", "divId":"infos"},
+                 {"tabId": "tab3", "divId":"stats"},
+                {"tabId": "tab5", "divId":"infos"},
                  ]
 {% endif %}
  
+{% if scoreql %}
+  $(document).ready(function() {
+    var tab5 = document.getElementById("tab5");
+    tab5.classList.add('active');
+    document.getElementById("query").style.display = "block";
+
+    var tab2 = document.getElementById("tab2");
+    tab2.classList.remove('active');
+    document.getElementById("tab1").classList.remove('active');
+    document.getElementById("subcorpus").style.display = "none";
+    document.getElementById("opus").style.display = "none";
+  });
+{% endif %}
     /* Replaces a long desctiption by a short
     initial text with a link */
     function getBeginText()
@@ -80,7 +95,14 @@ var tabNames = [{"tabId": "tab1", "divId": "subcorpus"},
 
 <!-- CORPUS -->
 
-
+  {% if corpus.ref != 'all' %}
+  <div class="path">
+  <a
+    href="{% url 'home:corpus' corpus.parent.ref %}">{% if corpus.parent.cover != "" %} 
+        <span class="icon" style="background-image: url({{ corpus.parent.cover.url }});"></span>
+     {% endif %}{% trans "Parent" %}: {{corpus.parent.title}}</a>
+  </div>
+{% endif %}
 <h1>
 	<!-- BEGIN admin_link -->
 	<ul class="toolbar">
@@ -96,25 +118,15 @@ var tabNames = [{"tabId": "tab1", "divId": "subcorpus"},
 </h1>
 
 <div class="block margins right small insert">
- <div class="path">
-  <a
-    href="{% url 'home:corpus' corpus.parent.ref %}">
-    {% if corpus.parent.cover != "" %} 
-        <span class="icon" style="background-image: url({{ corpus.parent.cover.url }});"></span>
-     {% endif %}
-     Parent: {{corpus.parent.title}}
-   </a>
-  </div>
-  	<hr/>
+
 	{% if corpus_cover != "" %} 
-	<div><img width="200" height="213"
+	<img width="200" height="213"
 		src="{{ corpus_cover.url }}" alt="Image" /> 
-		</div>
-	
 	{% endif %} 
-	  {% if corpus.ref != 'all' %}
-  
-{% endif %}
+    <p>{{corpus.licence.notice | safe}}</p>
+    	{% if corpus.copyright != "" %} 
+    	<p>&copy; {{corpus.copyright}}</p>
+       {% endif %} 
     
 </div>
 
@@ -128,10 +140,16 @@ var tabNames = [{"tabId": "tab1", "divId": "subcorpus"},
 {{corpus.description}}
 {% endautoescape %}</div>
 
-<div>
-{{ request.session.search_context.info_message }}</div>
 
 
+
+<dl class="description">
+    <dt>{% trans "Info " %}</dt>
+    <dd>{{ request.session.search_context.info_message }}</dd>
+
+	<dt>{% trans "Nb opera" %}</dt>
+	<dd>{{ nb_opera }}</dd>
+</dl>
 <div class="clearer">&nbsp;</div>
 
 
@@ -145,10 +163,11 @@ var tabNames = [{"tabId": "tab1", "divId": "subcorpus"},
 	<ul id="tabnav">
 		<li id="tab1"><a href="javascript:void(0);" onClick="TabClick(tabNames, 0);">Sub-corpora ({{ nb_children }})</a></li>
 		<li id="tab2" class="active"><a href="#" onClick="TabClick(tabNames, 1);">Opus ({{ nb_opera }})</a></li>
+		<!-- <li id="tab3"><a href="javascript:void(0);" onClick="TabClick(tabNames, 2);">Statistics</a></li>  -->
 		{% if "import_corpus" in user_corpus_perms or user.is_superuser %}
-		<li id="tab3"><a href="javascript:void(0);" onClick="TabClick(tabNames, 2);">Management</a></li>
+		<li id="tab4"><a href="javascript:void(0);" onClick="TabClick(tabNames, 3);">Management</a></li>
 		{% endif %}
-		<li id="tab4"><a href="javascript:void(0);" onClick="TabClick(tabNames, 3);">Infos</a></li>
+		<li id="tab5"><a href="javascript:void(0);" onClick="TabClick(tabNames, 4);">Infos</a></li>
 	</ul>
 </div>
 
@@ -331,23 +350,81 @@ var tabNames = [{"tabId": "tab1", "divId": "subcorpus"},
   </table>
 </div>
 
-<!--   Tab for  infos -->
-<div id="infos" style="display: none">
+<!--   Tab for scoreql queries -->
+<div id="info" style="display: none">
 
-<h2>Licence and copyright</h2>
+  <div class="grid">
 
-    <p>{{corpus.licence.notice | safe}}</p>
-    	{% if corpus.copyright != "" %} 
-    	<p>&copy; {{corpus.copyright}}</p>
-       {% endif %} 
+  <div id="left" class="col7">
+    <h3>Query</h3>
+    <br/>
+    <form  id="scoreqlquery" method="post" action="/home/corpus/{{ corpus_ref }}/#query">
+      {% csrf_token %} 
+      <textarea style="font-size:80%;margin: 0px; width: 95%; height: 233px;" id="queryarea" name="query">
+{% if query %}{{ query }}{% else %}import module namespace s = "fr.cnam.vertigo.scoreql.ScoreQL";
+let $j := for $i in fn:collection("ScoreMView")/score[contains(@id, "Neuma:{{ corpus_ref }}")] 
+    return $i
+return s:Score("1st voice", $j[1]/music/*[1])
+        {% endif %}
+      </textarea>
+      <br/> <br/>
+      <div class="text-center">
+      <input type="submit" value="Submit query" class="centered">
+    </div>
+    </form>
+    <br>
+    </div>
 
-<h2>Stats</h2>
-<dl class="description">
+    <div class="col1"></div>
+    <div id="right" class="col4 smaller">
+      
+        <h3>Documentation</h3>
+        <ul style="list-style:disc;margin:0;"><li>Link to the <a href="http://cchum-kvm-scorelibneuma.in2p3.fr/ScoreQL/">ScoreQL API documentation</a></li></ul>
+        <h3>Available query templates</h3>
+        {% if templates %}
+        <ul style="list-style:disc;margin:0;">
+          {% for key,value in templates.items %}
+          <li><a href="javascript:insertText('queryarea','{{ value }}')">{{ key }}</a> </li>
 
-	<dt>{% trans "Nb opera" %}</dt>
-	<dd>{{ nb_opera }}</dd>
-</dl>
+        {% endfor %}
+      </ul>
+        {% else %}
+        not yet implemented
+        {% endif %}
 
+        <h3>Available mappings</h3>
+        <ul style="list-style:disc;margin:0;">
+        {% if mappings %}
+          {% for map in mappings %}
+          <li><a target="_blank" href="http://cchum-kvm-scorelibneuma.in2p3.fr/ScoreQL/rest/mapping?corpus={{ map }}">{{ map }}</a></li> 
+          {% endfor %}
+        {% else %}
+        <li>the list of mappings is currently unavailable</li>
+        {% endif %}
+        </ul>
+
+        <h3>Available functions</h3>
+        <ul style="list-style:disc;margin:0px;">
+        {% if functions %}
+          {% for f in functions %}
+            <li class="functions">{{ f }}</li>
+          {% endfor %}
+        {% else %}
+        <li>the list of functions is currently unavailable</li>
+        {% endif %}
+          </ul>
+        </ul>
+
+     
+    </div><!-- ending column -->
+  </div><!-- ending grid -->
+  
+  <hr>
+  <h3>Results</h3>
+  {% if results %}<PRE style="height:200px;overflow:scroll;"><code class="xml">{{ results }}</code></PRE>
+  {% else %}
+  No results to be displayed.
+  {% endif %}
 </div>
 
 <script type="text/javascript">

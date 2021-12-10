@@ -537,6 +537,7 @@ class Corpus(models.Model):
 						if not (line.startswith(b"!!!ARE: ") 
 							or line.startswith(b"!!!AGN: ")
 							or line.startswith(b"!!!OTL: ")
+							or line.startswith(b"!!!YOR: ")
 							or line.startswith(b"!! ")
 							):
 							f.write (line.decode()  + os.linesep)
