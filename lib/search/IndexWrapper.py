@@ -75,13 +75,14 @@ class IndexWrapper:
         
         print ("Index Opus " + opus.ref)
         # First time that we index this Opus
-        score = opus.get_score()
-        # CHANGE: we do not longer store the summary in ES
-        #music_summary = score.get_music_summary()
-        #music_summary.opus_id = opus.ref
-        #msummary_for_es = music_summary.encode()
+        try:
+            score = opus.get_score()
+            # CHANGE: we do not longer store the summary in ES
+            #music_summary = score.get_music_summary()
+            #music_summary.opus_id = opus.ref
+            #msummary_for_es = music_summary.encode()
 
-        opus_index = OpusIndex(
+            opus_index = OpusIndex(
                 meta={'id': opus.ref, 'index': settings.ELASTIC_SEARCH["index"]},
                 corpus_ref=opus.corpus.ref,
                 ref=opus.ref,
@@ -90,6 +91,20 @@ class IndexWrapper:
                 composer=opus.composer,
                 lyricist=opus.lyricist,
             )
+            
+            # Add descriptors to opus index
+            for descriptor in opus.descriptor_set.all():
+                #print ("Add descriptor for voice " + descriptor.voice, " type " + descriptor.type)
+                opus_index.add_descriptor(descriptor)
+            # Saving the opus_index object triggers insert or replacement in ElasticSearch
+            opus_index.save(using=self.elastic_search,id=opus.ref)
+
+        except Exception as ex:
+            print ("Error met when trying to index: " + str(ex))
+            #When the analysis finish, no value would be assigned to mel_pat_dict etc.. thus simply return void
+        
+        return
+
 
         # Add descriptors to opus index
         for descriptor in opus.descriptor_set.all():
@@ -269,14 +284,30 @@ class IndexWrapper:
     def export_all(self, output_dir):
         es = Elasticsearch()
         
-        res = es.search(index=settings.ELASTIC_SEARCH["index"], size=10000, query={"match_all": {}})
-        print("Got %d Hits:" % res['hits']['total']['value'])
-        for hit in res['hits']['hits']:
-            id = hit['_id'].replace(':', '_').replace('.','_')
-            file_path = os.path.join(output_dir, id +'.json')
-            print ("File : " + file_path)
-            with open(file_path, 'w', encoding='utf-8') as f:
-                json.dump(hit["_source"], f)
+        resp = es.search(index=settings.ELASTIC_SEARCH["index"], 
+                         scroll="10m", 
+                         size= 100,
+                         query={"match_all": {}})
+        scroll_id = resp['_scroll_id']
+        scroll_size = len(resp['hits']['hits'])
+        
+        print("Scroll id %s and scroll size %s " % (str(scroll_id), str(scroll_size)))
+        i_doc = 0
+        while scroll_size > 0:
+            print ("Scrolling...")
+            for hit in resp['hits']['hits']:
+                id = hit['_id'].replace(':', '_').replace('.','_')
+                file_path = os.path.join(output_dir, id +'.json')
+                print ("File : " + file_path)
+                with open(file_path, 'w', encoding='utf-8') as f:
+                    json.dump(hit["_source"], f)
+                i_doc+= 1
+            resp  = es.scroll(scroll_id=scroll_id, scroll='2m')
+            scroll_id = resp['_scroll_id']
+            scroll_size = len(resp['hits']['hits'])
+
+
+        print ("%d documents have been exported." % i_doc)
         return
 
     def get_search(self, search_context):
