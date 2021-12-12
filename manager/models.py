@@ -73,7 +73,6 @@ class Corpus(models.Model):
 	creation_timestamp = models.DateTimeField('Created',auto_now_add=True)
 	update_timestamp = models.DateTimeField('Updated',auto_now=True)
 	ref = models.CharField(max_length=255,unique=True)
-	licence_notice =  models.TextField(default='', blank=True)
 	licence = models.ForeignKey(Licence, null=True,blank=True,on_delete=models.PROTECT)
 	copyright = models.CharField(max_length=255,null=True,blank=True)
 	supervisors = models.CharField(max_length=255,null=True,blank=True)

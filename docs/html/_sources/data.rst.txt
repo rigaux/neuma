@@ -5,7 +5,7 @@
 Data management
 ###############
 
-Neuma only knows two tpes of objects: *corpus(es)* and *opus(es)*. 
+Neuma only knows two types of objects: *corpus(es)* and *opus(es)*. 
 Each  corpus is a container with (sub-) *corpuses* and/or a list of *opuses*. The structure of a collection
 is therefore a hierarchy,  rooted at as pseudo-corpus named *all*. Internal nodes
 are corpuses, leaves are opuses.
@@ -70,7 +70,7 @@ proposed
 
   - Editing the corpus, to change its description
   - Adding a sub-corpus
-  - Adding a zip file containing a list of opuses to import in the corpus
+  - Adding a zip file containing a hierarchy of sub-corpuses to import as children of the current corpus
   - Importing a zip file
   
 Editing corpuses
@@ -206,20 +206,23 @@ the XML file.
 Upload files
 ============
 
-.. note:: In the ``data`` directory of Neuma, you will find that Zip files ready to be imported.
+.. note:: In the ``data`` directory of Neuma, you will find Zip files ready to be imported.
 
-For import/export, opuses are gathered in Zip files. In order to create such a file, proceed as follows
+For import/export, corpuses (including their children
+corpuses and opuses) are gathered in Zip files. In order to create such a file, proceed as follows
 
-  - create a directory (its name is not important), say ``myImport``;
+  - create a directory, named after the local corpus reference, say ``symphonies``;
   - put the opuses files in this directory. It is essential to respect the naming
     rules explained above. 
-  - compress the directory as a zip file, e.g., ``myImport.zip``.
+  - add a ``corpus.json`` file with a few metadata on the corpus: titles, descrption, etc.
+  - compress the directory as a zip file, e.g., ``op8.zip``.
     
 **Be careful with opus references**: the file names (without extension)
 define the local reference of an opus inside its corpus. if, for instance,
-one imports in a corpus ``psautiers:godeau1656``, then a file 
-``mynopus.xml`` will be imported in the corpus with (globl) reference 
-``psautiers:godeau1656:monopus``.
+one imports a zip file ``op8.zip`` in a corpus ``composers:vivaldi``, then a file 
+``allegro.xml`` will be imported in the corpus with (global) reference 
+``composers:vivaldi:op8``. The global reference of this opus 
+will be ``composers:vivaldi:op8:allegro``.
 
 Opus references cannot be modified after import.  **Use a consistent naming scheme,
 in lowercase, as short as possible**. Note that opuses are sorted
@@ -233,7 +236,8 @@ such as ``opus_01``,
 Inserting upload files
 ======================
 
-In the *Management* tab of a corpus, a form allows to upload a zip file. You must supply
+In the *Management* tab of a corpus, a form allows to upload zip files,
+one for each children. You must supply
 a sort description of the Zip content, and the Zip file itself. 
 
 Once uploaded, Zip files appear in a list, left of the *Management* tab. Note the ID of a
@@ -255,3 +259,6 @@ This function can be run in asynchronous mode with:
 .. code-block:: bash
 
     python3 manage.py import_zip -u <upload_id> -a 1
+
+A set of zip files with recursives corpuses can be found in ``data``. They can 
+be imported as children of the root corpus.

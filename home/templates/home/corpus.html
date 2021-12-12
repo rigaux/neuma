@@ -336,8 +336,10 @@ var tabNames = [{"tabId": "tab1", "divId": "subcorpus"},
 
 <h2>Licence and copyright</h2>
 
-    <p>{{corpus.licence.notice | safe}}</p>
-    	{% if corpus.copyright != "" %} 
+    {% if not corpus.licence == None %}
+    <p><a href="{{corpus.licence.url}}">{{corpus.licence.notice | safe}}</a></p>
+    {% endif %}
+    	{% if not corpus.copyright == "" and  not corpus.copyright == None %} 
     	<p>&copy; {{corpus.copyright}}</p>
        {% endif %} 
 
