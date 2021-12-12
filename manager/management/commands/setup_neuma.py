@@ -253,6 +253,7 @@ class Command(BaseCommand):
 			try:
 				db_licence = Licence.objects.get(code=code)
 				print ("Licence  '" + name + "' already exists")
+				db_licence.url= url 
 				db_licence.notice= notice 
 				db_licence.full_text = full_text
 				db_licence.save()

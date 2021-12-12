@@ -43,7 +43,7 @@
             
   <section id="data-management">
 <span id="chap-data"></span><h1>Data management<a class="headerlink" href="#data-management" title="Permalink to this headline">¶</a></h1>
-<p>Neuma only knows two tpes of objects: <em>corpus(es)</em> and <em>opus(es)</em>.
+<p>Neuma only knows two types of objects: <em>corpus(es)</em> and <em>opus(es)</em>.
 Each  corpus is a container with (sub-) <em>corpuses</em> and/or a list of <em>opuses</em>. The structure of a collection
 is therefore a hierarchy,  rooted at as pseudo-corpus named <em>all</em>. Internal nodes
 are corpuses, leaves are opuses.</p>
@@ -100,7 +100,7 @@ proposed</p>
 <div><ul class="simple">
 <li><p>Editing the corpus, to change its description</p></li>
 <li><p>Adding a sub-corpus</p></li>
-<li><p>Adding a zip file containing a list of opuses to import in the corpus</p></li>
+<li><p>Adding a zip file containing a hierarchy of sub-corpuses to import as children of the current corpus</p></li>
 <li><p>Importing a zip file</p></li>
 </ul>
 </div></blockquote>
@@ -234,22 +234,25 @@ the XML file.</p>
 <h3>Upload files<a class="headerlink" href="#upload-files" title="Permalink to this headline">¶</a></h3>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
-<p>In the <code class="docutils literal notranslate"><span class="pre">data</span></code> directory of Neuma, you will find that Zip files ready to be imported.</p>
+<p>In the <code class="docutils literal notranslate"><span class="pre">data</span></code> directory of Neuma, you will find Zip files ready to be imported.</p>
 </div>
-<p>For import/export, opuses are gathered in Zip files. In order to create such a file, proceed as follows</p>
+<p>For import/export, corpuses (including their children
+corpuses and opuses) are gathered in Zip files. In order to create such a file, proceed as follows</p>
 <blockquote>
 <div><ul class="simple">
-<li><p>create a directory (its name is not important), say <code class="docutils literal notranslate"><span class="pre">myImport</span></code>;</p></li>
+<li><p>create a directory, named after the local corpus reference, say <code class="docutils literal notranslate"><span class="pre">symphonies</span></code>;</p></li>
 <li><p>put the opuses files in this directory. It is essential to respect the naming
 rules explained above.</p></li>
-<li><p>compress the directory as a zip file, e.g., <code class="docutils literal notranslate"><span class="pre">myImport.zip</span></code>.</p></li>
+<li><p>add a <code class="docutils literal notranslate"><span class="pre">corpus.json</span></code> file with a few metadata on the corpus: titles, descrption, etc.</p></li>
+<li><p>compress the directory as a zip file, e.g., <code class="docutils literal notranslate"><span class="pre">op8.zip</span></code>.</p></li>
 </ul>
 </div></blockquote>
 <p><strong>Be careful with opus references</strong>: the file names (without extension)
 define the local reference of an opus inside its corpus. if, for instance,
-one imports in a corpus <code class="docutils literal notranslate"><span class="pre">psautiers:godeau1656</span></code>, then a file
-<code class="docutils literal notranslate"><span class="pre">mynopus.xml</span></code> will be imported in the corpus with (globl) reference
-<code class="docutils literal notranslate"><span class="pre">psautiers:godeau1656:monopus</span></code>.</p>
+one imports a zip file <code class="docutils literal notranslate"><span class="pre">op8.zip</span></code> in a corpus <code class="docutils literal notranslate"><span class="pre">composers:vivaldi</span></code>, then a file
+<code class="docutils literal notranslate"><span class="pre">allegro.xml</span></code> will be imported in the corpus with (global) reference
+<code class="docutils literal notranslate"><span class="pre">composers:vivaldi:op8</span></code>. The global reference of this opus
+will be <code class="docutils literal notranslate"><span class="pre">composers:vivaldi:op8:allegro</span></code>.</p>
 <p>Opus references cannot be modified after import.  <strong>Use a consistent naming scheme,
 in lowercase, as short as possible</strong>. Note that opuses are sorted
 on their (local) reference whenever a corpus is displayed. This must be anticipated
@@ -261,7 +264,8 @@ such as <code class="docutils literal notranslate"><span class="pre">opus_01</sp
 </section>
 <section id="inserting-upload-files">
 <h3>Inserting upload files<a class="headerlink" href="#inserting-upload-files" title="Permalink to this headline">¶</a></h3>
-<p>In the <em>Management</em> tab of a corpus, a form allows to upload a zip file. You must supply
+<p>In the <em>Management</em> tab of a corpus, a form allows to upload zip files,
+one for each children. You must supply
 a sort description of the Zip content, and the Zip file itself.</p>
 <p>Once uploaded, Zip files appear in a list, left of the <em>Management</em> tab. Note the ID of a
 file which is required to trigger its insertion.</p>
@@ -277,6 +281,8 @@ file which is required to trigger its insertion.</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python3 manage.py import_zip -u &lt;upload_id&gt; -a <span class="m">1</span>
 </pre></div>
 </div>
+<p>A set of zip files with recursives corpuses can be found in <code class="docutils literal notranslate"><span class="pre">data</span></code>. They can
+be imported as children of the root corpus.</p>
 </section>
 </section>
 </section>
@@ -311,7 +317,6 @@ file which is required to trigger its insertion.</p>
 <li class="toctree-l1"><a class="reference internal" href="utils.html">Utilities</a></li>
 <li class="toctree-l1"><a class="reference internal" href="searching.html">Searching Neuma collections</a></li>
 <li class="toctree-l1"><a class="reference internal" href="analysis.html">Analysis</a></li>
-<li class="toctree-l1"><a class="reference internal" href="humanum.html">Appendix: deploying at Humanum</a></li>
 </ul>
 
           <div role="search">
