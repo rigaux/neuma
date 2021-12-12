@@ -433,11 +433,11 @@ class Corpus(models.Model):
 		if not found_corpus_data:
 			logger.warning ("Missing corpus JSON file. Producing a skeleton with ref %s" % zip_name)
 			corpus_dict = {"ref": zip_name, 
-				 "title": "To be defined", 
-				 "short_title": "To be defined", 
-				 "description": "To be defined", 
+				 "title": zip_name, 
+				 "short_title": zip_name, 
+				 "description": zip_name, 
 				 "is_public": True,
-				 "short_description": "To be defined",
+				 "short_description": zip_name,
 				 "copyright": "",
 				 "supervisors": ""
 				}

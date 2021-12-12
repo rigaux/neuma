@@ -567,11 +567,8 @@ class Workflow:
 		return descriptors_dict
 
 	@staticmethod 
-	def import_zip(upload, corpus_ref):
-		# Check the zip
-		if zipfile.is_zipfile(upload.zip_file.path):
-			zf = zipfile.ZipFile(upload.zip_file.path, 'r')
-		list_imported = Corpus.import_from_zip(zf, upload.corpus, corpus_ref)
+	def import_zip(zip, parent_corpus, corpus_ref):
+		list_imported = Corpus.import_from_zip(zip, parent_corpus, corpus_ref)
 		
 		# Produce descriptors and index the corpus in ElasticSearch
 		#Workflow.index_corpus(upload.corpus, True)
