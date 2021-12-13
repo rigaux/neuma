@@ -1,0 +1,398 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<?xml-model href="http://music-encoding.googlecode.com/svn/tags/MEI2013_v2.1.0/schemata/mei-all.rng" type="application/xml" schematypens="http://relaxng.org/ns/structure/1.0"?>
+<?xml-model href="http://music-encoding.googlecode.com/svn/tags/MEI2013_v2.1.0/schemata/mei-all.rng" type="application/xml" schematypens="http://purl.oclc.org/dsdl/schematron"?>
+<mei xmlns="http://www.music-encoding.org/ns/mei"
+     xmlns:xlink="http://www.w3.org/1999/xlink"
+     meiversion="2013">
+   <meiHead>
+      <fileDesc>
+         <titleStmt>
+            <title/>
+         </titleStmt>
+         <pubStmt/>
+         <sourceDesc>
+            <source>
+               <titleStmt>
+                  <title/>
+               </titleStmt>
+               <pubStmt/>
+            </source>
+         </sourceDesc>
+      </fileDesc>
+      <encodingDesc>
+         <editorialDecl>
+            <normalization>
+               <p>Calculation of @tstamp and @tstamp2 values on control events, such as dir, dynam,
+              hairpin, etc., includes MusicXML offset values.</p>
+               <p>The parameters for musicxml2mei.xsl were set as follows: <list>
+                     <li>accidStyle: "attr", </li>
+                     <li>articStyle: "elem", </li>
+                     <li>formeWork: "strip", </li>
+                     <li>generateMIDI: "false", </li>
+                     <li>keepAttributes: "false", </li>
+                     <li>keepRights: "false", </li>
+                     <li>labelStyle: "attr", </li>
+                     <li>layout: "strip", </li>
+                     <li>tieStyle: "attr"</li>
+                  </list>
+               </p>
+            </normalization>
+         </editorialDecl>
+      </encodingDesc>
+      <revisionDesc>
+         <change n="1">
+            <respStmt/>
+            <changeDesc>
+               <p>Transcoded from a MusicXML file using an XSLT stylesheet (musicxml2mei v. 3.0).</p>
+            </changeDesc>
+            <date>2016-05-11</date>
+         </change>
+      </revisionDesc>
+   </meiHead>
+   <music>
+      <body>
+         <mdiv>
+            <score>
+               <scoreDef meter.count="2" meter.unit="2" meter.sym="cut" key.sig="0" key.mode="major">
+                  <staffGrp>
+                     <staffDef n="1" xml:id="P1" label="MusicXML Part" lines="5" clef.line="2" clef.shape="G"/>
+                  </staffGrp>
+               </scoreDef>
+               <section>
+                  <measure n="1" xml:id="d1e6">
+                     <staff n="1">
+                        <layer n="1">
+                           <note xml:id="d1e26" pname="g" oct="4">
+                              <verse n="1">
+                                 <syl wordpos="i" con="d">He</syl>
+                              </verse>
+                           </note>
+                           <note xml:id="d1e39" pname="c" oct="5">
+                              <verse n="1">
+                                 <syl wordpos="t">breux,</syl>
+                              </verse>
+                           </note>
+                           <note xml:id="d1e52" pname="d" oct="5">
+                              <verse n="1">
+                                 <syl wordpos="i" con="d">ser</syl>
+                              </verse>
+                           </note>
+                        </layer>
+                     </staff>
+                  </measure>
+                  <measure n="3" xml:id="d1e65">
+                     <staff n="1">
+                        <layer n="1">
+                           <note xml:id="d1e67" pname="e" oct="5">
+                              <verse n="1">
+                                 <syl wordpos="t">vez</syl>
+                              </verse>
+                           </note>
+                           <note xml:id="d1e80" pname="c" oct="5">
+                              <verse n="1">
+                                 <syl wordpos="i" con="d">a</syl>
+                              </verse>
+                           </note>
+                        </layer>
+                     </staff>
+                  </measure>
+                  <measure n="4" xml:id="d1e93">
+                     <staff n="1">
+                        <layer n="1">
+                           <note xml:id="d1e95" pname="b" oct="4">
+                              <verse n="1">
+                                 <syl wordpos="m" con="d">vec</syl>
+                              </verse>
+                           </note>
+                           <note xml:id="d1e108" pname="c" oct="5">
+                              <verse n="1">
+                                 <syl wordpos="t">que</syl>
+                              </verse>
+                           </note>
+                        </layer>
+                     </staff>
+                  </measure>
+                  <measure n="5" xml:id="d1e121">
+                     <staff n="1">
+                        <layer n="1">
+                           <note xml:id="d1e123" pname="d" oct="5">
+                              <verse n="1">
+                                 <syl wordpos="i" con="d">joy</syl>
+                              </verse>
+                           </note>
+                           <note xml:id="d1e136" pname="a" oct="4">
+                              <verse n="1">
+                                 <syl wordpos="t">e,</syl>
+                              </verse>
+                           </note>
+                        </layer>
+                     </staff>
+                  </measure>
+                  <measure n="6" xml:id="d1e149">
+                     <staff n="1">
+                        <layer n="1">
+                           <rest xml:id="d1e151" dur="2"/>
+                           <note xml:id="d1e155" pname="d" oct="5">
+                              <verse n="1">
+                                 <syl>Le</syl>
+                              </verse>
+                           </note>
+                        </layer>
+                     </staff>
+                  </measure>
+                  <measure n="7" xml:id="d1e168">
+                     <staff n="1">
+                        <layer n="1">
+                           <note xml:id="d1e170" pname="d" oct="5">
+                              <verse n="1">
+                                 <syl>Dieu</syl>
+                              </verse>
+                           </note>
+                           <note xml:id="d1e183" pname="b" oct="4">
+                              <verse n="1">
+                                 <syl>qui</syl>
+                              </verse>
+                           </note>
+                        </layer>
+                     </staff>
+                  </measure>
+                  <measure n="8" xml:id="d1e196">
+                     <staff n="1">
+                        <layer n="1">
+                           <note xml:id="d1e198" pname="c" oct="5">
+                              <verse n="1">
+                                 <syl>vous</syl>
+                              </verse>
+                           </note>
+                           <note xml:id="d1e211" pname="b" oct="4">
+                              <verse n="1">
+                                 <syl wordpos="i" con="d">don</syl>
+                              </verse>
+                           </note>
+                        </layer>
+                     </staff>
+                  </measure>
+                  <measure n="9" xml:id="d1e224">
+                     <staff n="1">
+                        <layer n="1">
+                           <note xml:id="d1e226" pname="a" oct="4">
+                              <verse n="1">
+                                 <syl wordpos="t">ne</syl>
+                              </verse>
+                           </note>
+                           <note xml:id="d1e239" pname="g" oct="4">
+                              <verse n="1">
+                                 <syl>ses</syl>
+                              </verse>
+                           </note>
+                        </layer>
+                     </staff>
+                  </measure>
+                  <measure n="10" xml:id="d1e252">
+                     <staff n="1">
+                        <layer n="1">
+                           <note xml:id="d1e254" pname="g" oct="4">
+                              <verse n="1">
+                                 <syl>loix,</syl>
+                              </verse>
+                           </note>
+                        </layer>
+                     </staff>
+                  </measure>
+                  <measure n="11" xml:id="d1e267">
+                     <staff n="1">
+                        <layer n="1">
+                           <rest xml:id="d1e269" dur="2"/>
+                           <note xml:id="d1e273" pname="c" oct="5">
+                              <verse n="1">
+                                 <syl>Et</syl>
+                              </verse>
+                           </note>
+                        </layer>
+                     </staff>
+                  </measure>
+                  <measure n="12" xml:id="d1e287">
+                     <staff n="1">
+                        <layer n="1">
+                           <note xml:id="d1e289" pname="d" oct="5">
+                              <verse n="1">
+                                 <syl>qu'à</syl>
+                              </verse>
+                           </note>
+                           <note xml:id="d1e302" pname="e" oct="5">
+                              <verse n="1">
+                                 <syl wordpos="i" con="d">l'en</syl>
+                              </verse>
+                           </note>
+                        </layer>
+                     </staff>
+                  </measure>
+                  <measure n="13" xml:id="d1e315">
+                     <staff n="1">
+                        <layer n="1">
+                           <note xml:id="d1e317" pname="e" oct="5">
+                              <verse n="1">
+                                 <syl wordpos="t">vy</syl>
+                              </verse>
+                           </note>
+                           <note xml:id="d1e330" pname="c" oct="5">
+                              <verse n="1">
+                                 <syl wordpos="i" con="d">cha</syl>
+                              </verse>
+                           </note>
+                        </layer>
+                     </staff>
+                  </measure>
+                  <measure n="14" xml:id="d1e343">
+                     <staff n="1">
+                        <layer n="1">
+                           <note xml:id="d1e345" pname="d" oct="5">
+                              <verse n="1">
+                                 <syl wordpos="t">cun</syl>
+                              </verse>
+                           </note>
+                           <note xml:id="d1e358" pname="f" oct="5">
+                              <verse n="1">
+                                 <syl wordpos="i" con="d">em</syl>
+                              </verse>
+                           </note>
+                        </layer>
+                     </staff>
+                  </measure>
+                  <measure n="15" xml:id="d1e371">
+                     <staff n="1">
+                        <layer n="1">
+                           <note xml:id="d1e373" pname="e" oct="5">
+                              <verse n="1">
+                                 <syl wordpos="m" con="d">ploy</syl>
+                              </verse>
+                           </note>
+                        </layer>
+                     </staff>
+                  </measure>
+                  <measure n="16" xml:id="d1e386">
+                     <staff n="1">
+                        <layer n="1">
+                           <note xml:id="d1e388" pname="d" oct="5">
+                              <verse n="1">
+                                 <syl wordpos="t">e,</syl>
+                              </verse>
+                           </note>
+                        </layer>
+                     </staff>
+                  </measure>
+                  <measure n="17" xml:id="d1e401">
+                     <staff n="1">
+                        <layer n="1">
+                           <rest xml:id="d1e403" dur="2"/>
+                           <note xml:id="d1e407" pname="e" oct="5">
+                              <verse n="1">
+                                 <syl>Pour</syl>
+                              </verse>
+                           </note>
+                        </layer>
+                     </staff>
+                  </measure>
+                  <measure n="18" xml:id="d1e420">
+                     <staff n="1">
+                        <layer n="1">
+                           <note xml:id="d1e422" pname="c" oct="5">
+                              <verse n="1">
+                                 <syl wordpos="i" con="d">ce</syl>
+                              </verse>
+                           </note>
+                           <note xml:id="d1e435" pname="d" oct="5">
+                              <verse n="1">
+                                 <syl wordpos="m" con="d">le</syl>
+                              </verse>
+                           </note>
+                        </layer>
+                     </staff>
+                  </measure>
+                  <measure n="19" xml:id="d1e448">
+                     <staff n="1">
+                        <layer n="1">
+                           <note xml:id="d1e450" pname="d" oct="5">
+                              <verse n="1">
+                                 <syl wordpos="t">brer</syl>
+                              </verse>
+                           </note>
+                           <note xml:id="d1e463" pname="c" oct="5">
+                              <verse n="1">
+                                 <syl>son</syl>
+                              </verse>
+                           </note>
+                        </layer>
+                     </staff>
+                  </measure>
+                  <measure n="20" xml:id="d1e476">
+                     <staff n="1">
+                        <layer n="1">
+                           <note xml:id="d1e478" pname="b" oct="4">
+                              <verse n="1">
+                                 <syl>nom,</syl>
+                              </verse>
+                           </note>
+                        </layer>
+                     </staff>
+                  </measure>
+                  <measure n="21" xml:id="d1e491">
+                     <staff n="1">
+                        <layer n="1">
+                           <note xml:id="d1e493" pname="c" oct="5">
+                              <verse n="1">
+                                 <syl>et</syl>
+                              </verse>
+                           </note>
+                        </layer>
+                     </staff>
+                  </measure>
+                  <measure n="22" xml:id="d1e506">
+                     <staff n="1">
+                        <layer n="1">
+                           <note xml:id="d1e508" pname="d" oct="5">
+                              <verse n="1">
+                                 <syl>le</syl>
+                              </verse>
+                           </note>
+                           <note xml:id="d1e521" pname="e" oct="5">
+                              <verse n="1">
+                                 <syl>coeur</syl>
+                              </verse>
+                           </note>
+                        </layer>
+                     </staff>
+                  </measure>
+                  <measure n="23" xml:id="d1e535">
+                     <staff n="1">
+                        <layer n="1">
+                           <note xml:id="d1e537" pname="d" oct="5">
+                              <verse n="1">
+                                 <syl>et</syl>
+                              </verse>
+                           </note>
+                           <note xml:id="d1e550" pname="c" oct="5">
+                              <verse n="1">
+                                 <syl>la</syl>
+                              </verse>
+                           </note>
+                        </layer>
+                     </staff>
+                  </measure>
+                  <measure n="24" xml:id="d1e563" right="end">
+                     <staff n="1">
+                        <layer n="1">
+                           <note xml:id="d1e565" pname="c" oct="5">
+                              <verse n="1">
+                                 <syl>voix.</syl>
+                              </verse>
+                           </note>
+                        </layer>
+                     </staff>
+                  </measure>
+               </section>
+            </score>
+         </mdiv>
+      </body>
+   </music>
+</mei>
