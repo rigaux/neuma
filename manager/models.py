@@ -537,6 +537,8 @@ class Corpus(models.Model):
 							or line.startswith(b"!!!AGN: ")
 							or line.startswith(b"!!!OTL: ")
 							or line.startswith(b"!!!YOR: ")
+							or line.startswith(b"!!!SCA: ")
+							or line.startswith(b"!!!OCY: ")
 							or line.startswith(b"!! ")
 							):
 							f.write (line.decode()  + os.linesep)
