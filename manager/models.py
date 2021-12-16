@@ -129,10 +129,10 @@ class Corpus(models.Model):
 		
 	@staticmethod
 	def make_ref_from_local_and_parent(local_ref, parent_ref):
-	   """
-		 Create the corpus reference from the local reference and parent reference
-	   """
-	   return parent_ref + settings.NEUMA_ID_SEPARATOR + local_ref
+		"""
+			Create the corpus reference from the local reference and parent reference
+		"""
+		return parent_ref + settings.NEUMA_ID_SEPARATOR + local_ref
 
 	def get_cover(self):
 		"""
@@ -148,7 +148,7 @@ class Corpus(models.Model):
 
 	def get_url(self):
 		"""
-		  Get the URL to the Web corpus page, taken from urls.py
+			Get the URL to the Web corpus page, taken from urls.py
 		"""
 		return reverse('home:corpus', args=[self.ref])
 
@@ -351,7 +351,7 @@ class Corpus(models.Model):
 
 	def export_as_zip(self):
 		''' Export a corpus, its children and all opuses in
-		    a recursive zip file 
+			a recursive zip file 
 		'''
 		
 		# Write the ZIP file in memory
@@ -384,7 +384,7 @@ class Corpus(models.Model):
 			if opus.mei:
 				if os.path.exists(opus.mei.path):
 					zf.write(opus.mei.path, opus.local_ref() + ".mei")
-		 	# Add a JSON file with meta data
+			# Add a JSON file with meta data
 			opus_json = json.dumps(opus.to_json())
 			zf.writestr(opus.local_ref() + ".json", opus_json)
 		zf.close()
@@ -394,8 +394,8 @@ class Corpus(models.Model):
 	@staticmethod
 	def import_from_zip(zfile, parent_corpus, zip_name):
 		''' Import a corpus from a Neuma zip export. If necessary, the
-		     corpus is created, and its descriptions loaded from the json file
-		  '''
+			 corpus is created, and its descriptions loaded from the json file
+		'''
 		opus_files = {}
 		children = {}
 		found_corpus_data = False
@@ -420,7 +420,7 @@ class Corpus(models.Model):
 				children[base] = zipfile.ZipFile(io.BytesIO(zfile.open(fname).read()))
 			# OK, there is an Opus there
 			elif (extension ==".json" or extension == ".mei" or extension == ".xml"
-			     or extension == '.mxl' or extension=='.krn' or extension=='.mid'):
+				or extension == '.mxl' or extension=='.krn' or extension=='.mid'):
 				opus_files[base] = {"mei": "", 
 						"musicxml": "",
 						"compressed_xml": "",
@@ -685,11 +685,11 @@ class Opus(models.Model):
 		return reverse('home:opus', args=[self.ref])
 
 	def local_ref(self):
-	   """
-		 The ref of the Opus inside its Corpus
-	   """
-	   last_pos = self.ref.rfind(settings.NEUMA_ID_SEPARATOR)
-	   return self.ref[last_pos+1:]
+		"""
+		The ref of the Opus inside its Corpus
+		"""
+		last_pos = self.ref.rfind(settings.NEUMA_ID_SEPARATOR)
+		return self.ref[last_pos+1:]
 
 	def add_meta (self, mkey, mvalue):
 		"""Add a (key, value) pair as an ad-hoc attribute"""
@@ -741,7 +741,7 @@ class Opus(models.Model):
 
 		# Get the Opus files
 		for fname, desc  in files.items():
-			if (fname in Opus.FILE_NAMES ):
+			if (fname in Opus.FILE_NAMES):
 				print ("Found " + fname + " at URL " + opus_url + fname)
 				# Take the score
 				file_temp = NamedTemporaryFile()
