@@ -245,9 +245,32 @@ class Workflow:
 	def patterns_statistics_analyze(mel_dict, dia_dict, rhy_dict, mel_opus_dict, dia_opus_dict, rhy_opus_dict):
 		"""
 		Analyze statistics based on all patterns in the opus/corpus/library, 
-		such as top 15 common patterns, patterns that appeared more than 50 times
+		such as top 15 common patterns, or output all patterns
 		"""
 
+		#We define the low threshold: if it appears less than 10 times in the library, it is not a pattern.
+
+		#Output every pattern appeared in csv
+		
+		mel_sorted = sorted(mel_dict.items(), key=lambda x: x[1], reverse=True)
+		with open("melodic_patterns_sorted.csv", "w") as out_f:
+				for ele in mel_sorted:
+						print(ele[0], ",", ele[1], file = out_f)
+						#if ele[1] < 10: break
+
+		dia_sorted = sorted(dia_dict.items(), key=lambda x: x[1], reverse=True)
+		with open("diatonic_patterns_sorted.csv", "w") as out_f:
+				for ele in dia_sorted:
+						print(ele[0], ",", ele[1], file = out_f)
+						#if ele[1] < 10: break
+
+		rhy_sorted = sorted(rhy_dict.items(), key=lambda x: x[1], reverse=True)
+		with open("rhythmic_patterns_sorted.csv", "w") as out_f:
+				for ele in rhy_sorted:
+						print(ele[0], ",", ele[1], file = out_f)
+						#if ele[1] < 10: break
+
+		'''
 		print("30 most frequent melodic patterns so far:")
 		cnt = 0
 		#sort elements by their total appearance number 
@@ -280,15 +303,7 @@ class Workflow:
 			cnt += 1
 			#only print the top 15 results
 			if cnt >= 30: break
-
-
-		"""
-		#Print all patterns existing 
-		
-		print("All melodic patterns: ", mel)
-		print("All diatonic patterns:", dia)
-		print("All rhythmic patterns:", rhy)
-		"""
+		'''
 
 	@staticmethod
 	def analyze_patterns(corpus, recursion = True):
@@ -317,7 +332,11 @@ class Workflow:
 		'''
 		print ("Analyze patterns in opus " + opus.ref)
 
-		score = opus.get_score()
+		try:
+			score = opus.get_score()
+		except:
+			print("Could not get score for opus" + opus.ref)
+			return {},{},{},{},{},{}
 
 		#If there is an error while tranforming MEI into XML format, skip this opus
 		if score.m21_score == None:
@@ -338,14 +357,17 @@ class Workflow:
 					# 'N' is used as segregation between patterns in descriptor
 					pattern_list = mel_descr.split("N")
 
-					mel_pat_dict, mel_opus_dict = Workflow.get_patterns_from_descr(pattern_list, opus, part_id, voice_id, settings.MELODY_DESCR)
+					#not recording opus ref for each pattern anymore bc there are too many patterns
+					#mel_pat_dict, mel_opus_dict = Workflow.get_patterns_from_descr(pattern_list, opus, part_id, voice_id, settings.MELODY_DESCR)
+					mel_pat_dict = Workflow.get_patterns_from_descr(pattern_list, opus, part_id, voice_id, settings.MELODY_DESCR)
 
 					#Diatonic descriptor
 					dia_descr = voice.get_diatonic_encoding(False, n)
 				
 					pattern_list = dia_descr.split("N")
 
-					dia_pat_dict, dia_opus_dict = Workflow.get_patterns_from_descr(pattern_list, opus, part_id, voice_id, settings.DIATONIC_DESCR)
+					#dia_pat_dict, dia_opus_dict = Workflow.get_patterns_from_descr(pattern_list, opus, part_id, voice_id, settings.DIATONIC_DESCR)
+					dia_pat_dict = Workflow.get_patterns_from_descr(pattern_list, opus, part_id, voice_id, settings.DIATONIC_DESCR)
  
 					# Rhythm descriptor
 					rhy_descr = voice.get_rhythm_encoding(n)
@@ -353,15 +375,17 @@ class Workflow:
 					###rhythm_encoding = self.rhythms_to_ngrams(self.get_rhythms())
 					pattern_list = rhy_descr.split("N")
 				
-					rhy_pat_dict, rhy_opus_dict = Workflow.get_patterns_from_descr(pattern_list, opus, part_id, voice_id, settings.RHYTHM_DESCR)
+					#rhy_pat_dict, rhy_opus_dict = Workflow.get_patterns_from_descr(pattern_list, opus, part_id, voice_id, settings.RHYTHM_DESCR)
+					rhy_pat_dict = Workflow.get_patterns_from_descr(pattern_list, opus, part_id, voice_id, settings.RHYTHM_DESCR)
 
-		return mel_pat_dict, dia_pat_dict, rhy_pat_dict, mel_opus_dict, dia_opus_dict, rhy_opus_dict
-
+		return mel_pat_dict, dia_pat_dict, rhy_pat_dict, {}, {}, {}#, mel_opus_dict, dia_opus_dict, rhy_opus_dict
+	
 	@staticmethod
 	def get_patterns_from_descr(pattern_list, opus, part_id, voice_id, descriptor):
 		"""
 		Iterate over the list of patterns to get statistical information of every pattern in a voice
 		"""
+
 		#if pattern list is empty, return:
 		if pattern_list == [""] or pattern_list == None:
 			return {}, {}
@@ -385,68 +409,54 @@ class Workflow:
 				#If the pattern is already in dictionary, total number +=1
 				if clean_pat in pattern.mel_pattern_dict:
 					pattern.mel_pattern_dict[clean_pat] += 1
-					if opus.ref not in pattern.mel_opuses[clean_pat]:
-						pattern.mel_opuses[clean_pat].append(opus.ref)
-
-					#Otherwise save the pattern
+					#if opus.ref not in pattern.mel_opuses[clean_pat]:
+					#	pattern.mel_opuses[clean_pat].append(opus.ref)
+				#Otherwise save the pattern
 				else:
 					pattern.mel_pattern_dict[clean_pat] = 1
-					pattern.mel_opuses[clean_pat] = []
-					pattern.mel_opuses[clean_pat].append(opus.ref)
+					#save all opus reference for each pattern...
+					#pattern.mel_opuses[clean_pat] = []
+					#pattern.mel_opuses[clean_pat].append(opus.ref)
 				
 			elif descriptor == settings.DIATONIC_DESCR:
 				#If the pattern is already in dictionary, total number +=1, and save the opus ref
 				if clean_pat in pattern.dia_pattern_dict:
 					pattern.dia_pattern_dict[clean_pat] += 1
-					if opus.ref not in pattern.dia_opuses[clean_pat]:
-						pattern.dia_opuses[clean_pat].append(opus.ref)
-					#Otherwise save the pattern
+					#if opus.ref not in pattern.dia_opuses[clean_pat]:
+					#	pattern.dia_opuses[clean_pat].append(opus.ref)
+				#Otherwise save the pattern
 				else:
 					pattern.dia_pattern_dict[clean_pat] = 1
-					pattern.dia_opuses[clean_pat] = []
-					pattern.dia_opuses[clean_pat].append(opus.ref)
+					#save all opus ref for each pattern... 
+					#pattern.dia_opuses[clean_pat] = []
+					#pattern.dia_opuses[clean_pat].append(opus.ref)
 
-				
 			elif descriptor == settings.RHYTHM_DESCR:
 				#If the pattern is already in dictionary, total number +=1
 				if clean_pat in pattern.rhy_pattern_dict:
 					pattern.rhy_pattern_dict[clean_pat] += 1
-					if opus.ref not in pattern.rhy_opuses[clean_pat]:
-						pattern.rhy_opuses[clean_pat].append(opus.ref)
+					#if opus.ref not in pattern.rhy_opuses[clean_pat]:
+					#	pattern.rhy_opuses[clean_pat].append(opus.ref)
 					#Otherwise save the pattern
 				else:
 					pattern.rhy_pattern_dict[clean_pat] = 1
-					pattern.rhy_opuses[clean_pat] = []
-					pattern.rhy_opuses[clean_pat].append(opus.ref)
+					#Save all opus ref for each pattern..
+					#pattern.rhy_opuses[clean_pat] = []
+					#pattern.rhy_opuses[clean_pat].append(opus.ref)
 
 		try:
 			if descriptor == settings.MELODY_DESCR:
-				return pattern.mel_pattern_dict, pattern.mel_opuses
+				return pattern.mel_pattern_dict#, pattern.mel_opuses
 
 			elif descriptor == settings.DIATONIC_DESCR:
-				return pattern.dia_pattern_dict, pattern.dia_opuses
+				return pattern.dia_pattern_dict#, pattern.dia_opuses
 
 			elif descriptor == settings.RHYTHM_DESCR:
-				return pattern.rhy_pattern_dict, pattern.rhy_opuses
+				return pattern.rhy_pattern_dict#, pattern.rhy_opuses
 
 		except Exception as ex:
 			print ("Exception for opus " + opus.ref + " Message:" + str(ex))
-	
-	@staticmethod
-	def produce_descriptors(corpus, recursion=True):
-		"""
-		Produce the descriptors used for indexing the opuses of a corpus
-		
-		"""
-		for opus in Opus.objects.filter(corpus__ref=corpus.ref):
-			Workflow.produce_opus_descriptor(opus)
-
-		# Recursive call
-		if recursion:
-			children = corpus.get_children(False)
-			for child in children:
-				Workflow.produce_descriptors(child, recursion)
-
+ 
 	@staticmethod
 	def produce_opus_descriptor(opus, affiche=False):
 		"""
