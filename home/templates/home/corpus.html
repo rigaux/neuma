@@ -102,7 +102,7 @@ var tabNames = [{"tabId": "tab1", "divId": "subcorpus"},
       <a    href="{% url 'home:corpus' corpus.parent.ref %}">
     {% if corpus.parent.cover != "" %} 
            <span class="icon" style="background-image: url({{ corpus.parent.cover.url }});"></span>
-        {% endif %}
+        {% endif %}        
              Parent: {{corpus.parent.title}}
    </a>
         {% endif %}
@@ -112,6 +112,9 @@ var tabNames = [{"tabId": "tab1", "divId": "subcorpus"},
 	<div><img width="200" height="213"
 		src="{{ corpus_cover.url }}" alt="Image" /> 
 		</div>
+	            	{% if not corpus.copyright == "" and  not corpus.copyright == None %} 
+    	<p>&copy; {{corpus.copyright}}</p>
+       {% endif %} 
 	
 	{% endif %} 
 
