@@ -4,8 +4,7 @@
 <html>
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17: http://docutils.sourceforge.net/" />
-
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Data management &#8212; Neuma dev. guide 1.0 documentation</title>
     <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="_static/agogo.css" />
@@ -41,7 +40,7 @@
         <div class="bodywrapper">
           <div class="body" role="main">
             
-  <section id="data-management">
+  <div class="section" id="data-management">
 <span id="chap-data"></span><h1>Data management<a class="headerlink" href="#data-management" title="Permalink to this headline">¶</a></h1>
 <p>Neuma only knows two types of objects: <em>corpus(es)</em> and <em>opus(es)</em>.
 Each  corpus is a container with (sub-) <em>corpuses</em> and/or a list of <em>opuses</em>. The structure of a collection
@@ -77,44 +76,37 @@ without special characters.</p>
 for specific
 activities. You can access to the root page by clicking the “Collection” link, choosing “All”.
 You should obtain the result of Figure <a class="reference internal" href="#initialcorpus"><span class="std std-ref">The root (initial) corpus</span></a>.</p>
-<figure class="align-center" id="id1">
+<div class="figure align-center" id="id1">
 <span id="initialcorpus"></span><a class="reference internal image-reference" href="_images/initialCorpus.png"><img alt="_images/initialCorpus.png" src="_images/initialCorpus.png" style="width: 90%;" /></a>
-<figcaption>
-<p><span class="caption-number">Fig. 2 </span><span class="caption-text">The root (initial) corpus</span><a class="headerlink" href="#id1" title="Permalink to this image">¶</a></p>
-</figcaption>
-</figure>
+<p class="caption"><span class="caption-number">Fig. 2 </span><span class="caption-text">The root (initial) corpus</span><a class="headerlink" href="#id1" title="Permalink to this image">¶</a></p>
+</div>
 <p>Note the “Management” tab: as a super user, you can add sub-corpuses to any corpus, and import
 opuses in a corpus. Let us explain both operations in turn.</p>
-<section id="managing-corpuses">
+<div class="section" id="managing-corpuses">
 <h2>Managing corpuses<a class="headerlink" href="#managing-corpuses" title="Permalink to this headline">¶</a></h2>
 <p>By clicking to the “Management”, one obtain the forms shown on Figure <a class="reference internal" href="#managecorpus"><span class="std std-ref">Managing a corpus and its sub-corpuses</span></a>.</p>
-<figure class="align-center" id="id2">
+<div class="figure align-center" id="id2">
 <span id="managecorpus"></span><a class="reference internal image-reference" href="_images/manageCorpus.png"><img alt="_images/manageCorpus.png" src="_images/manageCorpus.png" style="width: 90%;" /></a>
-<figcaption>
-<p><span class="caption-number">Fig. 3 </span><span class="caption-text">Managing a corpus and its sub-corpuses</span><a class="headerlink" href="#id2" title="Permalink to this image">¶</a></p>
-</figcaption>
-</figure>
+<p class="caption"><span class="caption-number">Fig. 3 </span><span class="caption-text">Managing a corpus and its sub-corpuses</span><a class="headerlink" href="#id2" title="Permalink to this image">¶</a></p>
+</div>
 <p>The following actions are
 proposed</p>
 <blockquote>
 <div><ul class="simple">
 <li><p>Editing the corpus, to change its description</p></li>
 <li><p>Adding a sub-corpus</p></li>
-<li><p>Adding a zip file containing a hierarchy of sub-corpuses to import as children of the current corpus</p></li>
-<li><p>Importing a zip file</p></li>
+<li><p>Exporting a zip file</p></li>
 </ul>
 </div></blockquote>
-<section id="editing-corpuses">
+<div class="section" id="editing-corpuses">
 <h3>Editing corpuses<a class="headerlink" href="#editing-corpuses" title="Permalink to this headline">¶</a></h3>
 <p>The <em>Edit corpus</em> form is shown on Figure <a class="reference internal" href="#editcorpus"><span class="std std-ref">Corpus form</span></a>. Note that it is automatically
 produced by Django from the schema. This form can be used for creating and
 editing (modifying) corpuses.</p>
-<figure class="align-center" id="id3">
+<div class="figure align-center" id="id3">
 <span id="editcorpus"></span><a class="reference internal image-reference" href="_images/editCorpus.png"><img alt="_images/editCorpus.png" src="_images/editCorpus.png" style="width: 90%;" /></a>
-<figcaption>
-<p><span class="caption-number">Fig. 4 </span><span class="caption-text">Corpus form</span><a class="headerlink" href="#id3" title="Permalink to this image">¶</a></p>
-</figcaption>
-</figure>
+<p class="caption"><span class="caption-number">Fig. 4 </span><span class="caption-text">Corpus form</span><a class="headerlink" href="#id3" title="Permalink to this image">¶</a></p>
+</div>
 <p>Fields:</p>
 <blockquote>
 <div><ul class="simple">
@@ -135,8 +127,8 @@ navigation and searches in Neuma.</p></li>
 <li><p>The cover is an image that illustrates the corpus.</p></li>
 </ul>
 </div></blockquote>
-</section>
-<section id="access-rights-on-corpuses">
+</div>
+<div class="section" id="access-rights-on-corpuses">
 <h3>Access rights on corpuses<a class="headerlink" href="#access-rights-on-corpuses" title="Permalink to this headline">¶</a></h3>
 <p>Neuma is implemented with the Django framework, which proposes an automatically
 generated interface for administrating data. Among these administration tasks,
@@ -144,19 +136,15 @@ generated interface for administrating data. Among these administration tasks,
 <p>In the admin page of a corpus, a link located in the top-right corner gives
 access to the permissions form. Links are defined per user: first choose the
 user as shown on Figure  <a class="reference internal" href="#droits-specif-user"><span class="std std-numref">Fig. 5</span></a>.</p>
-<figure class="align-center" id="id4">
+<div class="figure align-center" id="id4">
 <span id="droits-specif-user"></span><a class="reference internal image-reference" href="_images/droits_specif_user.png"><img alt="_images/droits_specif_user.png" src="_images/droits_specif_user.png" style="width: 100%;" /></a>
-<figcaption>
-<p><span class="caption-number">Fig. 5 </span><span class="caption-text">Choosing the user for permissions</span><a class="headerlink" href="#id4" title="Permalink to this image">¶</a></p>
-</figcaption>
-</figure>
+<p class="caption"><span class="caption-number">Fig. 5 </span><span class="caption-text">Choosing the user for permissions</span><a class="headerlink" href="#id4" title="Permalink to this image">¶</a></p>
+</div>
 <p>One obtains the form of Figure <a class="reference internal" href="#droits-specif"><span class="std std-numref">Fig. 6</span></a>.</p>
-<figure class="align-center" id="id5">
+<div class="figure align-center" id="id5">
 <span id="droits-specif"></span><a class="reference internal image-reference" href="_images/droits_specif.png"><img alt="_images/droits_specif.png" src="_images/droits_specif.png" style="width: 100%;" /></a>
-<figcaption>
-<p><span class="caption-number">Fig. 6 </span><span class="caption-text">Access rights form</span><a class="headerlink" href="#id5" title="Permalink to this image">¶</a></p>
-</figcaption>
-</figure>
+<p class="caption"><span class="caption-number">Fig. 6 </span><span class="caption-text">Access rights form</span><a class="headerlink" href="#id5" title="Permalink to this image">¶</a></p>
+</div>
 <p>The following rights can be given to the user:</p>
 <blockquote>
 <div><ul class="simple">
@@ -170,8 +158,8 @@ the public corpuses are, by definition, acessible (in read mode) for everybody.<
 </li>
 </ul>
 </div></blockquote>
-</section>
-<section id="commands-on-corpuses">
+</div>
+<div class="section" id="commands-on-corpuses">
 <h3>Commands on corpuses<a class="headerlink" href="#commands-on-corpuses" title="Permalink to this headline">¶</a></h3>
 <p>A set of Django commands is available on the command line to apply actions to either a
 corpus (and its set of opera) or to a single corpus.</p>
@@ -209,9 +197,9 @@ to ElasticSearch</p>
 </li>
 </ul>
 </div></blockquote>
-</section>
-</section>
-<section id="managing-opuses">
+</div>
+</div>
+<div class="section" id="managing-opuses">
 <h2>Managing opuses<a class="headerlink" href="#managing-opuses" title="Permalink to this headline">¶</a></h2>
 <p>Like corpuses, opuses cn be edited via the Django admin form. This form can be accessed, for
 connected users with access rights, thanks to a small pen displayed left of the opus title.</p>
@@ -230,8 +218,8 @@ for compressed MusicXML, and ‘mei’ for MEI.</p>
 <code class="docutils literal notranslate"><span class="pre">bwv333.xml</span></code> for the MusicXML file of choral BWV333, and <code class="docutils literal notranslate"><span class="pre">bwv333.json</span></code> for metadata.
 The Json file is optional: if absent, the import procedure attempts to extract metadata from
 the XML file.</p>
-<section id="upload-files">
-<h3>Upload files<a class="headerlink" href="#upload-files" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="importing-zip-files">
+<h3>Importing zip files<a class="headerlink" href="#importing-zip-files" title="Permalink to this headline">¶</a></h3>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
 <p>In the <code class="docutils literal notranslate"><span class="pre">data</span></code> directory of Neuma, you will find Zip files ready to be imported.</p>
@@ -243,10 +231,23 @@ corpuses and opuses) are gathered in Zip files. In order to create such a file, 
 <li><p>create a directory, named after the local corpus reference, say <code class="docutils literal notranslate"><span class="pre">symphonies</span></code>;</p></li>
 <li><p>put the opuses files in this directory. It is essential to respect the naming
 rules explained above.</p></li>
-<li><p>add a <code class="docutils literal notranslate"><span class="pre">corpus.json</span></code> file with a few metadata on the corpus: titles, descrption, etc.</p></li>
+<li><p>add a <code class="docutils literal notranslate"><span class="pre">corpus.json</span></code> file with a few metadata on the corpus: titles, description, etc.</p></li>
 <li><p>compress the directory as a zip file, e.g., <code class="docutils literal notranslate"><span class="pre">op8.zip</span></code>.</p></li>
+<li><p>add a <code class="docutils literal notranslate"><span class="pre">cover.jpg</span></code> file with a square image illustrating the corpus (optional)</p></li>
 </ul>
 </div></blockquote>
+<p>Here is an example of the JSON file:</p>
+<div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span><span class="nt">&quot;ref&quot;</span><span class="p">:</span> <span class="s2">&quot;airs&quot;</span><span class="p">,</span>
+  <span class="nt">&quot;title&quot;</span><span class="p">:</span> <span class="s2">&quot;Airs &amp; songs&quot;</span><span class="p">,</span>
+  <span class="nt">&quot;short_title&quot;</span><span class="p">:</span> <span class="s2">&quot;Airs&quot;</span><span class="p">,</span>
+  <span class="nt">&quot;description&quot;</span><span class="p">:</span> <span class="s2">&quot;Airs and songs from all periods and areas&quot;</span><span class="p">,</span>
+  <span class="nt">&quot;is_public&quot;</span><span class="p">:</span> <span class="kc">true</span><span class="p">,</span>
+          <span class="nt">&quot;short_description&quot;</span><span class="p">:</span> <span class="s2">&quot;Airs and songs from all periods and areas&quot;</span><span class="p">,</span>
+          <span class="nt">&quot;licence_code&quot;</span><span class="p">:</span> <span class="s2">&quot;CC BY-SA&quot;</span><span class="p">,</span>
+          <span class="nt">&quot;copyright&quot;</span><span class="p">:</span> <span class="s2">&quot;IR\u00e9Mus&quot;</span><span class="p">,</span>
+          <span class="nt">&quot;supervisors&quot;</span><span class="p">:</span> <span class="kc">null</span><span class="p">}</span>
+</pre></div>
+</div>
 <p><strong>Be careful with opus references</strong>: the file names (without extension)
 define the local reference of an opus inside its corpus. if, for instance,
 one imports a zip file <code class="docutils literal notranslate"><span class="pre">op8.zip</span></code> in a corpus <code class="docutils literal notranslate"><span class="pre">composers:vivaldi</span></code>, then a file
@@ -261,31 +262,31 @@ if order is important. For instance,
 but the latter  appears <em>after</em> <code class="docutils literal notranslate"><span class="pre">opus_12</span></code>. Use padding 0 to obtain a correct sorting,
 such as <code class="docutils literal notranslate"><span class="pre">opus_01</span></code>,
 <code class="docutils literal notranslate"><span class="pre">opus_02</span></code>, <cite>òpus_12`</cite> (in case two  positions are enough).</p>
-</section>
-<section id="inserting-upload-files">
-<h3>Inserting upload files<a class="headerlink" href="#inserting-upload-files" title="Permalink to this headline">¶</a></h3>
-<p>In the <em>Management</em> tab of a corpus, a form allows to upload zip files,
-one for each children. You must supply
-a sort description of the Zip content, and the Zip file itself.</p>
-<p>Once uploaded, Zip files appear in a list, left of the <em>Management</em> tab. Note the ID of a
-file which is required to trigger its insertion.</p>
-<p>The Django admin form gives additional access to upload files (deletion, replacement, etc.)</p>
-</section>
-<section id="importing-opuses">
-<h3>Importing opuses<a class="headerlink" href="#importing-opuses" title="Permalink to this headline">¶</a></h3>
-<p>In order to bulkload the content of a ZIP file, run the following command:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python3 manage.py import_zip -u &lt;upload_id&gt;
+<p>In order to bulkload the content of a ZIP file , run the following command:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python3 manage.py import_zip -c &lt;parent_corpus_id&gt; -f &lt;file_path&gt; <span class="o">[</span>-r corpus_ref<span class="o">]</span>
 </pre></div>
 </div>
-<p>This function can be run in asynchronous mode with:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python3 manage.py import_zip -u &lt;upload_id&gt; -a <span class="m">1</span>
-</pre></div>
-</div>
+<p>Where</p>
+<blockquote>
+<div><ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">parent_corpus_id</span></code> is the id of the corpus the new corpus should be added to</p></li>
+<li><dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">file_path</span></code> is the path to the zip file (remember: you will find</dt><dd><p>many of those file in the <code class="docutils literal notranslate"><span class="pre">data</span></code> directory.)</p>
+</dd>
+</dl>
+</li>
+<li><p><code class="docutils literal notranslate"><span class="pre">corpus_ref</span></code> (optional) give the reference of the new corpus, in case the JSON
+file <code class="docutils literal notranslate"><span class="pre">corpus.json</span></code> is absent from the ZIP. Shoudl be avoided.</p></li>
+</ul>
+</div></blockquote>
 <p>A set of zip files with recursives corpuses can be found in <code class="docutils literal notranslate"><span class="pre">data</span></code>. They can
-be imported as children of the root corpus.</p>
-</section>
-</section>
-</section>
+be imported as children of the root corpus. For instance:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python3 manage.py import_zip -c all -f data/composers/corelli.zip
+</pre></div>
+</div>
+</div>
+</div>
+</div>
 
 
             <div class="clearer"></div>
@@ -307,9 +308,7 @@ be imported as children of the root corpus.</p>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#managing-opuses">Managing opuses</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#upload-files">Upload files</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#inserting-upload-files">Inserting upload files</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#importing-opuses">Importing opuses</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#importing-zip-files">Importing zip files</a></li>
 </ul>
 </li>
 </ul>
@@ -354,7 +353,7 @@ be imported as children of the root corpus.</p>
           
     <div class="footer" role="contentinfo">
         &#169; Copyright 2016-2021 Philippe et al..
-      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.0.1.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.2.0.
     </div>
         </div>
         <div class="clearer"></div>

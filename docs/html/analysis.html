@@ -4,8 +4,7 @@
 <html>
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17: http://docutils.sourceforge.net/" />
-
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Analysis &#8212; Neuma dev. guide 1.0 documentation</title>
     <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="_static/agogo.css" />
@@ -38,11 +37,11 @@
         <div class="bodywrapper">
           <div class="body" role="main">
             
-  <section id="analysis">
+  <div class="section" id="analysis">
 <span id="chap-analysis"></span><h1>Analysis<a class="headerlink" href="#analysis" title="Permalink to this headline">¶</a></h1>
 <p>The chapter describes all the operations that produce analytic features from
 corpora and opera.</p>
-<section id="analytic-models">
+<div class="section" id="analytic-models">
 <h2>Analytic models<a class="headerlink" href="#analytic-models" title="Permalink to this headline">¶</a></h2>
 <p>An analysis is run with respect to an <em>analytic model</em>. Essentially, such a model
 is a forest of concepts, and each concept has a specific semantics. For
@@ -55,7 +54,7 @@ found in Medieval/Renaissance counterpoint.</p></li>
 such as metadata issues, rendering issues, etc.</p></li>
 </ul>
 </div></blockquote>
-<section id="defining-analytic-models">
+<div class="section" id="defining-analytic-models">
 <h3>Defining analytic models<a class="headerlink" href="#defining-analytic-models" title="Permalink to this headline">¶</a></h3>
 <p>An analytic model is defined in an XML file, located in <code class="docutils literal notranslate"><span class="pre">static/analytic_models</span></code>.
 The following is an excerpt of the <code class="docutils literal notranslate"><span class="pre">quality_model.xml</span></code> document.</p>
@@ -117,8 +116,8 @@ this syllable is missing.</p>
 <p>Running an analysis means discovering all the meanings of the elements
 of a score with respect to the concepts of an analytic model. This
 produces <em>annotations</em>.</p>
-</section>
-<section id="annotations">
+</div>
+<div class="section" id="annotations">
 <h3>Annotations<a class="headerlink" href="#annotations" title="Permalink to this headline">¶</a></h3>
 <p>An annotation stores the list of associations between scores elements
 and concepts of an analytic model. An annotation is stored in table <code class="docutils literal notranslate"><span class="pre">Annotation</span></code>
@@ -160,8 +159,8 @@ in a graphic representation.</p></li>
 <p>The code refers to a <code class="docutils literal notranslate"><span class="pre">AC_QUAL_MISSING_LYRICS</span></code> constant: this is the id of the
 concept, declared in <code class="docutils literal notranslate"><span class="pre">/scorelib/analytic_concepts.py</span></code>. This id must match
 the id of the concept in the XML file: see above.</p>
-</section>
-<section id="cookbook">
+</div>
+<div class="section" id="cookbook">
 <h3>Cookbook<a class="headerlink" href="#cookbook" title="Permalink to this headline">¶</a></h3>
 <p>In order to define a new concept, you must:</p>
 <blockquote>
@@ -192,17 +191,17 @@ of the model. These workflow are in <code class="docutils literal notranslate"><
 </div>
 </div></blockquote>
 </div>
-</section>
-</section>
-<section id="similarity-measures">
+</div>
+</div>
+<div class="section" id="similarity-measures">
 <h2>Similarity measures<a class="headerlink" href="#similarity-measures" title="Permalink to this headline">¶</a></h2>
-<section id="measures">
+<div class="section" id="measures">
 <h3>Measures<a class="headerlink" href="#measures" title="Permalink to this headline">¶</a></h3>
 <p>Evaluation of similarity is based on a measure. The list of measures is put in a DB
 table called <code class="docutils literal notranslate"><span class="pre">SimMeasure</span></code> that can be edited, via the <code class="docutils literal notranslate"><span class="pre">/neumadmin</span></code> interface. Insert
 at least one measure, called <code class="docutils literal notranslate"><span class="pre">pitches</span></code>.</p>
-</section>
-<section id="building-a-measure-matrix">
+</div>
+<div class="section" id="building-a-measure-matrix">
 <h3>Building a measure matrix<a class="headerlink" href="#building-a-measure-matrix" title="Permalink to this headline">¶</a></h3>
 <p>A matrix of similarities can be built for all the opera of a corpus thanks
 to the following command:</p>
@@ -214,12 +213,12 @@ to the following command:</p>
 </pre></div>
 </div>
 <p>One matrix is produced for each of the similarity measures found in table <code class="docutils literal notranslate"><span class="pre">SimMeasure</span></code>.</p>
-</section>
-</section>
-<section id="clustering">
+</div>
+</div>
+<div class="section" id="clustering">
 <h2>Clustering<a class="headerlink" href="#clustering" title="Permalink to this headline">¶</a></h2>
-</section>
-</section>
+</div>
+</div>
 
 
             <div class="clearer"></div>
@@ -286,7 +285,7 @@ to the following command:</p>
           
     <div class="footer" role="contentinfo">
         &#169; Copyright 2016-2021 Philippe et al..
-      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.0.1.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.2.0.
     </div>
         </div>
         <div class="clearer"></div>
