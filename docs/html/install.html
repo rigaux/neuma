@@ -4,8 +4,7 @@
 <html>
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17: http://docutils.sourceforge.net/" />
-
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Installation &#8212; Neuma dev. guide 1.0 documentation</title>
     <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="_static/agogo.css" />
@@ -41,7 +40,7 @@
         <div class="bodywrapper">
           <div class="body" role="main">
             
-  <section id="installation">
+  <div class="section" id="installation">
 <span id="chap-install"></span><h1>Installation<a class="headerlink" href="#installation" title="Permalink to this headline">¶</a></h1>
 <p>Neuma is essentially a web application developped in Python with the Django framework
 (<a class="reference external" href="https://www.djangoproject.com/">https://www.djangoproject.com/</a>). It relies on a Postgres relational DB for storage,
@@ -60,9 +59,9 @@ form is</p>
 as a technical user, you should probably spend some time to run the initial
 tutorial at <a class="reference external" href="https://www.djangoproject.com/">https://www.djangoproject.com/</a>.</p>
 </div>
-<section id="environment">
+<div class="section" id="environment">
 <h2>Environment<a class="headerlink" href="#environment" title="Permalink to this headline">¶</a></h2>
-<section id="python-django">
+<div class="section" id="python-django">
 <h3>Python/Django<a class="headerlink" href="#python-django" title="Permalink to this headline">¶</a></h3>
 <p>You need a Python3 environment, with a recent version of Django.</p>
 <div class="admonition note">
@@ -85,8 +84,8 @@ to manage these dependencies. You should be able to install them in one shot tha
 </div>
 <p>Enter the nameand password of the super-user for django. For instance (used  in the following):
 <code class="docutils literal notranslate"><span class="pre">djadmin</span> <span class="pre">/</span> <span class="pre">djadmin</span></code>.</p>
-</section>
-<section id="postgres">
+</div>
+<div class="section" id="postgres">
 <h3>Postgres<a class="headerlink" href="#postgres" title="Permalink to this headline">¶</a></h3>
 <p>Install the lastest version of Postgres (see <a class="reference external" href="https://www.postgresql.org/">https://www.postgresql.org/</a>).
 A nice client interface to enter commands is pgAdmin (<a class="reference external" href="https://www.pgadmin.org/">https://www.pgadmin.org/</a>).</p>
@@ -124,8 +123,8 @@ pertaining to your <em>local</em> configuration has to be put in <code class="do
 stored there override the default one in <code class="docutils literal notranslate"><span class="pre">settings.py</span></code>. Be sure to preserve this file
 in you environment : do not release it it the SVN repository; keep a safe copy somewhere.</p>
 </div>
-</section>
-<section id="elasticsearch">
+</div>
+<div class="section" id="elasticsearch">
 <h3>ElasticSearch<a class="headerlink" href="#elasticsearch" title="Permalink to this headline">¶</a></h3>
 <p>Install ElasticSearch, standard, from <a class="reference external" href="https://www.elastic.co/fr/products/elasticsearch">https://www.elastic.co/fr/products/elasticsearch</a>. Run
 an Elasticsearch server somewhere. A simple choice for a dev environment is to install ElasticSearch
@@ -145,8 +144,8 @@ Url <a class="reference external" href="http://localhost:9200">http://localhost:
 inspecting the index. If you want to do so,
 install the client such as Kibana or Cerebro (<a class="reference external" href="https://github.com/lmenezes/cerebro">https://github.com/lmenezes/cerebro</a>). Being
 able to send HTTP requests with <code class="docutils literal notranslate"><span class="pre">curl</span></code> might also prove to be useful</p>
-</section>
-<section id="neuma-setup">
+</div>
+<div class="section" id="neuma-setup">
 <h3>Neuma setup<a class="headerlink" href="#neuma-setup" title="Permalink to this headline">¶</a></h3>
 <p>Now some objects must be created in Neuma. This can be done by running the <code class="docutils literal notranslate"><span class="pre">setup_neuma</span></code>  command as follows:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python3 manage.py setup_neuma
@@ -158,26 +157,24 @@ able to send HTTP requests with <code class="docutils literal notranslate"><span
 <p>This is a first example of a <code class="docutils literal notranslate"><span class="pre">command</span></code> run in a terminal. Several such command
 are provided and documented in Chapter <span class="xref std std-ref">chap-commands</span>.</p>
 </div>
-</section>
-<section id="does-it-work">
+</div>
+<div class="section" id="does-it-work">
 <h3>Does it work?<a class="headerlink" href="#does-it-work" title="Permalink to this headline">¶</a></h3>
 <p>Launch the Django app.</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python3 manage.py runserver
 </pre></div>
 </div>
 <p>And Neuma should be accessible at <a class="reference external" href="http://localhost:8000">http://localhost:8000</a>.</p>
-<figure class="align-center" id="id1">
+<div class="figure align-center" id="id1">
 <span id="neumalogin"></span><a class="reference internal image-reference" href="_images/neumaLogin.png"><img alt="_images/neumaLogin.png" src="_images/neumaLogin.png" style="width: 90%;" /></a>
-<figcaption>
-<p><span class="caption-number">Fig. 1 </span><span class="caption-text">Login to neuma with the Django superuser</span><a class="headerlink" href="#id1" title="Permalink to this image">¶</a></p>
-</figcaption>
-</figure>
+<p class="caption"><span class="caption-number">Fig. 1 </span><span class="caption-text">Login to neuma with the Django superuser</span><a class="headerlink" href="#id1" title="Permalink to this image">¶</a></p>
+</div>
 <p>Félicitations ! It works. You can connect to Neuma with the super user account created for Django (Neuma
 relies on the Django authentication system). Figure <a class="reference internal" href="#neumalogin"><span class="std std-ref">Login to neuma with the Django superuser</span></a>.</p>
 <p>The next step is to load data.</p>
-</section>
-</section>
-</section>
+</div>
+</div>
+</div>
 
 
             <div class="clearer"></div>
@@ -242,7 +239,7 @@ relies on the Django authentication system). Figure <a class="reference internal
           
     <div class="footer" role="contentinfo">
         &#169; Copyright 2016-2021 Philippe et al..
-      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.0.1.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.2.0.
     </div>
         </div>
         <div class="clearer"></div>

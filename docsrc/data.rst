@@ -70,8 +70,7 @@ proposed
 
   - Editing the corpus, to change its description
   - Adding a sub-corpus
-  - Adding a zip file containing a hierarchy of sub-corpuses to import as children of the current corpus
-  - Importing a zip file
+  - Exporting a zip file
   
 Editing corpuses
 ================
@@ -203,8 +202,8 @@ Both files are named accoding to the (local) reference of the opus, for instance
 The Json file is optional: if absent, the import procedure attempts to extract metadata from
 the XML file. 
 
-Upload files
-============
+Importing zip files
+===================
 
 .. note:: In the ``data`` directory of Neuma, you will find Zip files ready to be imported.
 
@@ -214,9 +213,24 @@ corpuses and opuses) are gathered in Zip files. In order to create such a file, 
   - create a directory, named after the local corpus reference, say ``symphonies``;
   - put the opuses files in this directory. It is essential to respect the naming
     rules explained above. 
-  - add a ``corpus.json`` file with a few metadata on the corpus: titles, descrption, etc.
+  - add a ``corpus.json`` file with a few metadata on the corpus: titles, description, etc.
   - compress the directory as a zip file, e.g., ``op8.zip``.
-    
+  - add a ``cover.jpg`` file with a square image illustrating the corpus (optional)
+
+Here is an example of the JSON file:
+
+.. code-block:: json
+
+      {"ref": "airs", 
+        "title": "Airs & songs", 
+        "short_title": "Airs", 
+        "description": "Airs and songs from all periods and areas", 
+        "is_public": true,
+		"short_description": "Airs and songs from all periods and areas", 
+		"licence_code": "CC BY-SA", 
+		"copyright": "IR\u00e9Mus", 
+		"supervisors": null}
+
 **Be careful with opus references**: the file names (without extension)
 define the local reference of an opus inside its corpus. if, for instance,
 one imports a zip file ``op8.zip`` in a corpus ``composers:vivaldi``, then a file 
@@ -233,32 +247,25 @@ but the latter  appears *after* ``opus_12``. Use padding 0 to obtain a correct s
 such as ``opus_01``,
 ``opus_02``, `òpus_12`` (in case two  positions are enough).
 
-Inserting upload files
-======================
 
-In the *Management* tab of a corpus, a form allows to upload zip files,
-one for each children. You must supply
-a sort description of the Zip content, and the Zip file itself. 
-
-Once uploaded, Zip files appear in a list, left of the *Management* tab. Note the ID of a
-file which is required to trigger its insertion.
-
-The Django admin form gives additional access to upload files (deletion, replacement, etc.)
-
-Importing opuses
-================
-
-In order to bulkload the content of a ZIP file, run the following command:
+In order to bulkload the content of a ZIP file , run the following command:
 
 .. code-block:: bash
 
-    python3 manage.py import_zip -u <upload_id>
- 
-This function can be run in asynchronous mode with:
+    python3 manage.py import_zip -c <parent_corpus_id> -f <file_path> [-r corpus_ref]
 
-.. code-block:: bash
+Where 
 
-    python3 manage.py import_zip -u <upload_id> -a 1
+  - ``parent_corpus_id`` is the id of the corpus the new corpus should be added to
+  - ``file_path`` is the path to the zip file (remember: you will find
+     many of those file in the ``data`` directory.)
+  -  ``corpus_ref`` (optional) give the reference of the new corpus, in case the JSON
+     file ``corpus.json`` is absent from the ZIP. Shoudl be avoided.
+
 
 A set of zip files with recursives corpuses can be found in ``data``. They can 
-be imported as children of the root corpus.
+be imported as children of the root corpus. For instance:
+
+.. code-block:: bash
+
+    python3 manage.py import_zip -c all -f data/composers/corelli.zip

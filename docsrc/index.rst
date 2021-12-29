@@ -14,11 +14,6 @@ Contents:
   utils
   searching
   analysis
-  humanum
-
-
-.. automodule:: transcription.models
-   :members:
 
 
 

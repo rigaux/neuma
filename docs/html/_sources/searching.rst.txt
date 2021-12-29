@@ -17,9 +17,6 @@ ElasticSearch
 Searching
 *********
 
-.. autoclass:: IndexWrapper::IndexWrapper
-    :members:
-
 
 Exact search
 ============
