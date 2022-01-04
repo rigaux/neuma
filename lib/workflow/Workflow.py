@@ -482,9 +482,8 @@ class Workflow:
 				# First, compute the music summary and store it as a file
 				music_summary = score.get_music_summary()
 				music_summary.opus_id = opus.ref
-				opus.summary.save("summary.json", ContentFile(music_summary.encode()))
+				#opus.summary.save("summary.json", ContentFile(music_summary.encode()))
 				#print (json.dumps(json_summary, indent=4, separators=(',', ': ')))
-
 				types = "melodic", "diatonic", "rhythmic", "notes"
 				for atype in types:
 					descriptors_dict[atype] = {}
@@ -572,7 +571,7 @@ class Workflow:
 							descriptor.save()
 
 		except  Exception as ex:
-			print ("Exception for opus " + opus.ref + " Message:" + str(ex))
+			print ("Exception when trying to write descriptor for opus " + opus.ref + " Message:" + str(ex))
 
 		return descriptors_dict
 
