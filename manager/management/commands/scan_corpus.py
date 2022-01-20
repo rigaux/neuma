@@ -21,7 +21,7 @@ from lib.music.Voice import IncompleteBarsError
 
 TO_MEI_ACTION = "mei"
 INDEX_ACTION="index"
-PROPAGATE_LICENCE_ACTION="propagate_licence"
+PROPAGATE_ACTION="propagate"
 INDEX_ALL_ACTION = "index_all"
 COMPILE_ACTION="compile"
 CHORALS_ACTION="chorals"
@@ -61,10 +61,10 @@ class Command(BaseCommand):
                 if not c.parent_ref(c.ref):
                     Workflow.index_corpus(c)
             return 
-        elif action == PROPAGATE_LICENCE_ACTION:
+        elif action == PROPAGATE_ACTION:
         	root_corpus = Corpus(ref=settings.NEUMA_ROOT_CORPUS_REF)
-        	Workflow.propagate_licence(root_corpus)
-        	print ("Licences propagated from top-level corpora to children")
+        	Workflow.propagate(root_corpus)
+        	print ("Licences and composers propagated from top-level corpora to children")
         	return 
 
         try:
