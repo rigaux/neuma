@@ -1,10 +1,12 @@
 from django.core.management.base import BaseCommand, CommandError
 from django.conf import settings
-from manager.models import Corpus, Opus, Upload, SimMeasure, AnalyticModel, AnalyticConcept, Licence
+from manager.models import Corpus, Opus, Upload, SimMeasure, AnalyticModel
+from manager.models import AnalyticConcept, Licence, Person
 from lib.workflow.Workflow import Workflow
 import string
 from django.core.files import File
 import os
+import json
 
 from scorelib import analytic_concepts
 
@@ -144,6 +146,7 @@ class Command(BaseCommand):
 		self.load_model("comparison_model.xml")
 		
 		self.load_licences()
+		self.load_persons()
 		print ("Done !")
 		
 
@@ -262,4 +265,24 @@ class Command(BaseCommand):
 				licence = Licence (code=code,name=name,url=url,
 								notice=notice,full_text=full_text)
 				licence.save()
+				
+	def load_persons (self):
+		static_dir = os.path.join(settings.BASE_DIR, "static")
+ 
+		# Parse the file
+		with open(static_dir + "/persons/persons.json") as fp:
+			persons = json.load(fp)
+			for person in persons:
+				try:
+					db_person = Person.objects.get(id=person["id"])
+					print ("Person %s %s already exists" % (person["first_name"],person["last_name"]))
+				except Person.DoesNotExist:
+					print ("Creating person %s %s" % (person["first_name"],person["last_name"]))
+					person = Person (id=person["id"],
+									first_name=person["first_name"],
+									last_name=person["last_name"],
+									year_birth=person["year_birth"],
+									year_death=person["year_death"])
+					person.save()
+
 

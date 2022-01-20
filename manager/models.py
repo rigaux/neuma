@@ -49,6 +49,19 @@ from django.db.models.sql.where import OR
 from jinja2.nodes import Or
 
 
+class Person (models.Model):
+	'''Persons (authors, composers, etc)'''
+	first_name = models.CharField(max_length=100)
+	last_name = models.CharField(max_length=100)
+	year_birth = models.IntegerField()
+	year_death = models.IntegerField()
+
+	class Meta:
+		db_table = "Person"	
+
+	def __str__(self):  # __unicode__ on Python 2
+		return self.first_name  + "  " + self.last_name
+	
 class Licence (models.Model):
 	'''Description of a licence'''
 	code = models.CharField(max_length=25,primary_key=True)
@@ -70,6 +83,7 @@ class Corpus(models.Model):
 	short_description = models.TextField()
 	is_public = models.BooleanField(default=True)
 	parent = models.ForeignKey('self', null=True,on_delete=models.CASCADE)
+	composer = models.ForeignKey(Person, null=True,blank=True,on_delete=models.PROTECT)
 	creation_timestamp = models.DateTimeField('Created',auto_now_add=True)
 	update_timestamp = models.DateTimeField('Updated',auto_now=True)
 	ref = models.CharField(max_length=255,unique=True)

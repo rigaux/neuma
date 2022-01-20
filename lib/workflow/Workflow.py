@@ -210,19 +210,29 @@ class Workflow:
 				Workflow.index_corpus(child, recursion)
 				
 	@staticmethod
-	def propagate_licence(corpus, recursion=True):
+	def propagate(corpus, recursion=True):
 		"""
 		If the licence notice is not null: propagate it to the corpus children
+		Same for the composer
 		"""
+		
 		children = corpus.get_children(False)
-		if corpus.licence_notice != '':
+		if corpus.licence  != None:
 			for child in children:
-				child.licence_notice = corpus.licence_notice
+				child.licence = corpus.licence
+				child.save()
+		if corpus.copyright  != None and corpus.copyright != '':
+			for child in children:
+				child.copyright = corpus.copyright
+				child.save()
+		if corpus.composer  != None:
+			for child in children:
+				child.composer = corpus.composer
 				child.save()
 		# Recursive call
 		if recursion:
 			for child in children:
-				Workflow.propagate_licence(child, recursion)
+				Workflow.propagate(child, recursion)
 
 	@staticmethod
 	def index_opus(opus):
