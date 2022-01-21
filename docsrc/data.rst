@@ -5,7 +5,14 @@
 Data management
 ###############
 
-Neuma only knows two types of objects: *corpus(es)* and *opus(es)*. 
+Neuma  knows two main types of objects: *corpus(es)* and *opus(es)*. They
+can be associated to pre-defined datasets (composers, classification models, etc). 
+These pre-defined datasets are installed with the following command:
+
+.. code-block:: bash
+
+    python3 manage.py setup_neuma
+
 Each  corpus is a container with (sub-) *corpuses* and/or a list of *opuses*. The structure of a collection
 is therefore a hierarchy,  rooted at as pseudo-corpus named *all*. Internal nodes
 are corpuses, leaves are opuses.
@@ -95,6 +102,7 @@ Fields:
  - ``isPublic``: a corpus can be either *Public* (not access restrictions) or *Private*. In the
     latter case it is shown only to users with access grants.
  - Parent corpus: each corpus has a unique parent. Choose the parent from the list
+ - Composer: a person that composed all the scores of the corpus (optional)
  - Reference code: this is the *global* reference code, for instance ``composers:bach:chorals``
    for the ``chorals`` corpus, child of ``bach``, itself child of ``composers``. **Be very careful**
    when entering the reference, because its is essential to ensure the consistency of 
