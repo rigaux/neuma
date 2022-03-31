@@ -41,6 +41,13 @@
                      <li><a href="{% url 'transcription:index' %}">{% trans "Transcription" %}
                     </a></li>
                       {% endif %}
+                    {% if current_view == "collabscore:index" %}
+                    <li class='selected'><a  href="{% url 'collabscore:index' %}">{% trans "Collabscore" %}
+                    </a></li>
+                    {% else %}
+                     <li><a href="{% url 'collabscore:index' %}">{% trans "Collabscore" %}
+                    </a></li>
+                      {% endif %}
                      {% if current_view == "home:structsearch" %}
                     <li class='selected'><a href="{% url 'home:structsearch' %}">{% trans "Structured search" %}
                     {% else %}

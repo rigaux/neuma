@@ -32,4 +32,5 @@ urlpatterns = [
     url(r'^rest/', include('rest.urls', namespace="rest")),
     url(r'^migration/', include('migration.urls', namespace="migration")),
     url(r'^transcription/', include('transcription.urls', namespace="transcription")),
+	url(r'^collabscore/', include('collabscore.urls', namespace="collabscore")),
    ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
