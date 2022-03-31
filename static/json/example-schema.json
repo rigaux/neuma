@@ -1,0 +1,15 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "collabscore-schema",
+    "type": "object",
+    "properties": {
+        "people": {
+            "type": "array",
+            "items": {
+                "$ref": "person-schema.json"
+            }
+        }
+    },
+  "required": ["people"],
+  "additionalProperties": false
+}

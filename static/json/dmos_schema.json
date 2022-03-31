@@ -1,0 +1,26 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "dmos-schema.json",
+    "type": "object",
+  "title": "Schéma des documents de sortie DMOS",
+  "properties": {
+     "score_image_url": {
+          "description": "URL de la partition-image analysée",
+          "type": "string"
+        },
+     "date" : {
+          "description": "Date de l'analyse",
+          "type": "string"
+        },  
+     "pages": {
+         "description": "Tableau des descripteurs de page",
+         "type": "array",
+         "items": {
+           "$ref": "dmos_page.json"
+         },
+         "minItems": 1
+       }
+    },
+   "required": ["score_image_url", "date", "pages"],
+  "additionalProperties": false
+}

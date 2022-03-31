@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "dmos_time_signature.json",
+  "title": "Schéma de la description d'une métrique",
+  "type": "object",
+  "properties": {
+     "element": {"description": "type du chiffrage", "type": "string"},
+     "time": {"description": "Nb de temps", "type": "integer"},
+     "unit": {"description": "Unité de temps", "type": "integer"},
+     "errors": {"type": "array", "items": { "$ref": "dmos_error.json" }
+     }
+   },
+   "required": ["element", "time", "unit", "errors"],
+  "additionalProperties": false
+}

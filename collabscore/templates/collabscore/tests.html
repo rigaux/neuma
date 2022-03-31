@@ -1,0 +1,25 @@
+{% extends "layout.html" %} 
+{% load i18n %} 
+
+
+{% block content %}
+
+<h4>Message schéma</h4> 
+
+{{message_schema}}
+
+<h4>Message données : {{message}}</h4>
+
+
+
+<ul>
+{% for e in  errors %}
+<li>{{e}}</li>
+{% endfor %}
+</ul>
+
+<h4>le document analysé</h4>
+
+{{document}}
+
+{% endblock content %}

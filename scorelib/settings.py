@@ -60,6 +60,7 @@ INSTALLED_APPS = (
     "scoreql",
     "quality",
     "transcription",
+    "collabscore",
     "migration",
     "rest",
     "rest_framework",

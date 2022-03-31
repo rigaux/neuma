@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "dmos_voice.json",
+  "title": "Schéma des descripteurs de voix",
+  "type": "object",
+  "properties": {
+    "elements": {
+         "type": "array",
+         "description" : "Une voix est une séquence d'éléments de voix",
+         "items": {"$ref": "dmos_element_voice.json" } 
+    }
+  }
+}
