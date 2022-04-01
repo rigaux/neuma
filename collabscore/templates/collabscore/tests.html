@@ -18,8 +18,40 @@
 {% endfor %}
 </ul>
 
-<h4>le document analysé</h4>
+<h4>Le document analysé</h4>
 
 {{document}}
+
+
+<h4>La partition extraite</h4>
+
+<ul>
+   <li>Image analysée : {{omr_score.score_image_url}}</li>
+      <li>Nombre de pages : {{omr_score.pages|length}}
+      <ul>
+         {% for page in omr_score.pages %}
+           <li>Page {{page.no_page}}, avec {{page.systems|length}} système(s)
+             <ul>
+               {% for system in page.systems %}
+                 <li>Système {{system.id}}, zone {{system.zone}}, nb portées {{system.headers|length}}
+                     <ul>
+                     {% for measure in system.measures %}
+                        <li>Measure {{measure.id}}, zone {{measure.zone}}
+                          <ul>
+                          {% for voice in measure.voices %}
+                            <li>Voice {{voice.id}}</li>
+                           {% endfor %}
+                         </ul>
+                        </li>
+                     {% endfor %}
+                     </ul>
+                 </li>
+               {% endfor %}
+           </ul>
+           </li>
+         {% endfor %}
+         </li>
+      </ul>
+</ul>
 
 {% endblock content %}
