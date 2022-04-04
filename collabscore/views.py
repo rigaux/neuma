@@ -18,10 +18,16 @@ from jsonref import JsonRef
 def tests(request):
 	context = {"titre": "Tests Philippe"}
 
+	# Root dir for sample data
+	dmos_dir = os.path.join(settings.BASE_DIR, '../utilities/', 'dmos')
 	# Where is the schema?
-	data_dir = os.path.join(settings.BASE_DIR, 'static', 'json')
-	schema_file = os.path.join(data_dir, 'dmos_schema.json')
-	base_uri='file://' + data_dir + '/'
+	schema_dir = os.path.join(dmos_dir, 'schema/')
+	data_dir = os.path.join(dmos_dir, 'data/')
+	
+	# The main schema file
+	schema_file = os.path.join(schema_dir, 'dmos_schema.json')
+	# Where  json refs must be solved
+	base_uri='file://' + schema_dir + '/'
 	
 	# Parse the schema
 	try:
@@ -29,7 +35,7 @@ def tests(request):
 		context['message_schema'] = "Le schéma est valide"
 	except jsonschema.SchemaError as ex:
 		context['message_schema'] = "Schema parsing error: " + str (ex)
-	except Exception:
+	except Exception as ex:
 		"Unexpected error during parser initialization: " + str (ex)
 
 	''' Load the schema
@@ -48,9 +54,12 @@ def tests(request):
 	'''
 	
 	# Load the data and resolve references
-	data = jsonref.load_uri('http://collabscore.org/dmos/data/dmos_data.json', 
-						base_uri='http://collabscore.org/dmos/data/')
+	#data = jsonref.load_uri('http://collabscore.org/dmos/data/dmos_data.json', 
+	#					base_uri='http://collabscore.org/dmos/data/')
 	
+	data = jsonref.load_uri('file://' + data_dir + 'dmos_data.json', 
+						base_uri='file://' + data_dir)
+
 	# Write the full document in a local file
 	with open(os.path.join(data_dir, 'full_example.json'), 'a') as the_file:
 		json.dump(data, the_file)

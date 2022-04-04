@@ -39,7 +39,11 @@
                         <li>Measure {{measure.id}}, zone {{measure.zone}}
                           <ul>
                           {% for voice in measure.voices %}
-                            <li>Voice {{voice.id}}</li>
+                            <li>Voice {{voice.id}}
+                               {% for item in voice.items %}
+                                  {{item}}, 
+                               {% endfor %} 
+                            </li>
                            {% endfor %}
                          </ul>
                         </li>
