@@ -98,6 +98,10 @@ class Symbol:
 		self.label = json_symbol["label"]
 		self.zone = Zone(json_symbol["zone"])
 		
+
+	def __str__(self):
+		return f'({self.label},{self.zone})'
+
 class Element:
 	"""
 		An a score element 
@@ -106,6 +110,9 @@ class Element:
 	def __init__(self, json_elt):
 		self.label = json_elt["label"]
 		self.zone = Zone(json_elt["zone"])
+
+	def __str__(self):
+		return f'({self.label},{self.zone})'
 
 class Page:
 	"""
@@ -150,17 +157,78 @@ class Voice:
 	"""
 	
 	def __init__(self, json_voice):
-		self.items =[]
+		self.items = []
+		for json_item in json_voice["elements"]:
+			self.items.append(VoiceItem (json_item))
+			
 		
 class VoiceItem:
 	"""
 		A voice item
 	"""
 	
-	def __init__(self, json_voice):
-		self.items =[]
+	def __init__(self, json_voice_item):
+		self.note_attr = None
+		self.rest_attr = None
+		self.clef_attr = None
+		
+		self.type = Symbol (json_voice_item["type"])
+		self.no_step = json_voice_item["no_step"]
+		self.duration = json_voice_item["duration"]
+		if "no_group" in json_voice_item:
+			self.no_group = json_voice_item["no_group"]
+		if "step_duration" in json_voice_item:
+			self.step_duration = json_voice_item["step_duration"]
+		if "direction" in json_voice_item:
+			self.direction = json_voice_item["direction"]
+		if "att_note" in json_voice_item:
+			self.att_note = NoteAttr (json_voice_item["att_note"])
+		if "att_rest" in json_voice_item:
+			# NB: using the same type for note heads and rest heads
+			self.att_rest = NoteAttr (json_voice_item["att_rest"])
+		if "att_clef" in json_voice_item:
+			self.att_clef  = Clef (json_voice_item["att_clef"])
+
+	def __str__(self):
+		return f'({self.type}, step {self.no_step}, dur. {self.duration})'
+
+class NoteAttr:
+	"""
+		Note attributes
+	"""
+	
+	def __init__(self, json_note_attr):
+		
+		self.nb_heads = json_note_attr["nb_heads"]
+		self.heads = []
+		for json_head in json_note_attr["heads"]:
+			self.heads.append(Note (json_head))
+
+	
+	def __str__(self):
+		return f'({self.type}, step {self.no_step}, dur. {self.duration})'
 
 ##############
+
+
+class Note:
+	"""
+		Representation of a clef
+	"""
+	
+	def __init__(self, json_note):
+		self.tied = False
+		self.alter = None
+
+		self.head_symbol =  Symbol (json_note["head_symbol"])
+		self.no_staff  = json_note["no_staff"]
+		self.height  = json_note["height"]
+		
+		if "alter" in json_note:
+			self.alter = Symbol (json_note["alter"])
+		if "tied" in json_note:
+			self.tied = json_note["tied"]
+
 
 class Clef:
 	"""
@@ -169,7 +237,7 @@ class Clef:
 	
 	def __init__(self, json_clef):
 		self.symbol =  Symbol (json_clef["symbol"])
-		self.id_staff  = json_clef["id_staff"]
+		self.no_staff  = json_clef["no_staff"]
 		self.height  = json_clef["height"]
 
 class KeySignature:
@@ -198,7 +266,7 @@ class StaffHeader:
 	"""
 	
 	def __init__(self, json_system_header):
-		self.id_staff =json_system_header["id_staff"]
+		self.no_staff =json_system_header["no_staff"]
 		self.first_bar = Element(json_system_header["first_bar"])
 
 class MeasureHeader:
