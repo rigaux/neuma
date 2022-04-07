@@ -9,6 +9,8 @@ from pprint import pprint
 from jsonref import JsonRef
 import jsonschema 
 
+from lib.music.Score import *
+
 # Get an instance of a logger
 logger = logging.getLogger(__name__)
 
@@ -74,6 +76,17 @@ class OmrScore:
 		# Analyze pages
 		for json_page in json_data["pages"]:
 			self.pages.append(Page(json_page))
+
+	def get_score(self):
+		'''
+			Builds a score from the Omerized document
+		'''
+		
+		score = Score()
+		
+
+		score.add_part("part0")
+		return score 
 
 class Zone:
 	"""
