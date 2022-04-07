@@ -1,9 +1,10 @@
 {% extends "layout.html" %} 
 {% load i18n %} 
 
-
 {% block content %}
 
+    
+    
 <h4>Message schéma</h4> 
 
 {{message_schema}}
@@ -57,5 +58,32 @@
          </li>
       </ul>
 </ul>
+
+
+	<div>
+		<div id="verovio"></div>
+	</div>
+	
+<div class="panel-body">
+    <div id="app" class="panel" style="border: 1px solid lightgray; min-height: 800px;"></div>
+</div>
+<script type="module">
+    import 'https://www.verovio.org/javascript/app/verovio-app.js';
+
+    // Create the app - here with an empty option object
+    const app = new Verovio.App(document.getElementById("app"), {});
+
+    // Load a file (MEI or MusicXML)
+	var score_url = 
+	console.log ("Loading {{opus_url}}");
+
+    fetch("{{opus_url}}")
+        .then(function(response) {
+            return response.text();
+        })
+        .then(function(text) {
+            app.loadData(text);
+        });
+</script> 
 
 {% endblock content %}

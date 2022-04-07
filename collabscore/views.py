@@ -7,6 +7,7 @@ from manager.models import (
 	Opus
 )
 from django.conf import settings
+from django.core.files.base import ContentFile
 
 from lib.collabscore.parser import *
 
@@ -14,6 +15,7 @@ import jsonref
 import json
 from pprint import pprint
 from jsonref import JsonRef
+
 
 def tests(request):
 	context = {"titre": "Tests Philippe"}
@@ -76,6 +78,25 @@ def tests(request):
 	omr_score = OmrScore (data)
 	
 	context["omr_score"] = omr_score
+	
+	# Build the encoded score
+	corpus = Corpus.objects.get(ref="all:potspourris")
+	full_opus_ref = corpus.ref + settings.NEUMA_ID_SEPARATOR + "tst"
+	try:
+		opus = Opus.objects.get(ref=full_opus_ref)
+	except Opus.DoesNotExist as e:
+		# Create the Opus
+		opus = Opus(corpus=corpus, ref=full_opus_ref, title="Test collabscore")
+		opus.save()
+		
+	score = omr_score.get_score()
+	score.write_as_musicxml ("/tmp/score.xml")
+	with open("/tmp/score.xml") as f:
+		score_xml = f.read()
+	opus.musicxml.save("score.xml", ContentFile(score_xml))
+	
+	context["opus"] = opus
+	context["opus_url"] = "http://localhost:8000" + opus.musicxml.url
 	
 	return render(request, 'collabscore/tests.html', context)
 

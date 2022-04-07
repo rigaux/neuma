@@ -599,6 +599,7 @@ class Corpus(models.Model):
 						if opus_files_desc["musicxml"] != "":
 							logger.info ("Produce the MEI from MusicXML")
 							try:
+								print ("Produce the MEI from MusicXML")
 								tk = verovio.toolkit()
 								tk.loadFile(opus.musicxml.path)
 								mei_content = tk.getMEI()
