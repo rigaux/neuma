@@ -15,7 +15,7 @@ class Staff:
 		of notational events that occur (clef, signatures, directions, etc.)
 	'''
 	
-	def __init__(self, id_staff) :
+	def __init__(self, no_staff) :
 		''' 
 		   A dictionnary, indexed on measures, that records the clefs
 		    used in the staff
@@ -23,7 +23,7 @@ class Staff:
 		    supported for the time being. We will need a more powerful
 		    notion of 'position'
 		'''
-		self.id = id_staff
+		self.id = no_staff
 		self.clef_events = {}
 		self.time_signature_events = {}
 		self.key_signature_events = {}
@@ -32,21 +32,28 @@ class Staff:
 	def add_clef (self, no_measure, clef):
 		self.clef_events[no_measure] = clef
 		self.current_clef = clef
+	def add_time_signature (self, no_measure, ts):
+		self.time_signature_events[no_measure] = ts
 	def clef_found_at_measure (self, no_measure):
 		return (no_measure in self.clef_events.keys())
 	def get_clef (self, no_measure):
 		return self.clef_events[no_measure]
+	def ts_found_at_measure (self, no_measure):
+		return (no_measure in self.time_signature_events.keys())
+	def get_time_signature (self, no_measure):
+		return self.time_signature_events[no_measure]
 
 class TimeSignature:
 	'''
 		Represented as a fraction
 	'''
-	
+
 	def __init__(self, numer, denom) :
-		self.fraction = Fraction (numer, denom)
-		
+		#self.fraction = Fraction (numer, denom)
+		self.numer = numer
+		self.denom = denom
 		# m21 duration is the float obtained from the fraction
-		self.m21_time_signature = m21.meter.TimeSignature(str(self.fraction))
+		self.m21_time_signature = m21.meter.TimeSignature('{}/{}'.format(self.numer, self.denom))
 
 class KeySignature:
 	'''

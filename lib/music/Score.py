@@ -233,24 +233,24 @@ class Part:
 
 	def add_staff (self, staff):
 		self.staves.append(staff)
-	def staff_exists (self, id_staff):
+	def staff_exists (self, no_staff):
 		for staff in self.staves:
-			if staff.id == id_staff:
+			if staff.id == no_staff:
 				return True
 		return False
-	def get_staff (self, id_staff):
+	def get_staff (self, no_staff):
 		for staff in self.staves:
-			if staff.id == id_staff:
+			if staff.id == no_staff:
 				return staff
 
-	def add_clef_to_staff (self, id_staff, no_measure, clef):
+	def add_clef_to_staff (self, no_staff, no_measure, clef):
 		# A new clef at the beginning of measure for this staff
-		if self.staff_exists (id_staff):
-			staff = self.get_staff (id_staff)
+		if self.staff_exists (no_staff):
+			staff = self.get_staff (no_staff)
 			staff.add_clef (no_measure, clef)
 		else:
 			# Unknown staff: raise an exception
-			print ("Unknown staff : " + id_staff)
+			print ("Unknown staff : " + no_staff)
 		
 	def append_measure (self, measure):
 		# Check if we need to insert clef or signature at the beginning
@@ -260,6 +260,9 @@ class Part:
 		for staff in self.staves:
 			if staff.clef_found_at_measure(measure.no):
 				measure.add_clef (staff.get_clef(measure.no))
+			if staff.ts_found_at_measure(measure.no):
+				measure.add_time_signature (staff.get_time_signature(measure.no))
+
 		self.m21_part.append(measure.m21_measure)
 
 	@staticmethod
