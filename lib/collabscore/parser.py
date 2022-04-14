@@ -4,7 +4,6 @@ import  sys, os
 import logging
 
 import json
-import jsonref
 from jsonref import JsonRef
 import jsonschema 
 
@@ -124,6 +123,7 @@ class OmrScore:
 							staff.add_clef (current_measure, clef_staff)
 						if header.time_signature is not None:
 							time_sign = header.time_signature.get_notation_object()
+							staff.add_time_signature (current_measure, time_sign)
 
 					# Create a new measure for each part
 					current_measures = {}
@@ -168,12 +168,12 @@ class OmrScore:
 				(pitch_class, octave)  = staff.current_clef.decode_pitch (head.height)
 			
 				# Decode from the DMOS input codification
-				if head.alter == score_events.Note.DMOS_FLAT_SYMBOL:
-					alter = score_events.Note.ALTER_FLAT
-				elif head.alter == score_events.Note.DMOS_SHARP_SYMBOL:
-					alter = score_events.Note.ALTER_SHARP
-				else:
+				if head.alter == None:
 					alter = ""
+				elif head.alter.label == score_events.Note.DMOS_FLAT_SYMBOL:
+					alter = score_events.Note.ALTER_FLAT
+				elif head.alter.label  == score_events.Note.DMOS_SHARP_SYMBOL:
+					alter = score_events.Note.ALTER_SHARP
 				# Only manage one head 
 				break
 				

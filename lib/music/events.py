@@ -24,8 +24,8 @@ class Note:
 		Representation of a note
 	"""
 
-	DMOS_FLAT_SYMBOL="bémol"
-	DMOS_SHARP_SYMBOL="dièse"
+	DMOS_FLAT_SYMBOL="bemol"
+	DMOS_SHARP_SYMBOL="diese"
 	
 	UNDEFINED_STAFF = 0
 	
