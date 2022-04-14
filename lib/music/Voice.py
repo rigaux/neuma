@@ -1,19 +1,13 @@
-from search.Item import Item
-from search.Sequence import Sequence
-import json
+
 import music21 as m21
 
-from pprint import pprint
 from collections import namedtuple, OrderedDict
 from fractions import Fraction
 
-import manager.models
-
-from home.templatetags.extras import scale_degree, semitoneconv
-from home.templatetags.extras import rhythm_figures_print
+#from home.templatetags.extras import scale_degree, semitoneconv
+#from home.templatetags.extras import rhythm_figures_print
 
 DURATION_UNIT = 16
-
 
 class Voice:
 	"""
@@ -24,14 +18,17 @@ class Voice:
 	def __init__(self, id) :
 		# A voice has an id, and the sequence is represented as a Music21 stream
 		self.id = id
-		self.m21_stream = None
+		self.m21_stream = m21.stream.Voice()
 		return
 	
 	def set_from_m21(self, m21stream):
 		"""Feed the voice representation from a MusicXML document"""
 		
 		self.m21_stream = m21stream	
-		
+	
+	def append_note (self, note):
+		self.m21_stream.append(note.m21_note)
+
 	def get_half_step_intervals(self):
 		'''Return half-steps intervals'''
 		hs_inter = list()
@@ -42,38 +39,9 @@ class Voice:
 			
 		return hs_inter
 	
-	def convert_to_sequence(self):
-		sequence = Sequence()
-		for event in self.m21_stream.notesAndRests:
-			item = Item()
-			item.duration = float(event.duration.quarterLength)
-			if isinstance(event, m21.note.Note):
-				item.id = event.id
-				item.step = event.pitch.step
-				item.octave = event.pitch.octave
-				if event.pitch.accidental is not None:
-					item.alteration = int(event.pitch.accidental.alter)
-				else:
-					item.alteration = 0
-				if event.lyric != None:
-					item.lyric = event.lyric
-				sequence.add_item(item)
-			elif isinstance(event, m21.note.Rest):
-				item.id = event.id
-				item.is_rest = True
-				sequence.add_item(item)
-			elif isinstance(event, m21.chord.Chord):
-				item.id = event.id
-				# Get highest pitch in chord
-				highest_pitch = event.pitches[-1]
-				item.step = highest_pitch.step
-				item.octave = highest_pitch.octave
-				if highest_pitch.accidental is not None:
-					item.alteration = int(highest_pitch.accidental.alter)
-				else:
-					item.alteration = 0
-				sequence.add_item(item)
-		return sequence
+	#def convert_to_sequence(self):
+	# Moved to MusicSummary for reducing dependencies
+	
 	
 	def has_lyrics(self):
 		for event in self.m21_stream.notesAndRests:
@@ -395,7 +363,6 @@ class Voice:
 			measure_index+=1
 
 		return invalid
-
 
 # FIXME
 class IncompleteBarsError(Exception):

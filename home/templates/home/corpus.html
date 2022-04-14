@@ -112,7 +112,11 @@ var tabNames = [{"tabId": "tab1", "divId": "subcorpus"},
 	<div><img width="200" height="213"
 		src="{{ corpus_cover.url }}" alt="Image" /> 
 		</div>
-	            	{% if not corpus.copyright == "" and  not corpus.copyright == None %} 
+	   {% if not corpus.licence == "" and  not corpus.licence == None %} 
+    	<p>
+    	  <a    href="{% url 'home:show_licence' corpus.licence.code %}">{{corpus.licence}}</a></p>
+       {% endif %} 
+	   {% if not corpus.copyright == "" and  not corpus.copyright == None %} 
     	<p>&copy; {{corpus.copyright}}</p>
        {% endif %} 
 	

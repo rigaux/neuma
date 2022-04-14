@@ -9,11 +9,10 @@ from manager.models import (
 from django.conf import settings
 from django.core.files.base import ContentFile
 
-from lib.collabscore.parser import *
+from lib.collabscore.parser import CollabScoreParser, OmrScore
 
 import jsonref
 import json
-from pprint import pprint
 from jsonref import JsonRef
 
 
@@ -40,20 +39,6 @@ def tests(request):
 	except Exception as ex:
 		"Unexpected error during parser initialization: " + str (ex)
 
-	''' Load the schema
-	schema  = json.load(sch_file)
-	
-	resolver = jsonschema.RefResolver(referrer=schema, 
-									base_uri='file://' + data_dir + '/')
-
-	try:
-		# Check schema via class method call. Works, despite IDE complaining
-		validator = jsonschema.Draft4Validator (schema, resolver=resolver)
-		jsonschema.Draft4Validator.check_schema(schema)
-		context['message_schema'] = "Le schéma est valide"
-	except jsonschema.SchemaError as ex:
-		context['message_schema'] = str (ex)
-	'''
 	
 	# Load the data and resolve references
 	#data = jsonref.load_uri('http://collabscore.org/dmos/data/dmos_data.json', 
@@ -63,10 +48,9 @@ def tests(request):
 						base_uri='file://' + data_dir)
 
 	# Write the full document in a local file
-	with open(os.path.join(data_dir, 'full_example.json'), 'a') as the_file:
+	json_dir = os.path.join(settings.BASE_DIR, 'static', 'json')
+	with open(os.path.join(json_dir, 'full_example.json'), 'a') as the_file:
 		json.dump(data, the_file)
-		
-	context["document"] = data
 	
 	try:
 		parser.validate_data (data)
