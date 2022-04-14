@@ -46,6 +46,7 @@ class CollabScoreParser:
 		
 		return
 
+
 	def validate_data (self, json_content):
 		# Might raise an exception
 		try:
@@ -160,7 +161,7 @@ class OmrScore:
 		
 		# Duration of the event: the DMOS encoding is 1 from whole note, 2 for half, etc.
 		# Our encoding (music21) is 1 for quarter note. Hence the computation
-		duration = score_events.Duration(4, int(voice_item.duration))
+		duration = score_events.Duration(voice_item.duration.numer, voice_item.duration.denom)
 		if voice_item.att_note is not None:
 			# It should be a note
 			for head in voice_item.att_note.heads:
@@ -285,7 +286,7 @@ class VoiceItem:
 		
 		self.type = Symbol (json_voice_item["type"])
 		self.no_step = json_voice_item["no_step"]
-		self.duration = json_voice_item["duration"]
+		self.duration = Duration (json_voice_item["duration"])
 		if "no_group" in json_voice_item:
 			self.no_group = json_voice_item["no_group"]
 		if "step_duration" in json_voice_item:
@@ -302,7 +303,7 @@ class VoiceItem:
 
 	
 	def __str__(self):
-		return f'({self.type}, step {self.no_step}, dur. {self.duration})'
+		return f'({self.type}, step {self.no_step}, dur. ({self.duration.numer}/{self.duration.denom})'
 
 class NoteAttr:
 	"""
@@ -364,6 +365,15 @@ class KeySignature:
 		self.element =   json_key_sign["element"]
 		self.nb_naturals =   json_key_sign["nb_naturals"]
 		self.nb_alterations =   json_key_sign["nb_alterations"]
+		
+class Duration:
+	"""
+		Representation of a musical duration
+	"""
+	
+	def __init__(self, json_duration):
+		self.numer =   json_duration["numer"]
+		self.denom =   json_duration["denom"]
 
 class TimeSignature:
 	"""
