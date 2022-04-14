@@ -1,41 +1,78 @@
+# import the logging library
+import logging
 
-from .Voice import Voice
+import music21 as m21
 
-
-from django.conf import settings
-from search.MusicSummary import *
-
-from music21 import *
 import verovio
 
+# Voice is a complex class defined in a separate file
+from .Voice import Voice
+from . import notation
+
+# Get an instance of a logger
+logger = logging.getLogger(__name__)
+
+
+"""
+  This module acts as a thin layer over music21, so as to propose
+  a somewhat more constrained representation of encoded scores
+""" 
 
 class Score:
 	"""
-		Representation of a score as a hierarchy of su-scores / voices
+		Representation of a score as a hierarchy of sub-scores / voices
 	"""
 	
-	def __init__(self) :
+	def __init__(self, title="", composer="") :
 		self.id = ""
 		'''
 		   'A score is made of components, which can be either voices 
-		   (final) or other scores (aka parts)
+		   (final) or parts. Follows the music21 recomended organization
 		'''
+		self.parts = []
+		
+		# For compatibility ...
 		self.components = list()
-		self.m21_score = stream.Score(id='mainScore')
+		
+		self.m21_score = m21.stream.Score(id='mainScore')
+		self.m21_score.metadata = m21.metadata.Metadata()
+		
+		self.m21_score.metadata.title = title
+		self.m21_score.metadata.composer = composer
+		
 		return
 	
-	def add_part (self, id_part):
+	def add_part (self, part):
 		""" Add a part to the main score """
-		
-		part = stream.Part(id=id_part)
-		m01 = stream.Measure(number=1)
-		m01.append(note.Note('C', type="whole"))
-		m02 = stream.Measure(number=2)
-		m02.append(note.Note('D', type="whole"))
-		part.append([m01, m02])
+		self.parts.append(part)	
+		self.m21_score.insert(0, part.m21_part)
+	
+	def part_exists (self, id_part):
+		for part in self.parts:
+			if part.id == id_part:
+				return True
+		return False
 
-		self.m21_score.insert(0, part)
+	def get_part (self, id_part):
+		for part in self.parts:
+			if part.id == id_part:
+				return part
 		
+		# Oups, the part has not been found ...
+		logger.log ("Unable to find this part : " + id_part )
+
+	def get_staff (self, no_staff):
+		''' 
+		    Find a staff of the score. Staves are embedded in parts
+		'''
+		for part in self.parts:
+			if part.staff_exists (no_staff):
+				return part.get_staff(no_staff)
+
+		# The staff has not been found: raise an exception
+		print ("Unknown staff : " + str(no_staff))
+		return None
+
 	def write_as_musicxml(self, filename):
 			''' Produce the MusicXML encoding thanks to Music21'''
 			self.m21_score.write ("musicxml", filename)
@@ -76,7 +113,8 @@ class Score:
 			self.m21_score = None
 			print ("Error while loading from xml:" + str(ex))
 			print ("Some error raised while attempting to transform MEI to XML.")
-				
+
+
 	def load_component(self, m21stream):
 		'''Load the components from a M21 stream'''
 
@@ -148,7 +186,7 @@ class Score:
 		music_summary = MusicSummary()
 		# Adds a single part, for historical reasons: we do not care about parts
 		# for search operations
-		part_id = settings.ALL_PARTS
+		part_id = "all_parts"
 		music_summary.add_part(part_id)
 		# Now add all the voices
 		voices = self.get_all_voices()
@@ -172,3 +210,79 @@ class Score:
 
 	def get_intervals(self):
 		return score.chordify()
+
+
+class Part:
+	"""
+		Representation of a part as a hierarchy of parts / voices
+	"""
+	
+	def __init__(self, id_part, name="", abbr_name="") :
+		self.id = id_part
+		
+		self.m21_part = m21.stream.Part(id=id_part)
+		# Metadata
+		self.m21_part.partName  = name
+		self.m21_part.partAbbreviation = abbr_name
+		
+		# List of staves the part is displayed on
+		self.staves = []
+		
+		# There should be a add_subpart method for recursive structure. Not
+		# used for the moment
+
+	def add_staff (self, staff):
+		self.staves.append(staff)
+	def staff_exists (self, id_staff):
+		for staff in self.staves:
+			if staff.id == id_staff:
+				return True
+		return False
+	def get_staff (self, id_staff):
+		for staff in self.staves:
+			if staff.id == id_staff:
+				return staff
+
+	def add_clef_to_staff (self, id_staff, no_measure, clef):
+		# A new clef at the beginning of measure for this staff
+		if self.staff_exists (id_staff):
+			staff = self.get_staff (id_staff)
+			staff.add_clef (no_measure, clef)
+		else:
+			# Unknown staff: raise an exception
+			print ("Unknown staff : " + id_staff)
+		
+	def append_measure (self, measure):
+		# Check if we need to insert clef or signature at the beginning
+		# of the measure
+		
+		# NB: needs to be improved if a part extends over several staves
+		for staff in self.staves:
+			if staff.clef_found_at_measure(measure.no):
+				measure.add_clef (staff.get_clef(measure.no))
+		self.m21_part.append(measure.m21_measure)
+
+	@staticmethod
+	def create_part_id (id_part):
+		# Create a string that identifies the part
+		return "Part" + str(id_part)
+
+class Measure:
+	"""
+		Representation of a measure
+	"""
+	
+	def __init__(self, no_measure) :
+		self.no = no_measure
+		self.m21_measure = m21.stream.Measure(number=no_measure)
+		
+	def add_time_signature(self, time_signature):
+		self.m21_measure.insert(0,  time_signature.m21_time_signature)
+	def add_clef(self, clef):
+		self.m21_measure.insert(0,  clef.m21_clef)
+	def add_key_signature(self, key_signature):
+		self.m21_measure.insert(0,  key_signature.m21_key_signature)
+		
+	def add_voice (self, voice):
+		self.m21_measure.insert (0, voice.m21_stream)
+		

@@ -5,11 +5,14 @@ import logging
 
 import json
 import jsonref
-from pprint import pprint
 from jsonref import JsonRef
 import jsonschema 
 
-from lib.music.Score import *
+import lib.music.Score as score_model
+import lib.music.Voice as voice_model
+import lib.music.events as score_events
+import lib.music.notation as score_notation
+
 
 # Get an instance of a logger
 logger = logging.getLogger(__name__)
@@ -51,10 +54,19 @@ class CollabScoreParser:
 							schema=self.schema, 
 							resolver=self.resolver)
 		except jsonschema.ValidationError as ex:
-			errors = sorted(validator.iter_errors(data), key=lambda e: e.path)
-			raise Exception ("Data  validation error: " + errors)
+			errors = sorted(self.validator.iter_errors(json_content), key=lambda e: e.path)
+			str_errors = ""
+			for e in errors:
+				path = ""
+				for p in e.absolute_path:
+					path += str(p) + '/' 
+				str_errors += " Error : " + e.message + " (path " + path + ")"
+			raise Exception ("Data  validation error: " + str_errors)
 		except jsonschema.SchemaError as ex:
-			raise Exception ("Data  validation error: " + str(ex))
+			errors = sorted(self.validator.iter_errors(json_content), key=lambda e: e.path)
+			for e in errors:
+				str_errors += e.message
+			raise Exception ("Schema error: " + str_errors)
 
 """
   Utility classes
@@ -79,14 +91,95 @@ class OmrScore:
 
 	def get_score(self):
 		'''
-			Builds a score from the Omerized document
+			Builds a score (instance of our score model) from the Omerized document
 		'''
 		
-		score = Score()
+		score = score_model.Score()
+		current_measure = 1
 		
+		for page in self.pages:
+			for system in page.systems:
+				# Headers defines the parts and their staves in this system
+				for header in system.headers:
+					if score.part_exists(header.id_part):
+						part = score.get_part(header.id_part)
+					else:
+						part = score_model.Part(id_part=header.id_part)
+						score.add_part(part)
+					# Add the staff
+					part.add_staff (score_notation.Staff(header.no_staff))
+					
+				# Now we scan the measures. DMOS gives us a measure
+				# for all the parts of the system. Therefore we add 
+				# one measure to each part, and add the voice to the measure
+				# based on its part_id assignment
+				
+				for measure in system.measures:
+					for header in measure.headers:
+						# Check if some notational event occurs at this measure
+						# on some staff 
+						staff = score.get_staff (header.no_staff)
+						if header.clef is not None:
+							clef_staff = header.clef.get_notation_clef()
+							staff.add_clef (current_measure, clef_staff)
+						if header.time_signature is not None:
+							time_sign = header.time_signature.get_notation_object()
 
-		score.add_part("part0")
+					# Create a new measure for each part
+					current_measures = {}
+					for part in score.parts:
+						measure_for_part = score_model.Measure(current_measure)
+						# Add the measure to its part (notational events are added there)
+						part.append_measure (measure_for_part)
+						# Keep the array of current measures indexed by part
+						current_measures[part.id] = measure_for_part
+
+					for voice in measure.voices:
+						# One part per voice -> should be one part per system
+						voice_part = voice_model.Voice(id=voice.id)
+						
+						for item in voice.items:
+							# We would send the part and not the score
+							note = self.decode_event(score, item) 
+							voice_part.append_note(note)
+						# Add the voice to the measure of the relevant part
+						if voice.id_part not in current_measures.keys():
+							# Error this part is unknown. Raise an eexception
+							print ("Unknown part in voice : " + voice.id_part)
+						else:
+							current_measures[voice.id_part].add_voice (voice_part)
+
+		current_measure += 1
+		
 		return score 
+
+	def decode_event(self, score, voice_item):
+		'''
+			Produce an event (from our score model) by decoding the OMR input
+		'''
+		
+		# Duration of the event: the DMOS encoding is 1 from whole note, 2 for half, etc.
+		# Our encoding (music21) is 1 for quarter note. Hence the computation
+		duration = score_events.Duration(4, int(voice_item.duration))
+		if voice_item.att_note is not None:
+			# It should be a note
+			for head in voice_item.att_note.heads:
+				staff = score.get_staff (head.no_staff)
+				(pitch_class, octave)  = staff.current_clef.decode_pitch (head.height)
+			
+				# Decode from the DMOS input codification
+				if head.alter == score_events.Note.DMOS_FLAT_SYMBOL:
+					alter = score_events.Note.ALTER_FLAT
+				elif head.alter == score_events.Note.DMOS_SHARP_SYMBOL:
+					alter = score_events.Note.ALTER_SHARP
+				else:
+					alter = ""
+				# Only manage one head 
+				break
+				
+				# The head position gives the position of the note on the staff
+			event = score_events.Note(pitch_class, octave, duration, alter)
+			return event
 
 class Zone:
 	"""
@@ -160,6 +253,9 @@ class Measure:
 	
 	def __init__(self, json_measure):
 		self.zone = Zone (json_measure["zone"])
+		self.headers =[]
+		for json_header in json_measure["headers"]:
+			self.headers.append(MeasureHeader(json_header))
 		self.voices =[]
 		for json_voice in json_measure["voices"]:
 			self.voices.append(Voice(json_voice))
@@ -170,6 +266,8 @@ class Voice:
 	"""
 	
 	def __init__(self, json_voice):
+		self.id = json_voice["id"]
+		self.id_part = json_voice["id_part"]
 		self.items = []
 		for json_item in json_voice["elements"]:
 			self.items.append(VoiceItem (json_item))
@@ -202,6 +300,7 @@ class VoiceItem:
 		if "att_clef" in json_voice_item:
 			self.att_clef  = Clef (json_voice_item["att_clef"])
 
+	
 	def __str__(self):
 		return f'({self.type}, step {self.no_step}, dur. {self.duration})'
 
@@ -226,7 +325,7 @@ class NoteAttr:
 
 class Note:
 	"""
-		Representation of a clef
+		Representation of a Note
 	"""
 	
 	def __init__(self, json_note):
@@ -250,9 +349,12 @@ class Clef:
 	
 	def __init__(self, json_clef):
 		self.symbol =  Symbol (json_clef["symbol"])
-		self.no_staff  = json_clef["no_staff"]
 		self.height  = json_clef["height"]
 
+	def get_notation_clef(self):
+		# Decode the DMOS infos
+		return score_notation.Clef.decode_from_dmos(self.symbol.label, self.height)
+		
 class KeySignature:
 	"""
 		Representation of a key signature
@@ -273,12 +375,17 @@ class TimeSignature:
 		self.time =   json_time_sign["time"]
 		self.unit =   json_time_sign["unit"]
 
+	def get_notation_object(self):
+		# Decode the DMOS infos
+		return score_notation.TimeSignature (self.time, self.unit)
+
 class StaffHeader:
 	"""
 		Representation of a system header
 	"""
 	
 	def __init__(self, json_system_header):
+		self.id_part =json_system_header["id_part"]
 		self.no_staff =json_system_header["no_staff"]
 		self.first_bar = Element(json_system_header["first_bar"])
 
@@ -288,7 +395,28 @@ class MeasureHeader:
 	"""
 	
 	def __init__(self, json_measure_header):
-		self.clef = Clef(json_measure_header["clef"])
-		self.key_signature = KeySignature(json_measure_header["key_signature"])
-		self.time_signature  = TimeSignature(json_measure_header["time_signature"])
+		self.no_staff = json_measure_header["no_staff"] 
+		self.clef = None 
+		self.key_signature = None 
+		self.time_signature = None 
+		
+		if "clef" in json_measure_header:
+			self.clef = Clef(json_measure_header["clef"])
+		if "key_signature" in json_measure_header:
+			self.key_signature = KeySignature(json_measure_header["key_signature"])
+		if "time_signature" in json_measure_header:
+			self.time_signature  = TimeSignature(json_measure_header["time_signature"])
+
+class CScoreParserError(Exception):
+	def __init__(self, *args):
+		if args:
+			self.message = args[0]
+		else:
+			self.message = None
+
+	def __str__(self):
+		if self.message:
+			return 'CollabScoreParserError, {0} '.format(self.message)
+		else:
+			return 'CollabScoreParserError has been raised'
 

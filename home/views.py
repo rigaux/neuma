@@ -6,7 +6,6 @@ import zipfile
 
 from Cython.Compiler.Buffer import context
 from django.conf import settings
-from django.conf import settings
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist
@@ -20,7 +19,7 @@ from django.utils.safestring import mark_safe
 import requests
 
 import lxml.etree as etree
-from manager.models import Corpus, Opus, Upload, Audio, Bookmark, SimMeasure, SimMatrix, Annotation, AnalyticModel, AnalyticConcept
+from manager.models import Corpus, Opus, Upload, Audio, Bookmark, SimMeasure, Licence, Annotation, AnalyticModel, AnalyticConcept
 from music import *
 from music.Concordance import *
 from neuma.rest import Client
@@ -211,6 +210,14 @@ def export_opus_as_zip (request, opus_ref):
 	""" Export the list of files of this opus"""
  
 	return  HttpResponse("TODO")
+
+
+def show_licence (request, licence_code):
+	""" Show a licence"""
+	
+	context["licence"] = Licence.objects.get(code=licence_code)
+	return render(request, 'home/show_licence.html', context)
+
 
 
 def export_corpus_as_zip (request, corpus_ref):

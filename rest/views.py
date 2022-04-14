@@ -6,6 +6,8 @@ import subprocess
 from xml.dom import minidom
 from django.core.files.base import ContentFile
 
+from django.conf import settings
+
 from rest_framework import viewsets
 
 from manager import models
@@ -15,6 +17,8 @@ from django.utils.dateformat import DateFormat
 
 from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
+
+from rest_framework import viewsets
 from rest_framework.renderers import JSONRenderer
 from rest_framework.parsers import JSONParser
 from rest_framework import status
