@@ -14,7 +14,27 @@ import lib.music.notation as score_notation
 
 
 # Get an instance of a logger
+# See https://realpython.com/python-logging/
+
+logging.basicConfig(level=logging.DEBUG)
+
 logger = logging.getLogger(__name__)
+
+# Create file handler
+f_handler = logging.FileHandler(__name__ + '.log')
+f_handler.setLevel(logging.DEBUG)
+# Create formatters and add it to handlers
+f_format = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+f_handler.setFormatter(f_format)
+# Add handlers to the logger
+logger.addHandler(f_handler)
+
+# For the console
+c_handler = logging.StreamHandler()
+c_handler.setLevel(logging.DEBUG)
+c_format = logging.Formatter('%(name)s - %(levelname)s - %(message)s')
+c_handler.setFormatter(c_format)
+logger.addHandler(c_handler)
 
 class CollabScoreParser:
 	"""
@@ -95,7 +115,7 @@ class OmrScore:
 		'''
 		
 		score = score_model.Score()
-		current_measure = 1
+		current_measure_no = 1
 		
 		for page in self.pages:
 			for system in page.systems:
@@ -121,40 +141,38 @@ class OmrScore:
 						staff = score.get_staff (header.no_staff)
 						if header.clef is not None:
 							clef_staff = header.clef.get_notation_clef()
-							staff.add_clef (current_measure, clef_staff)
+							staff.add_clef (current_measure_no, clef_staff)
 						if header.time_signature is not None:
 							time_sign = header.time_signature.get_notation_object()
-							staff.add_time_signature (current_measure, time_sign)
+							staff.add_time_signature (current_measure_no, time_sign)
 
 					# Create a new measure for each part
 					current_measures = {}
 					for part in score.parts:
-						measure_for_part = score_model.Measure(current_measure)
+						measure_for_part = score_model.Measure(current_measure_no)
 						# Add the measure to its part (notational events are added there)
 						part.append_measure (measure_for_part)
 						# Keep the array of current measures indexed by part
 						current_measures[part.id] = measure_for_part
 
 					for voice in measure.voices:
-						# One part per voice -> should be one part per system
-						voice_part = voice_model.Voice(id=voice.id)
+						# Get the part the voice belongs to
+						current_part = score.get_part(voice.id_part)
+						current_measure = current_measures[voice.id_part]
 						
+						# Create the voice
+						voice_part = voice_model.Voice(id=voice.id)
 						for item in voice.items:
-							# We would send the part and not the score
-							note = self.decode_event(score, item) 
-							voice_part.append_note(note)
+							event = self.decode_event(current_part, item) 
+							voice_part.append_note(event)
 						# Add the voice to the measure of the relevant part
-						if voice.id_part not in current_measures.keys():
-							# Error this part is unknown. Raise an eexception
-							print ("Unknown part in voice : " + voice.id_part)
-						else:
-							current_measures[voice.id_part].add_voice (voice_part)
+						current_measure.add_voice (voice_part)
 
-		current_measure += 1
+		current_measure_no += 1
 		
 		return score 
 
-	def decode_event(self, score, voice_item):
+	def decode_event(self, part, voice_item):
 		'''
 			Produce an event (from our score model) by decoding the OMR input
 		'''
@@ -165,21 +183,30 @@ class OmrScore:
 		if voice_item.att_note is not None:
 			# It should be a note
 			for head in voice_item.att_note.heads:
-				staff = score.get_staff (head.no_staff)
+				staff = part.get_staff (head.no_staff)
+				# The head position gives the position of the note on the staff
 				(pitch_class, octave)  = staff.current_clef.decode_pitch (head.height)
 			
 				# Decode from the DMOS input codification
 				if head.alter == None:
-					alter = ""
+					alter = score_events.Note.ALTER_NONE
 				elif head.alter.label == score_events.Note.DMOS_FLAT_SYMBOL:
 					alter = score_events.Note.ALTER_FLAT
 				elif head.alter.label  == score_events.Note.DMOS_SHARP_SYMBOL:
 					alter = score_events.Note.ALTER_SHARP
+					
+				# Did we just met an accidental?
+				if (alter != score_events.Note.ALTER_NONE):
+					logger.info (f'Accidental {alter} met on staff {staff.id}')
+					staff.add_accidental (pitch_class, alter)
+				else:
+					# Is there a previous accidental on this staff for this pitch class?
+					alter = staff.get_accidental(pitch_class)
+
 				# Only manage one head 
 				break
 				
-				# The head position gives the position of the note on the staff
-			event = score_events.Note(pitch_class, octave, duration, alter)
+			event = score_events.Note(pitch_class, octave, duration, alter, head.no_staff)
 			return event
 
 class Zone:

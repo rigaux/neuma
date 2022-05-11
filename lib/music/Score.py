@@ -9,9 +9,17 @@ import verovio
 from .Voice import Voice
 from . import notation
 
-# Get an instance of a logger
+
+logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
+
+# For the console
+c_handler = logging.StreamHandler()
+c_handler.setLevel(logging.DEBUG)
+c_format = logging.Formatter('%(name)s - %(levelname)s - %(message)s')
+c_handler.setFormatter(c_format)
+logger.addHandler(c_handler)
 
 """
   This module acts as a thin layer over music21, so as to propose
@@ -59,7 +67,7 @@ class Score:
 				return part
 		
 		# Oups, the part has not been found ...
-		logger.log ("Unable to find this part : " + id_part )
+		raise CScoreModelError ("Unable to find this part : " + id_part )
 
 	def get_staff (self, no_staff):
 		''' 
@@ -70,8 +78,7 @@ class Score:
 				return part.get_staff(no_staff)
 
 		# The staff has not been found: raise an exception
-		print ("Unknown staff : " + str(no_staff))
-		return None
+		raise CScoreModelError (f'Unable to find staff {no_staff} in part {part.id}')
 
 	def write_as_musicxml(self, filename):
 			''' Produce the MusicXML encoding thanks to Music21'''
@@ -238,10 +245,14 @@ class Part:
 			if staff.id == no_staff:
 				return True
 		return False
+	
 	def get_staff (self, no_staff):
 		for staff in self.staves:
 			if staff.id == no_staff:
 				return staff
+			
+		# The staff has not been found: raise an exception
+		raise CScoreModelError (f'Unable to find staff {no_staff} in part {self.id}')
 
 	def add_clef_to_staff (self, no_staff, no_measure, clef):
 		# A new clef at the beginning of measure for this staff
@@ -251,7 +262,11 @@ class Part:
 		else:
 			# Unknown staff: raise an exception
 			print ("Unknown staff : " + no_staff)
-		
+
+	def add_accidental (self, no_staff, pitch_class, acc):
+		staff = self.get_staff(no_staff)
+		staff.add_accidental( pitch_class, acc)
+
 	def append_measure (self, measure):
 		# Check if we need to insert clef or signature at the beginning
 		# of the measure
@@ -278,7 +293,7 @@ class Measure:
 	def __init__(self, no_measure) :
 		self.no = no_measure
 		self.m21_measure = m21.stream.Measure(number=no_measure)
-		
+
 	def add_time_signature(self, time_signature):
 		self.m21_measure.insert(0,  time_signature.m21_time_signature)
 	def add_clef(self, clef):
@@ -289,3 +304,17 @@ class Measure:
 	def add_voice (self, voice):
 		self.m21_measure.insert (0, voice.m21_stream)
 		
+
+class CScoreModelError(Exception):
+	def __init__(self, *args):
+		if args:
+			self.message = args[0]
+		else:
+			self.message = None
+
+	def __str__(self):
+		if self.message:
+			return 'ScoreModelError, {0} '.format(self.message)
+		else:
+			return 'ScoreModelError has been raised'
+
