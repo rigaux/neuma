@@ -1,10 +1,11 @@
 
 import music21 as m21
 
-from fractions import Fraction
+
+import lib.music.events as score_events
 
 '''
- Classes representing music notation eleements
+ Classes representing music notation elements
 '''
 
 
@@ -17,7 +18,7 @@ class Staff:
 	
 	def __init__(self, no_staff) :
 		''' 
-		   A dictionnary, indexed on measures, that records the clefs
+		   A dictionary, indexed on measures, that records the clefs
 		    used in the staff
 		    What if a change occurs in the middle of a measure ? Not
 		    supported for the time being. We will need a more powerful
@@ -28,6 +29,20 @@ class Staff:
 		self.time_signature_events = {}
 		self.key_signature_events = {}
 		self.current_clef = Clef(Clef.TREBLE_CLEF)
+		
+		# List of accidentals met so far
+		self.accidentals = {"A": "", "B": "", "C": "", "D": "", "E":"", "F": "", "G": ""}
+		self.reset_accidentals()
+
+	def reset_accidentals (self):
+		# Used to forget that we ever met an accidental on this staff
+		for pitch_class in self.accidentals.keys():
+			self.accidentals[pitch_class] = score_events.Note.ALTER_NONE		
+	def add_accidental (self, pitch_class, acc):
+		# Record accidentals met in a measure
+		self.accidentals[pitch_class] = acc
+	def get_accidental (self, pitch_class):
+		return self.accidentals[pitch_class]
 		
 	def add_clef (self, no_measure, clef):
 		self.clef_events[no_measure] = clef
