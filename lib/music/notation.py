@@ -69,6 +69,7 @@ class TimeSignature:
 		self.denom = denom
 		# m21 duration is the float obtained from the fraction
 		self.m21_time_signature = m21.meter.TimeSignature('{}/{}'.format(self.numer, self.denom))
+		self.m21_time_signature.id = "tstoto"
 
 class KeySignature:
 	'''
@@ -82,6 +83,7 @@ class KeySignature:
 			self.m21_key_signature = m21.key.KeySignature((-1) * nb_flats)
 		else:
 			self.m21_key_signature = m21.key.KeySignature(0)
+		self.m21_key_signature.id = "ktodo"
 
 class Clef:
 	'''
@@ -107,6 +109,7 @@ class Clef:
 			self.m21_clef = m21.clef.TenorClef()
 		elif clef_code == self.BASS_CLEF:
 			self.m21_clef = m21.clef.BassClef()
+		self.m21_clef.id = "c98"
 
 	@staticmethod 
 	def decode_from_dmos (dmos_code, dmos_height):

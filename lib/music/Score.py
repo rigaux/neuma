@@ -224,14 +224,16 @@ class Part:
 		Representation of a part as a hierarchy of parts / voices
 	"""
 	
-	def __init__(self, id_part, name="", abbr_name="") :
+	def __init__(self, id_part, name="The name", abbr_name="") :
 		self.id = id_part
 		
 		self.m21_part = m21.stream.Part(id=id_part)
 		# Metadata
+		self.m21_part.id  = "Partvxh" + id_part
 		self.m21_part.partName  = name
 		self.m21_part.partAbbreviation = abbr_name
-		
+		self.m21_part.style.absoluteY =  50
+
 		# List of staves the part is displayed on
 		self.staves = []
 		
@@ -292,7 +294,8 @@ class Measure:
 	
 	def __init__(self, no_measure) :
 		self.no = no_measure
-		self.m21_measure = m21.stream.Measure(number=no_measure)
+		self.m21_measure = m21.stream.Measure(id=f'm{no_measure}', number=no_measure)
+		self.m21_measure.id =  "hj"
 
 	def add_time_signature(self, time_signature):
 		self.m21_measure.insert(0,  time_signature.m21_time_signature)

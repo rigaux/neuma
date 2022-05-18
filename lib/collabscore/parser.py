@@ -12,6 +12,7 @@ import lib.music.Voice as voice_model
 import lib.music.events as score_events
 import lib.music.notation as score_notation
 
+import verovio
 
 # Get an instance of a logger
 # See https://realpython.com/python-logging/
@@ -115,7 +116,7 @@ class OmrScore:
 		'''
 		
 		score = score_model.Score()
-		current_measure_no = 1
+		current_measure_no = 2
 		
 		for page in self.pages:
 			for system in page.systems:
@@ -170,6 +171,13 @@ class OmrScore:
 
 		current_measure_no += 1
 		
+		
+		tmp_file = "/tmp/tst.xml"
+		score.write_as_musicxml (tmp_file)
+		tk = verovio.toolkit()
+		tk.loadFile(tmp_file)
+		mei_content = tk.getMEI()
+		print (mei_content)
 		return score 
 
 	def decode_event(self, part, voice_item):
