@@ -3,7 +3,6 @@ import music21 as m21
 
 from fractions import Fraction
 
-
 '''
  Classes representing musical event (e.g., pairs (duratioin, value)
 '''
@@ -45,6 +44,8 @@ class Note (Event):
 	ALTER_NATURAL = "n"
 	ALTER_NONE = ""
 	
+	id_event = 1
+	
 	def __init__(self, pitch_class, octave, duration,  alter=ALTER_NONE,
 				no_staff=UNDEFINED_STAFF, tied=False) :
 		
@@ -55,7 +56,8 @@ class Note (Event):
 		self.alter = alter
 		self.m21_note = m21.note.Note(pitch_name)
 		self.m21_note.duration = duration.m21_duration
-		
+		self.m21_note.id = f'n{Note.id_event}'
+		Note.id_event += 1
 		self.no_staff = no_staff
 		self.tied = tied
 		return
