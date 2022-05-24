@@ -1,7 +1,7 @@
 
-import  sys, os
 # import the logging library
 import logging
+
 
 import json
 from jsonref import JsonRef
@@ -21,6 +21,7 @@ logging.basicConfig(level=logging.DEBUG)
 
 logger = logging.getLogger(__name__)
 
+
 # Create file handler
 f_handler = logging.FileHandler(__name__ + '.log')
 f_handler.setLevel(logging.DEBUG)
@@ -35,7 +36,7 @@ c_handler = logging.StreamHandler()
 c_handler.setLevel(logging.DEBUG)
 c_format = logging.Formatter('%(name)s - %(levelname)s - %(message)s')
 c_handler.setFormatter(c_format)
-logger.addHandler(c_handler)
+#logger.addHandler(c_handler)
 
 class CollabScoreParser:
 	"""
@@ -110,13 +111,14 @@ class OmrScore:
 		for json_page in json_data["pages"]:
 			self.pages.append(Page(json_page))
 
+
 	def get_score(self):
 		'''
 			Builds a score (instance of our score model) from the Omerized document
 		'''
 		
 		score = score_model.Score()
-		current_measure_no = 2
+		current_measure_no = 0
 		
 		for page in self.pages:
 			for system in page.systems:
@@ -136,6 +138,8 @@ class OmrScore:
 				# based on its part_id assignment
 				
 				for measure in system.measures:
+					current_measure_no += 1
+					logger.info (f'Process measure {current_measure_no}')
 					for header in measure.headers:
 						# Check if some notational event occurs at this measure
 						# on some staff 
@@ -144,6 +148,7 @@ class OmrScore:
 							clef_staff = header.clef.get_notation_clef()
 							staff.add_clef (current_measure_no, clef_staff)
 						if header.time_signature is not None:
+							logger.info (f'Time signature found on staff {header.no_staff} at measure {current_measure_no}')
 							time_sign = header.time_signature.get_notation_object()
 							staff.add_time_signature (current_measure_no, time_sign)
 
@@ -165,19 +170,10 @@ class OmrScore:
 						voice_part = voice_model.Voice(id=voice.id)
 						for item in voice.items:
 							event = self.decode_event(current_part, item) 
-							voice_part.append_note(event)
+							voice_part.append_event(event)
 						# Add the voice to the measure of the relevant part
 						current_measure.add_voice (voice_part)
-
-		current_measure_no += 1
 		
-		
-		tmp_file = "/tmp/tst.xml"
-		score.write_as_musicxml (tmp_file)
-		tk = verovio.toolkit()
-		tk.loadFile(tmp_file)
-		mei_content = tk.getMEI()
-		print (mei_content)
 		return score 
 
 	def decode_event(self, part, voice_item):
@@ -188,9 +184,9 @@ class OmrScore:
 		# Duration of the event: the DMOS encoding is 1 from whole note, 2 for half, etc.
 		# Our encoding (music21) is 1 for quarter note. Hence the computation
 		duration = score_events.Duration(voice_item.duration.numer, voice_item.duration.denom)
-		if voice_item.att_note is not None:
+		if voice_item.note_attr is not None:
 			# It should be a note
-			for head in voice_item.att_note.heads:
+			for head in voice_item.note_attr.heads:
 				staff = part.get_staff (head.no_staff)
 				# The head position gives the position of the note on the staff
 				(pitch_class, octave)  = staff.current_clef.decode_pitch (head.height)
@@ -213,9 +209,17 @@ class OmrScore:
 
 				# Only manage one head 
 				break
-				
 			event = score_events.Note(pitch_class, octave, duration, alter, head.no_staff)
-			return event
+		elif voice_item.rest_attr is not None:
+			# It is a rest
+			for head in voice_item.rest_attr.heads:
+				staff = part.get_staff (head.no_staff)
+			event = score_events.Rest(duration, head.no_staff)
+		else:
+			logger.error ("A voice event with unknown type has been met")
+			raise CScoreParserError ("A voice event with unknown type has been met")
+		return event
+
 
 class Zone:
 	"""
@@ -329,12 +333,12 @@ class VoiceItem:
 		if "direction" in json_voice_item:
 			self.direction = json_voice_item["direction"]
 		if "att_note" in json_voice_item:
-			self.att_note = NoteAttr (json_voice_item["att_note"])
+			self.note_attr = NoteAttr (json_voice_item["att_note"])
 		if "att_rest" in json_voice_item:
 			# NB: using the same type for note heads and rest heads
-			self.att_rest = NoteAttr (json_voice_item["att_rest"])
+			self.rest_attr = NoteAttr (json_voice_item["att_rest"])
 		if "att_clef" in json_voice_item:
-			self.att_clef  = Clef (json_voice_item["att_clef"])
+			self.clef_attr  = Clef (json_voice_item["att_clef"])
 
 	
 	def __str__(self):

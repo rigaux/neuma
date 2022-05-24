@@ -49,10 +49,12 @@ class Staff:
 		self.current_clef = clef
 	def add_time_signature (self, no_measure, ts):
 		self.time_signature_events[no_measure] = ts
+		
 	def clef_found_at_measure (self, no_measure):
 		return (no_measure in self.clef_events.keys())
 	def get_clef (self, no_measure):
 		return self.clef_events[no_measure]
+
 	def ts_found_at_measure (self, no_measure):
 		return (no_measure in self.time_signature_events.keys())
 	def get_time_signature (self, no_measure):

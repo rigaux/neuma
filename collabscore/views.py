@@ -44,7 +44,7 @@ def tests(request):
 	#data = jsonref.load_uri('http://collabscore.org/dmos/data/dmos_data.json', 
 	#					base_uri='http://collabscore.org/dmos/data/')
 	
-	data = jsonref.load_uri('file://' + data_dir + 'dmos_data.json', 
+	data = jsonref.load_uri('file://' + data_dir + 'dmos_ex1.json', 
 						base_uri='file://' + data_dir)
 
 	# Write the full document in a local file
@@ -79,6 +79,11 @@ def tests(request):
 		score_xml = f.read()
 	opus.musicxml.save("score.xml", ContentFile(score_xml))
 	
+	score.write_as_mei ("/tmp/score.mei")
+	with open("/tmp/score.mei") as f:
+		score_mei = f.read()
+	opus.mei.save("mei.xml", ContentFile(score_mei))
+
 	context["opus"] = opus
 	context["opus_url"] = "http://localhost:8000" + opus.musicxml.url
 	

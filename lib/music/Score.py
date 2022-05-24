@@ -19,7 +19,7 @@ c_handler = logging.StreamHandler()
 c_handler.setLevel(logging.DEBUG)
 c_format = logging.Formatter('%(name)s - %(levelname)s - %(message)s')
 c_handler.setFormatter(c_format)
-logger.addHandler(c_handler)
+#logger.addHandler(c_handler)
 
 """
   This module acts as a thin layer over music21, so as to propose
@@ -87,15 +87,11 @@ class Score:
 	def write_as_mei(self, filename):
 			''' Produce the MEI encoding thanks to Verovio'''
 			tk = verovio.toolkit()
-			print ("Version : " + tk.getVersion())
 			tmp_file = filename + "score.xml"
 			self.m21_score.write ("musicxml", tmp_file)
-			with open("/tmp/score.xml") as f:
-				score_xml = f.read()
-			tk.loadData(score_xml)
-			
-			#with open(filename, "w") as mei_file:
-			#	mei_file.write(tk.getMEI())
+			tk.loadFile(tmp_file)
+			with open(filename, "w") as mei_file:
+				mei_file.write(tk.getMEI())
 
 	def load_from_xml(self, xml_path, format):
 		"""
@@ -224,15 +220,14 @@ class Part:
 		Representation of a part as a hierarchy of parts / voices
 	"""
 	
-	def __init__(self, id_part, name="The name", abbr_name="") :
+	def __init__(self, id_part, name="", abbr_name="") :
 		self.id = id_part
 		
 		self.m21_part = m21.stream.Part(id=id_part)
 		# Metadata
-		self.m21_part.id  = "Partvxh" + id_part
+		self.m21_part.id  = "P" + id_part
 		self.m21_part.partName  = name
 		self.m21_part.partAbbreviation = abbr_name
-		self.m21_part.style.absoluteY =  50
 
 		# List of staves the part is displayed on
 		self.staves = []
@@ -273,6 +268,8 @@ class Part:
 		# Check if we need to insert clef or signature at the beginning
 		# of the measure
 		
+		logger.info (f'Adding measure {measure.no} to part {self.id}')
+
 		# NB: needs to be improved if a part extends over several staves
 		for staff in self.staves:
 			if staff.clef_found_at_measure(measure.no):

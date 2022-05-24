@@ -26,8 +26,8 @@ class Voice:
 		
 		self.m21_stream = m21stream	
 	
-	def append_note (self, note):
-		self.m21_stream.append(note.m21_note)
+	def append_event (self, event):
+		self.m21_stream.append(event.m21_event)
 
 	def get_half_step_intervals(self):
 		'''Return half-steps intervals'''
