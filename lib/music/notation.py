@@ -25,10 +25,14 @@ class Staff:
 		    notion of 'position'
 		'''
 		self.id = no_staff
+		self.current_clef = Clef(Clef.TREBLE_CLEF)
+
+		# Probably not useful at the end, since these notations are
+		# directly injected in the music21 measure.
 		self.clef_events = {}
 		self.time_signature_events = {}
 		self.key_signature_events = {}
-		self.current_clef = Clef(Clef.TREBLE_CLEF)
+		#####
 		
 		# List of accidentals met so far
 		self.accidentals = {"A": "", "B": "", "C": "", "D": "", "E":"", "F": "", "G": ""}
@@ -43,6 +47,14 @@ class Staff:
 		self.accidentals[pitch_class] = acc
 	def get_accidental (self, pitch_class):
 		return self.accidentals[pitch_class]
+		
+	def set_current_clef (self, clef):
+		self.current_clef = clef
+		
+		
+	'''
+	    All these functions are now useless. To be removed
+	'''
 		
 	def add_clef (self, no_measure, clef):
 		self.clef_events[no_measure] = clef

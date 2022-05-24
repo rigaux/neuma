@@ -270,13 +270,6 @@ class Part:
 		
 		logger.info (f'Adding measure {measure.no} to part {self.id}')
 
-		# NB: needs to be improved if a part extends over several staves
-		for staff in self.staves:
-			if staff.clef_found_at_measure(measure.no):
-				measure.add_clef (staff.get_clef(measure.no))
-			if staff.ts_found_at_measure(measure.no):
-				measure.add_time_signature (staff.get_time_signature(measure.no))
-
 		self.m21_part.append(measure.m21_measure)
 
 	@staticmethod
@@ -289,10 +282,13 @@ class Measure:
 		Representation of a measure
 	"""
 	
+	# Sequence for generating measure ids
+	sequence_measure = 0
 	def __init__(self, no_measure) :
+		Measure.sequence_measure += 1
 		self.no = no_measure
-		self.m21_measure = m21.stream.Measure(id=f'm{no_measure}', number=no_measure)
-		self.m21_measure.id =  "hj"
+		self.id = Measure.sequence_measure
+		self.m21_measure = m21.stream.Measure(id=f'm{self.id}', number=no_measure)
 
 	def add_time_signature(self, time_signature):
 		self.m21_measure.insert(0,  time_signature.m21_time_signature)
