@@ -2,7 +2,6 @@
 # import the logging library
 import logging
 
-
 import json
 from jsonref import JsonRef
 import jsonschema 
@@ -13,6 +12,7 @@ import lib.music.events as score_events
 import lib.music.notation as score_notation
 
 import verovio
+
 
 # Get an instance of a logger
 # See https://realpython.com/python-logging/
@@ -140,22 +140,28 @@ class OmrScore:
 				for measure in system.measures:
 					current_measure_no += 1
 					logger.info (f'Process measure {current_measure_no}')
-					for header in measure.headers:
-						# Check if some notational event occurs at this measure
-						# on some staff 
-						staff = score.get_staff (header.no_staff)
-						if header.clef is not None:
-							clef_staff = header.clef.get_notation_clef()
-							staff.add_clef (current_measure_no, clef_staff)
-						if header.time_signature is not None:
-							logger.info (f'Time signature found on staff {header.no_staff} at measure {current_measure_no}')
-							time_sign = header.time_signature.get_notation_object()
-							staff.add_time_signature (current_measure_no, time_sign)
 
 					# Create a new measure for each part
 					current_measures = {}
 					for part in score.parts:
+						# IMPORTANT: Works for a part with a single staff. Else, we probably need to
+						# add a measure for each staff. 
+						
 						measure_for_part = score_model.Measure(current_measure_no)
+						
+						# Check if the measure starts with a change of clef or meter
+						for header in measure.headers:
+							if part.staff_exists(header.no_staff):
+								staff = part.get_staff (header.no_staff)
+								if header.clef is not None:
+									clef_staff = header.clef.get_notation_clef()
+									staff.set_current_clef (clef_staff)
+									measure_for_part.add_clef (clef_staff)
+								if header.time_signature is not None:
+									logger.info (f'Time signature found on staff {header.no_staff} at measure {current_measure_no}')
+									time_sign = header.time_signature.get_notation_object()
+									# staff.add_time_signature (current_measure_no, time_sign)
+									measure_for_part.add_time_signature (time_sign)
 						# Add the measure to its part (notational events are added there)
 						part.append_measure (measure_for_part)
 						# Keep the array of current measures indexed by part
