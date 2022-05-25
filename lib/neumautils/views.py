@@ -49,8 +49,7 @@ class NeumaView(TemplateView):
             # We do not show these corpora in the top-level list 
             if  corpus.ref == settings.NEUMA_EXTERNAL_CORPUS_REF:
                continue
-            if  corpus.ref == settings.NEUMA_TRANSCRIPTION_CORPUS_REF:
-               continue
+
            
             if corpus.is_public: 
                 visible_corpora.append(corpus)

@@ -10,6 +10,7 @@ import lib.music.Score as score_model
 import lib.music.Voice as voice_model
 import lib.music.events as score_events
 import lib.music.notation as score_notation
+import lib.music.annotation as annot_mod
 
 import verovio
 
@@ -98,15 +99,20 @@ class OmrScore:
 	"""
 	  A structured representation of the score supplied by the OMR tool
 	"""
-	def __init__(self,json_data):
+	def __init__(self, uri, json_data):
 		"""
 			Input: a validated JSON object. The method builds
 			a representation based on the Python classes
 		"""
+		self.uri = uri 
+		self.id = json_data["id"]
 		self.score_image_url = json_data["score_image_url"]
 		self.date = json_data["date"]
-		self.pages = []
 		
+		self.creator = annot_mod.Creator ("collabscore", 
+										annot_mod.Creator.SOFTWARE_TYPE, 
+										"collabscore")
+		self.pages = []
 		# Analyze pages
 		for json_page in json_data["pages"]:
 			self.pages.append(Page(json_page))
@@ -140,7 +146,7 @@ class OmrScore:
 				for measure in system.measures:
 					current_measure_no += 1
 					logger.info (f'Process measure {current_measure_no}')
-
+					
 					# Create a new measure for each part
 					current_measures = {}
 					for part in score.parts:
@@ -148,6 +154,21 @@ class OmrScore:
 						# add a measure for each staff. 
 						
 						measure_for_part = score_model.Measure(current_measure_no)
+						
+						# Annotate this measure
+						fragment_body = annot_mod.FragmentSelector(
+											annot_mod.FragmentSelector.MEDIA_SELECTOR, 
+											measure.region.string_xyhw() )
+						body = annot_mod.SpecificResource(self.score_image_url, fragment_body)
+						fragment_target = annot_mod.FragmentSelector(
+												annot_mod.FragmentSelector.XML_SELECTOR, 
+												measure_for_part.id)
+						target = annot_mod.SpecificResource(self.uri, fragment_target)
+						annotation = annot_mod.Annotation(self.creator, 
+														target, 
+														body, 
+														annot_mod.Annotation.CATEG_TO_IMAGE)
+						score.add_annotation (annotation)
 						
 						# Check if the measure starts with a change of clef or meter
 						for header in measure.headers:
@@ -227,20 +248,22 @@ class OmrScore:
 		return event
 
 
-class Zone:
+class Region:
 	"""
-		A rectangular zone that frames a score graphical element
+		A rectangular region that frames a score graphical element
 	"""
 	
-	def __init__(self,json_zone):
-		self.xmin = json_zone[0]
-		self.xmax = json_zone[1]
-		self.ymin = json_zone[2]
-		self.ymax = json_zone[3]
+	def __init__(self,json_region):
+		self.x = json_region[0]
+		self.y = json_region[1]
+		self.height = json_region[2]
+		self.width = json_region[3]
 
 	def __str__(self):
-		return f'({self.xmin},{self.ymin},{self.xmax},{self.ymax})'
+		return f'({self.x},{self.y},{self.height},{self.width})'
 	
+	def string_xyhw(self):
+		return f'{self.x},{self.y},{self.height},{self.width}'
 	
 class Symbol:
 	"""
@@ -248,11 +271,11 @@ class Symbol:
 	"""
 	def __init__(self, json_symbol):
 		self.label = json_symbol["label"]
-		self.zone = Zone(json_symbol["zone"])
+		self.region = Region(json_symbol["region"])
 		
 
 	def __str__(self):
-		return f'({self.label},{self.zone})'
+		return f'({self.label},{self.region})'
 
 class Element:
 	"""
@@ -261,10 +284,10 @@ class Element:
 	
 	def __init__(self, json_elt):
 		self.label = json_elt["label"]
-		self.zone = Zone(json_elt["zone"])
+		self.region = Region(json_elt["region"])
 
 	def __str__(self):
-		return f'({self.label},{self.zone})'
+		return f'({self.label},{self.region})'
 
 class Page:
 	"""
@@ -284,7 +307,7 @@ class System:
 	
 	def __init__(self, json_system):
 		self.id = json_system["id"]
-		self.zone = Zone (json_system["zone"])
+		self.region = Region (json_system["region"])
 		self.headers = []
 		for json_header in json_system["headers"]:
 			self.headers.append(StaffHeader(json_header))
@@ -298,7 +321,7 @@ class Measure:
 	"""
 	
 	def __init__(self, json_measure):
-		self.zone = Zone (json_measure["zone"])
+		self.region = Region (json_measure["region"])
 		self.headers =[]
 		for json_header in json_measure["headers"]:
 			self.headers.append(MeasureHeader(json_header))

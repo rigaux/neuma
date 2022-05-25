@@ -39,6 +39,11 @@ class Score:
 		'''
 		self.parts = []
 		
+		'''
+			We can store annotations on a score and any of its elemnts
+		'''
+		self.annotations = []
+		
 		# For compatibility ...
 		self.components = list()
 		
@@ -213,7 +218,9 @@ class Score:
 
 	def get_intervals(self):
 		return score.chordify()
-
+	
+	def add_annotation(self, annotation):
+		self.annotations.append(annotation)
 
 class Part:
 	"""
