@@ -81,6 +81,7 @@ class Command(BaseCommand):
 			external.short_description = "External collections"
 			external.is_public = False
 			external.save()
+
 		# Create a corpus for quality management
 		try:
 			external = Corpus.objects.get(ref=settings.NEUMA_QUALITY_CORPUS_REF)
@@ -92,16 +93,17 @@ class Command(BaseCommand):
 			external.short_description = "Quality evaluation"
 			external.is_public = False
 			external.save()
-		# Create a transcription corpus for all scores produced by a transcription process
+
+		# Create a CollabScore corpus for all scores produced by OMR
 		try:
-			transcription = Corpus.objects.get(ref=settings.NEUMA_TRANSCRIPTION_CORPUS_REF)
+			collabscore = Corpus.objects.get(ref=settings.NEUMA_COLLABSCORE_CORPUS_REF)
 		except Corpus.DoesNotExist:
-			transcription = Corpus(ref=settings.NEUMA_TRANSCRIPTION_CORPUS_REF)
-			transcription.title = "Transcription Collections - Neuma"
-			transcription.short_title = "Transcriptions"
-			transcription.short_description = "Transcription collections"
-			transcription.is_public = False
-			transcription.save()
+			collabscore = Corpus(ref=settings.NEUMA_COLLABSCORE_CORPUS_REF)
+			collabscore.title = "CollabScore Collections - Neuma"
+			collabscore.short_title = "CollabScore"
+			collabscore.short_description = "CollabScore collections"
+			collabscore.is_public = False
+			collabscore.save()
 
 		# Similarity measures
 		for measure_code in settings.SIMILARITY_MEASURES:

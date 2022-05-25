@@ -44,7 +44,6 @@ from lib.neumautils.matrix_transform import matrix_transform
 from lib.neumautils.kmedoids import cluster
 from lib.music.Voice import IncompleteBarsError
 import transcription
-from abc import abstractstaticmethod
 from django.db.models.sql.where import OR
 from jinja2.nodes import Or
 
