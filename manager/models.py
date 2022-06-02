@@ -22,6 +22,7 @@ from django.conf import settings
 
 from lib.music.Score import *
 
+import lib.music.annotation as annot_mod
 
 # For tree models
 from mptt.models import MPTTModel, TreeForeignKey
@@ -46,6 +47,13 @@ from lib.music.Voice import IncompleteBarsError
 import transcription
 from django.db.models.sql.where import OR
 from jinja2.nodes import Or
+
+# Get an instance of a logger
+# See https://realpython.com/python-logging/
+
+logging.basicConfig(level=logging.DEBUG)
+
+logger = logging.getLogger(__name__)
 
 
 class Person (models.Model):
@@ -1112,7 +1120,7 @@ class AnalyticModel(models.Model):
 
 
 class AnalyticConcept(MPTTModel):
-	model = models.ForeignKey(AnalyticModel,on_delete=models.PROTECT)
+	model = models.ForeignKey(AnalyticModel,on_delete=models.CASCADE)
 	code = models.CharField(max_length=30,unique=True)
 	name = models.CharField(max_length=50, unique=True)
 	parent = TreeForeignKey('self', null=True, blank=True, related_name='children', db_index=True,on_delete=models.PROTECT)
@@ -1130,11 +1138,35 @@ class AnalyticConcept(MPTTModel):
 		order_insertion_by = ['name']
 
 
+class Resource(models.Model):
+	# Used for a resource without selector
+	NO_SELECTOR = "None"
+
+	''' A (web) resource, possibly with a selector 
+	     to address one of its segments. Used as body and target in annotations '''
+	source = models.TextField()
+	# A selector. Inspired by the W3C annotation model
+	selector_type = models.CharField(max_length=100, default=NO_SELECTOR)
+	selector_conforms_to = models.CharField(max_length=100,
+								choices=annot_mod.FRAGMENT_CONFORMITY,
+								default=annot_mod.FragmentSelector.XML_SELECTOR)
+	selector_value = models.CharField(max_length=100)
+
+	# Creation / update dates
+	created_at = models.DateTimeField(auto_now_add=True, null=True, blank=True)
+	updated_at = models.DateTimeField(auto_now=True, null=True, blank=True)
+
+	class Meta:
+		db_table = "Resource"
+		
+	def __str__(self):
+		return self.source + f'(conforms to {self.selector_conforms_to}), value {self.selector_value}'
+
 class Annotation(models.Model):
 	'''An annotation qualifies a fragment of a score with an analytic concept'''
 	opus = models.ForeignKey(Opus,on_delete=models.CASCADE)
 	# Analytic concept: for the moment, a simple code. See how we can do better
-	analytic_concept = models.ForeignKey(AnalyticConcept,on_delete=models.PROTECT)
+	analytic_concept = models.ForeignKey(AnalyticConcept,on_delete=models.PROTECT,null=True)
 	# reference to the element being annotated, in principle an xml:id
 	ref = models.TextField(default="")
 	# The fragment is represented by a json array of notes ids< OBSOLETE.
@@ -1154,6 +1186,13 @@ class Annotation(models.Model):
 	# Name and version of the model used for analysis
 	model_ref = models.TextField(default="")
 
+	##### New version, with target and body
+	target  = models.ForeignKey(Resource,null=True,on_delete=models.CASCADE, related_name="annot_target")
+	body =  models.ForeignKey(Resource,null=True,on_delete=models.CASCADE, related_name="annot_body")
+	motivation = models.CharField(max_length=30,
+								choices=annot_mod.MOTIVATION_OPTIONS,
+								default=annot_mod.Annotation.MOTIVATION_LINKING)
+
 	# Creation / update dates
 	created_at = models.DateTimeField(auto_now_add=True, null=True, blank=True)
 	updated_at = models.DateTimeField(auto_now=True, null=True, blank=True)
@@ -1166,7 +1205,33 @@ class Annotation(models.Model):
 		print (str(form_data))
 		
 
+	@staticmethod 
+	def create_from_web_annotation(user, opus, webannot):
+		# Get the concept
 		
+		try:
+			annot_concept = AnalyticConcept.objects.get(code=webannot.annotation_concept)
+		except AnalyticConcept.DoesNotExist:
+			logger.error (f'Unknown annotation concept {webannot.annotation_concept}')
+
+		# Create the target
+		wtarget = webannot.target
+		wtselector = wtarget.resource.selector
+		target = Resource(source=wtarget.resource.source, selector_type=wtselector.type,
+					selector_conforms_to=wtselector.conforms_to, selector_value=wtselector.value)
+		
+		# Create the body
+		wbody = webannot.body
+		wbselector = wbody.resource.selector
+		body = Resource(source=wbody.resource.source, selector_type=wbselector.type,
+					selector_conforms_to=wbselector.conforms_to, selector_value=wbselector.value)
+
+		return Annotation (opus=opus, ref = wtselector.value,
+								user=user, model_ref=webannot.annotation_model,
+								analytic_concept =  annot_concept,
+								target=target,body=body, 
+								motivation=webannot.motivation)
+
 # Get the Opus ref and extension from a file name
 def decompose_zip_name (fname):
 	dirname = os.path.dirname(fname)

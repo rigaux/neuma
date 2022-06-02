@@ -4,7 +4,8 @@ import os
 from django.shortcuts import render
 from manager.models import (
 	Corpus,
-	Opus
+	Opus,
+	Annotation
 )
 from django.conf import settings
 from django.core.files.base import ContentFile
@@ -95,5 +96,15 @@ def tests(request):
 	
 	context["annotations"] = score.annotations
 	
+	for dba in Annotation.objects.filter(opus=opus):
+		dba.target.delete()
+		dba.body.delete()
+		dba.delete()
+	for annotation in score.annotations:
+		db_annot = Annotation.create_from_web_annotation(request.user, opus, annotation)
+		db_annot.target.save()
+		db_annot.body.save()
+		db_annot.save()
+
 	return render(request, 'collabscore/tests.html', context)
 

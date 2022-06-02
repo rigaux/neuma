@@ -143,9 +143,10 @@ class Command(BaseCommand):
 					self.icons[icon_name] = {"svg_path": node.xpath("@d")[0]}
 
 		# Analytic models
-		self.load_model ("counterpoint_model.xml")
 		self.load_model ("quality_model.xml")
-		self.load_model("comparison_model.xml")
+		self.load_model ("region_model.xml")
+		self.load_model ("omr_errors_model.xml")
+		self.load_model ("counterpoint_model.xml")
 		
 		self.load_licences()
 		self.load_persons()

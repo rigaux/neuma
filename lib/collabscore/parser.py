@@ -11,9 +11,9 @@ import lib.music.Voice as voice_model
 import lib.music.events as score_events
 import lib.music.notation as score_notation
 import lib.music.annotation as annot_mod
+import lib.music.constants as constants_mod
 
 import verovio
-
 
 # Get an instance of a logger
 # See https://realpython.com/python-logging/
@@ -156,19 +156,11 @@ class OmrScore:
 						measure_for_part = score_model.Measure(current_measure_no)
 						
 						# Annotate this measure
-						fragment_body = annot_mod.FragmentSelector(
-											annot_mod.FragmentSelector.MEDIA_SELECTOR, 
-											measure.region.string_xyhw() )
-						body = annot_mod.SpecificResource(self.score_image_url, fragment_body)
-						fragment_target = annot_mod.FragmentSelector(
-												annot_mod.FragmentSelector.XML_SELECTOR, 
-												measure_for_part.id)
-						target = annot_mod.SpecificResource(self.uri, fragment_target)
-						annotation = annot_mod.Annotation(self.creator, 
-														target, 
-														body, 
-														annot_mod.Annotation.CATEG_TO_IMAGE)
-						score.add_annotation (annotation)
+						'''annotation = annot_mod.Annotation.create_annot_from_xml_to_image(
+							self.creator, self.uri, measure_for_part.id, 
+							self.score_image_url, measure.region.string_xyhw(), 
+							constants_mod.IREGION_MEASURE_CONCEPT)
+						score.add_annotation (annotation)'''
 						
 						# Check if the measure starts with a change of clef or meter
 						for header in measure.headers:
@@ -196,8 +188,14 @@ class OmrScore:
 						# Create the voice
 						voice_part = voice_model.Voice(id=voice.id)
 						for item in voice.items:
-							event = self.decode_event(current_part, item) 
+							(event, event_region) = self.decode_event(current_part, item) 
 							voice_part.append_event(event)
+							# Annotate this event
+							annotation = annot_mod.Annotation.create_annot_from_xml_to_image(
+								self.creator, self.uri, event.id, 
+								self.score_image_url, event_region.string_xyhw(), 
+								constants_mod.IREGION_NOTE_CONCEPT)
+							score.add_annotation (annotation)
 						# Add the voice to the measure of the relevant part
 						current_measure.add_voice (voice_part)
 		
@@ -205,7 +203,7 @@ class OmrScore:
 
 	def decode_event(self, part, voice_item):
 		'''
-			Produce an event (from our score model) by decoding the OMR input
+			Produce an event (from our score model) and its region by decoding the OMR input
 		'''
 		
 		# Duration of the event: the DMOS encoding is 1 from whole note, 2 for half, etc.
@@ -233,7 +231,9 @@ class OmrScore:
 				else:
 					# Is there a previous accidental on this staff for this pitch class?
 					alter = staff.get_accidental(pitch_class)
-
+					
+				# The head symbol has a region
+				event_region = head.head_symbol.region
 				# Only manage one head 
 				break
 			event = score_events.Note(pitch_class, octave, duration, alter, head.no_staff)
@@ -241,12 +241,12 @@ class OmrScore:
 			# It is a rest
 			for head in voice_item.rest_attr.heads:
 				staff = part.get_staff (head.no_staff)
+				event_region = head.head_symbol.region
 			event = score_events.Rest(duration, head.no_staff)
 		else:
 			logger.error ("A voice event with unknown type has been met")
 			raise CScoreParserError ("A voice event with unknown type has been met")
-		return event
-
+		return (event, event_region)
 
 class Region:
 	"""
@@ -369,7 +369,6 @@ class VoiceItem:
 		if "att_clef" in json_voice_item:
 			self.clef_attr  = Clef (json_voice_item["att_clef"])
 
-	
 	def __str__(self):
 		return f'({self.type}, step {self.no_step}, dur. ({self.duration.numer}/{self.duration.denom})'
 

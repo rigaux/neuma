@@ -296,7 +296,7 @@ class Measure:
 		self.no = no_measure
 		self.id = Measure.sequence_measure
 		self.m21_measure = m21.stream.Measure(id=f'm{self.id}', number=no_measure)
-
+		self.m21_measure.style.absoluteX = 23
 	def add_time_signature(self, time_signature):
 		self.m21_measure.insert(0,  time_signature.m21_time_signature)
 	def add_clef(self, clef):
