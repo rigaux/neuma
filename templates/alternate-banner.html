@@ -1,6 +1,7 @@
 {% load i18n %}
 
 <div id="alternate-banner" class="banner access alternate-banner">
+<!--  
   <div class="location"><span class="label">{% trans "Source:" %}</span>
     <form id="form_submit_score" class="quality-ref" action="{% url 'quality:index' %}" method="get">
       <input type="hidden" name="urlForm" value="1" />
@@ -10,8 +11,13 @@
       </fieldset>
     </form>
   </div>
+  -->
+    <div class="options">
+    <input type="checkbox" id="playOnClick" name="playOnClick">
+    <label for="playOnClick">Play on click</label>
+  </div>
   
-  <!-- List of score to test quality rules-->
+  <!-- List of score to test quality rules
     <div class="location"><span class="label">{% trans "Test suite:" %}</span>
     <form class="quality-ref" onsubmit="event.preventDefault(); SelectSampleScore(this);" method="get">
       <fieldset>
@@ -24,14 +30,25 @@
       </fieldset>
     </form>
   </div>
-  
-  <div class="options">
-    <input type="checkbox" id="playOnClick" name="playOnClick">
-    <label for="playOnClick">Play on click</label>
+-->
+
+  <!-- List of annotation models: the user chooses one, and it shows the annotations -->
+    <div  class="concepts"><span class="label">{% trans "Annotation model:" %}</span>
+    <form class="quality-ref" onsubmit="event.preventDefault(); SelectAnnotationModel(this);" method="get">
+      <fieldset>
+           <input type='hidden' id='opus_ref' name='opus_ref' value='{{opus.ref}}'/>
+          <select id="selected_annotation_model" type="text" name="annotation_model">
+             {% for a_model in annotation_models %}
+              <option value="{{a_model.code}}">{{a_model.name}}</option>
+               {% endfor %}
+           </select>
+          <input id="submitButton" type="submit" value="{% trans 'Load annotations' %}" />
+      </fieldset>
+    </form>
   </div>
-  
+
   <div class="concepts">
-    <a class="concepts-trigger">{% trans 'Quality Concepts…' %}</a>
+    <a class="concepts-trigger">{% trans 'Annotation tags…' %}</a>
     <div class="concepts-palette">
        <a class="close-palette" title="close">×</a>
        <div id="concepts_list">

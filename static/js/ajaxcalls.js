@@ -183,8 +183,9 @@ function ManageConceptsSelectList(select_list, concepts, level) {
 
 function ShowModelConcepts(opus_ref, model_code, concept_code="_all", show_hide=true) {
 	// Make sure the initial container is empty
-	// listRef = document.getElementById("concepts_list");
-	// listRef.innerHTML = ""
+	//console.log ("Clear the container of the concepts list")
+	listRef = document.getElementById("concepts_list");
+	listRef.innerHTML = ""
 	
 	// Get the list of annotations for this opus, this model and this concept
 	ShowAnnotations(opus_ref, model_code, concept_code, show_hide)
@@ -734,4 +735,18 @@ function SelectSampleScore(form) {
 	$("#url_score").val(selected_url)
 	$("#form_submit_score").submit()
 	// alert ("Select URL: " + selected_url)
+}
+
+
+/**
+ * Chooses an annotation model, and loads its annotations
+ */
+function SelectAnnotationModel(form) {
+	var opus_ref = form.querySelector("#opus_ref").value;
+	var e = form.querySelector("#selected_annotation_model");
+
+	console.log ("Load the annotation model  for opus " + opus_ref.value + 
+	     " model "+  e.options[e.selectedIndex].value)
+      ShowModelConcepts(opus_ref, e.options[e.selectedIndex].value) 
+
 }

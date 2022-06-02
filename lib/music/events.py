@@ -24,9 +24,12 @@ class Event:
 	'''
 	
 	# A counter for all events
-	counter_event = 1
+	counter_event = 0
 
 	def __init__(self, duration) :
+		Event.counter_event += 1
+		self.id = f'n{Event.counter_event}'
+		self.duration = duration
 		self.m21_event = None 
 
 	def is_note(self):
@@ -49,6 +52,7 @@ class Note (Event):
 		
 	def __init__(self, pitch_class, octave, duration,  alter=ALTER_NONE,
 				no_staff=UNDEFINED_STAFF, tied=False) :
+		super ().__init__(duration)
 		
 		self.alter = alter
 		self.pitch_class = pitch_class
@@ -57,8 +61,7 @@ class Note (Event):
 		self.alter = alter
 		self.m21_event = m21.note.Note(pitch_name)
 		self.m21_event.duration = duration.m21_duration
-		self.m21_event.id = f'n{Event.counter_event}'
-		Event.counter_event += 1
+		self.m21_event.id = self.id
 		self.no_staff = no_staff
 		self.tied = tied
 		return
@@ -79,7 +82,7 @@ class Rest (Event):
 	"""
 	
 	def __init__(self,  duration, no_staff) :
-		
+		super ().__init__(duration)
 		self.m21_event = m21.note.Rest()
 		self.m21_event.duration = duration.m21_duration
 		self.m21_event.id = f'r{Event.counter_event}'

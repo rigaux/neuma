@@ -399,6 +399,7 @@ class OpusView(NeumaView):
 		# Add the analytic models
 		context['analytic_models'] = AnalyticModel.objects.all()
 		context['analytic_concepts'] = AnalyticConcept.objects.all()
+		context["annotation_models"] = AnalyticModel.objects.all()
 
 	   # Add audio files
 		context['audio_files'] = opus.audio_set.all()

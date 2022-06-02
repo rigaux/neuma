@@ -5,8 +5,10 @@
 
 '''
 
+
 import datetime
-import json
+from .constants import *
+
 
 class Annotation:
 	'''
@@ -17,12 +19,10 @@ class Annotation:
 	MOTIVATION_COMMENTING = "commenting"
 	MOTIVATION_QUESTIONING = "questioning"
 	
-	CATEG_TO_TEXTUAL = "to_textual"
-	CATEG_TO_TAXONOMY = "to_annotation_concepts"
-	CATEG_TO_IMAGE = "pivot_to_image"
-	CATEG_TO_AUDIO = "pivot_to_audio"
-	CATEG_TO_VIDEO = "pivot_to_video"
-	
+	# List of target classes
+	TC_MEASURE = "measure"
+	TC_NOTE = "note"
+
 	# A counter for generating unique annotation ids
 	sequence_ids = 0
 	
@@ -32,13 +32,16 @@ class Annotation:
 		return Annotation.sequence_ids
 
 
-	def __init__(self, creator, target, body, category, 
-				annotation_model =  None,
-				motivation="linking") :
-		self.id = Annotation.get_new_id()
+	def __init__(self, id, creator, target, body, 
+				annotation_model,
+				annotation_concept,
+				motivation,
+				created, modified) :
+		
+		self.id =id
 		self.creator = creator 
-		self.created = datetime.datetime.now()
-		self.modified = datetime.datetime.now()
+		self.created = created
+		self.modified = modified
 		
 		self.target = target
 		self.body = body
@@ -49,13 +52,9 @@ class Annotation:
 		# For the record: maybe adding the notion of state would be useful
 	
 		# Neuma specific part: for usage purposes, we 
-		# assign an annotation to a category. One on them is
-		# "AnnotationTaxonomy", in which case we also record
-		# the annotation model name. The 'body' should then refer
-		# to a concept in this model
-		# and what is the id of the concept referred to
-		self.category = category 
+		# assign an annotation to a concept in an annotation model.
 		self.annotation_model = annotation_model
+		self.annotation_concept = annotation_concept
 		
 	def format_id(self):
 		return f'annot{self.id}' 
@@ -64,8 +63,52 @@ class Annotation:
 		''' Produce the JSON string, conform to the W3C spec..'''
 		return {"id": self.format_id(), "type": "Annotation", 
 			"creator": self.creator.get_json_obj(),
-			  "motivation": self.motivation, "category": self.category,
+			  "motivation": self.motivation, "annotation_model": self.annotation_model,
+			  "annotation_concept": self.annotation_concept,
 			 "body": self.body.get_json_obj(), "target": self.target.get_json_obj()}
+
+	@staticmethod 
+	def create_annot_from_xml_to_image(creator, doc_url, xml_id, image_url, region, annot_concept):
+		''' 
+			An annotation that links an XML element to an image region
+		'''
+		target_selector = FragmentSelector(FragmentSelector.XML_SELECTOR, xml_id)
+		target_resource = SpecificResource(doc_url, target_selector)
+		target = Target(target_resource)
+		body_selector = FragmentSelector(FragmentSelector.MEDIA_SELECTOR, region)
+		body_resource = SpecificResource(image_url, body_selector)
+		body = ResourceBody(body_resource)
+		return Annotation(Annotation.get_new_id(), creator, target, body, 
+							AM_IMAGE_REGION, annot_concept, 
+							Annotation.MOTIVATION_LINKING,
+							datetime.datetime.now(), datetime.datetime.now())
+
+# Define the restricted list of possible motivations
+MOTIVATION_OPTIONS = (
+    (Annotation.MOTIVATION_LINKING, "Linking sources"),
+    (Annotation.MOTIVATION_COMMENTING, "Commenting a target"),
+    (Annotation.MOTIVATION_QUESTIONING, "Questioning a target"),
+)
+# Define the restricted list of possible target classes
+TARGET_CLASSES = (
+    (Annotation.TC_MEASURE, "Annotates a measure in a score"),
+    (Annotation.TC_NOTE, "Annotates a note in a score")
+)
+
+
+class Target:
+	'''
+	   Represents the target of an annotation. Currently, only supported: 
+	   resource fragment (aka specific resource)
+	'''
+	
+	def __init__(self, resource) :
+		# If the annotation itself has a URI, it may be given
+		self.resource = resource
+		return
+
+	def get_json_obj(self):
+		return {"source": self.resource.get_json_obj(), "type": "SpecificResource"}
 
 class Body:
 	'''
@@ -74,25 +117,23 @@ class Body:
 	   This is a super-class, sub-typed for each type of body
 	'''
 	
-	def __init__(self, id) :
-		self.id = id
-		return
-
 	def get_json_obj(self):
 		''' 
-			Return an object fro JSON serialisation
+			Return an object from JSON serialisation
 		'''
-		return {"id": self.id}
+		return {"type": "generic_body"}
 
 class TextualBody(Body):
 	'''
 	   The body value is simply a text
 	'''
 	
-	def __init__(self, id, value) :
-		super().__init__(id)
+	def __init__(self,  value) :
 		self.value = value
 		return
+
+	def get_json_obj(self):
+		return {"type": "TextualBody", "value": self.value}
 
 class ResourceBody(Body):
 	'''
@@ -100,27 +141,39 @@ class ResourceBody(Body):
 	   by an URI and a fragment)
 	'''
 	
-	def __init__(self, id, resource) :
-		super().__init__(id)
+	def __init__(self, resource) :
 		self.resource = resource
 		return
 
-class SpecificResource:
+	def get_json_obj(self):
+		return {"type": "SpecificResource", 
+			"resource": self.resource.get_json_obj()}
+
+
+##########  Resources and resources fragment description
+class Resource:
+	'''
+	  Reference to a resource
+	'''
+	
+
+	def __init__(self, source) :
+		self.source = source
+
+	def get_json_obj(self):
+		return {"source": self.source}
+
+class SpecificResource(Resource):
 	'''
 	  Reference to a specific part of a source
 	'''
 	
-		
-	XML_MEDIA_FORMAT = "text/xml"
 
 	def __init__(self, source, selector) :
-		self.source = source
+		super().__init__(source)
 		self.selector = selector
 
 	def get_json_obj(self):
-		''' 
-			Return an object for JSON serialisation
-		'''
 		return {"source": self.source, 
 			"selector": self.selector.get_json_obj()}
 
@@ -147,6 +200,12 @@ class FragmentSelector:
 		'''
 		return {"type": self.type,
 			"type": self.type, "conformsTo": self.conforms_to, "value": self.value}
+
+# Defines the conformity of a fragment to a segment selection syntax
+FRAGMENT_CONFORMITY = (
+    (FragmentSelector.XML_SELECTOR, "An XPointer expression"),
+    (FragmentSelector.MEDIA_SELECTOR, "A segment in a multimedia document")
+)
 
 class Creator:
 	'''
