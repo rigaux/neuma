@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "dmos_att_rest.json",
+  "title": "Schema of rest attributes",
+  "description": "A rest consists of several heads",
+  "type": "object",
+  "properties": {
+    "nb_heads": {"description": "Nb heads", "type": "integer"},
+    "heads": {"type": "array", "items": { "$ref": "dmos_note_head.json" }, "minItems": 1},
+     "errors": {"type": "array", "items": { "$ref": "dmos_error.json" }}
+  },
+   "required": ["nb_heads", "heads"],
+  "additionalProperties": false
+}

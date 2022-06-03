@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "dmos_clef.json",
+  "title": "Schéma de la description d'une clef",
+  "type": "object",
+  "properties": {
+     "symbol": {"description": "Code du symbole", "$ref": "dmos_symbol.json"},
+     "no_staff": {"description": "Numéro de portée", "type": "integer"},
+     "height": {"description": "Hauteur de la clef sur la portée", "type": "integer"},
+     "errors": {"type": "array", "items": { "$ref": "dmos_error.json" }
+     }
+   },
+   "required": ["symbol", "no_staff", "height", "errors"],
+  "additionalProperties": false
+}

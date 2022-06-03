@@ -14,43 +14,49 @@ from lib.collabscore.parser import CollabScoreParser, OmrScore
 
 import jsonref
 import jsonschema
-
+import json
 
 def tests(request):
 	context = {"titre": "Tests Philippe"}
 
-	# Root dir for sample data
-	dmos_dir = os.path.join(settings.BASE_DIR, '../utilities/', 'dmos')
+	local_files = True
+	
+	if local_files:
+		# Root dir for sample data
+		# dmos_dir = os.path.join("file://" + settings.BASE_DIR, '../utilities/', 'dmos')
+		dmos_dir = os.path.join("file://" + settings.BASE_DIR, 'static/', 'dmos')
+	else:
+		# Get from the collabscore server
+		dmos_dir = 'http://collabscore.org/dmos/'
+	
 	# Where is the schema?
 	schema_dir = os.path.join(dmos_dir, 'schema/')
-	data_dir = os.path.join(dmos_dir, 'data/ex1/')
-	
 	# The main schema file
 	schema_file = os.path.join(schema_dir, 'dmos_schema.json')
-	# Where  json refs must be solved
-	base_uri='file://' + schema_dir + '/'
-	
+	# Parse the schema
+	try:
+		parser = CollabScoreParser(schema_file, schema_dir)
+		context['message_schema'] = "Le schéma est valide"
+	except jsonschema.SchemaError as ex:
+		context['message_schema'] = "Schema parsing error: " + ex.message
+	except Exception as ex:
+		context['message_schema'] = "Unexpected error during parser initialization: " + str (ex)
+		return render(request, 'collabscore/tests.html', context)
+
 	# Example to process
 	input_file = "dmos_ex1.json"
 	# Get the file name without extension
 	input_file_root = os.path.splitext(os.path.basename(input_file))[0]
 
-	# Parse the schema
+	# Load the data and resolve references	
+	data_dir = os.path.join(dmos_dir, 'data/ex1/')
+	file_url =  data_dir + input_file
+	#print (f'Load {file_url} from {data_dir}')
 	try:
-		parser = CollabScoreParser(schema_file, base_uri)
-		context['message_schema'] = "Le schéma est valide"
-	except jsonschema.SchemaError as ex:
-		context['message_schema'] = "Schema parsing error: " + str (ex)
+		data = jsonref.load_uri(file_url,base_uri=data_dir)
 	except Exception as ex:
-		"Unexpected error during parser initialization: " + str (ex)
-
-	
-	# Load the data and resolve references
-	#data = jsonref.load_uri('http://collabscore.org/dmos/data/dmos_data.json', 
-	#					base_uri='http://collabscore.org/dmos/data/')
-	
-	data = jsonref.load_uri('file://' + data_dir + input_file, 
-						base_uri='file://' + data_dir)
+		context['message'] = "Data loading error: " + str(ex)
+		return render(request, 'collabscore/tests.html', context)
 
 	# Write the full document in a local file
 	#json_dir = os.path.join(settings.BASE_DIR, 'static', 'json')
@@ -61,7 +67,7 @@ def tests(request):
 		parser.validate_data (data)
 		context['message'] = "Validation effectuée"
 	except Exception as ex:
-		context['message'] = str(ex)
+		context['message'] = "Validation error : " + str(ex)
 	
 	
 	# Build the encoded score
@@ -91,7 +97,7 @@ def tests(request):
 	opus.mei.save("mei.xml", ContentFile(score_mei))
 
 	context["opus"] = opus
-	context["opus_url"] = "http://localhost:8000" + opus.musicxml.url
+	context["opus_url"] = my_url + opus.musicxml.url
 	
 	context["annotations"] = score.annotations
 	
@@ -99,8 +105,10 @@ def tests(request):
 	score.uri = my_url + opus.mei.url
 
 	for dba in Annotation.objects.filter(opus=opus):
-		dba.target.delete()
-		dba.body.delete()
+		if dba.target is not None:
+			dba.target.delete()
+		if dba.body is not None:
+			dba.body.delete()
 		dba.delete()
 	for annotation in score.annotations:
 		annotation.target.resource.source = score.uri

@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "dmos_note_head.json",
+  "title": "Schema of note head descriptor",
+  "description": "A note head on a staff, with an optional accidental", 
+  "type": "object",
+  "properties": {
+     "head_symbol": {"description": "Noire, blanche, etc.", "$ref": "dmos_symbol.json"},
+     "no_staff": {"description": "Numéro de portée", "type": "integer"},
+     "height": {"description": "Hauteur de la note sur la portée", "type": "integer"},
+     "alter": {"description": "Altération", "$ref": "dmos_symbol.json"},
+     "nb_points": {"description": "Nbre de points", "type": "integer"},
+     "tied": {"description": "Liée à la note précédente ? À clarifier", "type": "boolean"},
+     "errors": {"description": "Liste des erreurs", 
+                "type": "array",
+                "items": { "$ref": "dmos_error.json" }
+     }
+   },
+   "required": ["head_symbol", "no_staff", "height"],
+  "additionalProperties": false
+}

@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "dmos_measure.json",
+  "title": "Schema of measure descriptor",
+  "type": "object",
+  "properties": {
+     "region": {
+               "description": "Region of the measure",
+               "$ref": "dmos_region.json"
+     },
+    "headers": {
+         "type": "array",
+         "description" : "Headers, one for each staff",
+          "items": {"$ref": "dmos_measure_header.json" }
+    },
+    "voices": {
+         "type": "array",
+         "description" : "A measure is  list of voices",
+         "items": {"$ref": "dmos_voice.json" }
+    }
+  }
+}

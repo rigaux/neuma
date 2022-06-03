@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "dmos_system.json",
+  "title": "Schema of system descriptor",
+  "description": "Each system is a list of headers, one for each staff, and a list of measures",
+  "type": "object",
+  "properties": {
+      "id" : {"description": "Numéro du système", "type": "integer"},
+     "region": {"description": "Region covered by the system in the page","$ref": "dmos_region.json"},
+    "headers": {
+         "type": "array",
+          "items": {"$ref": "dmos_staff_header.json" }
+    },
+    "measures": {
+         "type": "array",
+         "items": {"$ref": "dmos_measure.json" },
+           "minItems": 1
+    }
+  },
+   "required": ["id", "region", "headers", "measures"],
+  "additionalProperties": false
+}

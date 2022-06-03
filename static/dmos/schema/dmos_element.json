@@ -1,0 +1,12 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "dmos_element.json",
+  "title": "Schéma de description d'un élément",
+  "type": "object",
+  "properties": {
+     "label": {"type": "string"},
+     "region": {"description": "Emprise de l'élément", "$ref": "dmos_region.json"}
+   },
+   "required": ["label", "region"],
+  "additionalProperties": false
+}

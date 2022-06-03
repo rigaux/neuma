@@ -9,8 +9,9 @@
 
 {{message_schema}}
 
-<h4>Message données : {{message}}</h4>
+<h4>Message données</h4>
 
+{{message}}
 <ul>
 {% for e in  errors %}
 <li>{{e}}</li>
@@ -48,18 +49,5 @@
         });
 </script> 
 
-<h4>Les annotations</h4>
-
-<ul>
-{% for annotation in annotations %}
-  <li>
-    <ol>
-    <li><b>Target</b>: {{ annotation.get_json_obj.target }}</li>
-      <li><b>Body</b>: {{ annotation.get_json_obj.body }}</li>
-    
-    </ol>
-  </li>
-{% endfor %}
-</ul>
 
 {% endblock content %}

@@ -1,0 +1,12 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "dmos_duration.json",
+  "title": "Schéma de la description d'une durée musicale",
+  "type": "object",
+  "properties": {
+     "numer": {"description": "Numérateur", "type": "integer"},
+     "denom": {"description": "Dénominateur", "type": "integer"}
+     },
+   "required": [ "numer", "denom"],
+  "additionalProperties": false
+}

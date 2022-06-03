@@ -1246,13 +1246,13 @@ class Annotation(models.Model):
 		wtselector = wtarget.resource.selector
 		target = Resource(source=wtarget.resource.source, selector_type=wtselector.type,
 					selector_conforms_to=wtselector.conforms_to, selector_value=wtselector.value)
-		
+		target.save()
 		# Create the body
 		wbody = webannot.body
 		wbselector = wbody.resource.selector
 		body = Resource(source=wbody.resource.source, selector_type=wbselector.type,
 					selector_conforms_to=wbselector.conforms_to, selector_value=wbselector.value)
-
+		body.save()
 		return Annotation (opus=opus, ref = wtselector.value,
 								user=user, model_ref=webannot.annotation_model,
 								analytic_concept =  annot_concept,
