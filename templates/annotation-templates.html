@@ -27,11 +27,31 @@
     <div id="annotation_description" style="display:none">
         <ul>
             <li><b>{% trans "Type " %}</b> <span id="annotation_concept"></span></li>
-            <li><b>{% trans "User " %}</b> <span id="annotation_user"></span></li>
-            <li><b>{% trans "Offset " %}</b> <span id="annotation_offset"></span></li>
-            <li><b>{% trans "Comment " %}</b> <span id="annotation_comment"></span></li>
+            <li><b>{% trans "Creator " %}</b> 
+              <ul>
+               <li><b>{% trans "Type " %}</b> <span id="annotation_creator_type"></span></li>
+                 <li><b>{% trans "Name " %}</b> <span id="annotation_creator_name"></span></li>
+              </ul>
+            </li>
+            <li><b>{% trans "Motivation " %}</b> <span id="annotation_motivation"></span></li>
+            <li><b>{% trans "Annotation class " %}</b> <span id="annotation_class"></span></li>
+            <li><b>{% trans "Annotation target " %}</b> <span id="annotation_target"></span></li>
             <li><b>{% trans "Created " %}</b> <span id="annotation_created_at"></span></li>
             <li><b>{% trans "Updated " %}</b> <span id="annotation_updated_at"></span></li>
+            <li><b>{% trans "Target " %}</b> 
+              <ul>
+               <li><b>{% trans "Source " %}</b> <span id="annotation_target_source"></span></li>
+                 <li><b>{% trans "Selector type " %}</b> <span id="annotation_target_selector_type"></span></li>
+                 <li><b>{% trans "Selector value " %}</b> <span id="annotation_target_selector_value"></span></li>
+              </ul>
+            </li>
+            <li><b>{% trans "Body " %}</b> 
+              <ul>
+               <li><b>{% trans "Source " %}</b> <span id="annotation_body_source"></span></li>
+                 <li><b>{% trans "Selector type " %}</b> <span id="annotation_body_selector_type"></span></li>
+                 <li><b>{% trans "Selector value " %}</b> <span id="annotation_body_selector_value"></span></li>
+              </ul>
+            </li>
         </ul>
     </div>
 

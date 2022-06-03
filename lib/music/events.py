@@ -23,12 +23,20 @@ class Event:
 		Super-class for anything (note, rest, chord) that occurs for a given duration
 	'''
 	
-	# A counter for all events
+	# A counter for all events. It consists of i) a global part representing the context
+	# (ie, a measure in a part), and ii) a local counter for events met in this context
+	counter_context = ""
 	counter_event = 0
 
+	@staticmethod 
+	def reset_counter(new_context):
+		# Initializes the local counter for a new context
+		Event.counter_context = new_context
+		Event.counter_event = 0
+		
 	def __init__(self, duration) :
 		Event.counter_event += 1
-		self.id = f'n{Event.counter_event}'
+		self.id = f'{Event.counter_context}n{Event.counter_event}'
 		self.duration = duration
 		self.m21_event = None 
 

@@ -609,28 +609,38 @@ function getNoteDescription(opus_ref, note_id) {
 				console.log ("Affectation Note id " + note_id)
 				$("#annotations_list").empty ()
 				for (i in data.annotations) {
+					annotation = data.annotations[i]
 					annot_elem = $( "#annotation_description" ).clone();
 					// Change the annotation values in the form
 					annot_elem.find("#annotation_opus_ref").val (opus_ref);
-					annot_elem.find("#annotation_id").val (data.annotations[i].id);
+					annot_elem.find("#annotation_id").val (annotation.id);
 					annot_elem.find("#annotation_note_id").val (note_id);
-					annot_elem.find("#annotation_user").html (data.annotations[i].full_user_name);
-					annot_elem.find("#annotation_comment").html (data.annotations[i].comment);
-					annot_elem.find("#annotation_concept").html (data.annotations[i].concept);
-					annot_elem.find("#annotation_offset").html (data.annotations[i].offset);
-					annot_elem.find("#annotation_created_at").html (data.annotations[i].created_at);
-					annot_elem.find("#annotation_updated_at").html (data.annotations[i].updated_at);
+					annot_elem.find("#annotation_creator_type").html (annotation.creator.type);
+					annot_elem.find("#annotation_creator_name").html (annotation.creator.name);
+					annot_elem.find("#annotation_motivation").html (annotation.motivation);
+					annot_elem.find("#annotation_class").html (annotation.annotation_model);
+					annot_elem.find("#annotation_target").html (annotation.annotation_concept);
+					annot_elem.find("#annotation_created_at").html (annotation.created);
+										
+					annot_elem.find("#annotation_target_source").html (annotation.target.resource.source);
+					annot_elem.find("#annotation_target_selector_type").html (annotation.target.resource.selector.type);
+					annot_elem.find("#annotation_target_selector_value").html (annotation.target.resource.selector.value);
+
+					annot_elem.find("#annotation_body_source").html (annotation.body.resource.source);
+					annot_elem.find("#annotation_body_selector_type").html (annotation.body.resource.selector.type);
+					annot_elem.find("#annotation_body_selector_value").html (annotation.body.resource.selector.value);
+
 					annot_elem.show()
 					annot_elem.appendTo( $("#annotations_list"));
 					
 					// If the annotation belongs to the user: show the
 					// Update form
-					if (current_user.username == data.annotations[i].username) {
+					if (current_user.username == annotation.creator.name) {
 							form_elem = $( "#annotation_update" ).clone();
 							form_elem.find("#update_annotation_opus_ref").val (opus_ref);
-							form_elem.find("#update_annotation_id").val (data.annotations[i].id);
+							form_elem.find("#update_annotation_id").val (annotation.id);
 							form_elem.find("#update_annotation_note_id").val (note_id);
-							form_elem.find("#update_annotation_comment").val (data.annotations[i].comment);
+							form_elem.find("#update_annotation_comment").val (annotation.comment);
 							form_elem.show()
 							form_elem.appendTo( $("#annotations_list"));
 						}

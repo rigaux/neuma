@@ -55,7 +55,8 @@ class Annotation:
 		# assign an annotation to a concept in an annotation model.
 		self.annotation_model = annotation_model
 		self.annotation_concept = annotation_concept
-		
+		# Default style
+		self.style = Style ("square", "content6")
 	def format_id(self):
 		return f'annot{self.id}' 
 
@@ -65,7 +66,14 @@ class Annotation:
 			"creator": self.creator.get_json_obj(),
 			  "motivation": self.motivation, "annotation_model": self.annotation_model,
 			  "annotation_concept": self.annotation_concept,
-			 "body": self.body.get_json_obj(), "target": self.target.get_json_obj()}
+			 "body": self.body.get_json_obj(), 
+			 "target": self.target.get_json_obj(),
+			 "style": self.style.get_json_obj(),
+			 "created": self.created,
+			 "modified": self.modified}
+		
+	def set_style (self, style):
+		self.style = style
 
 	@staticmethod 
 	def create_annot_from_xml_to_image(creator, doc_url, xml_id, image_url, region, annot_concept):
@@ -108,7 +116,7 @@ class Target:
 		return
 
 	def get_json_obj(self):
-		return {"source": self.resource.get_json_obj(), "type": "SpecificResource"}
+		return {"resource": self.resource.get_json_obj(), "type": "SpecificResource"}
 
 class Body:
 	'''
@@ -149,6 +157,18 @@ class ResourceBody(Body):
 		return {"type": "SpecificResource", 
 			"resource": self.resource.get_json_obj()}
 
+class Style:
+	'''
+	   Some instructions to display an annotation
+	'''
+	
+	def __init__(self, icon, color) :
+		# If the annotation itself has a URI, it may be given
+		self.icon = icon
+		self.color = color
+
+	def get_json_obj(self):
+		return {"icon": self.icon, "color": self.color}
 
 ##########  Resources and resources fragment description
 class Resource:
