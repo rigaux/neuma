@@ -1204,7 +1204,34 @@ class Annotation(models.Model):
 		print ("Annotation from JSON")
 		print (str(form_data))
 		
+	def produce_web_annotation(self):
+		'''
+			Create an annotation of our score model from the DB data
+		'''
+		target_selector = annot_mod.FragmentSelector(
+				annot_mod.FragmentSelector.XML_SELECTOR, self.target.selector_value)
+		target_resource = annot_mod.SpecificResource(self.target.source, target_selector)
+		target = annot_mod.Target(target_resource)
+		body_selector = annot_mod.FragmentSelector(self.body.selector_conforms_to, 
+												self.body.selector_value)
+		body_resource = annot_mod.SpecificResource(self.body.source, body_selector)
+		body = annot_mod.ResourceBody(body_resource)
+		if self.user is not None:
+			creator = annot_mod.Creator(self.user.id, annot_mod.Creator.PERSON_TYPE, 
+									self.user.username)
+		else:
+			creator = annot_mod.Creator('xxx', annot_mod.Creator.SOFTWARE_TYPE, 
+									settings.COMPUTER_USER_NAME)
 
+		annotation = annot_mod.Annotation(self.id, creator, target, body, 
+							self.model_ref, self.analytic_concept.code, 
+							self.motivation,
+							self.created_at, self.updated_at)
+		annotation.set_style (annot_mod.Style (self.analytic_concept.icon,
+											 self.analytic_concept.display_options))
+		return annotation
+
+		
 	@staticmethod 
 	def create_from_web_annotation(user, opus, webannot):
 		# Get the concept

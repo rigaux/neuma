@@ -4,7 +4,6 @@ import logging
 
 import json
 from jsonref import JsonRef
-import jsonschema 
 
 import lib.music.Score as score_model
 import lib.music.Voice as voice_model
@@ -185,6 +184,10 @@ class OmrScore:
 						current_part = score.get_part(voice.id_part)
 						current_measure = current_measures[voice.id_part]
 						
+						# Reset the event counter
+						score_events.Event.reset_counter(
+							f'{voice.id_part}m{current_measure.id}{voice.id}')
+
 						# Create the voice
 						voice_part = voice_model.Voice(id=voice.id)
 						for item in voice.items:

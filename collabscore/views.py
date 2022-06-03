@@ -13,8 +13,7 @@ from django.core.files.base import ContentFile
 from lib.collabscore.parser import CollabScoreParser, OmrScore
 
 import jsonref
-import json
-from jsonref import JsonRef
+import jsonschema
 
 
 def tests(request):
@@ -96,11 +95,15 @@ def tests(request):
 	
 	context["annotations"] = score.annotations
 	
+	# Now we know the full url of the MEI document
+	score.uri = my_url + opus.mei.url
+
 	for dba in Annotation.objects.filter(opus=opus):
 		dba.target.delete()
 		dba.body.delete()
 		dba.delete()
 	for annotation in score.annotations:
+		annotation.target.resource.source = score.uri
 		db_annot = Annotation.create_from_web_annotation(request.user, opus, annotation)
 		db_annot.target.save()
 		db_annot.body.save()
