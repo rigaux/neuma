@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "dmos_staff_header.json",
+  "title": "Staff descriptor",
+  "type": "object",
+    "properties": {
+       "id_part": {"$type": "string" },
+       "no_staff": {"$type": "integer" },
+       "first_bar": {"$ref": "dmos_element.json" }
+   },
+   "required": [ "id_part", "no_staff", "first_bar"],
+  "additionalProperties": false
+}

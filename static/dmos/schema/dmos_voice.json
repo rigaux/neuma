@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "dmos_voice.json",
+  "title": "Schema of voice descriptor",
+  "description": "A voice (in  a measure) is a sequence of voice elements, which each belongs to one of the staves of the voice's part.",
+  "type": "object",
+  "properties": {
+    "id" : {"description": "Id of the voice", "type": "string"},
+    "id_part" : {"description": "Id of the part the voice belongs to", "type": "string"},  
+    "elements": {
+         "type": "array",
+         "items": {"$ref": "dmos_element_voice.json" } 
+    }
+  },
+   "required": ["id", "id_part","elements"],
+  "additionalProperties": false
+}

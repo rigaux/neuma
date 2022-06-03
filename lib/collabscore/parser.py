@@ -3,7 +3,9 @@
 import logging
 
 import json
+import jsonref
 from jsonref import JsonRef
+import jsonschema
 
 import lib.music.Score as score_model
 import lib.music.Voice as voice_model
@@ -46,27 +48,46 @@ class CollabScoreParser:
 
 	"""
 
+
 	def __init__(self, schema_file_path, base_uri=""):
 		"""
 		   Load the schema of OMR json files, for type checking
 		   
 		   See https://python-jsonschema.readthedocs.io/en/latest/
+		   
+		   To check the schema: http://www.jsonschemavalidator.net/
 		"""
 		
-		sch_file = open(schema_file_path)
-		self.schema  = json.load(sch_file)
-	
-		# The schema containes references to sub-files that need to be solved
-		self.resolver = jsonschema.RefResolver(referrer=self.schema, 
-										base_uri=base_uri)
 
 		# Check schema via class method call. Works, despite IDE complaining
-		self.validator = jsonschema.Draft4Validator (self.schema, resolver=self.resolver)
-		
+		logger.info (f'Loading schema file {schema_file_path} from {base_uri}')
 		# Might raise an exception
-		jsonschema.Draft4Validator.check_schema(self.schema)
-		
-		return
+		try:
+			self.schema  = jsonref.load_uri(schema_file_path, base_uri=base_uri)
+			logger.info (f'Schema loaded')
+			# The schema contains references to sub-files that need to be solved
+			self.resolver = jsonschema.RefResolver(referrer=self.schema, 
+										base_uri=base_uri)
+			self.validator = jsonschema.Draft7Validator (self.schema, resolver=self.resolver)
+		except jsonschema.ValidationError as ex:
+			logger.error (f'Error loading schema file {ex}')
+			errors = sorted(self.validator.iter_errors(self.schema), key=lambda e: e.path)
+			str_errors = ""
+			for e in errors:
+				path = ""
+				for p in e.absolute_path:
+					path += str(p) + '/' 
+				str_errors += " Error : " + e.message + " (path " + path + ")"
+			raise Exception ("Schema  validation error: " + str_errors)
+		except jsonschema.SchemaError as ex:
+			errors = sorted(self.validator.iter_errors(self.schema), key=lambda e: e.path)
+			str_errors = ""
+			for e in errors:
+				path = ""
+				for p in e.absolute_path:
+					path += str(p) + '/' 
+				str_errors += " Error : " + e.message + " (path " + path + ")"
+			raise Exception ("Schema  validation error: " + str_errors)
 
 
 	def validate_data (self, json_content):
@@ -86,9 +107,14 @@ class CollabScoreParser:
 			raise Exception ("Data  validation error: " + str_errors)
 		except jsonschema.SchemaError as ex:
 			errors = sorted(self.validator.iter_errors(json_content), key=lambda e: e.path)
+			str_errors = ""
 			for e in errors:
-				str_errors += e.message
-			raise Exception ("Schema error: " + str_errors)
+				path = ""
+				for p in e.absolute_path:
+					path += str(p) + '/' 
+					print ("Path to error " + path)
+				str_errors += " Error : " + e.message + " (path " + path + ")"
+			raise Exception (ex.message)
 
 """
   Utility classes

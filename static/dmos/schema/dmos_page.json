@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "dmos_page.json",
+  "title": "Schema of page descriptor",
+  "description": "Each page consists of a header (*structure to be defined*) and a list of systems",
+  "type": "object",
+  "properties": {
+     "no_page": { "type": "integer" },
+     "header_systems": {
+         "description": "Tableau des descripteurs de système",
+         "type": "object",
+         "properties": {
+           "entete": {"description": "Infos d'entête de la page: à préciser", "type": "string"}
+           }
+      },
+     "systems": {
+            "description": "Array of systems ",
+            "type": "array",
+            "items": {"$ref": "dmos_system.json"},
+         "minItems": 1
+       }
+   },
+   "required": ["no_page", "header_systems", "systems"],
+  "additionalProperties": false
+}
