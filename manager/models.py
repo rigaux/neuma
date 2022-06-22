@@ -1186,13 +1186,15 @@ class Annotation(models.Model):
 	# Name and version of the model used for analysis
 	model_ref = models.TextField(default="")
 
+
 	##### New version, with target and body
 	target  = models.ForeignKey(Resource,null=True,on_delete=models.CASCADE, related_name="annot_target")
 	body =  models.ForeignKey(Resource,null=True,on_delete=models.CASCADE, related_name="annot_body")
 	motivation = models.CharField(max_length=30,
 								choices=annot_mod.MOTIVATION_OPTIONS,
 								default=annot_mod.Annotation.MOTIVATION_LINKING)
-
+	textual_body = models.TextField(null=True)
+	
 	# Creation / update dates
 	created_at = models.DateTimeField(auto_now_add=True, null=True, blank=True)
 	updated_at = models.DateTimeField(auto_now=True, null=True, blank=True)
@@ -1212,10 +1214,14 @@ class Annotation(models.Model):
 				annot_mod.FragmentSelector.XML_SELECTOR, self.target.selector_value)
 		target_resource = annot_mod.SpecificResource(self.target.source, target_selector)
 		target = annot_mod.Target(target_resource)
-		body_selector = annot_mod.FragmentSelector(self.body.selector_conforms_to, 
+		
+		if self.body is not None:
+			body_selector = annot_mod.FragmentSelector(self.body.selector_conforms_to, 
 												self.body.selector_value)
-		body_resource = annot_mod.SpecificResource(self.body.source, body_selector)
-		body = annot_mod.ResourceBody(body_resource)
+			body_resource = annot_mod.SpecificResource(self.body.source, body_selector)
+			body = annot_mod.ResourceBody(body_resource)
+		if self.textual_body is not None:
+			body = annot_mod.TextualBody(self.textual_body)
 		if self.user is not None:
 			creator = annot_mod.Creator(self.user.id, annot_mod.Creator.PERSON_TYPE, 
 									self.user.username)
@@ -1247,16 +1253,24 @@ class Annotation(models.Model):
 		target = Resource(source=wtarget.resource.source, selector_type=wtselector.type,
 					selector_conforms_to=wtselector.conforms_to, selector_value=wtselector.value)
 		target.save()
+
 		# Create the body
 		wbody = webannot.body
-		wbselector = wbody.resource.selector
-		body = Resource(source=wbody.resource.source, selector_type=wbselector.type,
+		if wbody.type == "resource_body":
+			wbselector = wbody.resource.selector
+			body = Resource(source=wbody.resource.source, selector_type=wbselector.type,
 					selector_conforms_to=wbselector.conforms_to, selector_value=wbselector.value)
-		body.save()
-		return Annotation (opus=opus, ref = wtselector.value,
+			body.save()
+			return Annotation (opus=opus, ref = wtselector.value,
 								user=user, model_ref=webannot.annotation_model,
 								analytic_concept =  annot_concept,
 								target=target,body=body, 
+								motivation=webannot.motivation)
+		elif wbody.type == "textual_body":
+			return Annotation (opus=opus, ref = wtselector.value,
+								user=user, model_ref=webannot.annotation_model,
+								analytic_concept =  annot_concept,
+								target=target, textual_body=wbody.value, 
 								motivation=webannot.motivation)
 
 # Get the Opus ref and extension from a file name

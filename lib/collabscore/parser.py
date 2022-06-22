@@ -7,6 +7,9 @@ import jsonref
 from jsonref import JsonRef
 import jsonschema
 
+from fractions import Fraction
+
+
 import lib.music.Score as score_model
 import lib.music.Voice as voice_model
 import lib.music.events as score_events
@@ -15,6 +18,9 @@ import lib.music.annotation as annot_mod
 import lib.music.constants as constants_mod
 
 import verovio
+
+
+from .constants import *
 
 # Get an instance of a logger
 # See https://realpython.com/python-logging/
@@ -225,10 +231,17 @@ class OmrScore:
 								self.score_image_url, event_region.string_xyhw(), 
 								constants_mod.IREGION_NOTE_CONCEPT)
 							score.add_annotation (annotation)
+							# Did we met errors ?
+							for error in item.errors:
+								annotation = annot_mod.Annotation.create_annot_from_error (
+									self.creator, self.uri, event.id, error.message, 
+									constants_mod.OMR_ERROR_UNKNOWN_SYMBOL)
+								score.add_annotation (annotation)
 						# Add the voice to the measure of the relevant part
 						current_measure.add_voice (voice_part)
 		
 		return score 
+
 
 	def decode_event(self, part, voice_item):
 		'''
@@ -238,6 +251,13 @@ class OmrScore:
 		# Duration of the event: the DMOS encoding is 1 from whole note, 2 for half, etc.
 		# Our encoding (music21) is 1 for quarter note. Hence the computation
 		duration = score_events.Duration(voice_item.duration.numer, voice_item.duration.denom)
+		
+		# The symbol in the duration contains the region of the event
+		if 	voice_item.duration.symbol.region is None:
+			logger.error ("A voice item without region has been met")
+			raise CScoreParserError ("A voice item without region has been met")
+		event_region = voice_item.duration.symbol.region
+
 		if voice_item.note_attr is not None:
 			# It should be a note
 			for head in voice_item.note_attr.heads:
@@ -248,9 +268,9 @@ class OmrScore:
 				# Decode from the DMOS input codification
 				if head.alter == None:
 					alter = score_events.Note.ALTER_NONE
-				elif head.alter.label == score_events.Note.DMOS_FLAT_SYMBOL:
+				elif head.alter.label == FLAT_SYMBOL:
 					alter = score_events.Note.ALTER_FLAT
-				elif head.alter.label  == score_events.Note.DMOS_SHARP_SYMBOL:
+				elif head.alter.label  == SHARP_SYMBOL:
 					alter = score_events.Note.ALTER_SHARP
 					
 				# Did we just met an accidental?
@@ -261,8 +281,6 @@ class OmrScore:
 					# Is there a previous accidental on this staff for this pitch class?
 					alter = staff.get_accidental(pitch_class)
 					
-				# The head symbol has a region
-				event_region = head.head_symbol.region
 				# Only manage one head 
 				break
 			event = score_events.Note(pitch_class, octave, duration, alter, head.no_staff)
@@ -270,50 +288,82 @@ class OmrScore:
 			# It is a rest
 			for head in voice_item.rest_attr.heads:
 				staff = part.get_staff (head.no_staff)
-				event_region = head.head_symbol.region
 			event = score_events.Rest(duration, head.no_staff)
 		else:
 			logger.error ("A voice event with unknown type has been met")
 			raise CScoreParserError ("A voice event with unknown type has been met")
 		return (event, event_region)
 
+class Point:
+	"""
+		A geometric point
+	"""
+	
+	def __init__(self,json_point):
+		self.x = json_point[0]
+		self.y = json_point[1]
+
+	def __str__(self):
+		return f'(Point({self.x},{self.y})'
+
+class Segment:
+	"""
+		A segment  described by its two endpoints
+	"""
+	
+	def __init__(self,json_segment):
+		self.ll = Point (json_segment[0])
+		self.ur = Point (json_segment[1])
+
+	def __str__(self):
+		return f'(Segment({self.ll},{self.ur})'
+
 class Region:
 	"""
-		A rectangular region that frames a score graphical element
+		A polygon described by its contour
 	"""
 	
 	def __init__(self,json_region):
-		self.x = json_region[0]
-		self.y = json_region[1]
-		self.height = json_region[2]
-		self.width = json_region[3]
+		self.contour = []
+		for json_point in json_region:
+			self.contour.append(Point(json_point))
+
+	def __str__(self):
+		str_repr =""
+		for point in self.contour:
+			str_repr += str(point)
+
+		return f'({str_repr})'
+	
+	def string_xyhw(self):
+		return f'{self}'
+
+class Rectangle:
+	"""
+		A specific region. Maybe not useful
+	"""
+	
+	def __init__(self,json_rectangle):
+		self.x = json_rectangle[0]
+		self.y = json_rectangle[1]
+		self.height = json_rectangle[2]
+		self.width = json_rectangle[3]
 
 	def __str__(self):
 		return f'({self.x},{self.y},{self.height},{self.width})'
 	
 	def string_xyhw(self):
 		return f'{self.x},{self.y},{self.height},{self.width}'
-	
+
 class Symbol:
 	"""
 		An uninterpreted symbol (e.g, a Clef)
 	"""
 	def __init__(self, json_symbol):
 		self.label = json_symbol["label"]
-		self.region = Region(json_symbol["region"])
+		if "region" in json_symbol:
+			self.region = Region(json_symbol["region"])
 		
-
-	def __str__(self):
-		return f'({self.label},{self.region})'
-
-class Element:
-	"""
-		An a score element 
-	"""
-	
-	def __init__(self, json_elt):
-		self.label = json_elt["label"]
-		self.region = Region(json_elt["region"])
 
 	def __str__(self):
 		return f'({self.label},{self.region})'
@@ -381,13 +431,9 @@ class VoiceItem:
 		self.rest_attr = None
 		self.clef_attr = None
 		
-		self.type = Symbol (json_voice_item["type"])
-		self.no_step = json_voice_item["no_step"]
 		self.duration = Duration (json_voice_item["duration"])
 		if "no_group" in json_voice_item:
 			self.no_group = json_voice_item["no_group"]
-		if "step_duration" in json_voice_item:
-			self.step_duration = json_voice_item["step_duration"]
 		if "direction" in json_voice_item:
 			self.direction = json_voice_item["direction"]
 		if "att_note" in json_voice_item:
@@ -397,9 +443,13 @@ class VoiceItem:
 			self.rest_attr = NoteAttr (json_voice_item["att_rest"])
 		if "att_clef" in json_voice_item:
 			self.clef_attr  = Clef (json_voice_item["att_clef"])
+		self.errors = []
+		if "errors" in json_voice_item:
+			for json_error in json_voice_item["errors"]:
+				self.errors.append(Error (json_error))
 
 	def __str__(self):
-		return f'({self.type}, step {self.no_step}, dur. ({self.duration.numer}/{self.duration.denom})'
+		return f'({self.type}, dur. ({self.duration.numer}/{self.duration.denom})'
 
 class NoteAttr:
 	"""
@@ -413,12 +463,7 @@ class NoteAttr:
 		for json_head in json_note_attr["heads"]:
 			self.heads.append(Note (json_head))
 
-	
-	def __str__(self):
-		return f'({self.type}, step {self.no_step}, dur. {self.duration})'
-
 ##############
-
 
 class Note:
 	"""
@@ -462,14 +507,47 @@ class KeySignature:
 		self.nb_naturals =   json_key_sign["nb_naturals"]
 		self.nb_alterations =   json_key_sign["nb_alterations"]
 		
+
+class Error:
+	"""
+		Representation of an error met during OMR
+	"""
+	
+	def __init__(self, json_error):
+		self.message =   json_error["message"]
+
 class Duration:
 	"""
 		Representation of a musical duration
 	"""
-	
+
 	def __init__(self, json_duration):
-		self.numer =   json_duration["numer"]
-		self.denom =   json_duration["denom"]
+		self.symbol = Symbol (json_duration["symbol"])
+		if self.symbol.label not  in DURATION_SYMBOLS_LIST:
+			raise CScoreParserError (f'Unknown symbol name: {self.symbol.label}')
+		if self.symbol.label == SMB_WHOLE_NOTE or self.symbol.label == SMB_WHOLE_REST:
+			self.numer, self.denom =   4, 1
+		elif self.symbol.label == SMB_HALF_NOTE or self.symbol.label == SMB_HALF_REST:
+			self.numer, self.denom =   2, 1
+		elif self.symbol.label == SMB_QUARTER_NOTE or self.symbol.label == SMB_QUARTER_REST:
+			self.numer, self.denom =   1, 1
+		elif self.symbol.label == SMB_8TH_NOTE or self.symbol.label == SMB_8TH_REST:
+			self.numer, self.denom =   1, 2
+		elif self.symbol.label == SMB_16TH_NOTE or self.symbol.label == SMB_16TH_REST:
+			self.numer, self.denom =   1, 4
+		elif self.symbol.label == SMB_32TH_NOTE or self.symbol.label == SMB_32TH_REST:
+			self.numer, self.denom =   1, 8
+
+		self.nb_points = 0
+		if "nb_points" in json_duration:
+			self.nb_points = json_duration["nb_points"]
+		if self.nb_points == 1:
+			rational_fraction = Fraction (self.numer * 1.5 /  self.denom)
+			self.numer, self.denom = rational_fraction.numerator, rational_fraction.denominator
+		if self.nb_points == 2:
+			rational_fraction = Fraction (self.numer * 1.75 / self.denom)
+			self.numer, self.denom = rational_fraction.numerator, rational_fraction.denominator
+
 
 class TimeSignature:
 	"""
@@ -493,7 +571,8 @@ class StaffHeader:
 	def __init__(self, json_system_header):
 		self.id_part =json_system_header["id_part"]
 		self.no_staff =json_system_header["no_staff"]
-		self.first_bar = Element(json_system_header["first_bar"])
+		if "first_bar" in json_system_header:
+			self.first_bar = Segment(json_system_header["first_bar"])
 
 class MeasureHeader:
 	"""

@@ -27,7 +27,8 @@ function ShowAnnotations(opus_ref, model_code, concept_type, show_annotations) {
 	console.log("Call to ShowAnnotations for concept " + concept_type + " show/hide " +  show_annotations)
 
 	// First, clear all annotations
-	// ClearAnnotationAnchors("_all")
+	console.log ("Clear current annotations")
+	ClearAnnotationAnchors("_all")
 	
 	// Check or uncheck the concepts checkboxes for all the input concept
 	// descendant
@@ -625,11 +626,17 @@ function getNoteDescription(opus_ref, note_id) {
 					annot_elem.find("#annotation_target_source").html (annotation.target.resource.source);
 					annot_elem.find("#annotation_target_selector_type").html (annotation.target.resource.selector.type);
 					annot_elem.find("#annotation_target_selector_value").html (annotation.target.resource.selector.value);
-
-					annot_elem.find("#annotation_body_source").html (annotation.body.resource.source);
-					annot_elem.find("#annotation_body_selector_type").html (annotation.body.resource.selector.type);
-					annot_elem.find("#annotation_body_selector_value").html (annotation.body.resource.selector.value);
-
+	
+					if (annotation.body.type == "SpecificResource") {
+						annot_elem.find("#annotation_body_source").html (annotation.body.resource.source);
+						annot_elem.find("#annotation_body_selector_type").html (annotation.body.resource.selector.type);
+						annot_elem.find("#annotation_body_selector_value").html (annotation.body.resource.selector.value);
+					}
+					if (annotation.body.type == "TextualBody") {
+						//body_source = annot_elem.find("#annotation_body_source");
+						//body_source.parentNode.removeChild(body_source)
+						annot_elem.find("#annotation_body_selector_value").html (annotation.body.value);
+					}
 					annot_elem.show()
 					annot_elem.appendTo( $("#annotations_list"));
 					
@@ -755,7 +762,7 @@ function SelectAnnotationModel(form) {
 	var opus_ref = form.querySelector("#opus_ref").value;
 	var e = form.querySelector("#selected_annotation_model");
 
-	console.log ("Load the annotation model  for opus " + opus_ref.value + 
+	console.log ("Load the annotation model  for opus " + opus_ref + 
 	     " model "+  e.options[e.selectedIndex].value)
       ShowModelConcepts(opus_ref, e.options[e.selectedIndex].value) 
 

@@ -1,8 +1,8 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "dmos_region.json",
-  "title": "Schéma des coordonnées d'une région sur une image (x y w h)",
+  "title": "A region = a polygon described by its contour",
   "type": "array",
-  "minItems": 4,
-  "maxItems": 4
+  "items": {"$ref": "dmos_point.json" },
+  "minItems": 3
 }

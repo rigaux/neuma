@@ -76,19 +76,40 @@ class Annotation:
 		self.style = style
 
 	@staticmethod 
+	def create_target_for_annotation(doc_url, xml_id):
+		''' 
+			Create the target component for an XML fragment
+		'''
+		target_selector = FragmentSelector(FragmentSelector.XML_SELECTOR, xml_id)
+		target_resource = SpecificResource(doc_url, target_selector)
+		return Target(target_resource)
+		
+
+	@staticmethod 
 	def create_annot_from_xml_to_image(creator, doc_url, xml_id, image_url, region, annot_concept):
 		''' 
 			An annotation that links an XML element to an image region
 		'''
-		target_selector = FragmentSelector(FragmentSelector.XML_SELECTOR, xml_id)
-		target_resource = SpecificResource(doc_url, target_selector)
-		target = Target(target_resource)
+		target = Annotation.create_target_for_annotation(doc_url, xml_id)
+		
 		body_selector = FragmentSelector(FragmentSelector.MEDIA_SELECTOR, region)
 		body_resource = SpecificResource(image_url, body_selector)
 		body = ResourceBody(body_resource)
 		return Annotation(Annotation.get_new_id(), creator, target, body, 
 							AM_IMAGE_REGION, annot_concept, 
 							Annotation.MOTIVATION_LINKING,
+							datetime.datetime.now(), datetime.datetime.now())
+
+	@staticmethod 
+	def create_annot_from_error (creator, doc_url, xml_id, message, annot_concept):
+		''' 
+			An annotation that links an XML element to an image region
+		'''
+		target = Annotation.create_target_for_annotation(doc_url, xml_id)
+		body = TextualBody(message)
+		return Annotation(Annotation.get_new_id(), creator, target, body, 
+							AM_OMR_ERROR, annot_concept, 
+							Annotation.MOTIVATION_QUESTIONING,
 							datetime.datetime.now(), datetime.datetime.now())
 
 # Define the restricted list of possible motivations
@@ -125,11 +146,14 @@ class Body:
 	   This is a super-class, sub-typed for each type of body
 	'''
 	
+	def __init__(self):
+		self.type = "generic_body"
+		
 	def get_json_obj(self):
 		''' 
 			Return an object from JSON serialisation
 		'''
-		return {"type": "generic_body"}
+		return {"type": self.type}
 
 class TextualBody(Body):
 	'''
@@ -137,6 +161,7 @@ class TextualBody(Body):
 	'''
 	
 	def __init__(self,  value) :
+		self.type = "textual_body"
 		self.value = value
 		return
 
@@ -150,6 +175,7 @@ class ResourceBody(Body):
 	'''
 	
 	def __init__(self, resource) :
+		self.type = "resource_body"
 		self.resource = resource
 		return
 

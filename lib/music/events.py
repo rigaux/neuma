@@ -47,10 +47,6 @@ class Note (Event):
 	"""
 		Representation of a note
 	"""
-
-	DMOS_FLAT_SYMBOL="bemol"
-	DMOS_SHARP_SYMBOL="diese"
-	
 	UNDEFINED_STAFF = 0
 	
 	ALTER_FLAT = "-"
