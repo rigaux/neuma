@@ -46,6 +46,7 @@ c_format = logging.Formatter('%(name)s - %(levelname)s - %(message)s')
 c_handler.setFormatter(c_format)
 #logger.addHandler(c_handler)
 
+
 class CollabScoreParser:
 	"""
 
@@ -53,7 +54,6 @@ class CollabScoreParser:
 		and to produce encoded scores
 
 	"""
-
 
 	def __init__(self, schema_file_path, base_uri=""):
 		"""
