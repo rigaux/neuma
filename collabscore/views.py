@@ -58,6 +58,8 @@ def tests(request):
 		context['message'] = "Data loading error: " + str(ex)
 		return render(request, 'collabscore/tests.html', context)
 
+	#return render(request, 'collabscore/tests.html', context)
+
 	# Write the full document in a local file
 	#json_dir = os.path.join(settings.BASE_DIR, 'static', 'json')
 	#with open(os.path.join(json_dir, 'full_example.json'), 'a') as the_file:
@@ -114,7 +116,8 @@ def tests(request):
 		annotation.target.resource.source = score.uri
 		db_annot = Annotation.create_from_web_annotation(request.user, opus, annotation)
 		db_annot.target.save()
-		db_annot.body.save()
+		if db_annot.body is not None:
+			db_annot.body.save()
 		db_annot.save()
 
 	return render(request, 'collabscore/tests.html', context)
