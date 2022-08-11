@@ -146,7 +146,6 @@ class Command(BaseCommand):
 		self.load_model ("quality_model.xml")
 		self.load_model ("region_model.xml")
 		self.load_model ("omr_error_model.xml")
-		s
 		self.load_licences()
 		self.load_persons()
 		print ("Done !")
