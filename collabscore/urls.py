@@ -11,7 +11,7 @@ app_name="collabscore"
 
 urlpatterns = [
 	#url -> re_path because django 4 no longer support
-	path('',  TemplateView.as_view(template_name="collabscore/index.html"), name='index'),
+	path('', views.index, name='index'),
 	path('tests/', views.tests, name='tests'),
 
 ]
