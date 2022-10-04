@@ -16,6 +16,23 @@ import jsonref
 import jsonschema
 import json
 
+
+def index(request):
+	context = {"titre": "CollabScore actions"}
+
+	context["corpus"] = Corpus.objects.get(ref=settings.NEUMA_COLLABSCORE_CORPUS_REF)
+	context["opus_list"] = []
+	for opus in Opus.objects.filter(corpus=context["corpus"]):
+		context["opus_list"].append({"opus_obj": opus,
+									"url_mei" : request.build_absolute_uri(opus.mei.url),
+									"url_annotations": 
+									request.build_absolute_uri(
+									"/rest/collections/collabscore:dmos_ex1/_annotations/region/_all/"),
+									"label": opus.title})
+
+	return render(request, 'collabscore/index.html', context)
+
+
 def tests(request):
 	context = {"titre": "Tests Philippe"}
 

@@ -6,6 +6,20 @@
 
 <!-- ACCUEIL -->
 
+<h1>Liste des partitions numérisées</h1>
+
+<ul>
+  {% for opus in opus_list %}
+  <li>
+     Partition {{opus.opus_obj.title}}
+     <ol>
+        <li>Lien MEI : <a href="{{opus.url_mei}}">{{opus.url_mei}}</a>
+        <li>Lien annotations : <a href="{{opus.url_annotations}}">{{opus.url_mei}}</a>
+     </ol>
+  </li>
+  {% endfor %}
+</ul>
+<h1>Actions</h1>
 <div class="welcome">
 
 <a href="{% url 'collabscore:tests' %}">Tests d'imports des données ORM</a>
