@@ -19,7 +19,7 @@ from django.utils.safestring import mark_safe
 import requests
 
 import lxml.etree as etree
-from manager.models import Corpus, Opus, Upload, Audio, Bookmark, SimMeasure, Licence, Annotation, AnalyticModel, AnalyticConcept
+from manager.models import Corpus, Opus, Upload, Bookmark, SimMeasure, Licence, Annotation, AnalyticModel, AnalyticConcept
 from music import *
 from music.Concordance import *
 from neuma.rest import Client
@@ -400,19 +400,9 @@ class OpusView(NeumaView):
 		context['analytic_models'] = AnalyticModel.objects.all()
 		context['analytic_concepts'] = AnalyticConcept.objects.all()
 		context["annotation_models"] = AnalyticModel.objects.all()
-
-	   # Add audio files
-		context['audio_files'] = opus.audio_set.all()
-
-		# FIXME : need to do 'x + (y - x)' w/ opus1, opus2
-		#context['neighbors'] = SimMatrix.objects.filter(sim_measure=measure,
-		#								opus1=opus).order_by("value")[:settings.NB_NEIGHBORS]
-
-		# FIXME : Hard coding of voice 0. How can we fix that?
-	   # context['neighbor_voices'] = list(map(
-	   #	 lambda x:(x.opus2.title,x.opus2.get_score().get_all_voices()[0].get_histogram(measure)),
-		#	context['neighbors'])
-		#)
+		
+		# For for editing sources
+		context["source_form"] = OpusSourceForm()
 
 		# Show detail on the sequence and matching
 		if "explain" in self.request.GET:
@@ -422,24 +412,33 @@ class OpusView(NeumaView):
 
 		return context
 
+	def get(self, request, *args, **kwargs):
+		print ("Calling get method")
+		context = self.get_context_data(**kwargs)
+		return self.render_to_response(context)
+	
+	def post (self, request, *args, **kwargs):
+		""" Add a source to an Opus"""
+		print ("Calling post method")
+		context = self.get_context_data(**kwargs)
 
-def upload_opus_audio (request, opus_ref):
-	""" Upload an file for an Opus"""
-	
-	opus = Opus.objects.get(ref=opus_ref)
-	corpus = opus.corpus
-	
-	if request.method == 'POST' and "opus_audiofile" in request.FILES:
-		description = request.POST["description"]
-		audio_file = request.FILES["opus_audiofile"]
+		# Get the opus
+		opus_ref = self.kwargs['opus_ref']
+		opus = Opus.objects.get(ref=opus_ref)
 		
-		audio = Audio (opus=opus, filename=audio_file.name, description=description,audio_file=audio_file)
-		audio.save()
-	else:
-		logger.warning ("No file transmitted for opus " + corpus.ref)
-	   
-	url = reverse('home:opus', args=(), kwargs={"opus_ref": opus_ref})
-	return HttpResponseRedirect(url)
+		form = OpusSourceForm(request.POST, request.FILES)
+		if form.is_valid():
+				opus_source = form.save(commit=False)
+				opus_source.opus = opus
+				return redirect ('home:opus', opus_ref=opus_ref)
+		else:
+				# Reaffichage avec l'erreur
+				context["source_form"] = form
+				return redirect ('home:opus', opus_ref=opus_ref)
+	
+		print ("Tutto bene ! " + opus_ref)
+
+		return redirect ('home:opus', opus_ref=opus_ref)
 
 
 class SearchView(NeumaView):

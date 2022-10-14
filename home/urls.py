@@ -29,7 +29,6 @@ urlpatterns = [
     url(r'^corpus/(?P<corpus_ref>.+)/$', CorpusView.as_view(template_name="home/corpus.html"), name='corpus'),
     url(r'^show_licence/(?P<licence_code>.+)/$', views.show_licence , name='show_licence'),
 	url(r'^opus/(?P<opus_ref>.+)/_export_zip/$', views.export_opus_as_zip , name='opus_export_zip'),
-    url(r'^opus/(?P<opus_ref>.+)/_upload_audio/$', views.upload_opus_audio , name='upload_opus_audio'),
     url(r'^opus/(?P<opus_ref>.+)/(?P<pattern>.*)/$', OpusView.as_view(template_name="home/opus.html"), name='opus'),
     url(r'^opus/(?P<opus_ref>.+)/$', OpusView.as_view(template_name="home/opus.html"), name='opus'),
     url(r'^zoom/(?P<score_url>.+)/$', NeumaView.as_view(template_name="home/zoom.html"), name='zoom'),
