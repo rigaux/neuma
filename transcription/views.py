@@ -2,15 +2,7 @@ from django.shortcuts import render
 from neumautils.views import NeumaView
 from manager.models import (
     Corpus,
-    Opus,
-    Upload,
-    Audio,
-    Bookmark,
-    SimMeasure,
-    SimMatrix,
-    Annotation,
-    AnalyticModel,
-    AnalyticConcept,
+    Opus
 )
 from django.conf import settings
 from .forms import TranscriptionSettingsForm

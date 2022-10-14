@@ -1,7 +1,7 @@
 from django.core.management.base import BaseCommand, CommandError
 from django.conf import settings
 from manager.models import Corpus, Opus, Upload, SimMeasure, AnalyticModel
-from manager.models import AnalyticConcept, Licence, Person
+from manager.models import AnalyticConcept, Licence, Person, SourceType
 from lib.workflow.Workflow import Workflow
 import string
 from django.core.files import File
@@ -148,6 +148,7 @@ class Command(BaseCommand):
 		self.load_model ("omr_error_model.xml")
 		self.load_licences()
 		self.load_persons()
+		self.load_source_types()
 		print ("Done !")
 		
 
@@ -286,4 +287,20 @@ class Command(BaseCommand):
 									year_death=person["year_death"])
 					person.save()
 
+	def load_source_types (self):
+		static_dir = os.path.join(settings.BASE_DIR, "static")
+ 
+		# Parse the file
+		with open(static_dir + "/source_types/stypes.json") as fp:
+			stypes = json.load(fp)
+			for stype in stypes:
+				try:
+					db_stype = SourceType.objects.get(code=stype["code"])
+					print ("Source type %s %s already exists" % (stype["code"]))
+				except SourceType.DoesNotExist:
+					print ("Creating source type %s" % (stype["code"]))
+					db_stype = SourceType (code=stype["code"],
+									description=stype["description"],
+									mime_type=stype["mime_type"])
+					db_stype.save()
 

@@ -666,9 +666,13 @@ class Opus(models.Model):
 	external_link  = models.CharField(max_length=255,null=True, blank=True)
 	
 	# .Files names
-	FILE_NAMES = {"score.xml": "musicxml", "mei.xml": "mei","score.png": "png",
-				  "preview.png": "preview", "score.pdf": "pdf", "preview.ly": "lilypreview",
-				  "score.ly": "lilypond", "score.midi": "midi", "summary.json": "summary",
+	FILE_NAMES = {"score.xml": "musicxml", 
+				   "mei.xml": "mei",
+				   "score.png": "png",
+				  "preview.png": "preview", 
+				  "score.pdf": "pdf",
+				   "score.midi": "midi", 
+				   "summary.json": "summary",
 				  "record.mp3": "record"}
 
 	def statsDic(opus):
@@ -693,8 +697,6 @@ class Opus(models.Model):
 	png = models.FileField(upload_to=upload_path,null=True,storage=OverwriteStorage())
 	preview = models.FileField(upload_to=upload_path,null=True,storage=OverwriteStorage())
 	pdf = models.FileField(upload_to=upload_path,null=True,storage=OverwriteStorage())
-	lilypond = models.FileField(upload_to=upload_path,null=True,storage=OverwriteStorage())
-	lilypreview = models.FileField(upload_to=upload_path,null=True,storage=OverwriteStorage())
 	midi = models.FileField(upload_to=upload_path,null=True,storage=OverwriteStorage())
 	summary = models.FileField(upload_to=upload_path,null=True,storage=OverwriteStorage())
 	record = models.FileField(upload_to=upload_path,null=True,blank=True,storage=OverwriteStorage())
@@ -993,6 +995,40 @@ class Descriptor(models.Model):
 
 	def __str__(self):
 		return self.type + " " + str(self.opus.ref) + " " + str(self.opus.corpus)
+	
+class SourceType (models.Model):
+	'''Description of the accepted types of sources'''
+	code = models.CharField(max_length=25,primary_key=True)
+	description = models.TextField()
+	mime_type = models.CharField(max_length=255)
+
+	class Meta:
+		db_table = "SourceType"	
+
+	def __str__(self):  # __unicode__ on Python 2
+		return self.description + " (" + self.code + ")"
+
+class OpusSource (models.Model):
+	'''A link to a source that contains the representation of an Opus'''
+	opus = models.ForeignKey(Opus,on_delete=models.PROTECT)
+	ref =   models.CharField(max_length=25)
+	description =   models.TextField()
+	source_type = models.ForeignKey(SourceType,on_delete=models.PROTECT)
+	url = models.CharField(max_length=100,null=True)
+	creation_timestamp = models.DateTimeField('Created', auto_now_add=True)
+	update_timestamp = models.DateTimeField('Updated', auto_now=True)
+
+	def upload_path(self, filename):
+		'''Set the path where source files must be stored'''
+		source_ref = self.opus.ref.replace(settings.NEUMA_ID_SEPARATOR, "-")
+		return 'sources/' + source_ref + '/' + filename
+	source_file = models.FileField(upload_to=upload_path,null=True,storage=OverwriteStorage())
+
+	class Meta:
+		db_table = "OpusSource"	
+
+	def __str__(self):  # __unicode__ on Python 2
+		return "(" + self.opus.ref + ") " + self.ref
 
 class Bookmark(models.Model):
 	'''Record accesses from user to opera'''

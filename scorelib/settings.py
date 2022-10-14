@@ -53,7 +53,8 @@ INSTALLED_APPS = (
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'guardian',
+     'crispy_forms',
+  'guardian',
     # 'debug_toolbar',
     "home",
     "manager",
@@ -67,6 +68,7 @@ INSTALLED_APPS = (
     "mptt",
     'django_q',
    'drf_yasg',
+
 )
 
 SESSION_SERIALIZER='django.contrib.sessions.serializers.PickleSerializer'
