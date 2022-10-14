@@ -26,11 +26,15 @@ $(function() {
 <script language="JavaScript" type="text/JavaScript">
 /* Declare the list of tabs in the current page */
 {% if "change_corpus" in user_corpus_perms  %}
-var tabNames = [{"tabId": "tab1", "divId": "score"}, 
-                {"tabId": "tab2", "divId":"manage"}
+var tabNames = [
+	            {"tabId": "tab1", "divId": "score"}, 
+                {"tabId": "tab2", "divId":"sources"},
+                {"tabId": "tab3", "divId":"manage"}
                 ]
  {% else %}
-var tabNames = [{"tabId": "tab1", "divId": "score"}, 
+var tabNames = [
+	     {"tabId": "tab1", "divId": "score"}, 
+         {"tabId": "tab2", "divId":"sources"}
                 ]
 {% endif %}
 </script>
@@ -154,8 +158,10 @@ if request.session.search_context.pattern != ""
 	<ul id="tabnav">
 		<li id="tab1" class="active"><a href="#"
 			onClick="TabClick(tabNames, 0);">Score</a></li>
+		<li id="tab2" class="active"><a href="#"
+			onClick="TabClick(tabNames, 1);">Sources</a></li>
         {% if "change_corpus" in user_corpus_perms %}
-           <li id="tab2"><a href="#" onClick="TabClick(tabNames, 1);">Manage</a></li>
+           <li id="tab3"><a href="#" onClick="TabClick(tabNames, 2);">Manage</a></li>
         {% endif %}
 		</li>
 	</ul>
@@ -198,29 +204,42 @@ if request.session.search_context.pattern != ""
 
 <div class="clearer">&nbsp;</div>
 
-<!--   Tab for management functions -->
-<div id="manage" style="display: none">
-  <h1>Sources</h1>
+<!--   Tab for sources  -->
+<div id="sources" style="display: none">
   
   
   <h3>List of sources for this opus</h3>
+     <ul>
+      {% for source in opus.opussource_set.all %}
+           <li> Reference: {{ source.ref}}. Description: {{source.description}}
+             Type: {{source.source_type.mime_type}}
+                  {% if "change_corpus" in user_corpus_perms %}
+          <a  href="{% url 'home:opus' opus.ref %}?edit_source=1&source_id={{source.id}}">
+                           (Edit)
+                         </a>        
+               {% endif %}  
+          </li>
+      {% endfor %}
+   </ul>
 
+  
+</div>
 
-  <ul style="list-style-type: disc;margin-bottom:10px;">
-    {% for source in opus.sources_set %}
-    <li style="margin-bottom:10px;">Audio file {{ audio.id }}: {{audio.description}}<br/>
-      </li>
-    {% endfor %}
-  </ul>
+<div class="clearer">&nbsp;</div>
+
+<!--   Tab for management functions -->
+<div id="manage" style="display: none">
+  
+  {{source_form.errors}}
  
-  <h3>Create a new source</h3>
-  
-  
 
-<form method="post">
-    {% csrf_token %}
+  {% if edit_source == 0 %}
+  <h3>Create a new source</h3>
+  {% else %}
+  <h3>Update a source</h3>
+  {% endif %}
+  
        {% crispy source_form %}
-</form>
 
   
 </div>

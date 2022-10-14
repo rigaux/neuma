@@ -902,18 +902,22 @@ class Opus(models.Model):
 		result = opus.delete()
 		return result
 
-	def to_json(self):
+	def to_json(self, request):
 		"""
 		  Create a dictionary that can be used for JSON exports
 		"""
 		metas = []
 		for meta in self.get_metas ():
 			metas.append({"meta_key": meta.meta_key, "meta_value": meta.meta_value})
+		sources = []
+		for source in self.opussource_set.all ():
+			sources.append(source.to_json(request))
 		return {"ref": self.local_ref(), 
 				 "title": self.title, "composer": self.composer, 
 				 "lyricist": self.lyricist, 
 				 "corpus": self.corpus.ref,
-				 "meta_fields": metas}
+				 "meta_fields": metas,
+				 "sources": sources}
 
 
 class OpusMeta(models.Model):
@@ -1021,7 +1025,7 @@ class OpusSource (models.Model):
 	def upload_path(self, filename):
 		'''Set the path where source files must be stored'''
 		source_ref = self.opus.ref.replace(settings.NEUMA_ID_SEPARATOR, "-")
-		return 'sources/' + source_ref + '/' + filename
+		return 'sources/' + source_ref + '/' + self.ref + '-' + filename
 	source_file = models.FileField(upload_to=upload_path,null=True,storage=OverwriteStorage())
 
 	class Meta:
@@ -1029,6 +1033,18 @@ class OpusSource (models.Model):
 
 	def __str__(self):  # __unicode__ on Python 2
 		return "(" + self.opus.ref + ") " + self.ref
+
+	def to_json(self, request):
+		"""
+		  Create a dictionary that can be used for JSON exports
+		"""
+		dict =  {"ref": self.ref, "description": self.description,
+				"source_type": self.source_type.mime_type, "url": self.url}
+		if self.source_file:
+			my_url = request.build_absolute_uri("/")[:-1]
+			dict["url"] = my_url + self.source_file.url
+			
+		return dict
 
 class Bookmark(models.Model):
 	'''Record accesses from user to opera'''

@@ -296,7 +296,7 @@ class Command(BaseCommand):
 			for stype in stypes:
 				try:
 					db_stype = SourceType.objects.get(code=stype["code"])
-					print ("Source type %s %s already exists" % (stype["code"]))
+					print ("Source type %s already exists" % (stype["code"]))
 				except SourceType.DoesNotExist:
 					print ("Creating source type %s" % (stype["code"]))
 					db_stype = SourceType (code=stype["code"],

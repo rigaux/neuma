@@ -27,10 +27,12 @@ class CorpusForm(forms.ModelForm):
 
 class OpusSourceForm(ModelForm):
  
+    id_source = None
+
     class Meta:
         model = OpusSource
         fields = "__all__"
-    
+        
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.helper = FormHelper()
@@ -44,15 +46,19 @@ class OpusSourceForm(ModelForm):
         self.fields['source_file'].required = False
         #self.fields['creation_timestamp'].required = False
         #self.fields['update_timestamp'].required = False
-        self.fields['mime_type'] = forms.ModelChoiceField(queryset=SourceType.objects.all())
+        self.fields['source_type'] = forms.ModelChoiceField(queryset=SourceType.objects.all())
         self.fields['description'] = forms.CharField(widget=forms.Textarea(attrs={"rows":3, "cols":20}))
 
+        self.fields["id_source"] = forms.CharField(widget=forms.HiddenInput(),initial=OpusSourceForm.id_source)
+        self.fields['id_source'].required = False
+        
         self.helper.layout = Layout(
             'ref',
-            'mime_type',
+            'source_type',
             'description',
             'url',
             'source_file', 
+            "id_source",
             Submit('submit', 'Sauvegarder')
          )
         
