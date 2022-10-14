@@ -286,7 +286,9 @@ class CorpusEditView(NeumaView):
 	
 class OpusView(NeumaView):
 	
-	""" Display an opus """
+	""" 
+		Any information displayed is put in the context array by this function 
+	"""
 	def get_context_data(self, **kwargs):
 		# Get the opus
 		opus_ref = self.kwargs['opus_ref']
@@ -323,9 +325,6 @@ class OpusView(NeumaView):
 		# The pattern: it comes either from the search form (and takes priority)
 		# or from the session
 
-		#NOT necessary because the keyword is already saved in self.request.session["search_context"].keywords
-		#self.request.GET and self.request.POST are empty
-
 		if self.request.session["search_context"].keywords != "":
 			#There is a keyword to search
 			matching_ids = []
@@ -343,8 +342,10 @@ class OpusView(NeumaView):
 								matching_ids.append(m_id)
 			context["msummary"] = ""
 			context["pattern"] = ""
-			#Could be improved if necessary: context["occurrences"] in the same format as what it is for pattern search,
-			#speicifying the voices and occurrences in each voices instead of a total number of occurrences
+			# Could be improved if necessary: context["occurrences"] in the 
+			# same format as what it is for pattern search,
+			# speicifying the voices and occurrences in each voices instead of a total 
+			# number of occurrences
 			context["occurrences"] = len(matching_ids)
 			context["matching_ids"] = mark_safe(json.dumps(matching_ids))
 		
@@ -413,33 +414,49 @@ class OpusView(NeumaView):
 		return context
 
 	def get(self, request, *args, **kwargs):
-		print ("Calling get method")
 		context = self.get_context_data(**kwargs)
+		
+		if 'edit_source' in request.GET:
+			context["edit_source"] = 1
+			source = OpusSource.objects.get(id=request.GET["source_id"])
+			
+			# To introduce the id in the form, teelling that we are in update mode
+			OpusSourceForm.id_source = source.id
+			context["source_form"] = OpusSourceForm(instance=source)
+			# reset the static info
+			OpusSourceForm.id_source = None
+		else:
+			context["edit_source"] = 0
+
 		return self.render_to_response(context)
 	
 	def post (self, request, *args, **kwargs):
 		""" Add a source to an Opus"""
-		print ("Calling post method")
 		context = self.get_context_data(**kwargs)
-
+		context["edit_source"] = 1
+		
 		# Get the opus
 		opus_ref = self.kwargs['opus_ref']
 		opus = Opus.objects.get(ref=opus_ref)
 		
-		form = OpusSourceForm(request.POST, request.FILES)
-		if form.is_valid():
-				opus_source = form.save(commit=False)
-				opus_source.opus = opus
-				return redirect ('home:opus', opus_ref=opus_ref)
+		if request.POST["id_source"] != '':
+			# Update mode
+			source = OpusSource.objects.get(id=request.POST["id_source"])
+			form = OpusSourceForm(data=request.POST, files=request.FILES, instance=source)
 		else:
-				# Reaffichage avec l'erreur
-				context["source_form"] = form
-				return redirect ('home:opus', opus_ref=opus_ref)
-	
-		print ("Tutto bene ! " + opus_ref)
+			#Create mode
+			form = OpusSourceForm(data=request.POST,files=request.FILES)
 
-		return redirect ('home:opus', opus_ref=opus_ref)
-
+		if form.is_valid():
+			opus_source = form.save(commit=False)
+			opus_source.opus = opus
+			opus_source.save()
+			return  self.render_to_response(context)
+		else:
+			# Reaffichage avec l'erreur
+			print ("Erreur validation")
+			context["source_form"] = form
+			return  self.render_to_response(context)
 
 class SearchView(NeumaView):
 	"""Carry out a search"""

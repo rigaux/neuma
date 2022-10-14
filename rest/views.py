@@ -155,7 +155,7 @@ def handle_neuma_ref_request(request, full_neuma_ref):
 
 	if request.method == "GET":
 		if object_type == OPUS_RESOURCE:
-			return JSONResponse(opus_to_rest(neuma_object))
+			return JSONResponse(neuma_object.to_json(request))
 		elif object_type == CORPUS_RESOURCE:
 			return JSONResponse(corpus_to_rest(neuma_object))
 		elif object_type == INTERNAL_REF_RESOURCE:
@@ -336,7 +336,7 @@ def handle_import_request(request, full_neuma_ref, upload_id):
 			return JSONResponse(
 			{"error": "Empty list to import"})
 		for opus in list_imported:
-			answer_list.append(opus_to_rest(opus))
+			answer_list.append(opus.to_json(resquest))
 		return JSONResponse(
 			{"imported_file": upload.description, "imported_opera": answer_list}
 		)
@@ -488,7 +488,7 @@ def handle_opera_request(request, full_neuma_ref):
 
 		answer = []
 		for opus in opera:
-			answer.append(opus_to_rest(opus))
+			answer.append(opus.to_json(resquest))
 
 		return JSONResponse(answer)
 
@@ -517,20 +517,13 @@ def handle_files_request(request, full_neuma_ref):
 	if request.method == "GET":
 
 		my_url = request.build_absolute_uri("/")[:-1]
-		answer = opus_to_rest(opus)
+		answer = opus.to_json(resquest)
 		answer["files"] = {}
 		for fname, fattr in Opus.FILE_NAMES.items():
 			file = getattr(opus, fattr)
 			if file:
 				answer["files"][fname] = {"url": my_url + file.url}
 		return JSONResponse(answer)
-
-
-def opus_to_rest(opus):
-	"""
-	  Create the REST answer that describes an opus
-	"""
-	return opus.to_json()
 
 
 ############
