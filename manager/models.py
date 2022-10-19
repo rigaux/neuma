@@ -370,7 +370,7 @@ class Corpus(models.Model):
 		pprint(x)
 		return x
 
-	def export_as_zip(self):
+	def export_as_zip(self, request):
 		''' Export a corpus, its children and all opuses in
 			a recursive zip file 
 		'''
@@ -394,7 +394,7 @@ class Corpus(models.Model):
 			
 		# Add the zip files of the children
 		for child in self.get_direct_children():
-			zf.writestr(Corpus.local_ref(child.ref) + ".zip", child.export_as_zip().getvalue() )
+			zf.writestr(Corpus.local_ref(child.ref) + ".zip", child.export_as_zip(request).getvalue() )
 			
 		opera = Opus.objects.filter(corpus=self)
 		for opus in self.get_opera():
@@ -406,7 +406,7 @@ class Corpus(models.Model):
 				if os.path.exists(opus.mei.path):
 					zf.write(opus.mei.path, opus.local_ref() + ".mei")
 			# Add a JSON file with meta data
-			opus_json = json.dumps(opus.to_json())
+			opus_json = json.dumps(opus.to_json(request))
 			zf.writestr(opus.local_ref() + ".json", opus_json)
 		zf.close()
 		
@@ -734,7 +734,21 @@ class Opus(models.Model):
 			metas.append (m)
 		return metas
 
+	def add_source (self,source_dict):
+		"""Add a source to the opus"""
 		
+		# Search if exists
+		try:
+			source = OpusSource.objects.get(opus=self,ref=source_dict["ref"])
+		except OpusSource.DoesNotExist as e:
+			stype = SourceType.objects.get(code=source_dict["source_type"])
+			source = OpusSource(opus=self,
+							ref=source_dict["ref"],
+							description=source_dict["description"],
+							source_type=stype,
+							url=source_dict["url"])
+			source.save()
+
 	def load_from_dict(self, corpus, dict_opus, files={}, opus_url=""):
 		"""Load content from a dictionary.
 
@@ -761,7 +775,12 @@ class Opus(models.Model):
 		if ("metas" in dict_opus.keys()):
 			if (dict_opus["metas"] != None):
 				for m in dict_opus["metas"]:
-					add_meta (m.meta_key, m.meta_value)
+					self.add_meta (m.meta_key, m.meta_value)
+		if ("sources" in dict_opus.keys()):
+			if (dict_opus["sources"] != None):
+				for source in dict_opus["sources"]:
+					print ("Add source " + source["ref"])
+					self.add_source (source)
 		self.corpus = corpus
 
 		# Get the Opus files
@@ -912,7 +931,8 @@ class Opus(models.Model):
 		for source in self.opussource_set.all ():
 			sources.append(source.to_json(request))
 		return {"ref": self.local_ref(), 
-				 "title": self.title, "composer": self.composer, 
+				 "title": self.title,
+				  "composer": self.composer, 
 				 "lyricist": self.lyricist, 
 				 "corpus": self.corpus.ref,
 				 "meta_fields": metas,
@@ -1017,7 +1037,7 @@ class OpusSource (models.Model):
 	ref =   models.CharField(max_length=25)
 	description =   models.TextField()
 	source_type = models.ForeignKey(SourceType,on_delete=models.PROTECT)
-	url = models.CharField(max_length=100,null=True)
+	url = models.CharField(max_length=255,null=True)
 	creation_timestamp = models.DateTimeField('Created', auto_now_add=True)
 	update_timestamp = models.DateTimeField('Updated', auto_now=True)
 
@@ -1037,13 +1057,16 @@ class OpusSource (models.Model):
 		"""
 		  Create a dictionary that can be used for JSON exports
 		"""
-		dict =  {"ref": self.ref, "description": self.description,
-				"source_type": self.source_type.mime_type, "url": self.url}
+		source_dict =  {"ref": self.ref, 
+					"description": self.description,
+				"source_type": self.source_type.code, 
+				"mime_type": self.source_type.mime_type, 
+				"url": self.url}
 		if self.source_file:
 			my_url = request.build_absolute_uri("/")[:-1]
-			dict["url"] = my_url + self.source_file.url
+			source_dict["url"] = my_url + self.source_file.url
 			
-		return dict
+		return source_dict
 
 class Bookmark(models.Model):
 	'''Record accesses from user to opera'''
