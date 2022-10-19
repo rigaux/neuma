@@ -212,11 +212,14 @@ if request.session.search_context.pattern != ""
      <ul>
       {% for source in opus.opussource_set.all %}
            <li> Reference: {{ source.ref}}. Description: {{source.description}}
-             Type: {{source.source_type.mime_type}}
-                  {% if "change_corpus" in user_corpus_perms %}
-          <a  href="{% url 'home:opus' opus.ref %}?edit_source=1&source_id={{source.id}}">
-                           (Edit)
-                         </a>        
+             <ul>
+               <li> Type: {{source.source_type.mime_type}}</li>
+               <li> Url: <a href="{{source.url}}">{{source.url}}</a></li>
+               <li>  {% if "change_corpus" in user_corpus_perms %}
+           Actions :  <a  href="{% url 'home:opus' opus.ref %}?edit_source=1&source_id={{source.id}}">
+                           Edit
+                         </a> </li>
+                  </ul>       
                {% endif %}  
           </li>
       {% endfor %}
