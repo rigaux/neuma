@@ -234,7 +234,7 @@ NEUMA_ID_SEPARATOR = ":"
 NEUMA_ROOT_CORPUS_REF = "all"
 NEUMA_EXTERNAL_CORPUS_REF = "external"
 NEUMA_QUALITY_CORPUS_REF = "qualeval"
-NEUMA_COLLABSCORE_CORPUS_REF = "collabscore"
+NEUMA_COLLABSCORE_CORPUS_REF = "all:collabscore"
 
 # Used everywhere, to know which kind of object we are dealing with
 CORPUS_TYPE = "corpus"

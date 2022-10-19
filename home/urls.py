@@ -26,6 +26,7 @@ urlpatterns = [
     url(r'^corpus/(?P<corpus_ref>.+)/_export_zip/$', views.export_corpus_as_zip , name='corpus_export_zip'),
     url(r'^corpus/(?P<corpus_ref>.+)/_upload_zip/$', views.upload_corpus_zip , name='upload_corpus_zip'),
     url(r'^corpus/(?P<corpus_ref>.+)/_create_child/$', CorpusEditView.as_view(template_name="home/corpus_edit.html"), name='create_corpus_child'),
+    url(r'^corpus/(?P<corpus_ref>.+)/_edit_opus/$', views.edit_opus , name='edit_opus'),
     url(r'^corpus/(?P<corpus_ref>.+)/$', CorpusView.as_view(template_name="home/corpus.html"), name='corpus'),
     url(r'^show_licence/(?P<licence_code>.+)/$', views.show_licence , name='show_licence'),
 	url(r'^opus/(?P<opus_ref>.+)/_export_zip/$', views.export_opus_as_zip , name='opus_export_zip'),

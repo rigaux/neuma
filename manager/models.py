@@ -691,8 +691,6 @@ class Opus(models.Model):
 	musicxml = models.FileField(upload_to=upload_path,null=True,storage=OverwriteStorage())
 	mei = models.FileField(upload_to=upload_path,null=True,storage=OverwriteStorage(), max_length=255)
 	png = models.FileField(upload_to=upload_path,null=True,storage=OverwriteStorage())
-	lilypond = models.FileField(upload_to=upload_path,null=True,storage=OverwriteStorage())
-	lilypreview = models.FileField(upload_to=upload_path,null=True,storage=OverwriteStorage())
 	dmos_json = models.FileField(upload_to=upload_path,null=True,storage=OverwriteStorage())
 	preview = models.FileField(upload_to=upload_path,null=True,storage=OverwriteStorage())
 	pdf = models.FileField(upload_to=upload_path,null=True,storage=OverwriteStorage())
@@ -764,6 +762,7 @@ class Opus(models.Model):
 		else:
 			raise  KeyError('Missing ref field in an Opus dictionary')
 
+		self.corpus = corpus
 		self.title = dict_opus["title"]
 
 		if ("lyricist" in dict_opus.keys()):
@@ -772,6 +771,9 @@ class Opus(models.Model):
 		if ("composer" in dict_opus.keys()):
 			if (dict_opus["composer"] != None):
 				self.composer = dict_opus["composer"]
+				
+		# Saving before adding related objects
+		self.save()
 		if ("metas" in dict_opus.keys()):
 			if (dict_opus["metas"] != None):
 				for m in dict_opus["metas"]:
@@ -781,7 +783,6 @@ class Opus(models.Model):
 				for source in dict_opus["sources"]:
 					print ("Add source " + source["ref"])
 					self.add_source (source)
-		self.corpus = corpus
 
 		# Get the Opus files
 		for fname, desc  in files.items():

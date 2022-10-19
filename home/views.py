@@ -458,6 +458,14 @@ class OpusView(NeumaView):
 			context["source_form"] = form
 			return  self.render_to_response(context)
 
+
+def edit_opus (request, corpus_ref):
+	""" Form to edit an opus"""
+	
+	context["licence"] = ""
+	return render(request, 'home/edit_opus.html', context)
+
+
 class SearchView(NeumaView):
 	"""Carry out a search"""
 

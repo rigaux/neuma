@@ -12,7 +12,7 @@ app_name="collabscore"
 urlpatterns = [
 	#url -> re_path because django 4 no longer support
 	path('', views.index, name='index'),
-	path('tests/', views.tests, name='tests'),
+	path('tests/(?P<opus_ref>.+)/', views.tests, name='tests'),
 
 ]
 
