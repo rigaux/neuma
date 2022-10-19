@@ -33,7 +33,7 @@ def index(request):
 	return render(request, 'collabscore/index.html', context)
 
 
-def tests(request):
+def tests(request, opus_ref):
 	context = {"titre": "Tests Philippe"}
 
 	local_files = True

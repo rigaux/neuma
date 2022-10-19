@@ -270,23 +270,34 @@ var tabNames = [{"tabId": "tab1", "divId": "subcorpus"},
 <div id="manage" style="display: none">
   <h1>Manage corpus</h1>
   
+  <h3>Edit / create</h3>
   <div>
         {% if perms.manager.change_corpus  or user.is_superuser%}
-       <a
+        <ol>
+          <li> <a
             href="{% url 'admin:manager_corpus_change' corpus.id %}"
             title="edit this corpus"> Edit this corpus
-        </a> |
-         <a
+        </a> </li>
+        <li>   <a
         href="{% url 'home:corpus_export_zip'  corpus.ref %}"
         title="">{% trans 'Export this corpus as a zip file' %}
-      </a>
+      </a></li>
+        <li>   <a
+        href="{% url 'home:create_corpus_child' corpus.ref %}"
+        title="">{% trans 'Create a sub-corpus' %}
+      </a></li>
+        <li>   <a
+        href="{% url 'home:edit_opus' corpus.ref %}"
+        title="">{% trans 'Add an opus to this corpus' %}
+      </a></li>
+              </ol>
+     
         {% endif %}
-        </div>
-  <table width="100%" border="0">
-    <tr>
-    <td width="40%">
-  <h3>{% trans "List of uploaded ZIP files" %}</h3>
-  <ul>
+      </div>
+      
+      <h3>{% trans "List of uploaded ZIP files" %}</h3>  
+  
+    <ul>
     {% for upload in uploads %}
     <li>ID: {{upload.id}}. Content: {{upload.description}}<br/>
       {% if perms.corpus.change_upload  or user.is_superuser %}
@@ -304,9 +315,7 @@ var tabNames = [{"tabId": "tab1", "divId": "subcorpus"},
     </li>
     {% endfor %}
   </ul>
-          
-  </td>
-  <td>
+ 
   <h3>{% trans "Upload a new ZIP file" %}</h3>
    <form method="post" 
    action="{% url 'home:upload_corpus_zip' corpus.ref %}" 
@@ -323,19 +332,7 @@ var tabNames = [{"tabId": "tab1", "divId": "subcorpus"},
     <input type="submit" value="{% trans 'Upload' %}"/>
     </fieldset>
   </form>
-  </td>
-  </tr>
-  <tr>
-  <td></td>
-  <td>
-    <h3>{% trans "Create a child corpus" %}</h3>
-  <form method="POST"  action="{% url 'home:create_corpus_child' corpus.ref %}" >
-    {% csrf_token %}
-        {{ child_form.as_p }}
-        <input type="submit" value="Access creation form"/>
-    </form></td>
-  </tr>
-  </table>
+
 </div>
 
 <!--   Tab for  infos -->
