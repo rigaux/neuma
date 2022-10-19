@@ -12,21 +12,12 @@
                            title="{% trans 'Download MEI' %}"> <span class="accessibility">{% trans 'Download MEI' %}</span>
         </a></li>
         {% endif  %}
-        {% if opus.record %}
-        <li class="play"><a target="_blank" href="{{opus.record.url}}"
-                            title="{% trans 'Listen' %}"> <span class="accessibility">{% trans 'Listen' %}</span>
-        </a></li>
-        {% endif %}
         {% if opus.musicxml %}
         <li class="download"><a target="_blank" href="{{opus.musicxml.url}}"
                                 title="{% trans 'Download MusicXML'%}" target="_blank"> <span class="accessibility">{% trans 'Download MusicXML' %}</span>
         </a></li>
         {% endif %}
-        {% if opus.pdf %}
-        <li class="print"><a target="_blank" href="{{opus.pdf.url}}"
-                             title="{% trans 'Print (PDF)'%}" target="_blank"> <span class="accessibility">{% trans 'Print (PDF)' %}</span>
-        </a></li>
-        {% endif %}
+
               <li class="zoom">  <a  href="{% url 'home:opus' opus.ref %}" title="{% trans 'Open'%}">
                              <img width="20px" src="/static/images/zoom-icon.png"/>
                          </a>
@@ -78,14 +69,6 @@
     <table class="preview"><tr>
         <td valign="top">
         </td><td>     <a href="{% url 'home:opus' opus.ref %}"><div id="incipit{{opus.id}}"></div></a>
-        </td>
-    </tr>
-    </table>
-{% elif opus.png %}
-
-    <table class="preview"><tr>
-        <td valign="top">
-        </td><td>     <a href="{% url 'home:opus' opus.ref %}"><img src="{{opus.preview.url}}" alt="{{opus.title}}" /></a>
         </td>
     </tr>
     </table>

@@ -98,13 +98,6 @@
 			<i>in</i> <a href="{% url 'home:corpus' opus.corpus.ref %}">{{opus.corpus.title}}</a>
 		</h5>
 
-	        {% if opus.preview %}
-		<a
-			href="{base_url}/ajax/highlight?height=600&width=800&id={Opus->neutralId}&score={Opus->uri_score.png}&link={Opus->uri_link.xml}&positions={pattern_positions}"
-			class="thickbox"> <img src="{{opus.preview.url}}"
-			width="100%" alt="{{opus.title}}" />
-		</a>
-		         {% endif %}
 	</div>	
         {% endfor %} 
 

@@ -668,10 +668,6 @@ class Opus(models.Model):
 	# .Files names
 	FILE_NAMES = {"score.xml": "musicxml", 
 				   "mei.xml": "mei",
-				   "score.png": "png",
-				  "preview.png": "preview", 
-				  "score.pdf": "pdf",
-				   "score.midi": "midi", 
 				   "summary.json": "summary",
 				  "record.mp3": "record"}
 
@@ -695,6 +691,9 @@ class Opus(models.Model):
 	musicxml = models.FileField(upload_to=upload_path,null=True,storage=OverwriteStorage())
 	mei = models.FileField(upload_to=upload_path,null=True,storage=OverwriteStorage(), max_length=255)
 	png = models.FileField(upload_to=upload_path,null=True,storage=OverwriteStorage())
+	lilypond = models.FileField(upload_to=upload_path,null=True,storage=OverwriteStorage())
+	lilypreview = models.FileField(upload_to=upload_path,null=True,storage=OverwriteStorage())
+	dmos_json = models.FileField(upload_to=upload_path,null=True,storage=OverwriteStorage())
 	preview = models.FileField(upload_to=upload_path,null=True,storage=OverwriteStorage())
 	pdf = models.FileField(upload_to=upload_path,null=True,storage=OverwriteStorage())
 	midi = models.FileField(upload_to=upload_path,null=True,storage=OverwriteStorage())
