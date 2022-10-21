@@ -17,7 +17,12 @@
                                 title="{% trans 'Download MusicXML'%}" target="_blank"> <span class="accessibility">{% trans 'Download MusicXML' %}</span>
         </a></li>
         {% endif %}
-
+       {% if perms.manager.change_corpus  or user.is_superuser%}
+          <li class="edit">  <a  href="{% url 'home:edit_opus' opus.ref %}" title="Edit opus">
+                            <span class="accessibility">edit</span>
+                         </a>
+                        </li>
+        {% endif %}
               <li class="zoom">  <a  href="{% url 'home:opus' opus.ref %}" title="{% trans 'Open'%}">
                              <img width="20px" src="/static/images/zoom-icon.png"/>
                          </a>
