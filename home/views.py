@@ -459,10 +459,46 @@ class OpusView(NeumaView):
 			return  self.render_to_response(context)
 
 
-def edit_opus (request, corpus_ref):
+def add_opus (request, corpus_ref):
+	""" Form to add an opus"""
+	
+	context["corpus"] = Corpus.objects.get(ref=corpus_ref)
+	OpusForm.corpus_ref = context["corpus"].ref
+	if request.method == "POST":
+		form = OpusForm(request.POST, request.FILES)
+		if form.is_valid():
+			opus = form.save(commit=False)
+			opus.corpus = context["corpus"]
+			opus.save()
+			return redirect ('home:edit_opus', opus_ref=opus.ref)
+		else:
+			print ("Problème")
+	else:
+		context["opusForm"] = OpusForm()
+		context["mode"] = "insert"
+	return render(request, 'home/edit_opus.html', context)
+
+
+def edit_opus (request, opus_ref):
 	""" Form to edit an opus"""
 	
-	context["licence"] = ""
+	opus = Opus.objects.get(ref=opus_ref)
+	context["corpus"] = opus.corpus
+	OpusForm.corpus_ref = context["corpus"].ref
+
+	if request.method == "POST":
+		context["opusForm"] = OpusForm(instance=opus, data=request.POST, files=request.FILES)
+		if context["opusForm"].is_valid():
+			opus = context["opusForm"].save(commit=False)
+			opus.corpus = context["corpus"]
+			opus.save()
+		else:
+			# Reaffichage avec l'erreur
+			return render(request, 'home/edit_opus.html', context)
+	else:
+		OpusForm.mode = "create"
+		context["opusForm"] = OpusForm(instance=opus)
+
 	return render(request, 'home/edit_opus.html', context)
 
 

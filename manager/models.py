@@ -688,15 +688,9 @@ class Opus(models.Model):
 		self.histogram_cache={}
 
 	# List of files associated to an Opus
-	musicxml = models.FileField(upload_to=upload_path,null=True,storage=OverwriteStorage())
-	mei = models.FileField(upload_to=upload_path,null=True,storage=OverwriteStorage(), max_length=255)
-	png = models.FileField(upload_to=upload_path,null=True,storage=OverwriteStorage())
-	dmos_json = models.FileField(upload_to=upload_path,null=True,storage=OverwriteStorage())
-	preview = models.FileField(upload_to=upload_path,null=True,storage=OverwriteStorage())
-	pdf = models.FileField(upload_to=upload_path,null=True,storage=OverwriteStorage())
-	midi = models.FileField(upload_to=upload_path,null=True,storage=OverwriteStorage())
-	summary = models.FileField(upload_to=upload_path,null=True,storage=OverwriteStorage())
-	record = models.FileField(upload_to=upload_path,null=True,blank=True,storage=OverwriteStorage())
+	musicxml = models.FileField(upload_to=upload_path,null=True,blank=True,storage=OverwriteStorage())
+	mei = models.FileField(upload_to=upload_path,null=True,blank=True,storage=OverwriteStorage(), max_length=255)
+	summary = models.FileField(upload_to=upload_path,null=True,blank=True,storage=OverwriteStorage())
 
 	class Meta:
 		db_table = "Opus"

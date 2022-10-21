@@ -12,7 +12,7 @@ from crispy_forms.layout import LayoutObject, TEMPLATE_PACK
 from django.template.loader import render_to_string
 
 
-from manager.models import Corpus, OpusSource, SourceType
+from manager.models import Corpus, Opus, OpusSource, SourceType
 
 class StructuredQueryForm(forms.Form):
     query_text = forms.CharField(label="Enter your query", widget=forms.Textarea)
@@ -24,6 +24,38 @@ class CorpusForm(forms.ModelForm):
         model = Corpus
         fields = ('title', 'ref', 'short_title', 'description', 'short_description', 'is_public', 'cover')
 
+
+class OpusForm(ModelForm):
+ 
+    corpus_ref = None
+
+    class Meta:
+        model = Opus
+        fields = ('corpus', 'ref', 'title', 'musicxml', 'mei')
+        
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.form_id = 'id-OpusForm'
+        self.helper.form_class = 'blueForms'
+        self.helper.form_method = 'post'
+        
+        # Pour éviter le rejet par is_valid()
+        self.fields['corpus'].required = False
+        #self.fields['creation_timestamp'].required = False
+        #self.fields['update_timestamp'].required = False
+        self.fields["corpus_ref"] = forms.CharField(initial=OpusForm.corpus_ref)
+        # self.fields["id_corpus"] = forms.CharField(widget=forms.HiddenInput(),initial=OpusForm.id_corpus)
+        self.fields['corpus'].required = False
+       
+        self.helper.layout = Layout(
+            'ref',
+            'title',
+            'musicxml',
+            'mei',
+            'corpus_ref', 
+            Submit('submit', 'Sauvegarder')
+         )
 
 class OpusSourceForm(ModelForm):
  

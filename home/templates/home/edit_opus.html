@@ -1,11 +1,35 @@
 {% extends "layout.html" %} 
 {% load i18n %} 
 
+{% load crispy_forms_tags %}
+
 {% block content %}
 
-    
-    
-<h4>Edit an Opus</h4> 
+<p>
+<b>{{message}}</b></p>
 
+{{ mForm.errors}}
 
+{% if mode == 'insert' %}
+<p>
+You are going to add an opus in corpus
+ <a    href="{% url 'home:corpus' corpus.ref %}">
+              {{corpus.title}}
+   </a>
+ 
+</p>
+{% else %}
+<p>
+You are going to modify opus {{opus.title}} in corpus  <a    href="{% url 'home:corpus' corpus.ref %}">
+              {{corpus.title}}
+   </a>
+
+</p>
+
+{% endif%}
+<hr/>
+
+{% crispy opusForm  %}
+
+ </div>
 {% endblock content %}
