@@ -15,6 +15,7 @@ from lib.collabscore.parser import CollabScoreParser, OmrScore
 import jsonref
 import jsonschema
 import json
+from numpy import True_
 
 
 def index(request):
@@ -22,9 +23,19 @@ def index(request):
 
 	context["corpus"] = Corpus.objects.get(ref=settings.NEUMA_COLLABSCORE_CORPUS_REF)
 	context["opus_list"] = []
+	
 	for opus in Opus.objects.filter(corpus=context["corpus"]):
+		if opus.mei:
+			url_mei = request.build_absolute_uri(opus.mei.url)
+		else:
+			url_mei = ""
+		url_dmos =""
+		for source in opus.opussource_set.all():
+			if source.ref == "dmos":
+				url_dmos = request.build_absolute_uri(source.source_file.url)
 		context["opus_list"].append({"opus_obj": opus,
-									"url_mei" : request.build_absolute_uri(opus.mei.url),
+									"url_mei" : url_mei, 
+									"url_dmos": url_dmos,
 									"url_annotations": 
 									request.build_absolute_uri(
 									"/rest/collections/collabscore:dmos_ex1/_annotations/region/_all/"),
@@ -33,11 +44,20 @@ def index(request):
 	return render(request, 'collabscore/index.html', context)
 
 
-def tests(request, opus_ref):
+def tests(request, test_sample, opus_ref):
 	context = {"titre": "Tests Philippe"}
 
+	opus = Opus.objects.get(ref=opus_ref)
+	url_dmos =""
+	for source in opus.opussource_set.all():
+		if source.ref == "dmos":
+			url_dmos = request.build_absolute_uri(source.source_file.url)
+	if url_dmos == "":
+		context['message'] = "No DMOS file wih this Opus " 
+		return render(request, 'collabscore/tests.html', context)
+
+
 	local_files = True
-	
 	if local_files:
 		# Root dir for sample data
 		# dmos_dir = os.path.join("file://" + settings.BASE_DIR, '../utilities/', 'dmos')
@@ -61,13 +81,20 @@ def tests(request, opus_ref):
 		return render(request, 'collabscore/tests.html', context)
 
 	# Example to process
-	input_file = "dmos_ex1.json"
+	print ("Test sample " + test_sample)
+	if test_sample == 1:
+		input_file = "dmos_ex1.json"
+		# Load the data and resolve references	
+		data_dir = os.path.join(dmos_dir, 'data/ex1/')
+		file_url =  data_dir + input_file
+	else:
+		input_file = "dmos.json"
+		data_dir = os.path.join(dmos_dir, 'data/ex1/')
+		file_url =  url_dmos
+		
 	# Get the file name without extension
 	input_file_root = os.path.splitext(os.path.basename(input_file))[0]
 
-	# Load the data and resolve references	
-	data_dir = os.path.join(dmos_dir, 'data/ex1/')
-	file_url =  data_dir + input_file
 	#print (f'Load {file_url} from {data_dir}')
 	try:
 		data = jsonref.load_uri(file_url,base_uri=data_dir)

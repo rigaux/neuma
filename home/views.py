@@ -3,6 +3,7 @@ import logging, json
 import os
 from pprint import pprint  # debug only
 import zipfile
+import verovio
 
 from Cython.Compiler.Buffer import context
 from django.conf import settings
@@ -16,6 +17,8 @@ from django.http import HttpResponseRedirect
 from django.shortcuts import redirect
 from django.shortcuts import render
 from django.utils.safestring import mark_safe
+from django.core.files.base import ContentFile
+
 import requests
 
 import lxml.etree as etree
@@ -470,6 +473,11 @@ def add_opus (request, corpus_ref):
 			opus = form.save(commit=False)
 			opus.corpus = context["corpus"]
 			opus.save()
+			if bool(opus.musicxml)  and not bool(opus.mei):
+				tk = verovio.toolkit()
+				tk.loadFile(opus.musicxml.path)
+				mei_content = tk.getMEI()
+				opus.mei.save("mei.xml", ContentFile(mei_content))
 			return redirect ('home:edit_opus', opus_ref=opus.ref)
 		else:
 			print ("Problème")
@@ -482,22 +490,30 @@ def add_opus (request, corpus_ref):
 def edit_opus (request, opus_ref):
 	""" Form to edit an opus"""
 	
-	opus = Opus.objects.get(ref=opus_ref)
-	context["corpus"] = opus.corpus
+	context["opus"] = Opus.objects.get(ref=opus_ref)
+	context["corpus"] = context["opus"].corpus
+	context["mode"] = "update"
 	OpusForm.corpus_ref = context["corpus"].ref
 
 	if request.method == "POST":
-		context["opusForm"] = OpusForm(instance=opus, data=request.POST, files=request.FILES)
+		context["opusForm"] = OpusForm(instance=context["opus"], data=request.POST, files=request.FILES)
 		if context["opusForm"].is_valid():
 			opus = context["opusForm"].save(commit=False)
+			opus.ref = Corpus.make_ref_from_local_and_parent(Corpus.local_ref(opus.ref), context["corpus"].ref)
 			opus.corpus = context["corpus"]
 			opus.save()
+			
+			if bool(opus.musicxml)  and not bool(opus.mei):
+				tk = verovio.toolkit()
+				tk.loadFile(opus.musicxml.path)
+				mei_content = tk.getMEI()
+				opus.mei.save("mei.xml", ContentFile(mei_content))
+			context["message"] = "Opus updated ! "
 		else:
 			# Reaffichage avec l'erreur
 			return render(request, 'home/edit_opus.html', context)
 	else:
-		OpusForm.mode = "create"
-		context["opusForm"] = OpusForm(instance=opus)
+		context["opusForm"] = OpusForm(instance=context["opus"])
 
 	return render(request, 'home/edit_opus.html', context)
 

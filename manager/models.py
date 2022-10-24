@@ -1032,7 +1032,7 @@ class OpusSource (models.Model):
 	ref =   models.CharField(max_length=25)
 	description =   models.TextField()
 	source_type = models.ForeignKey(SourceType,on_delete=models.PROTECT)
-	url = models.CharField(max_length=255,null=True)
+	url = models.CharField(max_length=255,blank=True,null=True)
 	creation_timestamp = models.DateTimeField('Created', auto_now_add=True)
 	update_timestamp = models.DateTimeField('Updated', auto_now=True)
 

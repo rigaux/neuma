@@ -206,6 +206,10 @@ class OmrScore:
 									time_sign = header.time_signature.get_notation_object()
 									# staff.add_time_signature (current_measure_no, time_sign)
 									measure_for_part.add_time_signature (time_sign)
+								if header.key_signature is not None:
+									logger.info (f'Key signature found on staff {header.no_staff} at measure {current_measure_no}')
+									key_sign = header.key_signature.get_notation_object()
+									measure_for_part.add_key_signature (key_sign)
 						# Add the measure to its part (notational events are added there)
 						part.append_measure (measure_for_part)
 						# Keep the array of current measures indexed by part
@@ -507,6 +511,19 @@ class KeySignature:
 		self.nb_naturals =   json_key_sign["nb_naturals"]
 		self.nb_alterations =   json_key_sign["nb_alterations"]
 		
+	def nb_sharps(self):
+		if self.element == SHARP_SYMBOL:
+			return self.nb_alterations
+		else:
+			return 0
+	def nb_flats(self):
+		if self.element == FLAT_SYMBOL:
+			return self.nb_alterations
+		else:
+			return 0
+	def get_notation_object(self):
+		# Decode the DMOS infos
+		return score_notation.KeySignature (self.nb_sharps(), self.nb_flats())
 
 class Error:
 	"""
