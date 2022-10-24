@@ -43,10 +43,12 @@ var tabNames = [
     <ul class="toolbar active">
 
         {% if perms.manager.change_opus %}
-        <li class="edit"><a
-            href="{% url 'admin:manager_opus_change' opus.id %}"
-            title="edit this opus"> <span class="accessibility">edit</span>
-        </a></li> {% endif %}
+        <li class="edit">
+         <a  href="{% url 'home:edit_opus' opus.ref %}" title="Edit opus">
+                            <span class="accessibility">edit</span>
+                         </a>
+                         </li> 
+                         {% endif %}
     </ul>
 
 {{opus.title}}</h1>

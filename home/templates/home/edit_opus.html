@@ -12,7 +12,7 @@
 
 {% if mode == 'insert' %}
 <p>
-You are going to add an opus in corpus
+Adding an opus in corpus
  <a    href="{% url 'home:corpus' corpus.ref %}">
               {{corpus.title}}
    </a>
@@ -20,7 +20,8 @@ You are going to add an opus in corpus
 </p>
 {% else %}
 <p>
-You are going to modify opus {{opus.title}} in corpus  <a    href="{% url 'home:corpus' corpus.ref %}">
+Update of opus 
+ <a    href="{% url 'home:opus' opus.ref %}">{{opus.title}}</a> in corpus  <a    href="{% url 'home:corpus' corpus.ref %}">
               {{corpus.title}}
    </a>
 

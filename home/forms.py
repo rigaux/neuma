@@ -80,7 +80,7 @@ class OpusSourceForm(ModelForm):
         #self.fields['update_timestamp'].required = False
         self.fields['source_type'] = forms.ModelChoiceField(queryset=SourceType.objects.all())
         self.fields['description'] = forms.CharField(widget=forms.Textarea(attrs={"rows":3, "cols":20}))
-        self.fields['url'] = forms.CharField(max_length=255)
+        self.fields['url'] = forms.CharField(required=False,max_length=255)
         self.fields["id_source"] = forms.CharField(widget=forms.HiddenInput(),initial=OpusSourceForm.id_source)
         self.fields['id_source'].required = False
         

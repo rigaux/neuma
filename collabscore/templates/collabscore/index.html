@@ -14,9 +14,14 @@
      Partition {{opus.opus_obj.title}}
      <ol>
         <li>Lien Opus : <a href="{% url 'home:opus'  opus.opus_obj.ref %}">{{opus.opus_obj.ref}}</a></li>
-        <li>Lien MEI : <a href="{{opus.url_mei}}">{{opus.url_mei}}</a></li>
+        <li>Lien MEI : 
+        <a href="{{opus.url_mei}}">{{opus.url_mei}}</a>
+        </li>
+        <li>Lien DMOS : 
+        <a href="{{opus.url_dmos}}">{{opus.url_dmos}}</a>
+        </li>
         <li>Lien annotations : <a href="{{opus.url_annotations}}">{{opus.url_mei}}</a></li>
-        <li><a href="{% url 'collabscore:tests'  opus.opus_obj.ref %}">Tests d'imports des données ORM</a>
+        <li><a href="{% url 'collabscore:tests'  opus.opus_obj.ref  0%}">Tests d'imports des données ORM</a>
         
      </ol>
   </li>
@@ -24,7 +29,8 @@
 </ul>
 <h1>Actions</h1>
 <div class="welcome">
-
+<a href="{% url 'collabscore:tests'  'dmos_ex1' 1%}">Tests d'imports des données ORM</a>
+        
 </div>
 
 
