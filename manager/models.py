@@ -394,9 +394,9 @@ class Corpus(models.Model):
 			
 		# Add the zip files of the children
 		for child in self.get_direct_children():
-			zf.writestr(Corpus.local_ref(child.ref) + ".zip", child.export_as_zip(request).getvalue() )
+			zf.writestr(Corpus.local_ref(child.ref) + ".zip", 
+					child.export_as_zip(request).getvalue() )
 			
-		opera = Opus.objects.filter(corpus=self)
 		for opus in self.get_opera():
 			# Add MusicXML file
 			if opus.musicxml:
@@ -405,6 +405,13 @@ class Corpus(models.Model):
 			if opus.mei:
 				if os.path.exists(opus.mei.path):
 					zf.write(opus.mei.path, opus.local_ref() + ".mei")
+			# Add a sub dir for sources files
+			for source in opus.opussource_set.all():
+				source_dir = opus.local_ref() +  '_source_files' + '/'
+				if source.source_file:
+					zf.write(source.source_file.path, 
+							source_dir + source.ref + "." + source.source_file.path.split(".")[-1])
+					
 			# Add a JSON file with meta data
 			opus_json = json.dumps(opus.to_json(request))
 			zf.writestr(opus.local_ref() + ".json", opus_json)
@@ -1028,7 +1035,7 @@ class SourceType (models.Model):
 
 class OpusSource (models.Model):
 	'''A link to a source that contains the representation of an Opus'''
-	opus = models.ForeignKey(Opus,on_delete=models.PROTECT)
+	opus = models.ForeignKey(Opus,on_delete=models.CASCADE)
 	ref =   models.CharField(max_length=25)
 	description =   models.TextField()
 	source_type = models.ForeignKey(SourceType,on_delete=models.PROTECT)

@@ -217,6 +217,12 @@ if request.session.search_context.pattern != ""
              <ul>
                <li> Type: {{source.source_type.mime_type}}</li>
                <li> Url: <a href="{{source.url}}">{{source.url}}</a></li>
+               {% if source.source_file %}
+                    <li>File : 
+        <a href="{{source.source_file.url}}">{{source.source_file.url}}</a>
+        </li>
+        {% endif %}
+  
                <li>  {% if "change_corpus" in user_corpus_perms %}
            Actions :  <a  href="{% url 'home:opus' opus.ref %}?edit_source=1&source_id={{source.id}}">
                            Edit
