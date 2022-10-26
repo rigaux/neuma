@@ -49,6 +49,7 @@ from manager.models import (
 	AnalyticConcept,
 	Annotation,
 	Upload,
+	OpusSource
 )
 
 
@@ -525,13 +526,18 @@ def handle_files_request(request, full_neuma_ref):
 				answer["files"][fname] = {"url": my_url + file.url}
 		return JSONResponse(answer)
 
+############
+###
+### Source services
+###
+############
 
 
 @csrf_exempt
-@api_view(["GET"])
+@api_view(["GET","PUT"])
 def handle_sources_request(request, full_neuma_ref):
 	"""
-	  Return an opus description and the list of files
+	  Return an opus description and the list of sources
 	"""
 
 	neuma_object, object_type = get_object_from_neuma_ref(full_neuma_ref)
@@ -548,6 +554,47 @@ def handle_sources_request(request, full_neuma_ref):
 				 "sources": sources}
 		return JSONResponse(answer)
 
+	if request.method == "PUT":
+		print("REST CALL to create a new source. Data :" + str(request.data))
+		source_ref  = request.data.get("ref", "")
+		source_type = request.data.get("source_type", "")
+		mime_type = request.data.get("mime_type")
+		description = request.data.get("description", "")
+		source_url = request.data.get("url", "")
+		logger.info(
+			"Received a PUT request for source insertion. Ref: "
+			+ source_ref
+			+ " source type: "
+			+ source_type
+			+ "Description : "
+			+ description
+			+ " URL "
+			+ source_url
+		)
+
+		'''
+		try:
+			source = OpusSource.objects.get(ref=source_ref)
+			return JSONResponse("Source " + source_ref + " already exists")
+		except OpusSource.DoesNotExist:
+			db_source = OpusSource (
+				opus=opus,
+				ref=source_ref,
+				source_type=source_type,
+				mime_type=mime_type,
+				desription=description,
+				source_url =source_url,
+				)
+			db_source.save()
+		'''
+		return JSONResponse("New source created")
+	if request.method == "POST":
+		logger.info(
+			"Received a POST request for source update. :"
+		)
+		return JSONResponse(
+				"Not yet implemented"
+			)
 
 ############
 ###

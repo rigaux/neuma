@@ -52,6 +52,11 @@ urlpatterns = [
     url(r'^analysis/_models/(?P<model_code>.+)/_concepts/(?P<concept_code>.+)/_all/$', views.handle_concepts_request, name='handle_concepts_request'),
     #url(r'^analysis/models/(?P<model_code>.+)/concepts/(?P<encoding>.+)/$', views.handle_concepts_request, name='handle_concepts'),
     ################
+    # SOURCES
+    ################
+    # PUT a new source or GET the list of sources of an Opus
+    url(r'collections/(?P<full_neuma_ref>(.*))/_sources/$',views.handle_sources_request, name='handle_sources_request'),
+    ################
     # ANNOTATIONS
     ################
     # PUT a new annotation
@@ -80,7 +85,6 @@ urlpatterns = [
     url(r'^collections/(?P<full_neuma_ref>(.+))/_corpora/$', views.CorpusList.as_view(), name='handle_corpora_request'),
     url(r'collections/(?P<full_neuma_ref>(.*))/_opera/$', views.handle_opera_request, name='handle_opera_request'),
     url(r'collections/(?P<full_neuma_ref>(.*))/_files/$',views.handle_files_request, name='handle_files_request'),
-     url(r'collections/(?P<full_neuma_ref>(.*))/_sources/$',views.handle_sources_request, name='handle_sources_request'),
    url(r'collections/(?P<full_neuma_ref>(.*))/_uploads/(?P<upload_id>(.*))/_import/$',views.handle_import_request, name='handle_import_request'),
     # Request for a specific file
     url (r'^collections/(?P<full_neuma_ref>(.*))/*.xml$', views.handle_neuma_ref_request, name='handle_files_reauest'),
