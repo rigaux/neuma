@@ -9,7 +9,6 @@ from django.core.files.base import ContentFile
 from django.conf import settings
 
 from rest_framework import viewsets
-
 from manager import models
 from . import serializers
 
@@ -20,13 +19,14 @@ from django.views.decorators.csrf import csrf_exempt
 
 from rest_framework import viewsets
 from rest_framework.renderers import JSONRenderer
-from rest_framework.parsers import JSONParser
+from rest_framework.parsers import JSONParser, FileUploadParser, MultiPartParser
 from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework.views import APIView
 from rest_framework.response import Response
+from rest_framework.exceptions import ParseError
 
-from rest_framework.decorators import api_view, permission_classes
+from rest_framework.decorators import api_view, permission_classes, parser_classes
 from rest_framework.authentication import SessionAuthentication, BasicAuthentication
 from rest_framework.permissions import *
 
@@ -49,7 +49,8 @@ from manager.models import (
 	AnalyticConcept,
 	Annotation,
 	Upload,
-	OpusSource
+	OpusSource,
+	SourceType
 )
 
 
@@ -532,12 +533,11 @@ def handle_files_request(request, full_neuma_ref):
 ###
 ############
 
-
 @csrf_exempt
 @api_view(["GET","PUT"])
 def handle_sources_request(request, full_neuma_ref):
 	"""
-	  Return an opus description and the list of sources
+	  Manage requests on sources
 	"""
 
 	neuma_object, object_type = get_object_from_neuma_ref(full_neuma_ref)
@@ -546,6 +546,7 @@ def handle_sources_request(request, full_neuma_ref):
 	else:
 		return Response(status=status.HTTP_404_NOT_FOUND)
 
+
 	if request.method == "GET":
 		sources = []
 		for source in opus.opussource_set.all ():
@@ -553,48 +554,83 @@ def handle_sources_request(request, full_neuma_ref):
 		answer = {"ref": opus.local_ref(), 
 				 "sources": sources}
 		return JSONResponse(answer)
-
 	if request.method == "PUT":
 		print("REST CALL to create a new source. Data :" + str(request.data))
-		source_ref  = request.data.get("ref", "")
-		source_type = request.data.get("source_type", "")
-		mime_type = request.data.get("mime_type")
-		description = request.data.get("description", "")
-		source_url = request.data.get("url", "")
-		logger.info(
-			"Received a PUT request for source insertion. Ref: "
-			+ source_ref
-			+ " source type: "
-			+ source_type
-			+ "Description : "
-			+ description
-			+ " URL "
-			+ source_url
-		)
-
-		'''
 		try:
-			source = OpusSource.objects.get(ref=source_ref)
-			return JSONResponse("Source " + source_ref + " already exists")
+			source_type = SourceType.objects.get(code=request.data.get("source_type", ""))
+			source_ref  = request.data.get("ref", "")
+			description = request.data.get("description", "")
+			source_url = request.data.get("url", "")
+		except SourceType.DoesNotExist:
+			return JSONResponse("Source type " + request.data.get("source_type", "") + " does not exists")
+		try:
+			source = OpusSource.objects.get(opus=opus,ref=source_ref)
+			return JSONResponse("Source " + source_ref + " already exists in opus " + opus.ref)
 		except OpusSource.DoesNotExist:
-			db_source = OpusSource (
-				opus=opus,
-				ref=source_ref,
-				source_type=source_type,
-				mime_type=mime_type,
-				desription=description,
-				source_url =source_url,
-				)
+			db_source = OpusSource (opus=opus,ref=source_ref,source_type=source_type,
+				description=description,url =source_url)
 			db_source.save()
-		'''
 		return JSONResponse("New source created")
+
+@csrf_exempt
+@api_view(["GET","POST"])
+def handle_source_request(request, full_neuma_ref, source_ref):
+	"""
+	  Manage requests on ONE source
+	"""
+
+	neuma_object, object_type = get_object_from_neuma_ref(full_neuma_ref)
+	if type(neuma_object) is Opus:
+		opus = neuma_object
+	else:
+		return Response(status=status.HTTP_404_NOT_FOUND)
+
+	try:
+		source = OpusSource.objects.get(opus=opus,ref=source_ref)
+	except OpusSource.DoesNotExist:
+		return Response(status=status.HTTP_404_NOT_FOUND)
+
+	if request.method == "GET":
+		return JSONResponse(source.to_json(request))
 	if request.method == "POST":
-		logger.info(
-			"Received a POST request for source update. :"
-		)
-		return JSONResponse(
-				"Not yet implemented"
-			)
+		try:
+			source_type = SourceType.objects.get(code=request.data.get("source_type", ""))
+			description = request.data.get("description", "")
+			source_url = request.data.get("url", "")
+		except SourceType.DoesNotExist:
+			return JSONResponse("Source type " + request.data.get("source_type", "") + " does not exists")
+		try:
+			source = OpusSource.objects.get(opus=opus,ref=source_ref)
+			source.source_type = source_type
+			source.description = description
+			source.url = source_url
+			source.save()
+			return JSONResponse("Source updated with description " + source.description)
+		except OpusSource.DoesNotExist:
+			return Response(status=status.HTTP_404_NOT_FOUND)
+
+@csrf_exempt
+@api_view(["POST"])
+@parser_classes([FileUploadParser])
+def handle_source_file_request(request, full_neuma_ref, source_ref):
+	"""
+	  Replace a file in the source
+	"""
+
+	neuma_object, object_type = get_object_from_neuma_ref(full_neuma_ref)
+	if type(neuma_object) is Opus:
+		opus = neuma_object
+	else:
+		return Response(status=status.HTTP_404_NOT_FOUND)
+
+	try:
+		source = OpusSource.objects.get(opus=opus,ref=source_ref)
+	except OpusSource.DoesNotExist:
+		return Response(status=status.HTTP_404_NOT_FOUND)
+
+	if 'file' not in request.data:
+            raise ParseError("Empty content")
+	return JSONResponse("Source file request. Data=" + str(request.data))
 
 ############
 ###

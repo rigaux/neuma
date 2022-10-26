@@ -3,7 +3,7 @@ from . import views
 from django.conf.urls import include, url
 from django.views.decorators.csrf import csrf_exempt
 
-from django.urls import  path
+from django.urls import path
 
 from .views import *
 
@@ -54,6 +54,10 @@ urlpatterns = [
     ################
     # SOURCES
     ################
+    # GET a source description, or POST an update on a source
+    url(r'collections/(?P<full_neuma_ref>(.*))/_sources/(?P<source_ref>[-\w]+)/$',views.handle_source_request, name='handle_source_request'),
+    # POST a source file to a source
+    url(r'collections/(?P<full_neuma_ref>(.*))/_sources/(?P<source_ref>[-\w]+)/_file$',views.handle_source_file_request, name='handle_source_file_request'),
     # PUT a new source or GET the list of sources of an Opus
     url(r'collections/(?P<full_neuma_ref>(.*))/_sources/$',views.handle_sources_request, name='handle_sources_request'),
     ################
