@@ -406,12 +406,21 @@ class Corpus(models.Model):
 				if os.path.exists(opus.mei.path):
 					zf.write(opus.mei.path, opus.local_ref() + ".mei")
 			# Add a sub dir for sources files
+			source_bytes = io.BytesIO()
+			# The zip compressor
+			source_compressor = zipfile.ZipFile(source_bytes, "w")
+			nb_source_files = 0
 			for source in opus.opussource_set.all():
-				source_dir = opus.local_ref() +  '_source_files' + '/'
 				if source.source_file:
-					zf.write(source.source_file.path, 
-							source_dir + source.ref + "." + source.source_file.path.split(".")[-1])
-					
+					nb_source_files += 1
+					source_compressor.write(source.source_file.path, 
+							source.ref + "." + source.source_file.path.split(".")[-1])
+			source_compressor.close()
+			if nb_source_files > 0:
+				source_file = opus.local_ref() +  '.szip'
+				#source_file = opus.local_ref() +  '.source_files.zip'
+				zf.writestr( source_file, source_bytes.getvalue())
+			
 			# Add a JSON file with meta data
 			opus_json = json.dumps(opus.to_json(request))
 			zf.writestr(opus.local_ref() + ".json", opus_json)
@@ -444,8 +453,9 @@ class Corpus(models.Model):
 				found_cover = True 
 				cover_data = zfile.open(fname).read()
 			elif extension == ".zip":
-				# A zip file with a sub corpus
-				children[base] = zipfile.ZipFile(io.BytesIO(zfile.open(fname).read()))
+				# If not a zip of source files: A zip file with a sub corpus
+				if not base.__contains__ ("source_files"):
+					children[base] = zipfile.ZipFile(io.BytesIO(zfile.open(fname).read()))
 			# OK, there is an Opus there
 			elif (extension ==".json" or extension == ".mei" or extension == ".xml"
 				or extension == '.mxl' or extension=='.krn' or extension=='.mid'):
@@ -453,9 +463,10 @@ class Corpus(models.Model):
 						"musicxml": "",
 						"compressed_xml": "",
 						"json": "",
-						"kern": ""}
+						"kern": "",
+						"source_files": ""}
 			else:
-				print ("Ignoring file %s.%s" % (base, extension))
+				print ("Ignoring file %s%s" % (base, extension))
 
 		# Sanity
 		if not found_corpus_data:
@@ -512,6 +523,9 @@ class Corpus(models.Model):
 					opus_files[opus_ref]["midi"] = fname
 				elif extension == '.krn':
 					opus_files[opus_ref]["kern"] = fname
+				elif extension == ".szip":
+					# If a zip of source files
+					opus_files[opus_ref]["source_files"] = fname
 
 		# OK, now in opus_files, we know whether we have the MusicXML, MEI or any other
 		list_imported = []
@@ -533,10 +547,28 @@ class Corpus(models.Model):
 					json_file = zfile.open(opus_files_desc["json"])
 					json_doc = json_file.read()
 					opus.load_from_dict (corpus, json.loads(json_doc.decode('utf-8')))
+					
+					# Check whether a source file eists for each source
+					for source in opus.opussource_set.all():
+						if opus_files_desc["source_files"] != "":
+							# Yep we found one
+							source_zip_content = io.BytesIO(zfile.read(opus_files_desc["source_files"]))
+							source_zip = zipfile.ZipFile(source_zip_content)
+							# Check in the zip file for the file that corresponds to the source
+							for fname in source_zip.namelist():
+								base, extension = decompose_zip_name (fname)
+								if base == source.ref:
+									#print ("File " + fname + " found for source  " + source.ref)
+									sfile_content = source_zip.read(fname)
+									source.source_file.save(fname, ContentFile(sfile_content))
+									# In that case the URL is irrelevant
+									source.url=""
+									source.save()
+
 				# OK, we loaded metada : save
 				opus.mei = None
 				opus.save()
-				
+			
 				if opus_files_desc["compressed_xml"] != "":
 					logger.info ("Found compressed MusicXML content")
 					# Compressed XML
@@ -782,7 +814,6 @@ class Opus(models.Model):
 		if ("sources" in dict_opus.keys()):
 			if (dict_opus["sources"] != None):
 				for source in dict_opus["sources"]:
-					print ("Add source " + source["ref"])
 					self.add_source (source)
 
 		# Get the Opus files
@@ -1046,7 +1077,7 @@ class OpusSource (models.Model):
 	def upload_path(self, filename):
 		'''Set the path where source files must be stored'''
 		source_ref = self.opus.ref.replace(settings.NEUMA_ID_SEPARATOR, "-")
-		return 'sources/' + source_ref + '/' + self.ref + '-' + filename
+		return 'sources/' + source_ref + '/' + filename
 	source_file = models.FileField(upload_to=upload_path,null=True,storage=OverwriteStorage())
 
 	class Meta:
