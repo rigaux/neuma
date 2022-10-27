@@ -707,8 +707,7 @@ class Opus(models.Model):
 	# .Files names
 	FILE_NAMES = {"score.xml": "musicxml", 
 				   "mei.xml": "mei",
-				   "summary.json": "summary",
-				  "record.mp3": "record"}
+				   "summary.json": "summary"}
 
 	def statsDic(opus):
 		""" produces a dic with features"""

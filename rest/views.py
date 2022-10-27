@@ -611,7 +611,7 @@ def handle_source_request(request, full_neuma_ref, source_ref):
 
 @csrf_exempt
 @api_view(["POST"])
-@parser_classes([FileUploadParser])
+@parser_classes([MultiPartParser])
 def handle_source_file_request(request, full_neuma_ref, source_ref):
 	"""
 	  Replace a file in the source
@@ -628,9 +628,9 @@ def handle_source_file_request(request, full_neuma_ref, source_ref):
 	except OpusSource.DoesNotExist:
 		return Response(status=status.HTTP_404_NOT_FOUND)
 
-	if 'file' not in request.data:
-            raise ParseError("Empty content")
-	return JSONResponse("Source file request. Data=" + str(request.data))
+	for filename, filecontent in request.FILES.items():
+		source.source_file.save(filename, filecontent)
+	return JSONResponse("Source file uploaded")
 
 ############
 ###
