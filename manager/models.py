@@ -47,6 +47,7 @@ from lib.music.Voice import IncompleteBarsError
 import transcription
 from django.db.models.sql.where import OR
 from jinja2.nodes import Or
+from numpy.distutils.fcompiler import none
 
 # Get an instance of a logger
 # See https://realpython.com/python-logging/
@@ -1352,7 +1353,7 @@ class Annotation(models.Model):
 			annot_concept = AnalyticConcept.objects.get(code=webannot.annotation_concept)
 		except AnalyticConcept.DoesNotExist:
 			logger.error (f'Unknown annotation concept {webannot.annotation_concept}')
-
+		
 		# Create the target
 		wtarget = webannot.target
 		wtselector = wtarget.resource.selector

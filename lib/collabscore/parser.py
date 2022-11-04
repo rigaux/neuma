@@ -263,8 +263,10 @@ class OmrScore:
 		event_region = voice_item.duration.symbol.region
 
 		if voice_item.note_attr is not None:
-			# It should be a note
+			# It can be a note or a chord
+			events = []
 			for head in voice_item.note_attr.heads:
+				no_staff = head.no_staff # Will be used as the chord staff.
 				staff = part.get_staff (head.no_staff)
 				# The head position gives the position of the note on the staff
 				(pitch_class, octave)  = staff.current_clef.decode_pitch (head.height)
@@ -276,6 +278,8 @@ class OmrScore:
 					alter = score_events.Note.ALTER_FLAT
 				elif head.alter.label  == SHARP_SYMBOL:
 					alter = score_events.Note.ALTER_SHARP
+				else:  
+					alter = score_events.Note.ALTER_NATURAL
 					
 				# Did we just met an accidental?
 				if (alter != score_events.Note.ALTER_NONE):
@@ -284,10 +288,13 @@ class OmrScore:
 				else:
 					# Is there a previous accidental on this staff for this pitch class?
 					alter = staff.get_accidental(pitch_class)
-					
-				# Only manage one head 
-				break
-			event = score_events.Note(pitch_class, octave, duration, alter, head.no_staff)
+				events.append(score_events.Note(pitch_class, octave, duration, alter, head.no_staff))
+			if len(events) == 1:
+				# A single note
+				event = events[0]
+			else:
+				# A chord
+				event = score_events.Chord (duration, no_staff, events)
 		elif voice_item.rest_attr is not None:
 			# It is a rest
 			for head in voice_item.rest_attr.heads:

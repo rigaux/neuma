@@ -34,9 +34,6 @@ from lib.music.Score import *
 # Music analysis module
 from music21 import converter
 import logging
-# from lib.music.counterpoint import  pitchCollections, dissonanceAnalysis
-from lib.music.counterpoint import  pitchCollections
-
 
 from django_q.tasks import *
 from scorelib.analytic_concepts import *
