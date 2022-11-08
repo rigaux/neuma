@@ -52,9 +52,17 @@ SMB_WREST_HEAD = "wresthead"
 SMB_REST_HEAD = "qresthead"
 SMB_8THREST_HEAD = "8thresthead"
 
-# Misc
+# Alterations
 
 FLAT_SYMBOL="flat"
 SHARP_SYMBOL="sharp"
 NATURAL_SYMBOL="natural"
 	
+# Articulations
+ART_STACCATO="staccato"
+ART_ACCENT="accent"
+
+ARTICULATIONS_LIST = [ART_STACCATO,ART_ACCENT]
+
+ABOVE="above"
+BELOW="below"
