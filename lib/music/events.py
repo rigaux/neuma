@@ -43,6 +43,26 @@ class Event:
 	def is_note(self):
 		return False
 
+
+class Articulation ():
+	"""
+		Articulation = some performance indication attached to a note
+	"""
+	
+	STACCATO = "staccato"
+	ACCENT = "accent"
+	
+	def __init__(self, placement, art_type) :
+		if art_type == Articulation.STACCATO:
+			self.m21_articulation = m21.articulations.Staccato()
+		elif art_type == Articulation.ACCENT:
+			self.m21_articulation = m21.articulations.Accent()
+		else:
+			raise Exception ("Unknown articulation type: " + art_type)
+
+		self.m21_articulation.placement = placement
+		return
+
 class Note (Event):
 	"""
 		Representation of a note
@@ -78,6 +98,8 @@ class Note (Event):
 		return self.alter
 	def get_pitch_class(self):
 		return self.pitch_class
+	def add_articulation (self, art):
+		self.m21_event.articulations.append(art.m21_articulation)
 
 
 class Chord (Event):
