@@ -157,8 +157,14 @@ class OmrScore:
 		score = score_model.Score()
 		current_measure_no = 0
 		
+		MIN_MEASURE_NO = 4
+		MAX_MEASURE_NO = 10
+
+
 		for page in self.pages:
 			for system in page.systems:
+				#if  current_measure_no > MAX_MEASURE_NO :
+				#		continue
 				# Headers defines the parts and their staves in this system
 				for header in system.headers:
 					if score.part_exists(header.id_part):
@@ -176,7 +182,7 @@ class OmrScore:
 				
 				for measure in system.measures:
 					current_measure_no += 1
-					#if current_measure_no < 6 and current_measure_no > 11:
+					#if   current_measure_no > MAX_MEASURE_NO :
 					#	continue
 					logger.info (f'Process measure {current_measure_no}')
 					
