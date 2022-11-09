@@ -43,6 +43,26 @@ class Event:
 	def is_note(self):
 		return False
 
+
+class Articulation ():
+	"""
+		Articulation = some performance indication attached to a note
+	"""
+	
+	STACCATO = "staccato"
+	ACCENT = "accent"
+	
+	def __init__(self, placement, art_type) :
+		if art_type == Articulation.STACCATO:
+			self.m21_articulation = m21.articulations.Staccato()
+		elif art_type == Articulation.ACCENT:
+			self.m21_articulation = m21.articulations.Accent()
+		else:
+			raise Exception ("Unknown articulation type: " + art_type)
+
+		self.m21_articulation.placement = placement
+		return
+
 class Note (Event):
 	"""
 		Representation of a note
@@ -78,6 +98,33 @@ class Note (Event):
 		return self.alter
 	def get_pitch_class(self):
 		return self.pitch_class
+	def add_articulation (self, art):
+		self.m21_event.articulations.append(art.m21_articulation)
+
+
+class Chord (Event):
+	"""
+		Representation of a chord = a list of notes
+	"""
+	
+	def __init__(self,  duration, no_staff, notes) :
+		super ().__init__(duration)
+		
+		# Create the m21 representation: encode 
+		m21_notes = []
+		for note in notes:
+			m21_notes.append (note.m21_event)
+		self.m21_event = m21.chord.Chord(m21_notes)
+		self.m21_event.duration = duration.m21_duration
+		self.m21_event.id = f'r{Event.counter_event}'
+		Event.counter_event += 1
+		self.no_staff = no_staff
+		return
+	
+	def is_note(self):
+		return False
+	def get_no_staff(self):
+		return self.no_staff
 
 
 class Rest (Event):

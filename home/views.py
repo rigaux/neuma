@@ -24,7 +24,6 @@ import requests
 import lxml.etree as etree
 from manager.models import Corpus, Opus, Upload, Bookmark, SimMeasure, Licence, Annotation, AnalyticModel, AnalyticConcept
 from music import *
-from music.Concordance import *
 from neuma.rest import Client
 from search.IndexWrapper import IndexWrapper
 from search.MusicSummary import  MusicSummary
@@ -471,6 +470,7 @@ def add_opus (request, corpus_ref):
 		form = OpusForm(request.POST, request.FILES)
 		if form.is_valid():
 			opus = form.save(commit=False)
+			opus.ref = Corpus.make_ref_from_local_and_parent(Corpus.local_ref(opus.ref), context["corpus"].ref)
 			opus.corpus = context["corpus"]
 			opus.save()
 			if bool(opus.musicxml)  and not bool(opus.mei):
