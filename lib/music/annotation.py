@@ -57,6 +57,7 @@ class Annotation:
 		self.annotation_concept = annotation_concept
 		# Default style
 		self.style = Style ("square", "content6")
+		
 	def format_id(self):
 		return f'annot{self.id}' 
 
@@ -214,7 +215,6 @@ class SpecificResource(Resource):
 	  Reference to a specific part of a source
 	'''
 	
-
 	def __init__(self, source, selector) :
 		super().__init__(source)
 		self.selector = selector
