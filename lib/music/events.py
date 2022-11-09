@@ -18,6 +18,9 @@ class Duration:
 		# m21 duration is the float obtained from the fraction
 		self.m21_duration = m21.duration.Duration(self.fraction)
 
+	def __repr__(self):
+		return f'Duration({self.m21_duration})'
+
 class Event:
 	'''
 		Super-class for anything (note, rest, chord) that occurs for a given duration
