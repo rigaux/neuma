@@ -43,6 +43,8 @@ class Event:
 	def is_note(self):
 		return False
 
+	def add_articulation (self, art):
+		self.m21_event.articulations.append(art.m21_articulation)
 
 class Articulation ():
 	"""
@@ -98,8 +100,6 @@ class Note (Event):
 		return self.alter
 	def get_pitch_class(self):
 		return self.pitch_class
-	def add_articulation (self, art):
-		self.m21_event.articulations.append(art.m21_articulation)
 
 
 class Chord (Event):
@@ -117,6 +117,7 @@ class Chord (Event):
 		self.m21_event = m21.chord.Chord(m21_notes)
 		self.m21_event.duration = duration.m21_duration
 		self.m21_event.id = f'r{Event.counter_event}'
+		
 		Event.counter_event += 1
 		self.no_staff = no_staff
 		return
