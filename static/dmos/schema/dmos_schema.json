@@ -4,19 +4,7 @@
     "type": "object",
   "title": "Schema of DMOS documents",
   "description": "A DMOS document is a list of pages, with one descriptor for each page.",
-  "properties": {
-     "id" : {
-          "description": "Unique id of this score",
-          "type": "string"
-        },  
-     "score_image_url": {
-          "description": "URL of the analyzed score-image",
-          "type": "string"
-        },
-     "date" : {
-          "description": "Date of image analysis",
-          "type": "string"
-        },  
+  "properties": { 
      "pages": {
          "description": "Array of page descriptors",
          "type": "array",
@@ -26,6 +14,5 @@
          "minItems": 1
        }
     },
-   "required": ["id", "score_image_url", "date", "pages"],
-  "additionalProperties": false
+   "required": ["pages"]
 }

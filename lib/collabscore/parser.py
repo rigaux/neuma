@@ -136,9 +136,9 @@ class OmrScore:
 			a representation based on the Python classes
 		"""
 		self.uri = uri 
-		self.id = json_data["id"]
-		self.score_image_url = json_data["score_image_url"]
-		self.date = json_data["date"]
+		self.id = 1 #json_data["id"]
+		self.score_image_url = "http://" # json_data["score_image_url"]
+		#self.date = json_data["date"]
 		
 		self.creator = annot_mod.Creator ("collabscore", 
 										annot_mod.Creator.SOFTWARE_TYPE, 
@@ -176,6 +176,8 @@ class OmrScore:
 				
 				for measure in system.measures:
 					current_measure_no += 1
+					#if current_measure_no > 2:
+					#	break
 					logger.info (f'Process measure {current_measure_no}')
 					
 					# Create a new measure for each part
@@ -209,6 +211,10 @@ class OmrScore:
 								if header.key_signature is not None:
 									logger.info (f'Key signature found on staff {header.no_staff} at measure {current_measure_no}')
 									key_sign = header.key_signature.get_notation_object()
+									# The key signature impacts all subsequent events on the staff
+									staff.set_current_key_signature (key_sign)
+									# We will display the key signature at the beginning
+									# of the current measure
 									measure_for_part.add_key_signature (key_sign)
 						# Add the measure to its part (notational events are added there)
 						part.append_measure (measure_for_part)
@@ -271,9 +277,12 @@ class OmrScore:
 				# The head position gives the position of the note on the staff
 				(pitch_class, octave)  = staff.current_clef.decode_pitch (head.height)
 			
+				# Get the default alter
+				def_alter = staff.current_key_signature.accidentalByStep(pitch_class)
+					
 				# Decode from the DMOS input codification
 				if head.alter == None:
-					alter = score_events.Note.ALTER_NONE
+					alter = def_alter
 				elif head.alter.label == FLAT_SYMBOL:
 					alter = score_events.Note.ALTER_FLAT
 				elif head.alter.label  == SHARP_SYMBOL:

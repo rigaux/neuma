@@ -26,6 +26,7 @@ class Staff:
 		'''
 		self.id = no_staff
 		self.current_clef = Clef(Clef.TREBLE_CLEF)
+		self.current_key_signature = KeySignature() 
 
 		# Probably not useful at the end, since these notations are
 		# directly injected in the music21 measure.
@@ -50,8 +51,9 @@ class Staff:
 		
 	def set_current_clef (self, clef):
 		self.current_clef = clef
-		
-		
+	def set_current_key_signature (self, key):
+		self.current_key_signature = key
+
 	'''
 	    All these functions are now useless. To be removed
 	'''
@@ -98,6 +100,13 @@ class KeySignature:
 		else:
 			self.m21_key_signature = m21.key.KeySignature(0)
 		self.m21_key_signature.id = "ktodo"
+
+	# Layer over the music21 functions
+	def accidentalByStep(self, pitch):
+		if self.m21_key_signature.accidentalByStep(pitch) is not None:
+			return self.m21_key_signature.accidentalByStep(pitch).name
+		else:
+			return score_events.Note.ALTER_NONE
 
 class Clef:
 	'''
