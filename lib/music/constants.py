@@ -4,8 +4,6 @@ Constants used by the score model
 
 '''
 
-
-
 """
  For annotations
  """
@@ -22,6 +20,10 @@ AM_OMR_ERROR = "omr_error"
 IREGION_MEASURE_CONCEPT = "measure_region"
 IREGION_NOTE_CONCEPT = "note_region"
 
+# Concepts for the INTERVAL annotation
+INTERVAL_MEASURE_CONCEPT = "measure_interval"
+INTERVAL_NOTE_CONCEPT = "note_interval"
+INTERVAL_GENERIC_CONCEPT = "generic_interval"
 
 # Concepts for the AM_OMR_ERROR annotation
 OMR_ERROR_UNKNOWN_SYMBOL = "unknown_symbol"
