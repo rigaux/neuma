@@ -263,8 +263,10 @@ class OmrScore:
 		event_region = voice_item.duration.symbol.region
 
 		if voice_item.note_attr is not None:
-			# It should be a note
+			# It can be a note or a chord
+			events = []
 			for head in voice_item.note_attr.heads:
+				no_staff = head.no_staff # Will be used as the chord staff.
 				staff = part.get_staff (head.no_staff)
 				# The head position gives the position of the note on the staff
 				(pitch_class, octave)  = staff.current_clef.decode_pitch (head.height)
@@ -276,6 +278,8 @@ class OmrScore:
 					alter = score_events.Note.ALTER_FLAT
 				elif head.alter.label  == SHARP_SYMBOL:
 					alter = score_events.Note.ALTER_SHARP
+				else:  
+					alter = score_events.Note.ALTER_NATURAL
 					
 				# Did we just met an accidental?
 				if (alter != score_events.Note.ALTER_NONE):
@@ -285,9 +289,18 @@ class OmrScore:
 					# Is there a previous accidental on this staff for this pitch class?
 					alter = staff.get_accidental(pitch_class)
 					
-				# Only manage one head 
-				break
-			event = score_events.Note(pitch_class, octave, duration, alter, head.no_staff)
+				note = score_events.Note(pitch_class, octave, duration, alter, head.no_staff)
+				# Check articulations
+				for json_art in head.articulations:
+					articulation = score_events.Articulation(json_art["placement"], json_art["label"])
+					note.add_articulation(articulation)
+				events.append(note)
+			if len(events) == 1:
+				# A single note
+				event = events[0]
+			else:
+				# A chord
+				event = score_events.Chord (duration, no_staff, events)
 		elif voice_item.rest_attr is not None:
 			# It is a rest
 			for head in voice_item.rest_attr.heads:
@@ -465,7 +478,16 @@ class NoteAttr:
 		self.nb_heads = json_note_attr["nb_heads"]
 		self.heads = []
 		for json_head in json_note_attr["heads"]:
-			self.heads.append(Note (json_head))
+			note = Note (json_head)
+			
+			# Get the articulation symbol attached to the note
+			if "articulations_top" in json_note_attr.keys():
+				for json_art in json_note_attr["articulations_top"]:
+					note.add_articulation (ABOVE, json_art)
+			if "articulations_bottom" in json_note_attr.keys():
+				for json_art in json_note_attr["articulations_bottom"]:
+					note.add_articulation (BELOW, json_art)
+			self.heads.append(note)
 
 ##############
 
@@ -481,12 +503,14 @@ class Note:
 		self.head_symbol =  Symbol (json_note["head_symbol"])
 		self.no_staff  = json_note["no_staff"]
 		self.height  = json_note["height"]
-		
+		self.articulations = []
 		if "alter" in json_note:
 			self.alter = Symbol (json_note["alter"])
 		if "tied" in json_note:
 			self.tied = json_note["tied"]
 
+	def add_articulation(self, placement, json_art):
+		self.articulations.append({"placement": placement, "label": json_art["label"]})
 
 class Clef:
 	"""

@@ -70,8 +70,8 @@ class Annotation:
 			 "body": self.body.get_json_obj(), 
 			 "target": self.target.get_json_obj(),
 			 "style": self.style.get_json_obj(),
-			 "created": self.created,
-			 "modified": self.modified}
+			 "created": str(self.created),
+			 "modified": str(self.modified)}
 		
 	def set_style (self, style):
 		self.style = style
@@ -93,7 +93,7 @@ class Annotation:
 		'''
 		target = Annotation.create_target_for_annotation(doc_url, xml_id)
 		
-		body_selector = FragmentSelector(FragmentSelector.MEDIA_SELECTOR, region)
+		body_selector = FragmentSelector(FragmentSelector.IMAGE_SELECTOR, region)
 		body_resource = SpecificResource(image_url, body_selector)
 		body = ResourceBody(body_resource)
 		return Annotation(Annotation.get_new_id(), creator, target, body, 
@@ -229,7 +229,9 @@ class FragmentSelector:
 	 '''
 	
 	XML_SELECTOR = "http://tools.ietf.org/rfc/rfc3023"
-	MEDIA_SELECTOR = "http://www.w3.org/TR/media-frags/"
+	IMAGE_SELECTOR = "https://www.w3.org/TR/media-frags/#naming-space"
+	AUDIO_SELECTOR = "https://www.w3.org/TR/media-frags/#naming-time"
+
 
 	def __init__(self, conforms_to, value) :
 		# Type of the referred resource: Image, XML, etc.
@@ -250,7 +252,8 @@ class FragmentSelector:
 # Defines the conformity of a fragment to a segment selection syntax
 FRAGMENT_CONFORMITY = (
     (FragmentSelector.XML_SELECTOR, "An XPointer expression"),
-    (FragmentSelector.MEDIA_SELECTOR, "A segment in a multimedia document")
+    (FragmentSelector.IMAGE_SELECTOR, "A region in an image"),
+	(FragmentSelector.AUDIO_SELECTOR, "A segment in an audio or video document")
 )
 
 class Creator:
