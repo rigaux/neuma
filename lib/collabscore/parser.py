@@ -176,8 +176,8 @@ class OmrScore:
 				
 				for measure in system.measures:
 					current_measure_no += 1
-					#if current_measure_no > 2:
-					#	break
+					#if current_measure_no < 6 and current_measure_no > 11:
+					#	continue
 					logger.info (f'Process measure {current_measure_no}')
 					
 					# Create a new measure for each part
@@ -310,6 +310,10 @@ class OmrScore:
 			else:
 				# A chord
 				event = score_events.Chord (duration, no_staff, events)
+				for json_art in head.articulations:
+					articulation = score_events.Articulation(json_art["placement"], json_art["label"])
+					event.add_articulation(articulation)
+
 		elif voice_item.rest_attr is not None:
 			# It is a rest
 			for head in voice_item.rest_attr.heads:
