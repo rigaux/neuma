@@ -62,10 +62,10 @@ def tests(request, opus_ref):
 	if local_files:
 		# Root dir for sample data
 		# dmos_dir = os.path.join("file://" + settings.BASE_DIR, '../utilities/', 'dmos')
-		dmos_dir = os.path.join("file://" + settings.BASE_DIR, 'static/', 'dmos')
+		dmos_dir = os.path.join("file://" + settings.BASE_DIR, 'static/json/', 'dmos')
 	else:
 		# Get from the collabscore server
-		dmos_dir = 'http://collabscore.org/dmos/'
+		dmos_dir = 'http://collabscore.org/json/dmos/'
 	
 	# Where is the schema?
 	schema_dir = os.path.join(dmos_dir, 'schema/')
