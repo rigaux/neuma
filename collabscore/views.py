@@ -95,18 +95,20 @@ def tests(request, opus_ref):
 	except Exception as ex:
 		context['message'] = "Validation error : " + str(ex)
 	
-		
 	# OK now build the internal score representation from the JSON content
 	my_url = request.build_absolute_uri("/")[:-1] 
 	omr_score = OmrScore (my_url + opus.get_url(), data)
 	
 	context["omr_score"] = omr_score
 	score = omr_score.get_score()
+	
+	# Store the MusicXML file in the opus
 	score.write_as_musicxml ("/tmp/score.xml")
 	with open("/tmp/score.xml") as f:
 		score_xml = f.read()
 	opus.musicxml.save("score.xml", ContentFile(score_xml))
 	
+	# Generate and store the MEI file
 	score.write_as_mei ("/tmp/score.mei")
 	with open("/tmp/score.mei") as f:
 		score_mei = f.read()

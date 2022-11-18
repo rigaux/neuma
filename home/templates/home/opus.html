@@ -273,7 +273,7 @@ if request.session.search_context.pattern != ""
    $(document).ready(function() {
        
 	   // Show both the concepts, and the annotations for each concept
-       ShowModelConcepts("{{opus.ref}}", 'counterpoint')
+       ShowModelConcepts("{{opus.ref}}", 'image-region')
        
        // ComputeAnnotations();
        TabClick(tabNames,0);
@@ -283,7 +283,7 @@ if request.session.search_context.pattern != ""
 
   <!-- Parameters supplied to the ComputeAnnotations() Ajax call -->
 <input id="compute_opus_ref" type="hidden" name="opus_ref" value="{{opus.ref}}"/>
-<input id="compute_model_code" type="hidden" name="model_code" value="counterpoint"/>
+<input id="compute_model_code" type="hidden" name="model_code" value="image-region"/>
 
 
 {% endblock opus_menu %}

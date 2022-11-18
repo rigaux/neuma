@@ -39,7 +39,12 @@
            <input type='hidden' id='opus_ref' name='opus_ref' value='{{opus.ref}}'/>
           <select id="selected_annotation_model" type="text" name="annotation_model">
              {% for a_model in annotation_models %}
-              <option value="{{a_model.code}}">{{a_model.name}}</option>
+             <!--  Default annotation model to show -->
+               {% if a_model.code == "image-region" %}
+              <option value="{{a_model.code}}" selected>{{a_model.name}}</option>
+              {% else %}
+                  <option value="{{a_model.code}}">{{a_model.name}}</option>
+              {% endif %}
                {% endfor %}
            </select>
           <input id="submitButton" type="submit" value="{% trans 'Load annotations' %}" />

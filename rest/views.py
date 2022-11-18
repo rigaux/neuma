@@ -70,6 +70,8 @@ from scorelib.analytic_concepts import *
 import logging
 
 # Get an instance of a logger
+
+logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 #
 # Type for ressources
@@ -691,7 +693,7 @@ def handle_annotations_request(
 
 	if request.method == "GET":
 
-		print(
+		logger.info(
 			"REST call for annotations request. Opus:"
 			+ full_neuma_ref
 			+ " Model: "
@@ -741,7 +743,7 @@ def handle_annotations_request(
 
 
 @csrf_exempt
-@swagger_auto_schema(methods=["post", "put"], auto_schema=None)
+@swagger_auto_schema(methods=["get", "post", "put"], auto_schema=None)
 @api_view(["GET", "POST", "PUT"])
 def handle_annotation_request(request, full_neuma_ref, annotation_id="-1"):
 	"""

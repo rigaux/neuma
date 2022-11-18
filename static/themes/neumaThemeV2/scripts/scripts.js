@@ -395,10 +395,10 @@ $(function() {
 	$('a.playHere').attr('href',note_id);
 
 	// Take the reference to the current opus, stored in a div 
-	var opus_ref = $("#compute_opus_ref").val()
-	console.log ("Opus reference : " + opus_ref)
+	//var opus_ref = $("#compute_opus_ref").val()
+	//console.log ("Opus reference : " + opus_ref)
 	// The following function feeds the content of the Infobox
-	getNoteDescription(opus_ref, note_id)
+	// getNoteDescription(opus_ref, note_id)
 	
     var position = target.offset();
     var targetLeft = position.left;

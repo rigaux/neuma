@@ -49,6 +49,9 @@ class Event:
 	def add_articulation (self, art):
 		self.m21_event.articulations.append(art.m21_articulation)
 
+	def id(self):
+		return self.m21_event.id
+	
 class Articulation ():
 	"""
 		Articulation = some performance indication attached to a note
