@@ -279,7 +279,7 @@ function InsertAnnotation(form) {
 	});
 	
 	// OK refresh the description
-	getNoteDescription(opus_ref, note_id)
+	getNoteDescription("image-region", opus_ref, note_id)
 	// Refresh the annotations markup
 	ShowModelConcepts(opus_ref, $("#compute_model_code").val(), selectedConcept)
 }
@@ -409,7 +409,7 @@ function UpdateAnnotation(form) {
 	});
 	
 	// OK refresh the description
-	getNoteDescription(opus_ref, note_id)
+	getNoteDescription("image-region", opus_ref, note_id)
 }
 
 /**
@@ -533,9 +533,9 @@ function ComputeComparison() {
  * Call Ajax to retrieve the description of a note
  */
 
-function getNoteDescription(opus_ref, note_id) {
+function getNoteDescription(opus_ref, note_id, annotation_id, model_code) {
 
-	console.log ("Call element description for opus " + opus_ref + " and element " +  note_id) 
+	console.log ("Call element description for model " + model_code + " opus " + opus_ref + " and element " +  note_id) 
 	url_user = '/rest/misc/user/'
 	console.log ("Call current user description " + url_user)
 	var current_user = ""
@@ -584,6 +584,7 @@ function getNoteDescription(opus_ref, note_id) {
     }       
   });            
 
+  // Ajax call to get the annotations, and display them in the infobox
 	$.ajax({
 		url : url_rest,
 		type : 'GET',
@@ -607,10 +608,13 @@ function getNoteDescription(opus_ref, note_id) {
 				// Element description, including list of annotations
 				$("#score_element_id").html (note_id)
 				$("#annotation_element_id").html (note_id)
-				console.log ("Affectation Note id " + note_id)
 				$("#annotations_list").empty ()
 				for (i in data.annotations) {
 					annotation = data.annotations[i]
+					// We only show the annotations of the current annotation model
+			//console.log ("Annotation model " +  annotation.annotation_model  + " model code " + model_code)
+					if (annotation.annotation_model == model_code) {
+						 // console.log ("Add annotation to the list")
 					annot_elem = $( "#annotation_description" ).clone();
 					// Change the annotation values in the form
 					annot_elem.find("#annotation_opus_ref").val (opus_ref);
@@ -622,11 +626,7 @@ function getNoteDescription(opus_ref, note_id) {
 					annot_elem.find("#annotation_class").html (annotation.annotation_model);
 					annot_elem.find("#annotation_target").html (annotation.annotation_concept);
 					annot_elem.find("#annotation_created_at").html (annotation.created);
-										
-					annot_elem.find("#annotation_target_source").html (annotation.target.resource.source);
-					annot_elem.find("#annotation_target_selector_type").html (annotation.target.resource.selector.type);
-					annot_elem.find("#annotation_target_selector_value").html (annotation.target.resource.selector.value);
-	
+											
 					if (annotation.body.type == "SpecificResource") {
 						annot_elem.find("#annotation_body_source").html (annotation.body.resource.source);
 						annot_elem.find("#annotation_body_selector_type").html (annotation.body.resource.selector.type);
@@ -651,6 +651,7 @@ function getNoteDescription(opus_ref, note_id) {
 							form_elem.show()
 							form_elem.appendTo( $("#annotations_list"));
 						}
+					}
 				}
 				
 				// XML fragment edition

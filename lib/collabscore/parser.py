@@ -167,6 +167,8 @@ class OmrScore:
 				#		continue
 				# Headers defines the parts and their staves in this system
 				for header in system.headers:
+					# Safety: an id should not start with a digit
+					header.id_part = "P" + header.id_part
 					if score.part_exists(header.id_part):
 						part = score.get_part(header.id_part)
 					else:
@@ -451,7 +453,8 @@ class Voice:
 	
 	def __init__(self, json_voice):
 		self.id = json_voice["id"]
-		self.id_part = json_voice["id_part"]
+		# Safety
+		self.id_part =  "P" + json_voice["id_part"]
 		self.items = []
 		for json_item in json_voice["elements"]:
 			self.items.append(VoiceItem (json_item))

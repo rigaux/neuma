@@ -302,7 +302,7 @@ function EventOverNotes(opus_ref) {
  */
 
 function AddAnnotationAnchors(model_code, opusRef, annotations, show_annotation) {
-	console.log("AddAnnotationAnchors for model " + model_code + " opus "
+	console.log("AddAnnotationAnchors for model " + model_code + " and opus "
 			+ opusRef + " show/hide " + show_annotation)
 	// Loop on the notes, search for annotations 
 	$(".note").each(
@@ -315,11 +315,11 @@ function AddAnnotationAnchors(model_code, opusRef, annotations, show_annotation)
 					nb_annotations = annotations[note.id].length
 					for (var i = 0; i < nb_annotations; i++) {
 						// We identify the anchor with
-						// opus_ref@note_id@annotation_id
+						// opus_ref@note_id@annotation_id@model_code
 						annotation = annotations[note.id][i]
 						annotation_id = opusRef + '@' + $(this).attr("id")
-								+ '@' + annotation.id
-						
+								+ '@' + annotation.id + '@' + model_code
+					
 						// Find the vertical offset
 						if (offsets[note.id]) {
 							offsets[note.id] += 180
@@ -336,10 +336,9 @@ function AddAnnotationAnchors(model_code, opusRef, annotations, show_annotation)
 								var note_id = $(this).attr("id").split('@')[1]
 								var annotation_id = $(this).attr("id").split(
 										'@')[2]
-								getNoteDescription(opus_ref, note_id,
-										annotation_id)
+								var model_code = $(this).attr("id").split('@')[3]
+								getNoteDescription(opus_ref, note_id, annotation_id, model_code)
 							}
-							// note.parentNode.insertBefore(circle, note);
 							note.append(circle);
 						} else {
 							// We need to remove the circle

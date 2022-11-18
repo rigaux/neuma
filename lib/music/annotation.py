@@ -63,7 +63,7 @@ class Annotation:
 
 	def get_json_obj (self):
 		''' Produce the JSON string, conform to the W3C spec..'''
-		return {"id": self.format_id(), "type": "Annotation", 
+		return {"id": self.id, "type": "Annotation", 
 			"creator": self.creator.get_json_obj(),
 			  "motivation": self.motivation, "annotation_model": self.annotation_model,
 			  "annotation_concept": self.annotation_concept,
