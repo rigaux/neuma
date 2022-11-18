@@ -64,7 +64,8 @@ class CollabScoreParser:
 		   To check the schema: http://www.jsonschemavalidator.net/
 		"""
 		
-
+		self.error_messages = []
+		
 		# Check schema via class method call. Works, despite IDE complaining
 		logger.info (f'Loading schema file {schema_file_path} from {base_uri}')
 		# Might raise an exception
@@ -80,14 +81,14 @@ class CollabScoreParser:
 			errors = sorted(self.validator.iter_errors(self.schema), key=lambda e: e.path)
 			str_errors = ""
 			for e in errors:
-				path = ""
+				path = "/"
 				for p in e.absolute_path:
 					path += str(p) + '/' 
 				str_errors += " Error : " + e.message + " (path " + path + ")"
 			raise Exception ("Schema  validation error: " + str_errors)
 		except jsonschema.SchemaError as ex:
 			errors = sorted(self.validator.iter_errors(self.schema), key=lambda e: e.path)
-			str_errors = ""
+			str_errors = "/"
 			for e in errors:
 				path = ""
 				for p in e.absolute_path:
@@ -103,24 +104,26 @@ class CollabScoreParser:
 							schema=self.schema, 
 							resolver=self.resolver)
 		except jsonschema.ValidationError as ex:
-			errors = sorted(self.validator.iter_errors(json_content), key=lambda e: e.path)
-			str_errors = ""
-			for e in errors:
-				path = ""
-				for p in e.absolute_path:
-					path += str(p) + '/' 
-				str_errors += " Error : " + e.message + " (path " + path + ")"
-			raise Exception ("Data  validation error: " + str_errors)
+			self.error_messages = self.collect_errors(json_content, "Data validation errror")
+			return False
 		except jsonschema.SchemaError as ex:
-			errors = sorted(self.validator.iter_errors(json_content), key=lambda e: e.path)
-			str_errors = ""
-			for e in errors:
-				path = ""
-				for p in e.absolute_path:
-					path += str(p) + '/' 
-					print ("Path to error " + path)
-				str_errors += " Error : " + e.message + " (path " + path + ")"
-			raise Exception (ex.message)
+			self.error_messages = self.collect_errors(json_content, "Schema validation errror")
+			return False
+		# No pb
+		return True
+	
+	def collect_errors (self, json_content, context):
+		''' 
+		Put errors found in an exception in a list
+		'''
+		errors_list=[]
+		errors = sorted(self.validator.iter_errors(json_content), key=lambda e: e.path)
+		for e in errors:
+			path = "/"
+			for p in e.absolute_path:
+				path += str(p) + '/' 
+			errors_list.append(f"{context}: {e.message} at path {path}")
+		return errors_list
 
 """
   Utility classes
