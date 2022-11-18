@@ -963,13 +963,21 @@ class Opus(models.Model):
 		sources = []
 		for source in self.opussource_set.all ():
 			sources.append(source.to_json(request))
+		files = {}
+		my_url = request.build_absolute_uri("/")[:-1]
+		for fname, fattr in Opus.FILE_NAMES.items():
+			the_file = getattr(self, fattr)
+			if the_file:
+				files[fname] = {"url": my_url + the_file.url}
+	
 		return {"ref": self.local_ref(), 
 				 "title": self.title,
 				  "composer": self.composer, 
 				 "lyricist": self.lyricist, 
 				 "corpus": self.corpus.ref,
 				 "meta_fields": metas,
-				 "sources": sources}
+				 "sources": sources,
+				 "files": files}
 
 
 class OpusMeta(models.Model):
