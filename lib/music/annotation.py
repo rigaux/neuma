@@ -73,6 +73,25 @@ class Annotation:
 			 "created": str(self.created),
 			 "modified": str(self.modified)}
 		
+	@staticmethod 
+	def create_from_json (data):
+		''' Create an annotation from  a JSON serialisation'''
+	
+		#print (str(data))
+		creator =  Creator(data['creator']['id'], data['creator']['type'], data['creator']['name'])
+		annot_model = data['annotation_model']
+		annot_concept = data['annotation_concept']
+		motivation = data['motivation']
+		target_selector = FragmentSelector(data['target']['selector']['conformsTo'], 
+										data['target']['selector']['value'])
+		target_resource = SpecificResource(data['target']['source'], target_selector)
+		body_selector = FragmentSelector(data['body']['resource']['selector']['conformsTo'], 
+										data['body']['resource']['selector']['value'])
+		body_resource = SpecificResource(data['body']['resource']['source'], body_selector)
+		return Annotation (1, creator, Target(target_resource), ResourceBody(body_resource), 
+				annot_model, annot_concept, motivation,
+				datetime.datetime.today(), datetime.datetime.today())
+		
 	def set_style (self, style):
 		self.style = style
 
