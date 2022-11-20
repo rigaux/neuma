@@ -7,6 +7,7 @@ from xml.dom import minidom
 from django.core.files.base import ContentFile
 
 from django.conf import settings
+from django.db.models import Count, F
 
 from rest_framework import viewsets
 from manager import models
@@ -683,6 +684,56 @@ def compute_annotations(request, full_neuma_ref, model_code):
 
 
 @csrf_exempt
+@swagger_auto_schema(methods=["get"], auto_schema=None)
+@api_view(["GET"])
+def handle_stats_annotations_request(
+	request, full_neuma_ref, model_code='_stats', concept_code="_stats"
+):
+	"""
+	Return a list of annotations for a given annotation model
+	"""
+
+	if request.method == "GET":
+
+		logger.info(
+			"REST call for annotations request. Opus:"
+			+ full_neuma_ref
+			+ " Model: "
+			+ model_code
+		)
+
+		neuma_object, object_type = get_object_from_neuma_ref(full_neuma_ref)
+		if type(neuma_object) is Opus:
+			opus = neuma_object
+		else:
+			return Response(status=status.HTTP_404_NOT_FOUND)
+
+		if not(model_code == "_stats"):
+			# The model is explicitly given
+			try:
+				db_model = AnalyticModel.objects.get(code=model_code)
+			except AnalyticModel.DoesNotExist:
+				return JSONResponse({"error": f"Unknown analytic model: {model_code}"})
+
+		if model_code=="_stats" and concept_code=="_stats":
+			# Return stats of the annotations grouped by model
+			total_annot = Annotation.objects.filter(opus=opus).count()
+			model_count = Annotation.objects.filter(opus=opus).values(
+						model_code=F('analytic_concept__model__code')).annotate(count= Count('*'))
+			 				
+			return JSONResponse({"total_annotations": total_annot, "count_per_model": model_count})
+		elif concept_code=="_stats":
+			# Return stats of the model annotations grouped by concept
+			total_annot = Annotation.objects.filter(opus=opus).count()
+			model_count = Annotation.objects.filter(opus=opus).filter(analytic_concept__model=db_model).values(
+						concept_code=F('analytic_concept__code')).annotate(count= Count('*'))
+			 				
+			return JSONResponse({"annotation_model": db_model.code,
+								   "total_annotations": total_annot, "count_per_concept": model_count})
+
+
+@csrf_exempt
+@swagger_auto_schema(methods=["get"], auto_schema=None)
 @api_view(["GET"])
 def handle_annotations_request(
 	request, full_neuma_ref, model_code, concept_code="_all"
@@ -705,35 +756,28 @@ def handle_annotations_request(
 			opus = neuma_object
 		else:
 			return Response(status=status.HTTP_404_NOT_FOUND)
-
-		# Search for annotations
-		annotations = {}
-		obj = {"annotations": annotations}
-
+		# The model is explicitly given
 		try:
 			db_model = AnalyticModel.objects.get(code=model_code)
 		except AnalyticModel.DoesNotExist:
-			return JSONResponse({"error": "Unknown analytic model"})
+			return JSONResponse({"error": f"Unknown analytic model: {model_code}"})
 
+		# Search for annotations
 		if concept_code != "_all":
 			try:
-				# Take the concept and all its descendants
-				db_concept = AnalyticConcept.objects.get(code=concept_code)
-				concepts_list = db_concept.get_descendants(True)
-				concept_name = db_concept.name
 				db_annotations = Annotation.objects.filter(
-					opus=opus, analytic_concept__in=concepts_list
+					opus=opus, analytic_concept__code=concept_code
 				)
-				print("Get  annotations for concept " + concept_code)
+				logger.info("Get  annotations for concept " + concept_code)
 			except AnalyticConcept.DoesNotExist:
 				return Response(status=status.HTTP_404_NOT_FOUND)
 		else:
-			print("Get  annotations for all concepts of model " + model_code)
-			all_concepts = AnalyticConcept.objects.filter(model=db_model)
+			logger.info("Get  annotations for all concepts of model " + model_code)
 			db_annotations = Annotation.objects.filter(
-				opus=opus, analytic_concept__in=all_concepts
+				opus=opus, analytic_concept__model=db_model
 			)
-
+			
+		annotations = {}
 		for annotation in db_annotations:
 			if not annotation.ref in annotations:
 				annotations[annotation.ref] = []
@@ -741,25 +785,14 @@ def handle_annotations_request(
 
 		return JSONResponse(annotations)
 
-
 @csrf_exempt
-@swagger_auto_schema(methods=["get", "post", "put"], auto_schema=None)
-@api_view(["GET", "POST", "PUT"])
-def handle_annotation_request(request, full_neuma_ref, annotation_id="-1"):
+@swagger_auto_schema(methods=["get", "post"], auto_schema=None)
+@api_view(["GET", "POST"])
+def handle_annotation_request(request, full_neuma_ref, annotation_id=-1):
 	"""
-	  Actions on an annotation
+	  Actions on an annotation 
 	"""
-
-	# Get the annotation if id supplied
-	if annotation_id != "-1":
-		new_annotation = False
-		try:
-			db_annotation = Annotation.objects.get(id=annotation_id)
-		except Annotation.DoesNotExist:
-			return Response(status=status.HTTP_404_NOT_FOUND)
-	else:
-		new_annotation = True
-
+	
 	# Get the annotated object
 	neuma_object, object_type = get_object_from_neuma_ref(full_neuma_ref)
 	if object_type == OPUS_RESOURCE:
@@ -767,8 +800,38 @@ def handle_annotation_request(request, full_neuma_ref, annotation_id="-1"):
 	else:
 		return Response(status=status.HTTP_404_NOT_FOUND)
 
+	# Get the annotation 
+	try:
+		db_annotation = Annotation.objects.get(id=annotation_id)
+	except Annotation.DoesNotExist:
+		return Response(status=status.HTTP_404_NOT_FOUND)
+
+	if request.method == "GET":
+		return JSONResponse(annotation_to_rest(db_annotation))
+
+
+@csrf_exempt
+@swagger_auto_schema(methods=["put"], auto_schema=None)
+@api_view(["PUT"])
+def put_annotation_request(request, full_neuma_ref):
+	"""
+	  Create a new annotation 
+	"""
+	
+	# Get the annotated object
+	neuma_object, object_type = get_object_from_neuma_ref(full_neuma_ref)
+	if object_type == OPUS_RESOURCE:
+		opus = neuma_object
+	else:
+		return Response(status=status.HTTP_404_NOT_FOUND)
+
+	data = JSONParser().parse(request) 
+	logger.info ("Post data" + json.dumps(data))
+	return JSONResponse({"texte": "Mon texte"}
+					
+					)
 	if request.method == "PUT":
-		print("REST CALL to create a new annotation")
+		logger.info ("REST CALL to create a new annotation")
 		concept_code = request.POST.get("concept", "")
 		note_id = request.POST.get("note_id", "")
 		comment = request.POST.get("comment", "")
@@ -790,6 +853,8 @@ def handle_annotation_request(request, full_neuma_ref, annotation_id="-1"):
 			db_concept = AnalyticConcept.objects.get(code="composer")
 			# return Response(status=status.HTTP_404_NOT_FOUND)
 
+		return Response(status=status.HTTP_404_NOT_FOUND)
+	
 		user_annotation = Annotation(
 			opus=opus,
 			analytic_concept=db_concept,
@@ -804,8 +869,6 @@ def handle_annotation_request(request, full_neuma_ref, annotation_id="-1"):
 		user_annotation.save()
 
 		return JSONResponse("Create a new annotation")
-	if request.method == "GET":
-		return JSONResponse(annotation_to_rest(db_annotation))
 	if request.method == "POST":
 		concept_code = request.POST.get("concept", "")
 		comment = request.POST.get("comment", "")
@@ -834,7 +897,6 @@ def handle_annotation_request(request, full_neuma_ref, annotation_id="-1"):
 			return JSONResponse(
 				"User is not authenticated. This call should not happen"
 			)
-
 
 def annotation_to_rest(annotation):
 	"""
