@@ -63,16 +63,18 @@ urlpatterns = [
     ################
     # ANNOTATIONS
     ################
-    # PUT a new annotation
-    url (r'^collections/(?P<full_neuma_ref>(.*))/_annotations/$', views.handle_annotation_request, name='handle_put_annotation_request'),
-    # Compute annotations for an Opus and a model
-    url(r'^collections/(?P<full_neuma_ref>(.*))/_annotations/(?P<model_code>[-\w]+)/_compute/$', views.compute_annotations, name='compute_annotations'),
-    # Get the list of annotations for an object and a model
+    # Get stats on annotations for an object
+    url (r'^collections/(?P<full_neuma_ref>(.*))/_annotations/_stats/$', views.handle_stats_annotations_request, name='handle_annotations_stats'),
+    # Get/Update a specific annotation 
+    url (r'^collections/(?P<full_neuma_ref>(.*))/_annotations/(?P<annotation_id>[-\w]+)/$', views.handle_annotation_request, name='handle_annotation_request'),
+    # Put a new annotation 
+    url (r'^collections/(?P<full_neuma_ref>(.*))/_annotations/$', views.put_annotation_request, name='put_annotation_request'),
+     # Get stats for an object and a model
+    url (r'^collections/(?P<full_neuma_ref>(.*))/_annotations/(?P<model_code>[-\w]+)/_stats/$', views.handle_stats_annotations_request, name='handle_annotations_model_stats'),
+     # Get the list of annotations for an object and a model
     url (r'^collections/(?P<full_neuma_ref>(.*))/_annotations/(?P<model_code>[-\w]+)/_all/$', views.handle_annotations_request, name='handle_annotations_model_request'),
     # Get the list of annotations for an object, a model and a concept
-    url (r'^collections/(?P<full_neuma_ref>(.*))/_annotations/(?P<model_code>[-\w]+)/(?P<concept_code>.+)/_all/$', views.handle_annotations_request, name='handle_annotations_request'),
-    # Get/Post a specific annotation
-    url (r'^collections/(?P<full_neuma_ref>(.*))/_annotations/(?P<annotation_id>[-\w]+)/$', views.handle_annotation_request, name='handle_annotation_request'),
+    url (r'^collections/(?P<full_neuma_ref>(.*))/_annotations/(?P<model_code>[-\w]+)/(?P<concept_code>.+)/_all/$', views.handle_annotations_request, name='handle_annotations_concept_request'),
     #################
     # Transcription
     #################

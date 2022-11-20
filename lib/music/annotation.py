@@ -82,16 +82,22 @@ class Annotation:
 		annot_model = data['annotation_model']
 		annot_concept = data['annotation_concept']
 		motivation = data['motivation']
-		target_selector = FragmentSelector(data['target']['selector']['conformsTo'], 
-										data['target']['selector']['value'])
-		target_resource = SpecificResource(data['target']['source'], target_selector)
-		body_selector = FragmentSelector(data['body']['resource']['selector']['conformsTo'], 
-										data['body']['resource']['selector']['value'])
-		body_resource = SpecificResource(data['body']['resource']['source'], body_selector)
+		
+		target_source, target_selector = Annotation.specific_resource_from_json (data['target']['resource'])
+		target_resource = SpecificResource(target_source, target_selector)
+		body_source, body_selector = Annotation.specific_resource_from_json (data['body']['resource'])
+		body_resource = SpecificResource(body_source, body_selector)
+		
 		return Annotation (1, creator, Target(target_resource), ResourceBody(body_resource), 
 				annot_model, annot_concept, motivation,
 				datetime.datetime.today(), datetime.datetime.today())
-		
+	
+	@staticmethod 
+	def specific_resource_from_json(specres_json):
+		selector = FragmentSelector(specres_json['selector']['conformsTo'], 
+										specres_json['selector']['value'])
+		return  specres_json['source'], selector
+
 	def set_style (self, style):
 		self.style = style
 
