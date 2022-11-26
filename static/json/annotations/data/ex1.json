@@ -1,0 +1,33 @@
+{
+	"id": 1234,
+	"creator": {
+		"id": 1,
+		"type": "Person",
+		"name": "collabscore"
+	},
+	"motivation": "linking",
+	"annotation_model": "time-frame",
+	"annotation_concept": "measure_region",
+	"target": {
+		"type": "SpecificResource",
+		"resource": {
+			"source": "http://collabscore.org/target.mei",
+			"selector": {
+				"type": "FragmentSelector",
+				"conformsTo": "http://tools.ietf.org/rfc/rfc3023",
+				"value": "id('lkx123')"
+			}
+		}
+	},
+	"body": {
+		"type": "SpecificResource",
+		"resource": {
+			"source": "http://collabscore.org/body.mp3",
+			"selector": {
+				"type": "FragmentSelector",
+				"conformsTo": "https://www.w3.org/TR/media-frags/#naming-time",
+				"value": "t=10,20"
+			}
+		}
+	}
+}

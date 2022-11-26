@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "annotation_creator",
+  "title": "Schema of anotation creators",
+  "type": "object",
+  "properties": {
+     "id": { "type": "integer" },
+     "type": { "type": "string" ,
+             		"enum": ["Person", "Software"]},
+     "name": { "type": "string" }
+    },
+   "required": ["id", "type", "name"],
+  "additionalProperties": false
+}
