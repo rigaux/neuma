@@ -71,9 +71,9 @@ urlpatterns = [
     url (r'^collections/(?P<full_neuma_ref>(.*))/_annotations/$', views.put_annotation_request, name='put_annotation_request'),
      # Get stats for an object and a model
     url (r'^collections/(?P<full_neuma_ref>(.*))/_annotations/(?P<model_code>[-\w]+)/_stats/$', views.handle_stats_annotations_request, name='handle_annotations_model_stats'),
-     # Get the list of annotations for an object and a model
+     # Get or delete the list of annotations for an object and a model
     url (r'^collections/(?P<full_neuma_ref>(.*))/_annotations/(?P<model_code>[-\w]+)/_all/$', views.handle_annotations_request, name='handle_annotations_model_request'),
-    # Get the list of annotations for an object, a model and a concept
+    # Get or delete the list of annotations for an object, a model and a concept
     url (r'^collections/(?P<full_neuma_ref>(.*))/_annotations/(?P<model_code>[-\w]+)/(?P<concept_code>.+)/_all/$', views.handle_annotations_request, name='handle_annotations_concept_request'),
     #################
     # Transcription

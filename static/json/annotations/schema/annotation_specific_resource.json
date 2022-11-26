@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "annotation_target",
+  "title": "Schema of resources fragments",
+  "type": "object",
+  "properties": {
+     "type": { "type": "string" },
+     "resource": {"type": "object",
+                 "properties": {
+                     "source": {
+                                "type": "string",
+                                "description": "URL of the source"
+                            },
+                    "selector": {"description": "Selector description", 
+                             "$ref": "annotation_selector.json"}
+                    },
+                  "required": ["source", "selector"]
+                  }
+    },
+   "required": ["type", "resource"],
+  "additionalProperties": false
+}

@@ -1355,8 +1355,9 @@ class Annotation(models.Model):
 		
 	@staticmethod 
 	def create_from_web_annotation(user, opus, webannot):
-		# Get the concept
-		
+		'''
+			Create a DB annotation from an annotation of our score model
+		'''
 		try:
 			annot_concept = AnalyticConcept.objects.get(code=webannot.annotation_concept)
 		except AnalyticConcept.DoesNotExist:
