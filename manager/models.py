@@ -1284,22 +1284,10 @@ class Annotation(models.Model):
 	analytic_concept = models.ForeignKey(AnalyticConcept,on_delete=models.PROTECT,null=True)
 	# reference to the element being annotated, in principle an xml:id
 	ref = models.TextField(default="")
-	# The fragment is represented by a json array of notes ids< OBSOLETE.
-	fragment = models.TextField()
-	# Where to position the annotation. Always given by the id of a note
-	offset = models.TextField(default="")
-	# Music21 offset
-	m21_offset = models.TextField(default="")
 	# Whether the annotation is manual or not 
 	is_manual = models.BooleanField(default=False)
 	# The user that creates the annotation
 	user = models.ForeignKey(User, null=True,on_delete=models.PROTECT)
-	# Comment made by the user
-	comment = models.TextField(null=True, default="")
-	# XML fragment (alternate version proposed by the user)
-	xml_fragment = models.TextField(null=True, default="")
-	# Name and version of the model used for analysis
-	model_ref = models.TextField(default="")
 
 
 	##### New version, with target and body
@@ -1345,7 +1333,7 @@ class Annotation(models.Model):
 									settings.COMPUTER_USER_NAME)
 
 		annotation = annot_mod.Annotation(self.id, creator, target, body, 
-							self.model_ref, self.analytic_concept.code, 
+							self.analytic_concept.model.code, self.analytic_concept.code, 
 							self.motivation,
 							self.created_at, self.updated_at)
 		annotation.set_style (annot_mod.Style (self.analytic_concept.icon,
@@ -1377,14 +1365,17 @@ class Annotation(models.Model):
 			body = Resource(source=wbody.resource.source, selector_type=wbselector.type,
 					selector_conforms_to=wbselector.conforms_to, selector_value=wbselector.value)
 			body.save()
+			# NB: the annotation model of webannot is ignored, we take the model of the concept istead.
+			# There is probably no need to refer tothe annotation model in web annotation, unless
+			# two concepts in two distinct models share the same code
 			return Annotation (opus=opus, ref = wtselector.value,
-								user=user, model_ref=webannot.annotation_model,
+								user=user, 
 								analytic_concept =  annot_concept,
 								target=target,body=body, 
 								motivation=webannot.motivation)
 		elif wbody.type == "textual_body":
 			return Annotation (opus=opus, ref = wtselector.value,
-								user=user, model_ref=webannot.annotation_model,
+								user=user,
 								analytic_concept =  annot_concept,
 								target=target, textual_body=wbody.value, 
 								motivation=webannot.motivation)

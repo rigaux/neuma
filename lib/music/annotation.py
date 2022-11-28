@@ -260,7 +260,7 @@ class FragmentSelector:
 	 '''
 	
 	XML_SELECTOR = "http://tools.ietf.org/rfc/rfc3023"
-	IMAGE_SELECTOR = "https://www.w3.org/TR/media-frags/#naming-space"
+	IMAGE_SELECTOR = "http://www.w3.org/TR/SVG/"
 	AUDIO_SELECTOR = "https://www.w3.org/TR/media-frags/#naming-time"
 
 
