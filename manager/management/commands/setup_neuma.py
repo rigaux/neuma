@@ -145,6 +145,7 @@ class Command(BaseCommand):
 		# Analytic models
 		self.load_model ("quality_model.xml")
 		self.load_model ("region_model.xml")
+		self.load_model ("tframe_model.xml")
 		self.load_model ("omr_error_model.xml")
 		self.load_licences()
 		self.load_persons()
