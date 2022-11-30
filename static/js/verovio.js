@@ -391,6 +391,9 @@ function CreateAnchor(note, annotation, delta_y=0) {
 	svg.setAttribute ("viewBox", "0 0 5 5");
 
 	var path = document.createElementNS("http://www.w3.org/2000/svg", 'path');
+	
+	// The icon takes the id of the note, prefixed by 'icon'
+	path.setAttribute('id', 'icon:' + note.id);
 	path.setAttributeNS(null, 'd', annotation.style.icon);
 	path.setAttributeNS(null, 'fill-opacity', 0.6);
 	path.setAttributeNS(null, 'fill', annotation.style.color);
@@ -421,14 +424,17 @@ function jq(myid) {
 
 function ClearAnnotationAnchors(concept_type) {
 	// Maybe check that this indeeds correspond to an annotation
-	$("circle").each(function(i) {
-		var circle = document.getElementById($(this).attr("id"))
+console.log ("Clear annnotation for  " + concept_type)
 
-		console.log("Clear annotation for concept " + concept_type)
-		if (concept_type == "_all") {
-			circle.parentNode.removeChild(circle);
-		}
-
+	$("path").each(function(i) {
+		if ($(this).attr("id") != null && $(this).attr("id").startsWith("icon"))
+		{
+			// Removing all icons
+    	    	var circle = document.getElementById($(this).attr("id"))
+	        	if (concept_type == "_all") {
+		    	circle.parentNode.removeChild(circle);
+	        	}
+       }
 	})
 }
 

@@ -71,7 +71,7 @@ class Command(BaseCommand):
 			root.save()
 			
 		# Create a, external corpus for all scores not directly managed by Neuma
-		try:
+		'''try:
 			external = Corpus.objects.get(ref=settings.NEUMA_EXTERNAL_CORPUS_REF)
 		except Corpus.DoesNotExist:
 			print ("Creating external corpus")
@@ -81,7 +81,8 @@ class Command(BaseCommand):
 			external.short_description = "External collections"
 			external.is_public = False
 			external.save()
-
+'''
+			
 		# Create a corpus for quality management
 		try:
 			external = Corpus.objects.get(ref=settings.NEUMA_QUALITY_CORPUS_REF)
@@ -145,6 +146,7 @@ class Command(BaseCommand):
 		# Analytic models
 		self.load_model ("quality_model.xml")
 		self.load_model ("region_model.xml")
+		self.load_model ("tframe_model.xml")
 		self.load_model ("omr_error_model.xml")
 		self.load_licences()
 		self.load_persons()

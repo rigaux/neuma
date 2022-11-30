@@ -78,8 +78,14 @@ class Annotation:
 		''' Create an annotation from  a JSON serialisation'''
 	
 		#print (str(data))
-		creator =  Creator(data['creator']['id'], data['creator']['type'], data['creator']['name'])
-		annot_model = data['annotation_model']
+		if "creator" in data:
+			creator =  Creator(data['creator']['id'], data['creator']['type'], data['creator']['name'])
+		else:
+			creator =  Creator(0, "Person", "Anonymous")
+		if "annot_model" in data:
+			annot_model = data['annotation_model']
+		else:
+			annot_model = "Unknown"
 		annot_concept = data['annotation_concept']
 		motivation = data['motivation']
 		
@@ -254,7 +260,7 @@ class FragmentSelector:
 	 '''
 	
 	XML_SELECTOR = "http://tools.ietf.org/rfc/rfc3023"
-	IMAGE_SELECTOR = "https://www.w3.org/TR/media-frags/#naming-space"
+	IMAGE_SELECTOR = "http://www.w3.org/TR/SVG/"
 	AUDIO_SELECTOR = "https://www.w3.org/TR/media-frags/#naming-time"
 
 
