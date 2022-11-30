@@ -431,6 +431,7 @@ console.log ("Clear annnotation for  " + concept_type)
 		{
 			// Removing all icons
     	    	var circle = document.getElementById($(this).attr("id"))
+
 	        	if (concept_type == "_all") {
 		    	circle.parentNode.removeChild(circle);
 	        	}
