@@ -9,7 +9,6 @@ import verovio
 from .Voice import Voice
 from . import notation
 
-
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
@@ -27,18 +26,30 @@ c_handler.setFormatter(c_format)
 """ 
 
 class Score:
+
 	"""
-		Representation of a score as a hierarchy of sub-scores / voices
-	"""
+        Representation of a score as a hierarchy of sub-scores / voices
+    """
+
+	# For OMR app: we can introduce an intermediate System level
+	use_systems = False
 	
 	def __init__(self, title="", composer="") :
 		self.id = ""
 		'''
 		   'A score is made of components, which can be either voices 
-		   (final) or parts. Follows the music21 recomended organization
+		   (final) or parts. Follows the music21 recommended organization
 		'''
 		self.parts = []
 		
+		''' 
+            Optionnaly, a score is split in systems: mostly useful
+            for OMR applications. In that case the current system
+            behaves as a sub-scre, and all call on parts are delegated to it
+		'''
+		self.systems = []
+		self.current_system = None
+
 		'''
 			We can store annotations on a score and any of its elemnts
 		'''
@@ -55,19 +66,43 @@ class Score:
 		
 		return
 	
+	def get_parts(self):
+		'''
+			Get the list of parts, found either in the score itself or in the current system
+		'''
+		if Score.use_systems:
+			return self.current_system.parts
+		else:
+			return self.parts
+
+	def add_system (self, system):
+		if Score.use_systems:
+			self.systems.append (system)
+			self.current_system = system
+			self.m21_score.append(system.m21_system)
+			
+	def add_system_break(self):
+		system_break = m21.layout.SystemLayout(isNew=True)
+		self.m21_score.append (system_break)
+			
+			
 	def add_part (self, part):
-		""" Add a part to the main score """
-		self.parts.append(part)	
-		self.m21_score.insert(0, part.m21_part)
+		""" Add a part to the main score or to the current system"""
+		if Score.use_systems:
+			self.current_system.parts.append(part)	
+			self.current_system.m21_system.insert(0, part.m21_part)
+		else:
+			self.parts.append(part)	
+			self.m21_score.insert(0, part.m21_part)
 	
 	def part_exists (self, id_part):
-		for part in self.parts:
-			if part.id == id_part:
-				return True
+		for part in self.get_parts():
+				if part.id == id_part:
+					return True
 		return False
 
 	def get_part (self, id_part):
-		for part in self.parts:
+		for part in self.get_parts():
 			if part.id == id_part:
 				return part
 		
@@ -78,7 +113,7 @@ class Score:
 		''' 
 		    Find a staff of the score. Staves are embedded in parts
 		'''
-		for part in self.parts:
+		for part in self.get_parts():
 			if part.staff_exists (no_staff):
 				return part.get_staff(no_staff)
 
@@ -222,6 +257,21 @@ class Score:
 	def add_annotation(self, annotation):
 		self.annotations.append(annotation)
 
+class System:
+	"""
+        For OMR only: all the sub-components (parts, etc) are allocated to a single system 
+    """
+
+	def __init__(self, no_system) :
+		logger.info (f"Adding system {no_system}")
+		self.id = no_system
+
+		self.m21_system = m21.stream.System(id=no_system)
+
+		# List of parts in the system
+		self.parts = []
+		
+
 class Part:
 	"""
 		Representation of a part as a hierarchy of parts / voices
@@ -276,13 +326,17 @@ class Part:
 		# of the measure
 		
 		logger.info (f'Adding measure {measure.no} to part {self.id}')
-
 		self.m21_part.append(measure.m21_measure)
+
+	def add_system_break(self):
+		system_break = m21.layout.SystemLayout(isNew=True)
+		self.m21_part.append (system_break)
 
 	@staticmethod
 	def create_part_id (id_part):
 		# Create a string that identifies the part
 		return "Part" + str(id_part)
+
 
 class Measure:
 	"""

@@ -29,5 +29,5 @@ XML_MEASURE_CONCEPT = "measure-xml"
 XML_NOTE_CONCEPT = "note-xml"
 
 # Concepts for the AM_OMR_ERROR annotation
-OMR_ERROR_UNKNOWN_SYMBOL = "unknown_symbol"
-OMR_ERROR_INCONSISTENT_NOTATION = "inconsistent_notation"
+OMR_ERROR_UNKNOWN_SYMBOL = "unknown-symbol"
+OMR_ERROR_INCONSISTENT_NOTATION = "inconsistent-notation"

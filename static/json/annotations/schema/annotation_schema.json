@@ -1,0 +1,26 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "annotation-schema.json",
+    "type": "object",
+  "title": "Schema of annotation documents",
+  "description": "See https://github.com/collabscore/documents/blob/main/devdoc/annotations.md",
+  "properties": { 
+      "id": {"description": "Identifier", "type": "integer"},
+     "type": {"description": "Always 'Annotation'", "type": "string"},
+       "creator": {"description": "Creator of the annotation", "$ref": "annotation_creator.json"},
+      "motivation": {"description": "Purpose of the anotation", 
+          			"type": "string",
+             		"enum": ["linking", "questioning", "commenting"]
+                },
+      "annotation_model": {"description": "Code of the annotation model", "type": "string",
+             		"enum": ["image-region", "time-frame", "xml-fragment", "omr-error"]
+             		},
+      "annotation_concept": {"description": "Code of the annotation concept", "type": "string"},
+       "target": {"description": "Resource being annotated", "$ref": "annotation_specific_resource.json"},
+       "body": {"description": "Annotation content", "$ref": "annotation_specific_resource.json"},
+      "created": {"description": "Creation timestamp", "type": "string"},
+      "modified": {"description": "Last update timestamp", "type": "string"}
+   },
+   "required": ["annotation_concept", "motivation", "body", "target"],
+   "additionalProperties": false
+}

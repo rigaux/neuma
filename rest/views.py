@@ -3,6 +3,11 @@ import urllib
 
 import subprocess
 
+import jsonschema
+import jsonref
+import json
+from jsonref import JsonRef
+
 from xml.dom import minidom
 from django.core.files.base import ContentFile
 
@@ -10,7 +15,6 @@ from django.conf import settings
 from django.db.models import Count, F
 
 from rest_framework import viewsets
-from manager import models
 from . import serializers
 
 from django.utils.dateformat import DateFormat
@@ -29,7 +33,7 @@ from rest_framework.exceptions import ParseError
 
 from rest_framework.decorators import api_view, permission_classes, parser_classes
 from rest_framework.authentication import SessionAuthentication, BasicAuthentication
-from rest_framework.permissions import *
+from rest_framework import permissions
 
 from rest_framework import renderers
 from rest_framework.schemas import AutoSchema, ManualSchema
@@ -63,10 +67,15 @@ from quality.lib.NoteTree_v2 import MonophonicScoreTrees
 
 
 from music21 import converter, mei
+
+import lib.music.Score as score_model
+import lib.music.annotation as annot_mod
+import lib.music.constants as constants_mod
+from lib.collabscore.parser import CollabScoreParser
+
 from lib.music.Score import *
 from .forms import *
 from django.conf.global_settings import LOGGING
-from scorelib.analytic_concepts import *
 
 import logging
 
@@ -686,6 +695,7 @@ def compute_annotations(request, full_neuma_ref, model_code):
 @csrf_exempt
 @swagger_auto_schema(methods=["get"], auto_schema=None)
 @api_view(["GET"])
+@permission_classes((permissions.IsAuthenticatedOrReadOnly, ))
 def handle_stats_annotations_request(
 	request, full_neuma_ref, model_code='_stats', concept_code="_stats"
 ):
@@ -734,33 +744,30 @@ def handle_stats_annotations_request(
 
 @csrf_exempt
 @swagger_auto_schema(methods=["get"], auto_schema=None)
-@api_view(["GET"])
+@api_view(["GET", "DELETE"])
+@permission_classes((permissions.IsAuthenticatedOrReadOnly, ))
 def handle_annotations_request(
 	request, full_neuma_ref, model_code, concept_code="_all"
 ):
 	"""
-	Return a list of annotations for a given annotation model
+	Return or DELETE a list of annotations for a given annotation model
 	"""
 
-	if request.method == "GET":
-
-		logger.info(
-			"REST call for annotations request. Opus:"
-			+ full_neuma_ref
-			+ " Model: "
-			+ model_code
-		)
-
-		neuma_object, object_type = get_object_from_neuma_ref(full_neuma_ref)
-		if type(neuma_object) is Opus:
+	neuma_object, object_type = get_object_from_neuma_ref(full_neuma_ref)
+	if type(neuma_object) is Opus:
 			opus = neuma_object
-		else:
-			return Response(status=status.HTTP_404_NOT_FOUND)
-		# The model is explicitly given
-		try:
-			db_model = AnalyticModel.objects.get(code=model_code)
-		except AnalyticModel.DoesNotExist:
-			return JSONResponse({"error": f"Unknown analytic model: {model_code}"})
+	else:
+		return Response(status=status.HTTP_404_NOT_FOUND)
+	# The model is explicitly given
+	try:
+		db_model = AnalyticModel.objects.get(code=model_code)
+	except AnalyticModel.DoesNotExist:
+		return JSONResponse({"error": f"Unknown analytic model: {model_code}"})
+
+	if request.method == "GET":
+		logger.info(
+			f"REST call for reading all annotations of {opus.ref} in annotation model {db_model.code}"
+		)
 
 		# Search for annotations
 		if concept_code != "_all":
@@ -768,9 +775,9 @@ def handle_annotations_request(
 				db_annotations = Annotation.objects.filter(
 					opus=opus, analytic_concept__code=concept_code
 				)
-				logger.info("Get  annotations for concept " + concept_code)
+				logger.info("Get annotations for concept " + concept_code)
 			except AnalyticConcept.DoesNotExist:
-				return Response(status=status.HTTP_404_NOT_FOUND)
+				return JSONResponse({"error": f"Unknown concept {concept_code}"})
 		else:
 			logger.info("Get  annotations for all concepts of model " + model_code)
 			db_annotations = Annotation.objects.filter(
@@ -784,10 +791,20 @@ def handle_annotations_request(
 			annotations[annotation.ref].append(annotation_to_rest(annotation))
 
 		return JSONResponse(annotations)
+	if request.method == "DELETE":
+		Annotation.objects.filter(
+				opus=opus, analytic_concept__model=db_model
+			).delete()
+
+		logger.info(
+			f"REST call for deleting all annotations of {opus.ref} in annotation model {model_code}"
+		)
+		return JSONResponse({"message": f"All annotations of {opus.ref} for annotation model {model_code} have been deleted"})
 
 @csrf_exempt
 @swagger_auto_schema(methods=["get", "post"], auto_schema=None)
-@api_view(["GET", "POST"])
+@api_view(["GET", "POST", "DELETE"])
+@permission_classes((permissions.IsAuthenticatedOrReadOnly, ))
 def handle_annotation_request(request, full_neuma_ref, annotation_id=-1):
 	"""
 	  Actions on an annotation 
@@ -808,11 +825,15 @@ def handle_annotation_request(request, full_neuma_ref, annotation_id=-1):
 
 	if request.method == "GET":
 		return JSONResponse(annotation_to_rest(db_annotation))
+	if request.method == "DELETE":
+		db_annotation.delete()
+		return JSONResponse({"message": f"Annotation {annotation_id} has been deleted for opus {opus.ref}"})
 
 
 @csrf_exempt
 @swagger_auto_schema(methods=["put"], auto_schema=None)
 @api_view(["PUT"])
+@permission_classes((permissions.IsAuthenticatedOrReadOnly, ))
 def put_annotation_request(request, full_neuma_ref):
 	"""
 	  Create a new annotation 
@@ -825,64 +846,55 @@ def put_annotation_request(request, full_neuma_ref):
 	else:
 		return Response(status=status.HTTP_404_NOT_FOUND)
 
+	# We need a user
+	if not request.user.is_authenticated:
+		return JSONResponse(
+				"User is not authenticated. This call should not happen"
+			)
+
+	# Instantiate a validator 
+	try:
+		# The main schema file
+		schema_path = os.path.join (settings.BASE_DIR, "static", "json", "annotations", "schema")
+		schema_file = 'file://' + os.path.join (schema_path, 'annotation_schema.json')
+		# Where  json refs must be solved
+		base_uri='file://' + schema_path + os.sep
+		validator = CollabScoreParser(schema_file, base_uri)
+	except jsonschema.SchemaError as ex:
+		return JSONResponse({"error": "Schema parsing error: " + str (ex)})
+	except Exception as ex:
+		return JSONResponse({"error": "Unexpected error during schema parsing: " + str (ex)})
+
 	data = JSONParser().parse(request) 
 	logger.info ("Post data" + json.dumps(data))
-	return JSONResponse({"texte": "Mon texte"}
-					
-					)
+
 	if request.method == "PUT":
 		logger.info ("REST CALL to create a new annotation")
-		concept_code = request.POST.get("concept", "")
-		note_id = request.POST.get("note_id", "")
-		comment = request.POST.get("comment", "")
-		xml_fragment = request.POST.get("xml_fragment", "")
+		
+		# Validate
+		if not validator.validate_data (data):
+			return JSONResponse({"errors": validator.error_messages})
+
+		annotation = annot_mod.Annotation.create_from_json(data)
+		concept_code = annotation.annotation_concept
 		logger.info(
-			"Received a PUT request for annotation insertion. Concept:"
-			+ concept_code
-			+ " note id "
-			+ note_id
-			+ "Comment : "
-			+ comment
-			+ " XML fragment "
-			+ xml_fragment
+			f"Received a PUT request for annotation insertion. Concept: {annotation.annotation_concept}"
 		)
 
 		try:
 			db_concept = AnalyticConcept.objects.get(code=concept_code)
 		except AnalyticConcept.DoesNotExist:
-			db_concept = AnalyticConcept.objects.get(code="composer")
-			# return Response(status=status.HTTP_404_NOT_FOUND)
-
-		return Response(status=status.HTTP_404_NOT_FOUND)
+			return JSONResponse({"error": f"Unknown concept code= {annotation.annotation_concept}"})
 	
-		user_annotation = Annotation(
-			opus=opus,
-			analytic_concept=db_concept,
-			ref=note_id,
-			offset="",
-			fragment="",
-			is_manual=True,
-			comment=comment,
-			xml_fragment=xml_fragment,
-			user=request.user,
-		)
-		user_annotation.save()
+		db_annot = Annotation.create_from_web_annotation(request.user, opus, annotation)
+		db_annot.target.save()
+		if db_annot.body is not None:
+			db_annot.body.save()
+		db_annot.save()
+
+		return JSONResponse({"message": f"New annotation created on {opus.ref}", "annotation_id": db_annot.id})
 
 		return JSONResponse("Create a new annotation")
-	if request.method == "POST":
-		concept_code = request.POST.get("concept", "")
-		comment = request.POST.get("comment", "")
-
-		logger.info(
-			"Received a POST request for annotation update. Concept:"
-			+ concept_code
-			+ "Comment : "
-			+ comment
-		)
-		try:
-			db_concept = AnalyticConcept.objects.get(code=concept_code)
-		except AnalyticConcept.DoesNotExist:
-			return Response(status=status.HTTP_404_NOT_FOUND)
 
 		if request.user.is_authenticated():
 			if db_annotation.user.username == request.user.username:

@@ -122,8 +122,8 @@ class Chord (Event):
 			m21_notes.append (note.m21_event)
 		self.m21_event = m21.chord.Chord(m21_notes)
 		self.m21_event.duration = duration.m21_duration
-		self.m21_event.id = f'r{Event.counter_event}'
-		
+		self.m21_event.id = f'{Event.counter_context}c{Event.counter_event}'
+
 		Event.counter_event += 1
 		self.no_staff = no_staff
 		return
@@ -143,7 +143,7 @@ class Rest (Event):
 		super ().__init__(duration)
 		self.m21_event = m21.note.Rest()
 		self.m21_event.duration = duration.m21_duration
-		self.m21_event.id = f'r{Event.counter_event}'
+		self.m21_event.id = f'{Event.counter_context}r{Event.counter_event}'
 		Event.counter_event += 1
 		self.no_staff = no_staff
 		return

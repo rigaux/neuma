@@ -21,6 +21,7 @@ import verovio
 
 
 from .constants import *
+from numpy import True_
 
 # Get an instance of a logger
 # See https://realpython.com/python-logging/
@@ -157,6 +158,9 @@ class OmrScore:
 			Builds a score (instance of our score model) from the Omerized document
 		'''
 		
+		# We use systems
+		score_model.Score.use_systems = True
+		
 		score = score_model.Score()
 		current_measure_no = 0
 		
@@ -166,6 +170,9 @@ class OmrScore:
 
 		for page in self.pages:
 			for system in page.systems:
+				score_system = score_model.System(system.id)
+				score.add_system(score_system)
+				
 				#if  current_measure_no > MAX_MEASURE_NO :
 				#		continue
 				# Headers defines the parts and their staves in this system
@@ -173,8 +180,10 @@ class OmrScore:
 					# Safety: an id should not start with a digit
 					header.id_part = "P" + header.id_part
 					if score.part_exists(header.id_part):
+						logger.info (f"Part {header.id_part} already exists")
 						part = score.get_part(header.id_part)
 					else:
+						logger.info (f"Creating part {header.id_part}")
 						part = score_model.Part(id_part=header.id_part)
 						score.add_part(part)
 					# Add the staff
@@ -193,7 +202,7 @@ class OmrScore:
 					
 					# Create a new measure for each part
 					current_measures = {}
-					for part in score.parts:
+					for part in score.get_parts():
 						# IMPORTANT: Works for a part with a single staff. Else, we probably need to
 						# add a measure for each staff. 
 						
@@ -208,6 +217,7 @@ class OmrScore:
 						
 						# Check if the measure starts with a change of clef or meter
 						for header in measure.headers:
+							header.no_staff = 0
 							if part.staff_exists(header.no_staff):
 								staff = part.get_staff (header.no_staff)
 								if header.clef is not None:
@@ -231,6 +241,7 @@ class OmrScore:
 						part.append_measure (measure_for_part)
 						# Keep the array of current measures indexed by part
 						current_measures[part.id] = measure_for_part
+					
 
 					for voice in measure.voices:
 						# Get the part the voice belongs to
@@ -260,6 +271,12 @@ class OmrScore:
 								score.add_annotation (annotation)
 						# Add the voice to the measure of the relevant part
 						current_measure.add_voice (voice_part)
+						
+				# Add a system break to better mimic the initial score organization
+				score.add_system_break()
+
+				if system.id > 0:
+					break
 		
 		return score 
 
