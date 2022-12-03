@@ -275,10 +275,10 @@ class OmrScore:
 				# Add a system break to better mimic the initial score organization
 				score.add_system_break()
 
-				if system.id > 0:
-					break
+				#if system.id > 0:
+				#	break
 		
-		return score 
+		return score
 
 
 	def decode_event(self, part, voice_item):

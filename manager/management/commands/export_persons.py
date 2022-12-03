@@ -18,6 +18,7 @@ class Command(BaseCommand):
 
 	def handle(self, *args, **options):
 		data = list(Person.objects.values())
-		with open('static/persons/persons.json', 'w') as fp:
+		with open('static/persons/persons.json', 'w', encoding="utf-8") as fp:
 			json.dump(data, fp)
+		print ("Persons have been exported to static/persons/persons.json")
 			
