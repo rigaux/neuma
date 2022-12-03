@@ -19,9 +19,8 @@ import lib.music.constants as constants_mod
 
 import verovio
 
-
 from .constants import *
-from numpy import True_
+
 
 # Get an instance of a logger
 # See https://realpython.com/python-logging/
@@ -164,8 +163,8 @@ class OmrScore:
 		score = score_model.Score()
 		current_measure_no = 0
 		
-		MIN_MEASURE_NO = 4
-		MAX_MEASURE_NO = 10
+		MIN_MEASURE_NO = 2
+		MAX_MEASURE_NO = 2
 
 
 		for page in self.pages:
@@ -173,8 +172,6 @@ class OmrScore:
 				score_system = score_model.System(system.id)
 				score.add_system(score_system)
 				
-				#if  current_measure_no > MAX_MEASURE_NO :
-				#		continue
 				# Headers defines the parts and their staves in this system
 				for header in system.headers:
 					# Safety: an id should not start with a digit
@@ -217,7 +214,6 @@ class OmrScore:
 						
 						# Check if the measure starts with a change of clef or meter
 						for header in measure.headers:
-							header.no_staff = 0
 							if part.staff_exists(header.no_staff):
 								staff = part.get_staff (header.no_staff)
 								if header.clef is not None:
@@ -254,9 +250,23 @@ class OmrScore:
 
 						# Create the voice
 						voice_part = voice_model.Voice(id=voice.id)
+						current_beam = 0
+						previous_event = None
 						for item in voice.items:
+							# Decode the event
 							(event, event_region) = self.decode_event(current_part, item) 
+							# Manage beams
+							if current_beam != item.beam_id:
+								if current_beam != 0:
+									# The previous event was the end of the beam
+									previous_event.stop_beam(current_beam)
+								if item.beam_id != 0:
+									event.start_beam(item.beam_id)
+								current_beam =  item.beam_id
+							previous_event = event
+							
 							voice_part.append_event(event)
+								
 							# Annotate this event
 							annotation = annot_mod.Annotation.create_annot_from_xml_to_image(
 								self.creator, self.uri, event.id, 
@@ -269,13 +279,20 @@ class OmrScore:
 									self.creator, self.uri, event.id, error.message, 
 									constants_mod.OMR_ERROR_UNKNOWN_SYMBOL)
 								score.add_annotation (annotation)
+								
+						# End of items for this measure. Close any pending beam
+						if current_beam != 0:
+							previous_event.stop_beam(current_beam)
+							current_beam =  0
 						# Add the voice to the measure of the relevant part
 						current_measure.add_voice (voice_part)
-						
+					if current_measure_no >= MAX_MEASURE_NO:
+						return score
+
 				# Add a system break to better mimic the initial score organization
 				score.add_system_break()
 
-				#if system.id > 0:
+				#if system.id == 0:
 				#	break
 		
 		return score
@@ -320,7 +337,7 @@ class OmrScore:
 					
 				# Did we just met an accidental?
 				if (alter != score_events.Note.ALTER_NONE):
-					logger.info (f'Accidental {alter} met on staff {staff.id}')
+					# logger.info (f'Accidental {alter} met on staff {staff.id}')
 					staff.add_accidental (pitch_class, alter)
 				else:
 					# Is there a previous accidental on this staff for this pitch class?
@@ -492,7 +509,7 @@ class VoiceItem:
 		
 		self.duration = Duration (json_voice_item["duration"])
 		if "no_group" in json_voice_item:
-			self.no_group = json_voice_item["no_group"]
+			self.beam_id = json_voice_item["no_group"]
 		if "direction" in json_voice_item:
 			self.direction = json_voice_item["direction"]
 		if "att_note" in json_voice_item:

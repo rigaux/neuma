@@ -165,3 +165,15 @@ class Clef:
 		pitch = m21.pitch.Pitch() 
 		pitch.diatonicNoteNum = diatonic_num
 		return (pitch.step, pitch.octave)
+
+
+class Beam:
+	'''
+		Same as Music21
+	'''
+	number= 0
+	
+	def __init__(self) :
+		# Unclear role of the beam member. Seems to be useful in case of several beams on a same group
+		Beam.number = Beam.number + 1
+		self.m21_beam = m21.beam.Beam(type='start', number=1)
