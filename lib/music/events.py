@@ -3,6 +3,13 @@ import music21 as m21
 
 from fractions import Fraction
 
+
+import lib.music.notation as score_notation
+
+import logging
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__name__)
+
 '''
  Classes representing musical event (e.g., pairs (duratioin, value)
 '''
@@ -45,9 +52,26 @@ class Event:
 
 	def is_note(self):
 		return False
+	def is_rest(self):
+		return False
 
 	def add_articulation (self, art):
 		self.m21_event.articulations.append(art.m21_articulation)
+
+	def start_beam(self, beam_id):
+		if not self.is_rest():
+			logger.info (f"Start a beam : {beam_id}" )
+			beam = score_notation.Beam()
+			self.m21_event.beams.append(beam.m21_beam)
+		else:
+			logger.warning ("Trying to start a beam ({beam_id}) on a rest")
+
+	def stop_beam(self, beam_id):
+		if not self.is_rest():
+			logger.info (f"Stop a beam : {beam_id}" )
+			self.m21_event.beams.append("stop")
+		else:
+			logger.warning (f"Trying to stop a beam ({beam_id}) on a rest")
 
 	def id(self):
 		return self.m21_event.id
@@ -150,5 +174,7 @@ class Rest (Event):
 	
 	def is_note(self):
 		return False
+	def is_rest(self):
+		return True
 	def get_no_staff(self):
 		return self.no_staff
