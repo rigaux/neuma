@@ -286,8 +286,8 @@ class OmrScore:
 							current_beam =  0
 						# Add the voice to the measure of the relevant part
 						current_measure.add_voice (voice_part)
-					if current_measure_no >= MAX_MEASURE_NO:
-						return score
+					#if current_measure_no >= MAX_MEASURE_NO:
+					#	return score
 
 				# Add a system break to better mimic the initial score organization
 				score.add_system_break()
