@@ -63,6 +63,7 @@ class Person (models.Model):
 	last_name = models.CharField(max_length=100)
 	year_birth = models.IntegerField()
 	year_death = models.IntegerField()
+	dbpedia_uri = models.CharField(max_length=255,null=True)
 
 	class Meta:
 		db_table = "Person"	

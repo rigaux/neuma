@@ -286,7 +286,9 @@ class Command(BaseCommand):
 									first_name=person["first_name"],
 									last_name=person["last_name"],
 									year_birth=person["year_birth"],
-									year_death=person["year_death"])
+									year_death=person["year_death"],
+									dbpedia_uri=person["dbpedia_uri"],
+									)
 					person.save()
 
 	def load_source_types (self):
