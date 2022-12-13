@@ -21,6 +21,7 @@ from django.conf import settings
 
 
 from lib.music.Score import *
+from lib.music.jsonld import JsonLD
 
 import lib.music.annotation as annot_mod
 
@@ -429,6 +430,28 @@ class Corpus(models.Model):
 		zf.close()
 		
 		return s
+	
+	def export_as_jsonld (self):
+		jsonld = JsonLD(settings.SCORELIB_ONTOLOGY_URI)
+		jsonld.add_type("Collection", "Collection")
+		jsonld.add_type("Opus", "Opus")
+		
+		
+		dict = {"@id": self.ref, 
+			    "@type": "Collection",
+				"hasCollectionTitle": self.title,
+				"hasCollectionCopyright": self.copyright
+				}
+		if self.licence is not None:
+			dict["hasLicence"] = self.licence.code
+		if self.parent is not None:
+			dict["isInCollection"] = self.parent.ref
+			
+		tab_opus = []
+		for opus in self.get_opera():
+			tab_opus.append(opus.export_as_jsonld())
+		has_opus = {"hasOpus": tab_opus}
+		return jsonld.get_context() | dict | has_opus 
 	
 	@staticmethod
 	def import_from_zip(zfile, parent_corpus, zip_name):
@@ -979,7 +1002,17 @@ class Opus(models.Model):
 				 "meta_fields": metas,
 				 "sources": sources,
 				 "files": files}
+		
+	def export_as_jsonld (self):
+		my_url = "http://neuma.huma-num.fr/"
 
+		dict = {"@id": self.ref, 
+			     "@type": "Opus",
+				"hasOpusTitle": self.title,
+				}
+		if self.mei is not None:
+			dict["hasScore"] = my_url + self.mei.url
+		return dict
 
 class OpusMeta(models.Model):
 	opus = models.ForeignKey(Opus,on_delete=models.CASCADE)
@@ -1282,7 +1315,7 @@ class Annotation(models.Model):
 	'''An annotation qualifies a fragment of a score with an analytic concept'''
 	opus = models.ForeignKey(Opus,on_delete=models.CASCADE)
 	# Analytic concept: for the moment, a simple code. See how we can do better
-	analytic_concept = models.ForeignKey(AnalyticConcept,on_delete=models.PROTECT,null=True)
+	analytic_concept = models.ForeignKey(AnalyticConcept,on_delete=models.CASCADE,null=True)
 	# reference to the element being annotated, in principle an xml:id
 	ref = models.TextField(default="")
 	# Whether the annotation is manual or not 
