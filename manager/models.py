@@ -177,7 +177,7 @@ class Corpus(models.Model):
 		return reverse('home:corpus', args=[self.ref])
 
 	def load_from_dict(self, dict_corpus):
-		"""Load content from a dictionary. used to migrate from Neuma/CouchDB"""
+		"""Load content from a dictionary."""
 		self.title = dict_corpus["title"]
 		self.short_title = dict_corpus["short_title"]
 		self.description = dict_corpus["description"]
@@ -188,6 +188,11 @@ class Corpus(models.Model):
 				self.licence = Licence.objects.get(code=dict_corpus["licence_code"])
 			except Licence.DoesNotExist:
 				print ("Unknown licence. Ignored. Did you run setup_neuma?")
+		if "composer" in dict_corpus:
+			try:
+				self.composer = Person.objects.get(dbpedia_uri=dict_corpus["composer"])
+			except Person.DoesNotExist:
+				print (f"Unknown composer {dict_corpus['composer']}. Ignored. Did you run setup_neuma?")
 		if "copyright" in dict_corpus:
 			self.copyright = dict_corpus["copyright"]
 		if "supervisors" in dict_corpus:
@@ -203,7 +208,7 @@ class Corpus(models.Model):
 		else:
 			licence_code = None
 
-		return {"ref": Corpus.local_ref(self.ref), 
+		core = {"ref": Corpus.local_ref(self.ref), 
 				 "title": self.title, 
 				 "short_title": self.short_title, 
 				 "description": self.description, 
@@ -213,6 +218,10 @@ class Corpus(models.Model):
 				 "copyright": self.copyright,
 				 "supervisors": self.supervisors
 		}
+		
+		if self.composer is not None:
+			core["composer"] = self.composer.dbpedia_uri
+		return core
 
 
 	def get_children(self, recursive=True):
@@ -397,6 +406,11 @@ class Corpus(models.Model):
 			
 		# Add the zip files of the children
 		for child in self.get_direct_children():
+			# Composer at the corpus level ? Then each child inherits the composer
+			if self.composer is not None:
+				child.composer = self.composer
+				child.save()
+
 			zf.writestr(Corpus.local_ref(child.ref) + ".zip", 
 					child.export_as_zip(request).getvalue() )
 			
@@ -424,6 +438,10 @@ class Corpus(models.Model):
 				#source_file = opus.local_ref() +  '.source_files.zip'
 				zf.writestr( source_file, source_bytes.getvalue())
 			
+			# Composer at the corpus level ? Then each opus inherits the composer
+			if self.composer is not None:
+				opus.add_meta(OpusMeta.MK_COMPOSER, self.composer.dbpedia_uri)
+				opus.save()
 			# Add a JSON file with meta data
 			opus_json = json.dumps(opus.to_json(request))
 			zf.writestr(opus.local_ref() + ".json", opus_json)
@@ -435,6 +453,7 @@ class Corpus(models.Model):
 		jsonld = JsonLD(settings.SCORELIB_ONTOLOGY_URI)
 		jsonld.add_type("Collection", "Collection")
 		jsonld.add_type("Opus", "Opus")
+		jsonld.add_type("Score", "Score")
 		
 		
 		dict = {"@id": self.ref, 
@@ -774,6 +793,10 @@ class Opus(models.Model):
 	def add_meta (self, mkey, mvalue):
 		"""Add a (key, value) pair as an ad-hoc attribute"""
 		
+		# The key must belongs to the list of pre-deefined accepted values
+		if mkey not in OpusMeta.META_KEYS:
+			raise Exception(f"Sorry, the key {mkey} does not belong to the accepted meta keys")
+		
 		# Search if exists
 		try:
 			meta_pair = OpusMeta.objects.get(opus=self,meta_key=mkey)
@@ -831,10 +854,10 @@ class Opus(models.Model):
 				
 		# Saving before adding related objects
 		self.save()
-		if ("metas" in dict_opus.keys()):
-			if (dict_opus["metas"] != None):
-				for m in dict_opus["metas"]:
-					self.add_meta (m.meta_key, m.meta_value)
+		if ("meta_fields" in dict_opus.keys()):
+			if (dict_opus["meta_fields"] != None):
+				for m in dict_opus["meta_fields"]:
+					self.add_meta (m["meta_key"], m["meta_value"])
 		if ("sources" in dict_opus.keys()):
 			if (dict_opus["sources"] != None):
 				for source in dict_opus["sources"]:
@@ -1011,7 +1034,10 @@ class Opus(models.Model):
 				"hasOpusTitle": self.title,
 				}
 		if self.mei is not None:
-			dict["hasScore"] = my_url + self.mei.url
+			dict["hasScore"] = {"@type": "Score", 
+							    "@id": self.mei.url,
+							    "uri": my_url + self.mei.url
+							    }
 		return dict
 
 class OpusMeta(models.Model):
@@ -1027,6 +1053,7 @@ class OpusMeta(models.Model):
 	MK_GENRE = "genre"
 	MK_SOLENNITE = "solennite"
 	MK_TEXTE = "texte"
+	MK_COMPOSER = "composer"
 	
 	# Descriptive infos for meta pairs
 	META_KEYS = {
@@ -1036,6 +1063,7 @@ class OpusMeta(models.Model):
 		MK_GENRE: {"displayed_label": "Genre"},
 		MK_SOLENNITE: {"displayed_label": "Degré de solennité"},
 		MK_TEXTE: {"displayed_label": "Texte"},
+		MK_COMPOSER: {"displayed_label": "Composer"},
 				 }
 
 	def __init__(self, *args, **kwargs):
