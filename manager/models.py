@@ -1033,6 +1033,11 @@ class Opus(models.Model):
 			     "@type": "Opus",
 				"hasOpusTitle": self.title,
 				}
+		
+		for meta in self.get_metas ():
+			if meta.meta_key == OpusMeta.MK_COMPOSER:
+				dict["hasAuthor"] = meta.meta_value
+
 		if self.mei is not None:
 			dict["hasScore"] = {"@type": "Score", 
 							    "@id": self.mei.url,
