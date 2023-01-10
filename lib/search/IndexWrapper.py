@@ -77,16 +77,16 @@ class IndexWrapper:
         # First time that we index this Opus
         try:
             score = opus.get_score()
-            # CHANGE: we do not longer store the summary in ES
-            #music_summary = score.get_music_summary()
-            #music_summary.opus_id = opus.ref
-            #msummary_for_es = music_summary.encode()
+            # New change: store MS in ES
+            music_summary = score.get_music_summary()
+            music_summary.opus_id = opus.ref
+            msummary_for_es = music_summary.encode()
 
             opus_index = OpusIndex(
                 meta={'id': opus.ref, 'index': settings.ELASTIC_SEARCH["index"]},
                 corpus_ref=opus.corpus.ref,
                 ref=opus.ref,
-                #summary = msummary_for_es,
+                summary = msummary_for_es,
                 title=opus.title,
                 composer=opus.composer,
                 lyricist=opus.lyricist,
@@ -196,7 +196,6 @@ class IndexWrapper:
         # Philippe la boucle  "for hit in search.scan()" plante sur Humanum...
         for hit in search:
             try:
-               if hit.corpus_ref == 'all:composers:liyanfei': continue
                # Nicolas rajout de ce test car des documents de mappings peuvent apparaitre dans elasticsearch 6.1.2
                if "ref" in hit:
                     opus = Opus.objects.get(ref=hit["ref"])
@@ -443,7 +442,6 @@ class OpusIndex(Document):
 
     @staticmethod
     def update_list(l, d, attr):
-        "OLD function: still useful ? To check."
         updated = False
         
         for i, item in enumerate(l):
