@@ -205,7 +205,23 @@ class Workflow:
 			children = corpus.get_children(False)
 			for child in children:
 				Workflow.index_corpus(child, recursion)
-				
+
+	@staticmethod
+	def extract_features_from_corpus(corpus, recursion=True):
+		"""
+		(Re)extract features and metadata for all the opuses of a corpus (and its descendants
+		if the recursion parameter is True)
+		"""
+
+		for opus in Opus.objects.filter(corpus__ref=corpus.ref):
+			Workflow.extract_features_from_opus(opus)
+
+		# Recursive call
+		if recursion:
+			children = corpus.get_children(False)
+			for child in children:
+				Workflow.extract_features_from_corpus(child, recursion)
+
 	@staticmethod
 	def propagate(corpus, recursion=True):
 		"""
@@ -247,6 +263,105 @@ class Workflow:
 		# Store the descriptors in Elastic Search
 		index_wrapper = IndexWrapper()
 		index_wrapper.index_opus(opus)
+
+	@staticmethod
+	def extract_features_from_opus(opus):
+		'''
+		Extract features from opus. 
+		First get m21 stream from the original score of the opus, then extract features.
+		TODO: Store in index
+		'''
+		try:
+				score = opus.get_score()
+
+				#If there is error while transforming MEI into XML format, skip this opus
+				if score.m21_score == None:
+					print ("Exception when trying to access m21 object of opus " + opus.ref)
+					return
+				else:
+					m21_score = score.m21_score
+
+				# Extract features with m21 and save in database
+				Workflow.extract_features_with_m21(opus, m21_score)
+						
+		except  Exception as ex:
+			print ("Exception when trying to extract info from opus " + opus.ref + " Message:" + str(ex))
+
+		# Store the descriptors in ElasticSearch
+		#index_wrapper = IndexWrapper()
+		#TO_DO!
+		#index_wrapper.index_opus(opus)
+
+		return
+
+	@staticmethod
+	def extract_features_with_m21(opus, m21_score):
+		"""
+		EXTRACT A LIST OF FEATURES FROM OPUS AND SAVE IN OPUSMETA
+		"""
+		print ("Extract features/info for opus " + opus.ref)
+
+		info = {}
+		
+		key = m21_score.analyze('key')
+		info["key_tonic_name"] = key.tonic.name
+		info["key_mode"] = key.mode
+
+		info["num_of_parts"] = len(m21_score.getElementsByClass(stream.Part))
+		info["num_of_measures"] = 0
+		for part in m21_score.parts:
+			info["num_of_measures"] += len(part)
+
+		info["num_of_notes"] = len(m21_score.flatten().getElementsByClass(note.Note))
+
+		info["instruments"] = []
+		# TODO: from music21 object to string
+		if instrument.partitionByInstrument(m21_score) != None:
+			for part in instrument.partitionByInstrument(m21_score):
+				info["instruments"].append(part.getInstrument())
+				# TODO: JSON ENCODE
+		
+		nameCount = analysis.pitchAnalysis.pitchAttributeCount(m21_score, 'name')
+		print("10 most common pitch and occurrence:")
+		for n, count in nameCount.most_common(10):
+			print("%2s: %2d" % (n, nameCount[n]))
+			# TODO: JSON ENCODE and save in info dictioary
+
+		# TODO: this needs to be json encoded
+		p = analysis.discrete.Ambitus()
+		count = 0
+		for part in m21_score.parts:
+			count += 1
+			pitchMin, pitchMax = p.getPitchSpan(part)
+			# Could be used to analyse each measure
+			print("Lowest pitch of part", count, "is ", pitchMin)
+			print("Highest pitch of part", count, "is ", pitchMax)
+
+		# the followings are float number instead of integer/string
+		fe = features.jSymbolic.AverageMelodicIntervalFeature(m21_score)
+		info["average_melodic_ interval"] = fe.extract().vector
+
+		fe = features.jSymbolic.DirectionOfMotionFeature(m21_score)
+		info["direction_of_motion"] = fe.extract().vector[0]
+
+		fe = features.native.MostCommonNoteQuarterLength(m21_score)
+		info["most_common_note_quarter_length"] = fe.extract().vector[0]
+
+		fe = features.native.RangeOfNoteQuarterLengths(m21_score)
+		info["range_note_quarter_lengths"] = fe.extract().vector[0]
+
+		fe = features.jSymbolic.InitialTimeSignatureFeature(m21_score)
+		#print("\nInitial time signature:", fe.extract().vector)
+		info["initial_time_signature"] = fe.extract().vector
+		#TODO:fe.extract().vector is a list, change it to JSONENCODED value!!
+
+		print("Extracted features:", info)
+		# At last, store in postgres
+		#for mkey, mvalue in info:
+			#STORE IN OPUSMETA
+			#opus.add_meta(mkey, mvalue)
+
+	return
 
 	@staticmethod
 	def patterns_statistics_analyze(mel_dict, dia_dict, rhy_dict, mel_opus_dict, dia_opus_dict, rhy_opus_dict):

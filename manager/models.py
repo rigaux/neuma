@@ -801,7 +801,7 @@ class Opus(models.Model):
 		try:
 			meta_pair = OpusMeta.objects.get(opus=self,meta_key=mkey)
 		except OpusMeta.DoesNotExist as e:
-			meta_pair = OpusMeta(opus=self,meta_key=mkey, meta_value=mvalue)
+			meta_pair = OpusMeta(opus=self, meta_key=mkey, meta_value=mvalue)
 			meta_pair.save()
 
 	def get_metas (self):
@@ -1019,7 +1019,7 @@ class Opus(models.Model):
 	
 		return {"ref": self.local_ref(), 
 				 "title": self.title,
-				  "composer": self.composer, 
+				 "composer": self.composer, 
 				 "lyricist": self.lyricist, 
 				 "corpus": self.corpus.ref,
 				 "meta_fields": metas,
@@ -1059,6 +1059,21 @@ class OpusMeta(models.Model):
 	MK_SOLENNITE = "solennite"
 	MK_TEXTE = "texte"
 	MK_COMPOSER = "composer"
+	MK_KEY_TONIC = "key_tonic_name"
+	MK_KEY_MODE = "key_mode"
+	MK_NUM_OF_PARTS = "num_of_parts"
+	MK_NUM_OF_MEASURES = "num_of_measures"
+	MK_NUM_OF_NOTES = "num_of_notes"
+	ML_INSTRUMENTS = "instruments"
+	MK_LOWEST_PITCH_EACH_PART = "lowest_pitch_each_part"
+	MK_HIGHEST_PITCH_EACH_PART = "highest_pitch_each_part"
+	MK_MOST_COMMON_PITCHES = "most_common_pitches"
+	MK_AVE_MELODIC_INTERVAL = "average_melodic_interval"
+	MK_DIRECTION_OF_MOTION = "direction_of_motion"
+	MK_MOST_COMMON_NOTE_QUARTER_LENGTH = "most_common_note_quarter_length"
+	MK_RANGE_NOTE_QUARTER_LENGTH = "range_note_quarter_length"
+	MK_INIT_TIME_SIG = "initial_time_signature"
+
 	
 	# Descriptive infos for meta pairs
 	META_KEYS = {
@@ -1069,7 +1084,21 @@ class OpusMeta(models.Model):
 		MK_SOLENNITE: {"displayed_label": "Degré de solennité"},
 		MK_TEXTE: {"displayed_label": "Texte"},
 		MK_COMPOSER: {"displayed_label": "Composer"},
-				 }
+		MK_KEY_TONIC = {"displayed_label": "Key Tonic Name"}
+		MK_KEY_MODE = {"displayed_label":"Key Mode"}
+		MK_NUM_OF_PARTS = {"displayed_label": "Number of parts"}
+		MK_NUM_OF_MEASURES = {"displayed_label": "Number of measures"}
+		MK_NUM_OF_NOTES = {"displayed_label": "Number of notes"}
+		ML_INSTRUMENTS = {"displayed_label": "Instruments"}
+		MK_LOWEST_PITCH_EACH_PART = {"displayed_label": "Lowest pitch each part"}
+		MK_HIGHEST_PITCH_EACH_PART = {"displayed_label": "Highest pitch each part"}
+		MK_MOST_COMMON_PITCHES = {"displayed_label": "Most common pitches"}
+		MK_AVE_MELODIC_INTERVAL = {"displayed_label": "Average melodic interval"}
+		MK_DIRECTION_OF_MOTION = {"displayed_label": "Direction of motion"}
+		MK_MOST_COMMON_NOTE_QUARTER_LENGTH = {"displayed_label": "Most common note quarter length"}
+		MK_RANGE_NOTE_QUARTER_LENGTH = {"displayed_label": "Range of note quarter length"}
+		MK_INIT_TIME_SIG = {"displayed_label": "Initial time signature"}
+	}
 
 	def __init__(self, *args, **kwargs):
 		super(OpusMeta, self).__init__(*args, **kwargs)

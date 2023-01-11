@@ -36,6 +36,8 @@ CPT_GRAMMAR="cptgrammar"
 DESCRIPTORJSON_ACTION="descriptorjson"
 ANALYZE_CORPUS_ACTION = "analyze"
 ANALYZE_OPUS_ACTION = "analyze_opus"
+EXTRACT_FEATURES_FROM_CORPUS_ACTION = "features_corpus"
+#EXTRACT_FEATURES_FROM_OPUS_ACTION = "features_opus"
 
 class Command(BaseCommand):
     """Scan a corpus specified as input, and apply some action"""
@@ -73,7 +75,6 @@ class Command(BaseCommand):
         except Corpus.DoesNotExist:
                 raise CommandError('Corpus "%s" does not exist' % options['corpus_ref'])
 
-#        exit(1)
 
         if not opusref: 
             if action is None:
@@ -151,6 +152,15 @@ class Command(BaseCommand):
                 try:
                     Workflow.analyze_patterns(corpus)
                     print("Done.")
+                except corpus.DoesNotExist:
+                    raise CommandError('corpus "%s" does not exist' % corpusref)
+
+            elif action == EXTRACT_FEATURES_FROM_CORPUS_ACTION:
+                """
+                Extract features and metadata info from the corpus and save in database
+                """
+                try:
+                    Workflow.extract_features_from_corpus(corpus)
                 except corpus.DoesNotExist:
                     raise CommandError('corpus "%s" does not exist' % corpusref)
 
