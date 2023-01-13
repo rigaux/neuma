@@ -897,11 +897,11 @@ class Opus(models.Model):
 		score = Score()
 		# Try to obtain the MEI document, which contains IDs
  
-		if self.mei :
+		if self.mei:
 			#print ("Load from MEI")
 			score.load_from_xml(self.mei.path, "mei")
 			return score
-		elif self.musicxml :
+		elif self.musicxml:
 			#print ("Load from MusicXML")
 			score.load_from_xml(self.musicxml.path, "musicxml")
 			return score
@@ -1084,20 +1084,20 @@ class OpusMeta(models.Model):
 		MK_SOLENNITE: {"displayed_label": "Degré de solennité"},
 		MK_TEXTE: {"displayed_label": "Texte"},
 		MK_COMPOSER: {"displayed_label": "Composer"},
-		MK_KEY_TONIC = {"displayed_label": "Key Tonic Name"}
-		MK_KEY_MODE = {"displayed_label":"Key Mode"}
-		MK_NUM_OF_PARTS = {"displayed_label": "Number of parts"}
-		MK_NUM_OF_MEASURES = {"displayed_label": "Number of measures"}
-		MK_NUM_OF_NOTES = {"displayed_label": "Number of notes"}
-		ML_INSTRUMENTS = {"displayed_label": "Instruments"}
-		MK_LOWEST_PITCH_EACH_PART = {"displayed_label": "Lowest pitch each part"}
-		MK_HIGHEST_PITCH_EACH_PART = {"displayed_label": "Highest pitch each part"}
-		MK_MOST_COMMON_PITCHES = {"displayed_label": "Most common pitches"}
-		MK_AVE_MELODIC_INTERVAL = {"displayed_label": "Average melodic interval"}
-		MK_DIRECTION_OF_MOTION = {"displayed_label": "Direction of motion"}
-		MK_MOST_COMMON_NOTE_QUARTER_LENGTH = {"displayed_label": "Most common note quarter length"}
-		MK_RANGE_NOTE_QUARTER_LENGTH = {"displayed_label": "Range of note quarter length"}
-		MK_INIT_TIME_SIG = {"displayed_label": "Initial time signature"}
+		MK_KEY_TONIC: {"displayed_label": "Key Tonic Name"},
+		MK_KEY_MODE: {"displayed_label":"Key Mode"},
+		MK_NUM_OF_PARTS: {"displayed_label": "Number of parts"},
+		MK_NUM_OF_MEASURES: {"displayed_label": "Number of measures"},
+		MK_NUM_OF_NOTES: {"displayed_label": "Number of notes"},
+		ML_INSTRUMENTS: {"displayed_label": "Instruments"},
+		MK_LOWEST_PITCH_EACH_PART: {"displayed_label": "Lowest pitch each part"},
+		MK_HIGHEST_PITCH_EACH_PART: {"displayed_label": "Highest pitch each part"},
+		MK_MOST_COMMON_PITCHES: {"displayed_label": "Most common pitches"},
+		MK_AVE_MELODIC_INTERVAL: {"displayed_label": "Average melodic interval"},
+		MK_DIRECTION_OF_MOTION: {"displayed_label": "Direction of motion"},
+		MK_MOST_COMMON_NOTE_QUARTER_LENGTH: {"displayed_label": "Most common note quarter length"},
+		MK_RANGE_NOTE_QUARTER_LENGTH: {"displayed_label": "Range of note quarter length"},
+		MK_INIT_TIME_SIG:{"displayed_label": "Initial time signature"}
 	}
 
 	def __init__(self, *args, **kwargs):

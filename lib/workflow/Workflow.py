@@ -32,6 +32,7 @@ from lib.neuma.rest import Client
 from lib.music.Score import *
 
 # Music analysis module
+import music21 as m21
 from music21 import converter
 import logging
 
@@ -269,27 +270,29 @@ class Workflow:
 		'''
 		Extract features from opus. 
 		First get m21 stream from the original score of the opus, then extract features.
-		TODO: Store in index
 		'''
 		try:
-				score = opus.get_score()
-
-				#If there is error while transforming MEI into XML format, skip this opus
-				if score.m21_score == None:
-					print ("Exception when trying to access m21 object of opus " + opus.ref)
-					return
-				else:
-					m21_score = score.m21_score
-
-				# Extract features with m21 and save in database
-				Workflow.extract_features_with_m21(opus, m21_score)
+			#score = opus.get_score()
+			if opus.mei:
+				#print ("Load from MEI")
+				with open (opus.mei.path, "r") as meifile:
+					meiString = meifile.read()
+					conv = m21.mei.MeiToM21Converter(meiString)
+					m21_score = conv.run()
+			elif opus.musicxml:
+				#print ("Load from MusicXML")
+				m21_score = m21.converter.parse(opus.musicxml.path)
+			else:
+				print("Exception caused by file format or when trying to access m21 object of opus " + opus.ref)
+			
+			# Extract features with m21 and save in database
+			info = Workflow.extract_features_with_m21(opus, m21_score)
 						
 		except  Exception as ex:
 			print ("Exception when trying to extract info from opus " + opus.ref + " Message:" + str(ex))
 
-		# Store the descriptors in ElasticSearch
+		# TODO: Store the descriptors in ElasticSearch...
 		#index_wrapper = IndexWrapper()
-		#TO_DO!
 		#index_wrapper.index_opus(opus)
 
 		return
@@ -299,7 +302,7 @@ class Workflow:
 		"""
 		EXTRACT A LIST OF FEATURES FROM OPUS AND SAVE IN OPUSMETA
 		"""
-		print ("Extract features/info for opus " + opus.ref)
+		print ("Extracting info from opus " + opus.ref)
 
 		info = {}
 		
@@ -307,61 +310,70 @@ class Workflow:
 		info["key_tonic_name"] = key.tonic.name
 		info["key_mode"] = key.mode
 
-		info["num_of_parts"] = len(m21_score.getElementsByClass(stream.Part))
+		info["num_of_parts"] = len(m21_score.getElementsByClass(m21.stream.Part))
 		info["num_of_measures"] = 0
 		for part in m21_score.parts:
 			info["num_of_measures"] += len(part)
-
-		info["num_of_notes"] = len(m21_score.flatten().getElementsByClass(note.Note))
+		#flatten = m21_score.flatten()
+		#can not use flatten, need to find another way...
+		#info["num_of_notes"] TODO
 
 		info["instruments"] = []
-		# TODO: from music21 object to string
-		if instrument.partitionByInstrument(m21_score) != None:
-			for part in instrument.partitionByInstrument(m21_score):
-				info["instruments"].append(part.getInstrument())
-				# TODO: JSON ENCODE
+		# TODO: JSON encode
+		if m21.instrument.partitionByInstrument(m21_score) != None:
+			for part in m21.instrument.partitionByInstrument(m21_score):
+				info["instruments"].append(part.getInstrument().instrumentName)
 		
-		nameCount = analysis.pitchAnalysis.pitchAttributeCount(m21_score, 'name')
-		print("10 most common pitch and occurrence:")
+		nameCount = m21.analysis.pitchAnalysis.pitchAttributeCount(m21_score, 'name')
+		dict_common_pitch = {}
 		for n, count in nameCount.most_common(10):
-			print("%2s: %2d" % (n, nameCount[n]))
-			# TODO: JSON ENCODE and save in info dictioary
+			dict_common_pitch[n] = nameCount[n]
+		json_commonpitch = json.dumps(dict_common_pitch)
+		info["most_common_pitches"] = json_commonpitch
+		info["most_common_pitches"]
 
 		# TODO: this needs to be json encoded
-		p = analysis.discrete.Ambitus()
+		pitchmin_eachpart = {}
+		pitchmax_eachpart = {}
+		p = m21.analysis.discrete.Ambitus()
 		count = 0
 		for part in m21_score.parts:
 			count += 1
 			pitchMin, pitchMax = p.getPitchSpan(part)
-			# Could be used to analyse each measure
-			print("Lowest pitch of part", count, "is ", pitchMin)
-			print("Highest pitch of part", count, "is ", pitchMax)
+			partname = 'part'+str(count)
+			pitchmin_eachpart[partname] = pitchMin.nameWithOctave
+			pitchmax_eachpart[partname] = pitchMax.nameWithOctave
+
+		json_pitchmin = json.dumps(pitchmin_eachpart)
+		json_pitchmax = json.dumps(pitchmax_eachpart)
+		
+		info["lowest_pitch_each_part"] = json_pitchmin
+		info["highest_pitch_each_part"] = json_pitchmax
 
 		# the followings are float number instead of integer/string
-		fe = features.jSymbolic.AverageMelodicIntervalFeature(m21_score)
-		info["average_melodic_ interval"] = fe.extract().vector
+		fe = m21.features.jSymbolic.AverageMelodicIntervalFeature(m21_score)
+		info["average_melodic_interval"] = fe.extract().vector[0]
 
-		fe = features.jSymbolic.DirectionOfMotionFeature(m21_score)
+		fe = m21.features.jSymbolic.DirectionOfMotionFeature(m21_score)
 		info["direction_of_motion"] = fe.extract().vector[0]
 
-		fe = features.native.MostCommonNoteQuarterLength(m21_score)
+		fe = m21.features.native.MostCommonNoteQuarterLength(m21_score)
 		info["most_common_note_quarter_length"] = fe.extract().vector[0]
 
-		fe = features.native.RangeOfNoteQuarterLengths(m21_score)
-		info["range_note_quarter_lengths"] = fe.extract().vector[0]
+		fe = m21.features.native.RangeOfNoteQuarterLengths(m21_score)
+		info["range_note_quarter_length"] = fe.extract().vector[0]
 
-		fe = features.jSymbolic.InitialTimeSignatureFeature(m21_score)
+		fe = m21.features.jSymbolic.InitialTimeSignatureFeature(m21_score)
 		#print("\nInitial time signature:", fe.extract().vector)
-		info["initial_time_signature"] = fe.extract().vector
-		#TODO:fe.extract().vector is a list, change it to JSONENCODED value!!
+		info["initial_time_signature"] = json.dumps(fe.extract().vector)
 
-		print("Extracted features:", info)
+		print("Info:", info)
+		
 		# At last, store in postgres
-		#for mkey, mvalue in info:
-			#STORE IN OPUSMETA
-			#opus.add_meta(mkey, mvalue)
-
-	return
+		for item in info:
+			opus.add_meta(item, info[item])
+			#print("added", item)
+		return info
 
 	@staticmethod
 	def patterns_statistics_analyze(mel_dict, dia_dict, rhy_dict, mel_opus_dict, dia_opus_dict, rhy_opus_dict):

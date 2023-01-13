@@ -145,12 +145,13 @@ class Score:
 				with open (xml_path, "r") as meifile:
 					meiString = meifile.read()
 				#print ("MEI file: "	meiString[0:40])
-				conv = mei.MeiToM21Converter(meiString)
+				conv = m21.mei.MeiToM21Converter(meiString)
 				self.m21_score = conv.run()
 			else:
 				#If the score is in XML format
-				self.m21_score = m21.converter.parseFile(xml_path,format=format)
-		
+				self.m21_score = m21.converter.parse(xml_path)
+			
+			# ignore the following bc it cause errors
 			self.load_component(self.m21_score)
 
 		except Exception as ex:
@@ -185,7 +186,7 @@ class Score:
 				self.components.append(score)
 				# Recursive call
 				score.load_component(p)
-				
+
 		# Last case: no voice, no part: the stream itself is a voice
 		if not m21stream.hasVoices() and not m21stream.hasPartLikeStreams():
 			voice = Voice(self.id + "-" + str(default_voice_id))
