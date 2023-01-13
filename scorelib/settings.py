@@ -278,13 +278,9 @@ SIMILARITY_MEASURES = ["pitches","intervals","degrees","rhythms"]
 
 DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
 
-<<<<<<< HEAD
-=======
 # JSON LD parameters
 SCORELIB_ONTOLOGY_URI="https://github.com/polifonia-project/scorelib-ontology"
 
-
->>>>>>> 06c55414e382d98720010d7d39fa88ec015ab7e3
 try:
     from scorelib.local_settings import *
     print("local settings .... ok")

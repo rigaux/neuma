@@ -61,14 +61,10 @@ class Event:
 	def start_beam(self, beam_id):
 		if not self.is_rest():
 			logger.info (f"Start a beam : {beam_id}" )
-<<<<<<< HEAD
-			beam = score_notation.Beam()
-			self.m21_event.beams.append(beam.m21_beam)
-=======
+
 			# TODO: solve circular import pb
 			#beam = Beam()
 			#self.m21_event.beams.append(beam.m21_beam)
->>>>>>> 06c55414e382d98720010d7d39fa88ec015ab7e3
 		else:
 			logger.warning ("Trying to start a beam ({beam_id}) on a rest")
 
