@@ -1,0 +1,39 @@
+SELECT * FROM public."Descriptor" WHERE value LIKE '%%' and type = 'rhythmic'
+SELECT * FROM public."Descriptor" WHERE value LIKE '%%'
+SELECT * FROM public."Descriptor" WHERE value LIKE '%(1)(1)(1) N%' and type = 'rhythm'
+
+(1)(1)(1)
+Total query runtime: 278 msec.
+19622 rows affected.
+
+(1)(1)(1)(1)
+Total query runtime: 295 msec.
+16301 rows affected.
+
+(1)(1)(1)(1)(1)
+Total query runtime: 303 msec.
+14751 rows affected.
+
+(1)(1)(1)(1)(1)(1)
+Total query runtime: 327 msec.
+11256 rows affected.
+
+(1)(1)(1)(1)(1)(1)(1)
+Total query runtime: 283 msec.
+9590 rows affected.
+
+(1)(1)(1)(1)(1)(1)(1)(1)
+Total query runtime: 316 msec.
+7889 rows affected.
+
+(1)(1)(1)(1)(1)(1)(1)(1)(1)
+Total query runtime: 316 msec.    340msec
+7001 rows affected.
+
+(1)(1)(1)(1)(1)(1)(1)(1)(1)(1)
+Total query runtime: 329 msec.    302msec
+5727 rows affected.
+
+(1)(1)(1)(1)(1)(1)(1)(1)(1)(1)(1)
+Total query runtime: 335 msec.
+5365 rows affected.

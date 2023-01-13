@@ -3,6 +3,7 @@ import logging
 
 import music21 as m21
 
+from lib.search.MusicSummary import MusicSummary
 import verovio
 
 # Voice is a complex class defined in a separate file
@@ -144,12 +145,22 @@ class Score:
 				with open (xml_path, "r") as meifile:
 					meiString = meifile.read()
 				#print ("MEI file: "	meiString[0:40])
+<<<<<<< HEAD
 				conv = mei.MeiToM21Converter(meiString)
 				self.m21_score = conv.run()
 			else:
 				#If the score is in XML format
 				self.m21_score = m21.converter.parseFile(xml_path,format=format)
 		
+=======
+				conv = m21.mei.MeiToM21Converter(meiString)
+				self.m21_score = conv.run()
+			else:
+				#If the score is in XML format
+				self.m21_score = m21.converter.parse(xml_path)
+			
+			# ignore the following bc it cause errors
+>>>>>>> 06c55414e382d98720010d7d39fa88ec015ab7e3
 			self.load_component(self.m21_score)
 
 		except Exception as ex:
@@ -184,7 +195,11 @@ class Score:
 				self.components.append(score)
 				# Recursive call
 				score.load_component(p)
+<<<<<<< HEAD
 				
+=======
+
+>>>>>>> 06c55414e382d98720010d7d39fa88ec015ab7e3
 		# Last case: no voice, no part: the stream itself is a voice
 		if not m21stream.hasVoices() and not m21stream.hasPartLikeStreams():
 			voice = Voice(self.id + "-" + str(default_voice_id))

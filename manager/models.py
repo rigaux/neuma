@@ -21,6 +21,7 @@ from django.conf import settings
 
 
 from lib.music.Score import *
+from lib.music.jsonld import JsonLD
 
 import lib.music.annotation as annot_mod
 
@@ -176,7 +177,8 @@ class Corpus(models.Model):
 		return reverse('home:corpus', args=[self.ref])
 
 	def load_from_dict(self, dict_corpus):
-		"""Load content from a dictionary. used to migrate from Neuma/CouchDB"""
+
+		"""Load content from a dictionary."""
 		self.title = dict_corpus["title"]
 		self.short_title = dict_corpus["short_title"]
 		self.description = dict_corpus["description"]
@@ -187,6 +189,12 @@ class Corpus(models.Model):
 				self.licence = Licence.objects.get(code=dict_corpus["licence_code"])
 			except Licence.DoesNotExist:
 				print ("Unknown licence. Ignored. Did you run setup_neuma?")
+
+		if "composer" in dict_corpus:
+			try:
+				self.composer = Person.objects.get(dbpedia_uri=dict_corpus["composer"])
+			except Person.DoesNotExist:
+				print (f"Unknown composer {dict_corpus['composer']}. Ignored. Did you run setup_neuma?")
 		if "copyright" in dict_corpus:
 			self.copyright = dict_corpus["copyright"]
 		if "supervisors" in dict_corpus:
@@ -202,7 +210,8 @@ class Corpus(models.Model):
 		else:
 			licence_code = None
 
-		return {"ref": Corpus.local_ref(self.ref), 
+
+		core = {"ref": Corpus.local_ref(self.ref), 
 				 "title": self.title, 
 				 "short_title": self.short_title, 
 				 "description": self.description, 
@@ -213,6 +222,9 @@ class Corpus(models.Model):
 				 "supervisors": self.supervisors
 		}
 
+		if self.composer is not None:
+			core["composer"] = self.composer.dbpedia_uri
+		return core
 
 	def get_children(self, recursive=True):
 		self.children = Corpus.objects.filter(parent=self)
@@ -396,6 +408,12 @@ class Corpus(models.Model):
 			
 		# Add the zip files of the children
 		for child in self.get_direct_children():
+
+			# Composer at the corpus level ? Then each child inherits the composer
+			if self.composer is not None:
+				child.composer = self.composer
+				child.save()
+
 			zf.writestr(Corpus.local_ref(child.ref) + ".zip", 
 					child.export_as_zip(request).getvalue() )
 			
@@ -423,12 +441,41 @@ class Corpus(models.Model):
 				#source_file = opus.local_ref() +  '.source_files.zip'
 				zf.writestr( source_file, source_bytes.getvalue())
 			
+
+			# Composer at the corpus level ? Then each opus inherits the composer
+			if self.composer is not None:
+				opus.add_meta(OpusMeta.MK_COMPOSER, self.composer.dbpedia_uri)
+				opus.save()
 			# Add a JSON file with meta data
 			opus_json = json.dumps(opus.to_json(request))
 			zf.writestr(opus.local_ref() + ".json", opus_json)
 		zf.close()
 		
 		return s
+	
+
+	def export_as_jsonld (self):
+		jsonld = JsonLD(settings.SCORELIB_ONTOLOGY_URI)
+		jsonld.add_type("Collection", "Collection")
+		jsonld.add_type("Opus", "Opus")
+		jsonld.add_type("Score", "Score")
+		
+		
+		dict = {"@id": self.ref, 
+			    "@type": "Collection",
+				"hasCollectionTitle": self.title,
+				"hasCollectionCopyright": self.copyright
+				}
+		if self.licence is not None:
+			dict["hasLicence"] = self.licence.code
+		if self.parent is not None:
+			dict["isInCollection"] = self.parent.ref
+			
+		tab_opus = []
+		for opus in self.get_opera():
+			tab_opus.append(opus.export_as_jsonld())
+		has_opus = {"hasOpus": tab_opus}
+		return jsonld.get_context() | dict | has_opus 
 	
 	@staticmethod
 	def import_from_zip(zfile, parent_corpus, zip_name):
@@ -751,11 +798,16 @@ class Opus(models.Model):
 	def add_meta (self, mkey, mvalue):
 		"""Add a (key, value) pair as an ad-hoc attribute"""
 		
+		# The key must belongs to the list of pre-deefined accepted values
+		if mkey not in OpusMeta.META_KEYS:
+			raise Exception(f"Sorry, the key {mkey} does not belong to the accepted meta keys")
+		
 		# Search if exists
 		try:
 			meta_pair = OpusMeta.objects.get(opus=self,meta_key=mkey)
 		except OpusMeta.DoesNotExist as e:
-			meta_pair = OpusMeta(opus=self,meta_key=mkey, meta_value=mvalue)
+
+			meta_pair = OpusMeta(opus=self, meta_key=mkey, meta_value=mvalue)
 			meta_pair.save()
 
 	def get_metas (self):
@@ -808,10 +860,11 @@ class Opus(models.Model):
 				
 		# Saving before adding related objects
 		self.save()
-		if ("metas" in dict_opus.keys()):
-			if (dict_opus["metas"] != None):
-				for m in dict_opus["metas"]:
-					self.add_meta (m.meta_key, m.meta_value)
+
+		if ("meta_fields" in dict_opus.keys()):
+			if (dict_opus["meta_fields"] != None):
+				for m in dict_opus["meta_fields"]:
+					self.add_meta (m["meta_key"], m["meta_value"])
 		if ("sources" in dict_opus.keys()):
 			if (dict_opus["sources"] != None):
 				for source in dict_opus["sources"]:
@@ -850,12 +903,12 @@ class Opus(models.Model):
 		"""Get a score object from an XML document"""
 		score = Score()
 		# Try to obtain the MEI document, which contains IDs
- 
-		if self.mei :
+
+		if self.mei:
 			#print ("Load from MEI")
 			score.load_from_xml(self.mei.path, "mei")
 			return score
-		elif self.musicxml :
+		elif self.musicxml:
 			#print ("Load from MusicXML")
 			score.load_from_xml(self.musicxml.path, "musicxml")
 			return score
@@ -973,13 +1026,32 @@ class Opus(models.Model):
 	
 		return {"ref": self.local_ref(), 
 				 "title": self.title,
-				  "composer": self.composer, 
+				 "composer": self.composer, 
 				 "lyricist": self.lyricist, 
 				 "corpus": self.corpus.ref,
 				 "meta_fields": metas,
 				 "sources": sources,
 				 "files": files}
 
+		
+	def export_as_jsonld (self):
+		my_url = "http://neuma.huma-num.fr/"
+
+		dict = {"@id": self.ref, 
+			     "@type": "Opus",
+				"hasOpusTitle": self.title,
+				}
+		
+		for meta in self.get_metas ():
+			if meta.meta_key == OpusMeta.MK_COMPOSER:
+				dict["hasAuthor"] = meta.meta_value
+
+		if self.mei is not None:
+			dict["hasScore"] = {"@type": "Score", 
+							    "@id": self.mei.url,
+							    "uri": my_url + self.mei.url
+							    }
+		return dict
 
 class OpusMeta(models.Model):
 	opus = models.ForeignKey(Opus,on_delete=models.CASCADE)
@@ -994,6 +1066,22 @@ class OpusMeta(models.Model):
 	MK_GENRE = "genre"
 	MK_SOLENNITE = "solennite"
 	MK_TEXTE = "texte"
+	MK_COMPOSER = "composer"
+	MK_KEY_TONIC = "key_tonic_name"
+	MK_KEY_MODE = "key_mode"
+	MK_NUM_OF_PARTS = "num_of_parts"
+	MK_NUM_OF_MEASURES = "num_of_measures"
+	MK_NUM_OF_NOTES = "num_of_notes"
+	ML_INSTRUMENTS = "instruments"
+	MK_LOWEST_PITCH_EACH_PART = "lowest_pitch_each_part"
+	MK_HIGHEST_PITCH_EACH_PART = "highest_pitch_each_part"
+	MK_MOST_COMMON_PITCHES = "most_common_pitches"
+	MK_AVE_MELODIC_INTERVAL = "average_melodic_interval"
+	MK_DIRECTION_OF_MOTION = "direction_of_motion"
+	MK_MOST_COMMON_NOTE_QUARTER_LENGTH = "most_common_note_quarter_length"
+	MK_RANGE_NOTE_QUARTER_LENGTH = "range_note_quarter_length"
+	MK_INIT_TIME_SIG = "initial_time_signature"
+
 	
 	# Descriptive infos for meta pairs
 	META_KEYS = {
@@ -1003,7 +1091,22 @@ class OpusMeta(models.Model):
 		MK_GENRE: {"displayed_label": "Genre"},
 		MK_SOLENNITE: {"displayed_label": "Degré de solennité"},
 		MK_TEXTE: {"displayed_label": "Texte"},
-				 }
+		MK_COMPOSER: {"displayed_label": "Composer"},
+		MK_KEY_TONIC: {"displayed_label": "Key Tonic Name"},
+		MK_KEY_MODE: {"displayed_label":"Key Mode"},
+		MK_NUM_OF_PARTS: {"displayed_label": "Number of parts"},
+		MK_NUM_OF_MEASURES: {"displayed_label": "Number of measures"},
+		MK_NUM_OF_NOTES: {"displayed_label": "Number of notes"},
+		ML_INSTRUMENTS: {"displayed_label": "Instruments"},
+		MK_LOWEST_PITCH_EACH_PART: {"displayed_label": "Lowest pitch each part"},
+		MK_HIGHEST_PITCH_EACH_PART: {"displayed_label": "Highest pitch each part"},
+		MK_MOST_COMMON_PITCHES: {"displayed_label": "Most common pitches"},
+		MK_AVE_MELODIC_INTERVAL: {"displayed_label": "Average melodic interval"},
+		MK_DIRECTION_OF_MOTION: {"displayed_label": "Direction of motion"},
+		MK_MOST_COMMON_NOTE_QUARTER_LENGTH: {"displayed_label": "Most common note quarter length"},
+		MK_RANGE_NOTE_QUARTER_LENGTH: {"displayed_label": "Range of note quarter length"},
+		MK_INIT_TIME_SIG:{"displayed_label": "Initial time signature"}
+	}
 
 	def __init__(self, *args, **kwargs):
 		super(OpusMeta, self).__init__(*args, **kwargs)
@@ -1282,7 +1385,9 @@ class Annotation(models.Model):
 	'''An annotation qualifies a fragment of a score with an analytic concept'''
 	opus = models.ForeignKey(Opus,on_delete=models.CASCADE)
 	# Analytic concept: for the moment, a simple code. See how we can do better
-	analytic_concept = models.ForeignKey(AnalyticConcept,on_delete=models.PROTECT,null=True)
+
+	analytic_concept = models.ForeignKey(AnalyticConcept,on_delete=models.CASCADE,null=True)
+
 	# reference to the element being annotated, in principle an xml:id
 	ref = models.TextField(default="")
 	# Whether the annotation is manual or not 
