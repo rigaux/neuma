@@ -226,7 +226,12 @@ def export_corpus_as_zip (request, corpus_ref):
 	""" Export the list of XML files of this corpus"""
 	
 	corpus = Corpus.objects.get(ref=corpus_ref)
-	zip_bytes = corpus.export_as_zip(request)
+	if "mode" in request.GET:
+		mode = request.GET.get("mode")
+	else:
+		mode = "json"
+
+	zip_bytes = corpus.export_as_zip(request,mode)
 	resp = HttpResponse(zip_bytes.getvalue(), content_type = "application/x-zip-compressed")
 	resp["Content-Disposition"] = "attachment; filename=%s.zip" % Corpus.local_ref(corpus_ref) 
 

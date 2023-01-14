@@ -384,9 +384,11 @@ class Corpus(models.Model):
 		pprint(x)
 		return x
 
-	def export_as_zip(self, request):
+	def export_as_zip(self, request, mode="json"):
 		''' Export a corpus, its children and all opuses in
-			a recursive zip file 
+			a recursive zip file.
+			By default, standard JSON files are used to encode corpus and opus
+			If mode == jsonld, we export as linked data
 		'''
 		
 		# Write the ZIP file in memory
@@ -396,15 +398,17 @@ class Corpus(models.Model):
 		zf = zipfile.ZipFile(s, "w")
 	
 		# Add a JSON file with meta data
-		zf.writestr("corpus.json", json.dumps(self.to_json()))
-
-		# Write the cover file
-		if self.cover is not None:
-			try:
-				with open (self.cover.path, "r") as coverfile:
-					zf.writestr("cover.jpg", self.cover.read())
-			except Exception as ex:
-				print ("Cannot read the cover file ?" + str(ex))
+		if mode == "jsonld":
+			zf.writestr("corpus.json", json.dumps(self.to_jsonld()))
+		else:
+			zf.writestr("corpus.json", json.dumps(self.to_json()))
+			# Write the cover file
+			if self.cover is not None:
+				try:
+					with open (self.cover.path, "r") as coverfile:
+						zf.writestr("cover.jpg", self.cover.read())
+				except Exception as ex:
+					print ("Cannot read the cover file ?" + str(ex))
 			
 		# Add the zip files of the children
 		for child in self.get_direct_children():
@@ -415,16 +419,18 @@ class Corpus(models.Model):
 				child.save()
 
 			zf.writestr(Corpus.local_ref(child.ref) + ".zip", 
-					child.export_as_zip(request).getvalue() )
+					child.export_as_zip(request,mode).getvalue())
 			
 		for opus in self.get_opera():
-			# Add MusicXML file
-			if opus.musicxml:
-				if os.path.exists(opus.musicxml.path):
-					zf.write(opus.musicxml.path, opus.local_ref() + ".xml")
-			if opus.mei:
-				if os.path.exists(opus.mei.path):
-					zf.write(opus.mei.path, opus.local_ref() + ".mei")
+			# Only add files where we are not in momde JSON-LD
+			if not mode == "jsonld":
+				# Add MusicXML file
+				if opus.musicxml:
+					if os.path.exists(opus.musicxml.path):
+						zf.write(opus.musicxml.path, opus.local_ref() + ".xml")
+				if opus.mei:
+					if os.path.exists(opus.mei.path):
+						zf.write(opus.mei.path, opus.local_ref() + ".mei")
 			# Add a sub dir for sources files
 			source_bytes = io.BytesIO()
 			# The zip compressor
@@ -447,14 +453,17 @@ class Corpus(models.Model):
 				opus.add_meta(OpusMeta.MK_COMPOSER, self.composer.dbpedia_uri)
 				opus.save()
 			# Add a JSON file with meta data
-			opus_json = json.dumps(opus.to_json(request))
+			if mode == "jsonld":
+				opus_json = json.dumps(opus.to_jsonld())
+			else:
+				opus_json = json.dumps(opus.to_json(request))
 			zf.writestr(opus.local_ref() + ".json", opus_json)
 		zf.close()
 		
 		return s
 	
 
-	def export_as_jsonld (self):
+	def to_jsonld (self):
 		jsonld = JsonLD(settings.SCORELIB_ONTOLOGY_URI)
 		jsonld.add_type("Collection", "Collection")
 		jsonld.add_type("Opus", "Opus")
@@ -473,7 +482,7 @@ class Corpus(models.Model):
 			
 		tab_opus = []
 		for opus in self.get_opera():
-			tab_opus.append(opus.export_as_jsonld())
+			tab_opus.append(opus.to_jsonld())
 		has_opus = {"hasOpus": tab_opus}
 		return jsonld.get_context() | dict | has_opus 
 	
@@ -1034,7 +1043,7 @@ class Opus(models.Model):
 				 "files": files}
 
 		
-	def export_as_jsonld (self):
+	def to_jsonld (self):
 		my_url = "http://neuma.huma-num.fr/"
 
 		dict = {"@id": self.ref, 
@@ -1046,7 +1055,7 @@ class Opus(models.Model):
 			if meta.meta_key == OpusMeta.MK_COMPOSER:
 				dict["hasAuthor"] = meta.meta_value
 
-		if self.mei is not None:
+		if self.mei:
 			dict["hasScore"] = {"@type": "Score", 
 							    "@id": self.mei.url,
 							    "uri": my_url + self.mei.url
