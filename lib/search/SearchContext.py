@@ -66,7 +66,6 @@ class SearchContext:
         ''' Decode the pattern as a Sequence object '''
         pattern_seq = Sequence()
         if self.pattern:
-            pattern_seq = Sequence()
             pattern_seq.set_from_pattern(self.pattern)
         return pattern_seq
 

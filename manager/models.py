@@ -177,6 +177,7 @@ class Corpus(models.Model):
 		return reverse('home:corpus', args=[self.ref])
 
 	def load_from_dict(self, dict_corpus):
+
 		"""Load content from a dictionary."""
 		self.title = dict_corpus["title"]
 		self.short_title = dict_corpus["short_title"]
@@ -223,6 +224,9 @@ class Corpus(models.Model):
 			core["composer"] = self.composer.dbpedia_uri
 		return core
 
+		if self.composer is not None:
+			core["composer"] = self.composer.dbpedia_uri
+		return core
 
 	def get_children(self, recursive=True):
 		self.children = Corpus.objects.filter(parent=self)
@@ -382,9 +386,11 @@ class Corpus(models.Model):
 		pprint(x)
 		return x
 
-	def export_as_zip(self, request):
+	def export_as_zip(self, request, mode="json"):
 		''' Export a corpus, its children and all opuses in
-			a recursive zip file 
+			a recursive zip file.
+			By default, standard JSON files are used to encode corpus and opus
+			If mode == jsonld, we export as linked data
 		'''
 		
 		# Write the ZIP file in memory
@@ -394,15 +400,17 @@ class Corpus(models.Model):
 		zf = zipfile.ZipFile(s, "w")
 	
 		# Add a JSON file with meta data
-		zf.writestr("corpus.json", json.dumps(self.to_json()))
-
-		# Write the cover file
-		if self.cover is not None:
-			try:
-				with open (self.cover.path, "r") as coverfile:
-					zf.writestr("cover.jpg", self.cover.read())
-			except Exception as ex:
-				print ("Cannot read the cover file ?" + str(ex))
+		if mode == "jsonld":
+			zf.writestr("corpus.json", json.dumps(self.to_jsonld()))
+		else:
+			zf.writestr("corpus.json", json.dumps(self.to_json()))
+			# Write the cover file
+			if self.cover is not None:
+				try:
+					with open (self.cover.path, "r") as coverfile:
+						zf.writestr("cover.jpg", self.cover.read())
+				except Exception as ex:
+					print ("Cannot read the cover file ?" + str(ex))
 			
 		# Add the zip files of the children
 		for child in self.get_direct_children():
@@ -412,16 +420,18 @@ class Corpus(models.Model):
 				child.save()
 
 			zf.writestr(Corpus.local_ref(child.ref) + ".zip", 
-					child.export_as_zip(request).getvalue() )
+					child.export_as_zip(request,mode).getvalue())
 			
 		for opus in self.get_opera():
-			# Add MusicXML file
-			if opus.musicxml:
-				if os.path.exists(opus.musicxml.path):
-					zf.write(opus.musicxml.path, opus.local_ref() + ".xml")
-			if opus.mei:
-				if os.path.exists(opus.mei.path):
-					zf.write(opus.mei.path, opus.local_ref() + ".mei")
+			# Only add files where we are not in momde JSON-LD
+			if not mode == "jsonld":
+				# Add MusicXML file
+				if opus.musicxml:
+					if os.path.exists(opus.musicxml.path):
+						zf.write(opus.musicxml.path, opus.local_ref() + ".xml")
+				if opus.mei:
+					if os.path.exists(opus.mei.path):
+						zf.write(opus.mei.path, opus.local_ref() + ".mei")
 			# Add a sub dir for sources files
 			source_bytes = io.BytesIO()
 			# The zip compressor
@@ -437,19 +447,22 @@ class Corpus(models.Model):
 				source_file = opus.local_ref() +  '.szip'
 				#source_file = opus.local_ref() +  '.source_files.zip'
 				zf.writestr( source_file, source_bytes.getvalue())
-			
+
 			# Composer at the corpus level ? Then each opus inherits the composer
 			if self.composer is not None:
 				opus.add_meta(OpusMeta.MK_COMPOSER, self.composer.dbpedia_uri)
 				opus.save()
 			# Add a JSON file with meta data
-			opus_json = json.dumps(opus.to_json(request))
+			if mode == "jsonld":
+				opus_json = json.dumps(opus.to_jsonld())
+			else:
+				opus_json = json.dumps(opus.to_json(request))
 			zf.writestr(opus.local_ref() + ".json", opus_json)
 		zf.close()
 		
 		return s
-	
-	def export_as_jsonld (self):
+
+	def to_jsonld (self):
 		jsonld = JsonLD(settings.SCORELIB_ONTOLOGY_URI)
 		jsonld.add_type("Collection", "Collection")
 		jsonld.add_type("Opus", "Opus")
@@ -468,7 +481,8 @@ class Corpus(models.Model):
 			
 		tab_opus = []
 		for opus in self.get_opera():
-			tab_opus.append(opus.export_as_jsonld())
+			tab_opus.append(opus.to_jsonld())
+
 		has_opus = {"hasOpus": tab_opus}
 		return jsonld.get_context() | dict | has_opus 
 	
@@ -801,7 +815,8 @@ class Opus(models.Model):
 		try:
 			meta_pair = OpusMeta.objects.get(opus=self,meta_key=mkey)
 		except OpusMeta.DoesNotExist as e:
-			meta_pair = OpusMeta(opus=self,meta_key=mkey, meta_value=mvalue)
+
+			meta_pair = OpusMeta(opus=self, meta_key=mkey, meta_value=mvalue)
 			meta_pair.save()
 
 	def get_metas (self):
@@ -854,6 +869,7 @@ class Opus(models.Model):
 				
 		# Saving before adding related objects
 		self.save()
+
 		if ("meta_fields" in dict_opus.keys()):
 			if (dict_opus["meta_fields"] != None):
 				for m in dict_opus["meta_fields"]:
@@ -896,12 +912,12 @@ class Opus(models.Model):
 		"""Get a score object from an XML document"""
 		score = Score()
 		# Try to obtain the MEI document, which contains IDs
- 
-		if self.mei :
+
+		if self.mei:
 			#print ("Load from MEI")
 			score.load_from_xml(self.mei.path, "mei")
 			return score
-		elif self.musicxml :
+		elif self.musicxml:
 			#print ("Load from MusicXML")
 			score.load_from_xml(self.musicxml.path, "musicxml")
 			return score
@@ -1019,16 +1035,17 @@ class Opus(models.Model):
 	
 		return {"ref": self.local_ref(), 
 				 "title": self.title,
-				  "composer": self.composer, 
+				 "composer": self.composer, 
 				 "lyricist": self.lyricist, 
 				 "corpus": self.corpus.ref,
 				 "meta_fields": metas,
 				 "sources": sources,
 				 "files": files}
 		
-	def export_as_jsonld (self):
-		my_url = "http://neuma.huma-num.fr/"
 
+
+	def to_jsonld (self):
+		my_url = "http://neuma.huma-num.fr/"
 		dict = {"@id": self.ref, 
 			     "@type": "Opus",
 				"hasOpusTitle": self.title,
@@ -1038,7 +1055,7 @@ class Opus(models.Model):
 			if meta.meta_key == OpusMeta.MK_COMPOSER:
 				dict["hasAuthor"] = meta.meta_value
 
-		if self.mei is not None:
+		if self.mei:
 			dict["hasScore"] = {"@type": "Score", 
 							    "@id": self.mei.url,
 							    "uri": my_url + self.mei.url
@@ -1059,6 +1076,20 @@ class OpusMeta(models.Model):
 	MK_SOLENNITE = "solennite"
 	MK_TEXTE = "texte"
 	MK_COMPOSER = "composer"
+	MK_KEY_TONIC = "key_tonic_name"
+	MK_KEY_MODE = "key_mode"
+	MK_NUM_OF_PARTS = "num_of_parts"
+	MK_NUM_OF_MEASURES = "num_of_measures"
+	MK_NUM_OF_NOTES = "num_of_notes"
+	ML_INSTRUMENTS = "instruments"
+	MK_LOWEST_PITCH_EACH_PART = "lowest_pitch_each_part"
+	MK_HIGHEST_PITCH_EACH_PART = "highest_pitch_each_part"
+	MK_MOST_COMMON_PITCHES = "most_common_pitches"
+	MK_AVE_MELODIC_INTERVAL = "average_melodic_interval"
+	MK_DIRECTION_OF_MOTION = "direction_of_motion"
+	MK_MOST_COMMON_NOTE_QUARTER_LENGTH = "most_common_note_quarter_length"
+	MK_RANGE_NOTE_QUARTER_LENGTH = "range_note_quarter_length"
+	MK_INIT_TIME_SIG = "initial_time_signature"
 	
 	# Descriptive infos for meta pairs
 	META_KEYS = {
@@ -1069,7 +1100,21 @@ class OpusMeta(models.Model):
 		MK_SOLENNITE: {"displayed_label": "Degré de solennité"},
 		MK_TEXTE: {"displayed_label": "Texte"},
 		MK_COMPOSER: {"displayed_label": "Composer"},
-				 }
+		MK_KEY_TONIC: {"displayed_label": "Key Tonic Name"},
+		MK_KEY_MODE: {"displayed_label":"Key Mode"},
+		MK_NUM_OF_PARTS: {"displayed_label": "Number of parts"},
+		MK_NUM_OF_MEASURES: {"displayed_label": "Number of measures"},
+		MK_NUM_OF_NOTES: {"displayed_label": "Number of notes"},
+		ML_INSTRUMENTS: {"displayed_label": "Instruments"},
+		MK_LOWEST_PITCH_EACH_PART: {"displayed_label": "Lowest pitch each part"},
+		MK_HIGHEST_PITCH_EACH_PART: {"displayed_label": "Highest pitch each part"},
+		MK_MOST_COMMON_PITCHES: {"displayed_label": "Most common pitches"},
+		MK_AVE_MELODIC_INTERVAL: {"displayed_label": "Average melodic interval"},
+		MK_DIRECTION_OF_MOTION: {"displayed_label": "Direction of motion"},
+		MK_MOST_COMMON_NOTE_QUARTER_LENGTH: {"displayed_label": "Most common note quarter length"},
+		MK_RANGE_NOTE_QUARTER_LENGTH: {"displayed_label": "Range of note quarter length"},
+		MK_INIT_TIME_SIG:{"displayed_label": "Initial time signature"}
+	}
 
 	def __init__(self, *args, **kwargs):
 		super(OpusMeta, self).__init__(*args, **kwargs)
@@ -1348,7 +1393,9 @@ class Annotation(models.Model):
 	'''An annotation qualifies a fragment of a score with an analytic concept'''
 	opus = models.ForeignKey(Opus,on_delete=models.CASCADE)
 	# Analytic concept: for the moment, a simple code. See how we can do better
+
 	analytic_concept = models.ForeignKey(AnalyticConcept,on_delete=models.CASCADE,null=True)
+
 	# reference to the element being annotated, in principle an xml:id
 	ref = models.TextField(default="")
 	# Whether the annotation is manual or not 
