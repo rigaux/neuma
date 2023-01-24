@@ -229,7 +229,7 @@ class Corpus(models.Model):
 		return core
 
 	def get_children(self, recursive=True):
-		self.children = Corpus.objects.filter(parent=self)
+		self.children = Corpus.objects.filter(parent=self).order_by("ref")
 		for child in self.children:
 			child.get_children(recursive)
 		return self.children
@@ -253,6 +253,7 @@ class Corpus(models.Model):
 		return Opus.objects.filter(ref__startswith=self.ref).count()
 
 	def get_opera(self):
+		print ("Get opera order by ref")
 		return Opus.objects.filter(corpus=self).order_by('ref')
 
 	def generate_sim_matrix(self):
