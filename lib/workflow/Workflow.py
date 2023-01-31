@@ -1,5 +1,5 @@
 
-from manager.models import Corpus, Opus, Descriptor, Annotation, AnalyticModel, AnalyticConcept, Patterns
+from manager.models import Corpus, Opus, Descriptor, Patterns, OpusMeta
 import os
 import re
 import subprocess
@@ -10,7 +10,8 @@ import sys
 from neumautils.duration_tree import *
 
 import ast
-from scorelib import local_settings
+
+from django.conf import settings
 
 from search.IndexWrapper import IndexWrapper
 
@@ -245,7 +246,10 @@ class Workflow:
 		# Produce the Opus descriptors
 		Workflow.produce_opus_descriptor(opus)
 		
-		# Store the descriptors in Elastic Search
+		# Compute and store feartues
+		Workflow.extract_features_from_opus(opus)
+
+		# Store the descriptors and the features in Elastic Search
 		index_wrapper = IndexWrapper()
 		index_wrapper.index_opus(opus)
 
@@ -406,32 +410,44 @@ class Workflow:
 		return
 
 	@staticmethod
-	def extract_features_with_m21(opus, m21_score):
+	def extract_features_with_m21(opus, m21_score, forced=False):
 		"""
 		EXTRACT A LIST OF FEATURES FROM OPUS AND SAVE IN OPUSMETA
 		"""
-		print ("Extracting info from opus " + opus.ref)
+		print ("Producting features from opus " + opus.ref)
 
 		info = {}
 		
-		key = m21_score.analyze('key')
-		info["key_tonic_name"] = key.tonic.name
-		info["key_mode"] = key.mode
+		# Get the current meta values. We do not want to compute twice,
+		# except if "forced" recomputation
+		opus_metas = []
+		for m in opus.get_metas():
+			opus_metas.append(m.meta_key)
+		if not (OpusMeta.MK_KEY_TONIC in opus_metas) or forced:
+			key = m21_score.analyze('key')
+			info["key_tonic_name"] = key.tonic.name
+			info["key_mode"] = key.mode
 
-		info["num_of_parts"] = len(m21_score.getElementsByClass(m21.stream.Part))
-		info["num_of_measures"] = 0
-		for part in m21_score.parts:
-			info["num_of_measures"] += len(part)
+		if not (OpusMeta.MK_NUM_OF_PARTS in opus_metas) or forced:
+			info["num_of_parts"] = len(m21_score.getElementsByClass(m21.stream.Part))
+			
+		if not (OpusMeta.MK_NUM_OF_MEASURES in opus_metas) or forced:
+			info["num_of_measures"] = 0
+			for part in m21_score.parts:
+				info["num_of_measures"] += len(part)
 		#flatten = m21_score.flatten()
 		#can not use flatten, need to find another way...
 		#info["num_of_notes"] TODO
 
-		info["instruments"] = []
-		# TODO: JSON encode
-		if m21.instrument.partitionByInstrument(m21_score) != None:
-			for part in m21.instrument.partitionByInstrument(m21_score):
-				info["instruments"].append(part.getInstrument().instrumentName)
+		if not (OpusMeta.ML_INSTRUMENTS in opus_metas) or forced:
+			info["instruments"] = []
+			# TODO: JSON encode
+			if m21.instrument.partitionByInstrument(m21_score) != None:
+				for part in m21.instrument.partitionByInstrument(m21_score):
+					info["instruments"].append(part.getInstrument().instrumentName)
 		
+		'''
+		  Is it really useful ?
 		nameCount = m21.analysis.pitchAnalysis.pitchAttributeCount(m21_score, 'name')
 		dict_common_pitch = {}
 		for n, count in nameCount.most_common(10):
@@ -439,48 +455,52 @@ class Workflow:
 		json_commonpitch = json.dumps(dict_common_pitch)
 		info["most_common_pitches"] = json_commonpitch
 		info["most_common_pitches"]
-
+		''' 
+					
 		# TODO: this needs to be json encoded
-		pitchmin_eachpart = {}
-		pitchmax_eachpart = {}
-		p = m21.analysis.discrete.Ambitus()
-		count = 0
-		for part in m21_score.parts:
-			count += 1
-			pitchMin, pitchMax = p.getPitchSpan(part)
-			partname = 'part'+str(count)
-			pitchmin_eachpart[partname] = pitchMin.nameWithOctave
-			pitchmax_eachpart[partname] = pitchMax.nameWithOctave
-
-		json_pitchmin = json.dumps(pitchmin_eachpart)
-		json_pitchmax = json.dumps(pitchmax_eachpart)
+		if not (OpusMeta.MK_LOWEST_PITCH_EACH_PART in opus_metas) or forced:
+			pitchmin_eachpart = {}
+			pitchmax_eachpart = {}
+			p = m21.analysis.discrete.Ambitus()
+			count = 0
+			for part in m21_score.parts:
+				count += 1
+				pitchMin, pitchMax = p.getPitchSpan(part)
+				partname = 'part'+str(count)
+				pitchmin_eachpart[partname] = pitchMin.nameWithOctave
+				pitchmax_eachpart[partname] = pitchMax.nameWithOctave
 		
-		info["lowest_pitch_each_part"] = json_pitchmin
-		info["highest_pitch_each_part"] = json_pitchmax
+				info["lowest_pitch_each_part"] = json.dumps(pitchmin_eachpart)
+				info["highest_pitch_each_part"] = json.dumps(pitchmax_eachpart)
 
 		# the followings are float number instead of integer/string
-		fe = m21.features.jSymbolic.AverageMelodicIntervalFeature(m21_score)
-		info["average_melodic_interval"] = fe.extract().vector[0]
+		if not (OpusMeta.MK_AVE_MELODIC_INTERVAL in opus_metas) or forced:
+			fe = m21.features.jSymbolic.AverageMelodicIntervalFeature(m21_score)
+			info["average_melodic_interval"] = fe.extract().vector[0]
 
-		fe = m21.features.jSymbolic.DirectionOfMotionFeature(m21_score)
-		info["direction_of_motion"] = fe.extract().vector[0]
+		if not (OpusMeta.MK_DIRECTION_OF_MOTION in opus_metas) or forced:
+			fe = m21.features.jSymbolic.DirectionOfMotionFeature(m21_score)
+			info["direction_of_motion"] = fe.extract().vector[0]
 
-		fe = m21.features.native.MostCommonNoteQuarterLength(m21_score)
-		info["most_common_note_quarter_length"] = fe.extract().vector[0]
+		if not (OpusMeta.MK_MOST_COMMON_NOTE_QUARTER_LENGTH in opus_metas) or forced:
+			fe = m21.features.native.MostCommonNoteQuarterLength(m21_score)
+			info["most_common_note_quarter_length"] = fe.extract().vector[0]
 
-		fe = m21.features.native.RangeOfNoteQuarterLengths(m21_score)
-		info["range_note_quarter_length"] = fe.extract().vector[0]
+		if not (OpusMeta.MK_RANGE_NOTE_QUARTER_LENGTH in opus_metas) or forced:
+			fe = m21.features.native.RangeOfNoteQuarterLengths(m21_score)
+			info["range_note_quarter_length"] = fe.extract().vector[0]
 
-		fe = m21.features.jSymbolic.InitialTimeSignatureFeature(m21_score)
-		#print("\nInitial time signature:", fe.extract().vector)
-		info["initial_time_signature"] = json.dumps(fe.extract().vector)
+		if not (OpusMeta.MK_INIT_TIME_SIG in opus_metas) or forced:
+			fe = m21.features.jSymbolic.InitialTimeSignatureFeature(m21_score)
+			#print("\nInitial time signature:", fe.extract().vector)
+			info["initial_time_signature"] = json.dumps(fe.extract().vector)
 
-		print("Info:", info)
+		 #print("Info:", info)
 		
 		# At last, store in postgres
 		for item in info:
 			opus.add_meta(item, info[item])
-			#print("added", item)
+			# print("added", item)
 		return info
 
 	@staticmethod

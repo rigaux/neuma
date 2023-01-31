@@ -17,6 +17,4 @@ class Command(BaseCommand):
         parser.add_argument('-o', dest='output_dir')
 
     def handle(self, *args, **options):
-      
       Workflow.export_from_es (options['output_dir'])
- 
