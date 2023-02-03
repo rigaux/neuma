@@ -469,7 +469,6 @@ class Corpus(models.Model):
 		jsonld.add_type("Opus", "Opus")
 		jsonld.add_type("Score", "Score")
 		
-		
 		dict = {"@id": self.ref, 
 			    "@type": "Collection",
 				"hasCollectionTitle": self.title,
@@ -1052,10 +1051,14 @@ class Opus(models.Model):
 				"hasOpusTitle": self.title,
 				}
 		
+		features = []
 		for meta in self.get_metas ():
 			if meta.meta_key == OpusMeta.MK_COMPOSER:
 				dict["hasAuthor"] = meta.meta_value
-
+			else:
+				features.append(ScoreFeature(meta.meta_key, meta.meta_value).to_json())
+		if len(features) > 0:
+			dict["hasFeature"] = features
 		if self.mei:
 			dict["hasScore"] = {"@type": "Score", 
 							    "@id": self.mei.url,
@@ -1494,6 +1497,21 @@ class Annotation(models.Model):
 								analytic_concept =  annot_concept,
 								target=target, textual_body=wbody.value, 
 								motivation=webannot.motivation)
+
+class ScoreFeature():
+	''' 
+		A class to represent features in the JSON LD export
+	'''
+
+	feature_type = ""
+	feature_value = ""
+	
+	def __init__(self, ftype, fvalue):
+		self.feature_type = ftype
+		self.feature_value = fvalue
+		
+	def to_json(self):
+		return {"type": self.feature_type, "value": self.feature_value}
 
 # Get the Opus ref and extension from a file name
 def decompose_zip_name (fname):

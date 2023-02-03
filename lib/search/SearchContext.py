@@ -3,6 +3,8 @@ from django.conf import settings
 from music import *
 from .Sequence import Sequence
 
+from .constants import MELODIC_SEARCH
+
 class SearchContext:
     """
        Representation of a search context
@@ -32,7 +34,7 @@ class SearchContext:
         #: Type of pattern search
         self.rhythmic_search = False
         #: Default type of search
-        self.search_type = settings.MELODIC_SEARCH
+        self.search_type = MELODIC_SEARCH
         #: A variable that holds messages return by a search. 
         self.info_message = ""
         # Mirror search enabled or not

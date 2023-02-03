@@ -279,6 +279,8 @@ class Command(BaseCommand):
 			for person in persons:
 				try:
 					db_person = Person.objects.get(id=person["id"])
+					db_person.dbpedia_uri=person["dbpedia_uri"]
+					db_person.save()
 					print ("Person %s %s already exists" % (person["first_name"],person["last_name"]))
 				except Person.DoesNotExist:
 					print ("Creating person %s %s" % (person["first_name"],person["last_name"]))
