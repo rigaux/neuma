@@ -1005,7 +1005,7 @@ class Opus(models.Model):
 		  Create a dictionary that can be used for JSON exports
 		"""
 		metas = []
-		for meta in self.get_metas ():
+		for meta in self.get_metas():
 			metas.append({"meta_key": meta.meta_key, "meta_value": meta.meta_value})
 		sources = []
 		for source in self.opussource_set.all ():
