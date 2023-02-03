@@ -251,12 +251,6 @@ RHYTHM_DESCR = "rhythm"
 NOTES_DESCR = "notes"
 DIATONIC_DESCR = "diatonic"
 
-# Search types
-EXACT_SEARCH = "exactSearch"
-MELODIC_SEARCH = "melodicSearch"
-RHYTHMIC_SEARCH = "rhythmicSearch"
-DIATONIC_SEARCH = "diatonicSearch"
-
 # Neighbors
 NB_NEIGHBORS = 10
 

@@ -29,12 +29,14 @@ $(function() {
 var tabNames = [
 	            {"tabId": "tab1", "divId": "score"}, 
                 {"tabId": "tab2", "divId":"sources"},
-                {"tabId": "tab3", "divId":"manage"}
+                {"tabId": "tab3", "divId":"features"},
+                {"tabId": "tab4", "divId":"manage"}
                 ]
  {% else %}
 var tabNames = [
 	     {"tabId": "tab1", "divId": "score"}, 
-         {"tabId": "tab2", "divId":"sources"}
+         {"tabId": "tab2", "divId":"sources"},
+         {"tabId": "tab3", "divId":"features"}
                 ]
 {% endif %}
 </script>
@@ -87,22 +89,7 @@ if request.session.search_context.pattern != ""
     <dt>{% trans "External link" %}</dt>
     <dd><a href="{{opus.external_link}}" target="_blank">{{opus.external_link}}</a>&nbsp;</dd>
     {% endif %} 
-    
-    {% for meta_val in meta_values %} 
-         <dt>  {{meta_val.displayed_label}}</dt>
-    <dd>{{meta_val.meta_value}}</dd>
 
-    {% endfor %}
-    
-	<!--
-    <dt>{def.lyrics}</dt>
-    <dd>{Opus->lyrics}&nbsp;
-    </dd>
-    <dt>{feature_key}</dt>
-    <dd>{feature_value}</dd>
-    <dt>{def.bnf_link}</dt>
-    <dd>{bnf_link}</dd>
--->
 	<dt>{% trans "Files"%}</dt>
 	<dd>
 		{% if opus.pdf %} 
@@ -121,9 +108,6 @@ if request.session.search_context.pattern != ""
             href="{{opus.summary.url}}">Summary</a> 
             {% endif %}
            </dd>
-           
-
-            
 </dl>
 <!-- fin div .description -->
 
@@ -160,10 +144,12 @@ if request.session.search_context.pattern != ""
 	<ul id="tabnav">
 		<li id="tab1" class="active"><a href="#"
 			onClick="TabClick(tabNames, 0);">Score</a></li>
-		<li id="tab2" class="active"><a href="#"
+		<li id="tab2"><a href="#"
 			onClick="TabClick(tabNames, 1);">Sources</a></li>
-        {% if "change_corpus" in user_corpus_perms %}
-           <li id="tab3"><a href="#" onClick="TabClick(tabNames, 2);">Manage</a></li>
+        		<li id="tab3"><a href="#"
+			onClick="TabClick(tabNames, 2);">Features</a></li>
+         {% if "change_corpus" in user_corpus_perms %}
+           <li id="tab4"><a href="#" onClick="TabClick(tabNames, 3);">Manage</a></li>
         {% endif %}
 		</li>
 	</ul>
@@ -254,6 +240,24 @@ if request.session.search_context.pattern != ""
 
   
 </div>
+
+
+<div class="clearer">&nbsp;</div>
+
+<!--   Tab for features  -->
+<div id="features" style="display: none">
+ 
+ <div>
+    
+<dl class="description">
+    {% for meta_val in meta_values %} 
+         <dt>  {{meta_val.displayed_label}}</dt>
+    <dd>{{meta_val.meta_value}}</dd>
+    {% endfor %}
+</dl>
+  </div>
+</div>
+
 {% endblock content %}
 
  {% block opus_menu %}

@@ -26,8 +26,6 @@
             <h4>{% trans "Pattern" %}
             <span class="control">[<a href="{% url 'home:search' %}?pattern=">{% trans "Clear" %}</a>]</span>
             </h4>
-            <h4>Search type:</h4> <span>{{ request.session.search_context.search_type }}</span>
-            <h4>Mirror search:</h4> <span>{{ request.session.search_context.mirror_search }}</span>
             <div id="search_partition"></div>
         </div>
     </div>

@@ -56,8 +56,6 @@ class CorpusView(NeumaView):
 	def get(self, request, **kwargs):
 		context = self.get_context_data(**kwargs)
 
-		corpus = self.kwargs['corpus_ref']
-
 		# default result (or empty block?)
 		default_result_path = "static/scoreqldefault.xml"
 		with open(default_result_path,  "r", encoding='utf8') as defaultFile:
@@ -67,9 +65,10 @@ class CorpusView(NeumaView):
 
 		# Are we in search mode
 		if request.session["search_context"].in_search_mode():
-			print ("We are in search mode. Ref " + request.session["search_context"].ref)
 			url = reverse('home:search', args=(), kwargs={})
 			return HttpResponseRedirect(url)
+		else:
+			request.session["search_context"].info_message = ""
  
 		return render(request, "home/corpus.html", context)
 
@@ -226,7 +225,12 @@ def export_corpus_as_zip (request, corpus_ref):
 	""" Export the list of XML files of this corpus"""
 	
 	corpus = Corpus.objects.get(ref=corpus_ref)
-	zip_bytes = corpus.export_as_zip(request)
+	if "mode" in request.GET:
+		mode = request.GET.get("mode")
+	else:
+		mode = "json"
+
+	zip_bytes = corpus.export_as_zip(request,mode)
 	resp = HttpResponse(zip_bytes.getvalue(), content_type = "application/x-zip-compressed")
 	resp["Content-Disposition"] = "attachment; filename=%s.zip" % Corpus.local_ref(corpus_ref) 
 
@@ -524,6 +528,7 @@ class SearchView(NeumaView):
 	def get(self, request, **kwargs):
 		# Get the search context
 		search_context = self.request.session["search_context"]
+		self.request.session["search_context"].info_message = ""
 
 		# Update the search from the request arguments
 		if 'keywords' in self.request.GET:
@@ -539,14 +544,10 @@ class SearchView(NeumaView):
 		# of from the session
 		if 'pattern' in self.request.GET:
 			# Put in the session until it is cleared or replaced
-			search_context.pattern = self.request.GET['pattern']
+			search_context.pattern = self.request.GET["pattern"] 
 			# Check that the pattern is long enough
 			if not search_context.check_pattern_length():
-				if search_context.keywords != "":
-					print("We are in keyword search mode")
-				else:
-					print ("Pattern ignored : it must contain at least three intervals")
-					search_context.info_message  = "Pattern ignored : it must contain at least three intervals"
+				search_context.info_message  = "Pattern ignored : it must contain at least three intervals"
 				search_context.pattern = ""
 
 		#Initialize search_context.mirror_search according to the search request

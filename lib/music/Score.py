@@ -152,6 +152,7 @@ class Score:
 				self.m21_score = m21.converter.parse(xml_path)
 			
 			# ignore the following bc it cause errors
+
 			self.load_component(self.m21_score)
 
 		except Exception as ex:
@@ -191,11 +192,9 @@ class Score:
 		if not m21stream.hasVoices() and not m21stream.hasPartLikeStreams():
 			voice = Voice(self.id + "-" + str(default_voice_id))
 
-			m21voice = m21.stream.Voice(m21stream.flat.notesAndRests.elements)
+			m21voice = m21.stream.Voice(m21stream.flat.notesAndRests.stream().elements)
 			# print ("Create voice in component "	self.id	" with id "	voice.id)
 			voice.set_from_m21(m21voice)
-			voice.convert_to_sequence()
-
 			self.components.append(voice)
 		
 	def get_sub_scores(self):

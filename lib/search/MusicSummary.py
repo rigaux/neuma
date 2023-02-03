@@ -1,11 +1,12 @@
 # coding: utf-8
-from django.conf import settings
+from .constants import MELODIC_SEARCH, RHYTHMIC_SEARCH,DIATONIC_SEARCH
 
 import jsonpickle, json
 from operator import itemgetter
-from .Sequence import Sequence
+from .Sequence import Sequence, Item
 from .Distance import *
 
+import music21 as m21
 
 # import the logging library
 import logging
@@ -17,7 +18,7 @@ class MusicSummary:
 	"""
 		Lightweight representation of a music score. Used for pattern search.
 		
-		A music summary object gives a barebne representation of a music piece. It consists
+		A music summary object gives a barebone representation of a music piece. It consists
 		of *parts*, which themselves consist of *voices*. Finally each voice
 		if a *sequence* of *items*.
 		
@@ -53,7 +54,7 @@ class MusicSummary:
 		
 	def add_voice_to_part(self, part_id, voice_id, voice):
 		'''Add a voice to a part'''
-		self.parts[part_id][voice_id] = voice.convert_to_sequence()
+		self.parts[part_id][voice_id] = MusicSummary.convert_to_sequence(voice)
 		
 	def encode(self):
 		'''
@@ -143,11 +144,11 @@ class MusicSummary:
 			print ("Check occurrence " + str(o))
 			try:
 				#Get rhythmic distance for melodic type of search for the current match
-				if search_type == settings.MELODIC_SEARCH or search_type == settings.DIATONIC_SEARCH:
+				if search_type == MELODIC_SEARCH or search_type == DIATONIC_SEARCH:
 					d = (o, o.get_rhythmic_distance(o, pattern))
 
 				#Otherwise, get melodic distance for rhythmic search for the current match
-				elif search_type == settings.RHYTHMIC_SEARCH:
+				elif search_type == RHYTHMIC_SEARCH:
 					d = (o, o.get_melodic_distance(o, pattern))
 
 				distances.append(d)

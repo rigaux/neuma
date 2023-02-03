@@ -35,7 +35,7 @@ class Command(BaseCommand):
 			file_name = corpus.ref.replace (settings.NEUMA_ID_SEPARATOR, "-") + ".json"
 			with open(os.path.join(options['file_path'], file_name),"w") as file:
 				print (f"Writing file {file_name}")
-				file.write (json.dumps(corpus.export_as_jsonld()))
+				file.write (json.dumps(corpus.to_jsonld()))
 		except Corpus.DoesNotExist:
 			raise CommandError('Corpus with ref "%s" does not exist' % options['corpus_ref'])
 			exit(1)

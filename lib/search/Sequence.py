@@ -4,7 +4,8 @@ import string
 from fractions import Fraction
 from .Distance import *
 from .Distance_neuma import *
-from django.conf import settings
+
+from .constants import MELODIC_SEARCH,RHYTHMIC_SEARCH,EXACT_SEARCH,DIATONIC_SEARCH
 import music21 as m21
 
 INTERVAL_SEPARATOR = "|"
@@ -327,21 +328,21 @@ class Sequence:
         """
         occurrences = []
 
-        if search_type == settings.RHYTHMIC_SEARCH:
+        if search_type == RHYTHMIC_SEARCH:
             p_intervals = pattern.get_rhythms()
             s_intervals = self.get_rhythms()
             m_intervals = ""
 
-        elif search_type == settings.MELODIC_SEARCH:
+        elif search_type == MELODIC_SEARCH:
             p_intervals = pattern.get_intervals(settings.MELODY_DESCR)
             m_intervals = pattern.get_mirror_intervals(p_intervals)
             s_intervals = self.get_intervals(settings.MELODY_DESCR)
 
-        elif search_type == settings.EXACT_SEARCH:
+        elif search_type == EXACT_SEARCH:
             p_intervals = pattern.get_notes()
             s_intervals = self.get_notes()
 
-        elif search_type == settings.DIATONIC_SEARCH:
+        elif search_type == DIATONIC_SEARCH:
             p_intervals = pattern.get_intervals(settings.DIATONIC_DESCR)
             m_intervals = pattern.get_mirror_intervals(p_intervals)
             s_intervals = self.get_intervals(settings.DIATONIC_DESCR)
@@ -351,7 +352,7 @@ class Sequence:
             s_intervals = self.get_intervals(settings.MELODY_DESCR)
 
         # Get intervals as list, e.g. ['2', '2', '2']
-        if search_type == settings.EXACT_SEARCH:
+        if search_type == EXACT_SEARCH:
             p_intervals_list = self.notes_to_symbols(p_intervals)
             s_intervals_list = self.notes_to_symbols(s_intervals)
         else:

@@ -1,5 +1,5 @@
 
-from manager.models import Corpus, Opus, Descriptor, Annotation, AnalyticModel, AnalyticConcept, Patterns
+from manager.models import Corpus, Opus, Descriptor, Patterns, OpusMeta
 import os
 import re
 import subprocess
@@ -10,7 +10,8 @@ import sys
 from neumautils.duration_tree import *
 
 import ast
-from scorelib import local_settings
+
+from django.conf import settings
 
 from search.IndexWrapper import IndexWrapper
 
@@ -206,23 +207,7 @@ class Workflow:
 			children = corpus.get_children(False)
 			for child in children:
 				Workflow.index_corpus(child, recursion)
-
-	@staticmethod
-	def extract_features_from_corpus(corpus, recursion=True):
-		"""
-		(Re)extract features and metadata for all the opuses of a corpus (and its descendants
-		if the recursion parameter is True)
-		"""
-
-		for opus in Opus.objects.filter(corpus__ref=corpus.ref):
-			Workflow.extract_features_from_opus(opus)
-
-		# Recursive call
-		if recursion:
-			children = corpus.get_children(False)
-			for child in children:
-				Workflow.extract_features_from_corpus(child, recursion)
-
+			
 	@staticmethod
 	def propagate(corpus, recursion=True):
 		"""
@@ -261,9 +246,136 @@ class Workflow:
 		# Produce the Opus descriptors
 		Workflow.produce_opus_descriptor(opus)
 		
-		# Store the descriptors in Elastic Search
+		# Compute and store feartues
+		Workflow.extract_features_from_opus(opus)
+
+		# Store the descriptors and the features in Elastic Search
 		index_wrapper = IndexWrapper()
 		index_wrapper.index_opus(opus)
+
+	@staticmethod
+	def patterns_statistics_analyze(mel_dict, dia_dict, rhy_dict, mel_opus_dict, dia_opus_dict, rhy_opus_dict):
+		"""
+		Analyze statistics based on all patterns in the opus/corpus/library, 
+		such as top 15 common patterns, or output all patterns
+		"""
+
+		#We define the low threshold: if it appears less than 10 times in the library, it is not a pattern.
+
+		#Output every pattern appeared in csv
+		
+		mel_sorted = sorted(mel_dict.items(), key=lambda x: x[1], reverse=True)
+		with open("melodic_patterns_sorted.csv", "w") as out_f:
+				for ele in mel_sorted:
+						print(ele[0], ",", ele[1], file = out_f)
+						#if ele[1] < 10: break
+
+		dia_sorted = sorted(dia_dict.items(), key=lambda x: x[1], reverse=True)
+		with open("diatonic_patterns_sorted.csv", "w") as out_f:
+				for ele in dia_sorted:
+						print(ele[0], ",", ele[1], file = out_f)
+						#if ele[1] < 10: break
+
+		rhy_sorted = sorted(rhy_dict.items(), key=lambda x: x[1], reverse=True)
+		with open("rhythmic_patterns_sorted.csv", "w") as out_f:
+				for ele in rhy_sorted:
+						print(ele[0], ",", ele[1], file = out_f)
+						#if ele[1] < 10: break
+
+		'''
+		print("30 most frequent melodic patterns so far:")
+		cnt = 0
+		#sort elements by their total appearance number 
+		for ele in sorted(mel_dict, key=mel_dict.get, reverse=True):
+			print("Pattern ",ele, " with total appearance:", mel_dict[ele])
+			print("appeared in", len(mel_opus_dict[ele]), "opuses.\n")
+			#print("which are:", mel_opus_dict[ele])
+			cnt += 1
+			#only print the top 15 results
+			if cnt >= 30: break
+
+		print("\n\n30 most frequent diatonic patterns so far:")
+		cnt = 0
+		#sort elements by their total appearance number
+		for ele in sorted(dia_dict, key=dia_dict.get, reverse=True):
+			print("Pattern ",ele, " with total appearance:", dia_dict[ele])
+			print("appeared in", len(dia_opus_dict[ele]), "opuses.\n")
+			#print("which are:", dia_opus_dict[ele])
+			cnt += 1
+			#only print the top 15 results
+			if cnt >= 30: break
+
+		print("\n\n30 most frequent rhythmic patterns so far:")
+		cnt = 0
+		#sort elements by their total appearance number
+		for ele in sorted(rhy_dict, key=rhy_dict.get, reverse=True):
+			print("Pattern ",ele, " with total appearance:", rhy_dict[ele])
+			print("appeared in", len(rhy_opus_dict[ele]), "opuses.\n")
+			#print("which are:", rhy_opus_dict[ele])
+			cnt += 1
+			#only print the top 15 results
+			if cnt >= 30: break
+		'''
+
+	@staticmethod
+	def analyze_patterns(corpus, recursion = True):
+		'''
+		Analyze all pattern to get statistical data of frequent patterns
+		'''
+		for opus in Opus.objects.filter(corpus__ref=corpus.ref):
+			mel_pat_dict, dia_pat_dict, rhy_pat_dict, mel_opus_dict, dia_opus_dict, rhy_opus_dict = Workflow.analyze_patterns_in_opus(opus)
+
+		# Recursive call
+		if recursion:
+			children = corpus.get_children(False)
+			for child in children:
+				Workflow.analyze_patterns(child, recursion)
+
+		try:
+			Workflow.patterns_statistics_analyze(mel_pat_dict, dia_pat_dict, rhy_pat_dict, mel_opus_dict, dia_opus_dict, rhy_opus_dict) 
+		except:
+			#When the analysis finish, no value would be assigned to mel_pat_dict etc.. thus simply return void
+			return
+
+	@staticmethod
+	def analyze_patterns_in_opus(opus):
+		'''
+		Analyze melodic, diatonic and rhythmic patterns within an opus and store statistics
+		'''
+		print ("Analyze patterns in opus " + opus.ref)
+
+		try:
+			score = opus.get_score()
+		except:
+			print("Could not get score for opus" + opus.ref)
+			return {},{},{},{},{},{}
+
+		#If there is an error while tranforming MEI into XML format, skip this opus
+		if score.m21_score == None:
+			return {},{},{},{},{},{}
+
+		# First, compute the music summary and store it as a file
+		music_summary = score.get_music_summary()
+		music_summary.opus_id = opus.ref
+		opus.summary.save("summary.json", ContentFile(music_summary.encode()))
+
+
+	@staticmethod
+	def extract_features_from_corpus(corpus, recursion=True):
+		"""
+		(Re)extract features and metadata for all the opuses of a corpus (and its descendants
+		if the recursion parameter is True)
+		"""
+
+		for opus in Opus.objects.filter(corpus__ref=corpus.ref):
+			Workflow.extract_features_from_opus(opus)
+
+		# Recursive call
+		if recursion:
+			children = corpus.get_children(False)
+			for child in children:
+				Workflow.extract_features_from_corpus(child, recursion)
+
 
 	@staticmethod
 	def extract_features_from_opus(opus):
@@ -298,32 +410,44 @@ class Workflow:
 		return
 
 	@staticmethod
-	def extract_features_with_m21(opus, m21_score):
+	def extract_features_with_m21(opus, m21_score, forced=False):
 		"""
 		EXTRACT A LIST OF FEATURES FROM OPUS AND SAVE IN OPUSMETA
 		"""
-		print ("Extracting info from opus " + opus.ref)
+		print ("Producting features from opus " + opus.ref)
 
 		info = {}
 		
-		key = m21_score.analyze('key')
-		info["key_tonic_name"] = key.tonic.name
-		info["key_mode"] = key.mode
+		# Get the current meta values. We do not want to compute twice,
+		# except if "forced" recomputation
+		opus_metas = []
+		for m in opus.get_metas():
+			opus_metas.append(m.meta_key)
+		if not (OpusMeta.MK_KEY_TONIC in opus_metas) or forced:
+			key = m21_score.analyze('key')
+			info["key_tonic_name"] = key.tonic.name
+			info["key_mode"] = key.mode
 
-		info["num_of_parts"] = len(m21_score.getElementsByClass(m21.stream.Part))
-		info["num_of_measures"] = 0
-		for part in m21_score.parts:
-			info["num_of_measures"] += len(part)
+		if not (OpusMeta.MK_NUM_OF_PARTS in opus_metas) or forced:
+			info["num_of_parts"] = len(m21_score.getElementsByClass(m21.stream.Part))
+			
+		if not (OpusMeta.MK_NUM_OF_MEASURES in opus_metas) or forced:
+			info["num_of_measures"] = 0
+			for part in m21_score.parts:
+				info["num_of_measures"] += len(part)
 		#flatten = m21_score.flatten()
 		#can not use flatten, need to find another way...
 		#info["num_of_notes"] TODO
 
-		info["instruments"] = []
-		# TODO: JSON encode
-		if m21.instrument.partitionByInstrument(m21_score) != None:
-			for part in m21.instrument.partitionByInstrument(m21_score):
-				info["instruments"].append(part.getInstrument().instrumentName)
+		if not (OpusMeta.ML_INSTRUMENTS in opus_metas) or forced:
+			info["instruments"] = []
+			# TODO: JSON encode
+			if m21.instrument.partitionByInstrument(m21_score) != None:
+				for part in m21.instrument.partitionByInstrument(m21_score):
+					info["instruments"].append(part.getInstrument().instrumentName)
 		
+		'''
+		  Is it really useful ?
 		nameCount = m21.analysis.pitchAnalysis.pitchAttributeCount(m21_score, 'name')
 		dict_common_pitch = {}
 		for n, count in nameCount.most_common(10):
@@ -331,48 +455,52 @@ class Workflow:
 		json_commonpitch = json.dumps(dict_common_pitch)
 		info["most_common_pitches"] = json_commonpitch
 		info["most_common_pitches"]
-
+		''' 
+					
 		# TODO: this needs to be json encoded
-		pitchmin_eachpart = {}
-		pitchmax_eachpart = {}
-		p = m21.analysis.discrete.Ambitus()
-		count = 0
-		for part in m21_score.parts:
-			count += 1
-			pitchMin, pitchMax = p.getPitchSpan(part)
-			partname = 'part'+str(count)
-			pitchmin_eachpart[partname] = pitchMin.nameWithOctave
-			pitchmax_eachpart[partname] = pitchMax.nameWithOctave
-
-		json_pitchmin = json.dumps(pitchmin_eachpart)
-		json_pitchmax = json.dumps(pitchmax_eachpart)
+		if not (OpusMeta.MK_LOWEST_PITCH_EACH_PART in opus_metas) or forced:
+			pitchmin_eachpart = {}
+			pitchmax_eachpart = {}
+			p = m21.analysis.discrete.Ambitus()
+			count = 0
+			for part in m21_score.parts:
+				count += 1
+				pitchMin, pitchMax = p.getPitchSpan(part)
+				partname = 'part'+str(count)
+				pitchmin_eachpart[partname] = pitchMin.nameWithOctave
+				pitchmax_eachpart[partname] = pitchMax.nameWithOctave
 		
-		info["lowest_pitch_each_part"] = json_pitchmin
-		info["highest_pitch_each_part"] = json_pitchmax
+				info["lowest_pitch_each_part"] = json.dumps(pitchmin_eachpart)
+				info["highest_pitch_each_part"] = json.dumps(pitchmax_eachpart)
 
 		# the followings are float number instead of integer/string
-		fe = m21.features.jSymbolic.AverageMelodicIntervalFeature(m21_score)
-		info["average_melodic_interval"] = fe.extract().vector[0]
+		if not (OpusMeta.MK_AVE_MELODIC_INTERVAL in opus_metas) or forced:
+			fe = m21.features.jSymbolic.AverageMelodicIntervalFeature(m21_score)
+			info["average_melodic_interval"] = fe.extract().vector[0]
 
-		fe = m21.features.jSymbolic.DirectionOfMotionFeature(m21_score)
-		info["direction_of_motion"] = fe.extract().vector[0]
+		if not (OpusMeta.MK_DIRECTION_OF_MOTION in opus_metas) or forced:
+			fe = m21.features.jSymbolic.DirectionOfMotionFeature(m21_score)
+			info["direction_of_motion"] = fe.extract().vector[0]
 
-		fe = m21.features.native.MostCommonNoteQuarterLength(m21_score)
-		info["most_common_note_quarter_length"] = fe.extract().vector[0]
+		if not (OpusMeta.MK_MOST_COMMON_NOTE_QUARTER_LENGTH in opus_metas) or forced:
+			fe = m21.features.native.MostCommonNoteQuarterLength(m21_score)
+			info["most_common_note_quarter_length"] = fe.extract().vector[0]
 
-		fe = m21.features.native.RangeOfNoteQuarterLengths(m21_score)
-		info["range_note_quarter_length"] = fe.extract().vector[0]
+		if not (OpusMeta.MK_RANGE_NOTE_QUARTER_LENGTH in opus_metas) or forced:
+			fe = m21.features.native.RangeOfNoteQuarterLengths(m21_score)
+			info["range_note_quarter_length"] = fe.extract().vector[0]
 
-		fe = m21.features.jSymbolic.InitialTimeSignatureFeature(m21_score)
-		#print("\nInitial time signature:", fe.extract().vector)
-		info["initial_time_signature"] = json.dumps(fe.extract().vector)
+		if not (OpusMeta.MK_INIT_TIME_SIG in opus_metas) or forced:
+			fe = m21.features.jSymbolic.InitialTimeSignatureFeature(m21_score)
+			#print("\nInitial time signature:", fe.extract().vector)
+			info["initial_time_signature"] = json.dumps(fe.extract().vector)
 
-		print("Info:", info)
+		 #print("Info:", info)
 		
 		# At last, store in postgres
 		for item in info:
 			opus.add_meta(item, info[item])
-			#print("added", item)
+			# print("added", item)
 		return info
 
 	@staticmethod

@@ -60,6 +60,7 @@ class Event:
 	def start_beam(self, beam_id):
 		if not self.is_rest():
 			logger.info (f"Start a beam : {beam_id}" )
+
 			# TODO: solve circular import pb
 			#beam = Beam()
 			#self.m21_event.beams.append(beam.m21_beam)
