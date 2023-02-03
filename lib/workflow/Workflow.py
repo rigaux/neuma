@@ -403,7 +403,7 @@ class Workflow:
 		except  Exception as ex:
 			print ("Exception when trying to extract info from opus " + opus.ref + " Message:" + str(ex))
 
-		# TODO: Store the descriptors in ElasticSearch...
+		# TODO: Store the descriptors in ElasticSearch
 		#index_wrapper = IndexWrapper()
 		#index_wrapper.index_opus(opus)
 
