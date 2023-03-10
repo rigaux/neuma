@@ -3,7 +3,7 @@ import logging
 
 import music21 as m21
 
-from lib.search.MusicSummary import MusicSummary
+from neumasearch.MusicSummary import MusicSummary
 import verovio
 
 # Voice is a complex class defined in a separate file

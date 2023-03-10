@@ -4,7 +4,7 @@ from django.conf import settings
 # To communicate with Neuma
 from neuma.rest import Client
 # To communicate with ElasticSearch
-from search.IndexWrapper import IndexWrapper
+from neumasearch.IndexWrapper import IndexWrapper
 
 from neumautils.views import NeumaView
 import zipfile, os.path, io

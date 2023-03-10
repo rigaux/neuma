@@ -15,8 +15,8 @@ from operator import itemgetter
 
 from manager.models import Corpus, Opus, OpusMeta
 from music import *
-from search.Sequence import Sequence
-from search.MusicSummary import MusicSummary
+from .Sequence import Sequence
+from .MusicSummary import MusicSummary
 
 # import the logging library
 import logging

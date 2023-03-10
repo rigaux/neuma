@@ -15,7 +15,7 @@ from neumautils.views import NeumaView
 from manager.models import Corpus, Opus, Annotation, AnalyticModel, AnalyticConcept
 from scorelib import analytic_concepts
 from scorelib.analytic_concepts import *
-from search.SearchContext import SearchContext
+from neumasearch.SearchContext import SearchContext
 from workflow.Workflow import Workflow, workflow_import_zip
 
 from .models import QtDimension, QtMetric

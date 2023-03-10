@@ -20,6 +20,7 @@ from django.conf import settings
 
 from neumautils.views import NeumaView
 
+
 import home.views
 
 urlpatterns = [

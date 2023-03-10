@@ -31,6 +31,7 @@ os.path.join(BASE_DIR, BASE_DIR + "/lib")
 import sys
 sys.path.append(os.path.join(BASE_DIR, "lib"))
 
+print ("Adding " + os.path.join(BASE_DIR, "lib") + " to Python path")
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/1.8/howto/deployment/checklist/

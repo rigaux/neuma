@@ -13,7 +13,7 @@ import ast
 
 from django.conf import settings
 
-from search.IndexWrapper import IndexWrapper
+from neumasearch.IndexWrapper import IndexWrapper
 
 import zipfile, os.path, io
 

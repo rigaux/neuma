@@ -6,8 +6,7 @@ from django.conf import settings
 
 from django.urls  import reverse
 
-from search.SearchContext import SearchContext
-
+from neumasearch.SearchContext import SearchContext
 
 class NeumaView(TemplateView):
     '''Override the view class to always add the list of t

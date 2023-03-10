@@ -25,10 +25,10 @@ import lxml.etree as etree
 from manager.models import Corpus, Opus, Upload, Bookmark, SimMeasure, Licence, Annotation, AnalyticModel, AnalyticConcept
 from music import *
 from neuma.rest import Client
-from search.IndexWrapper import IndexWrapper
-from search.MusicSummary import  MusicSummary
-from search.SearchContext import SearchContext
-from search.Sequence import Sequence
+from neumasearch.IndexWrapper import IndexWrapper
+from neumasearch.MusicSummary import  MusicSummary
+from neumasearch.SearchContext import SearchContext
+from neumasearch.Sequence import Sequence
 from neumautils.views import NeumaView
 import xml.etree.ElementTree as ET
 
