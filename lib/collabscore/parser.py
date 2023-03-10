@@ -250,19 +250,19 @@ class OmrScore:
 
 						# Create the voice
 						voice_part = voice_model.Voice(id=voice.id)
-						current_beam = 0
+						current_beam = None
 						previous_event = None
 						for item in voice.items:
 							# Decode the event
 							(event, event_region) = self.decode_event(current_part, item) 
 							# Manage beams
-							if current_beam != item.beam_id:
-								if current_beam != 0:
+							'''if current_beam != item.beam_id:
+								if current_beam != None:
 									# The previous event was the end of the beam
 									previous_event.stop_beam(current_beam)
-								if item.beam_id != 0:
+								if item.beam_id != None:
 									event.start_beam(item.beam_id)
-								current_beam =  item.beam_id
+								current_beam =  item.beam_id'''
 							previous_event = event
 							
 							voice_part.append_event(event)
@@ -281,9 +281,9 @@ class OmrScore:
 								score.add_annotation (annotation)
 								
 						# End of items for this measure. Close any pending beam
-						if current_beam != 0:
+						if current_beam != None:
 							previous_event.stop_beam(current_beam)
-							current_beam =  0
+							current_beam =  None
 						# Add the voice to the measure of the relevant part
 						current_measure.add_voice (voice_part)
 					#if current_measure_no >= MAX_MEASURE_NO:
@@ -506,6 +506,7 @@ class VoiceItem:
 		self.note_attr = None
 		self.rest_attr = None
 		self.clef_attr = None
+		self.beam_id = None
 		
 		self.duration = Duration (json_voice_item["duration"])
 		if "no_group" in json_voice_item:

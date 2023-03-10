@@ -3,7 +3,9 @@ import logging
 
 import music21 as m21
 
-from neumasearch.MusicSummary import MusicSummary
+#from neumasearch.MusicSummary import MusicSummary
+# No longer useful?
+
 import verovio
 
 # Voice is a complex class defined in a separate file
@@ -226,7 +228,10 @@ class Score:
 		return voices
 	
 	def get_music_summary(self):
-		'''Produce a compact representation of a score for search operations'''
+		'''Produce a compact representation of a score for search operations
+		
+		   No longeer used? Seee MusicSummary line 57
+		
 		music_summary = MusicSummary()
 		# Adds a single part, for historical reasons: we do not care about parts
 		# for search operations
@@ -238,6 +243,8 @@ class Score:
 			music_summary.add_voice_to_part(part_id, voice.id, voice)
 			
 		return music_summary
+		'''
+		return
 	
 	def get_title(self):
 		if self.m21_score.metadata:
