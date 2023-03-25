@@ -1,32 +1,35 @@
 
 
 '''
- A class used to produce JSON-LD encoding of score libray data
+ A class used to produce JSON-LD encoding of score library data
 '''
 
 
 class JsonLD:
-    '''
-        A general utility class to manage JSON LD specifics
-    '''
-    
-    def __init__(self, base) :
-        ''' 
-           A dictionary, indexed on measures, that records the clefs
-            used in the staff
-            What if a change occurs in the middle of a measure ? Not
-            supported for the time being. We will need a more powerful
-            notion of 'position'
-        '''
-        self.types = {}
-        self.base= base
+	'''
+		A general utility class to manage JSON LD specifics
+	'''
+	
+	def __init__(self, ontos) :
+		''' 
+		   ontos is an array of prefix-iri pairs, from which types are taken
+		'''
+		self.ontologies = ontos
 
-    def add_type (self, name, uri):
-        self.types[name] = uri 
-        
-    
-    def get_context(self):
-        
-        context = {"@base": self.base} | self.types
-        
-        return  {"@context": context}
+		self.types = {}
+
+	def add_type (self, prefix, nom_type):
+		'''
+		  Add a type and specifies the prefix of its ontology
+		'''
+		self.types[nom_type] = prefix
+		
+	
+	def get_context(self):
+		
+		# First create a dict with the ontologies
+		context = self.ontologies
+		# Add the types
+		for nom_type, prefix  in self.types.items():
+			context[nom_type] = prefix + ":" + nom_type
+		return  {"@context": context}

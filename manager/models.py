@@ -253,7 +253,6 @@ class Corpus(models.Model):
 		return Opus.objects.filter(ref__startswith=self.ref).count()
 
 	def get_opera(self):
-		print ("Get opera order by ref")
 		return Opus.objects.filter(corpus=self).order_by('ref')
 
 	def generate_sim_matrix(self):
@@ -464,27 +463,29 @@ class Corpus(models.Model):
 		return s
 
 	def to_jsonld (self):
-		jsonld = JsonLD(settings.SCORELIB_ONTOLOGY_URI)
-		jsonld.add_type("Collection", "Collection")
-		jsonld.add_type("Opus", "Opus")
-		jsonld.add_type("Score", "Score")
+		ontos = {"scorelib": settings.SCORELIB_ONTOLOGY_URI}
+		jsonld = JsonLD (ontos)
 		
-		dict = {"@id": self.ref, 
+		jsonld.add_type("scorelib", "Collection")
+		jsonld.add_type("scorelib", "Opus")
+		jsonld.add_type("scorelib", "Score")
+		
+		dict_corpus = {"@id": self.ref, 
 			    "@type": "Collection",
 				"hasCollectionTitle": self.title,
 				"hasCollectionCopyright": self.copyright
 				}
 		if self.licence is not None:
-			dict["hasLicence"] = self.licence.code
+			dict_corpus["hasLicence"] = self.licence.code
 		if self.parent is not None:
-			dict["isInCollection"] = self.parent.ref
+			dict_corpus["isInCollection"] = self.parent.ref
 			
 		tab_opus = []
 		for opus in self.get_opera():
 			tab_opus.append(opus.to_jsonld())
 
 		has_opus = {"hasOpus": tab_opus}
-		return jsonld.get_context() | dict | has_opus 
+		return jsonld.get_context() | dict_corpus | has_opus 
 	
 	@staticmethod
 	def import_from_zip(zfile, parent_corpus, zip_name):

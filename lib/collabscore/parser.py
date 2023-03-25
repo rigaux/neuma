@@ -164,7 +164,7 @@ class OmrScore:
 		current_measure_no = 0
 		
 		MIN_MEASURE_NO = 2
-		MAX_MEASURE_NO = 2
+		MAX_MEASURE_NO = 1
 
 
 		for page in self.pages:
@@ -217,6 +217,7 @@ class OmrScore:
 							if part.staff_exists(header.no_staff):
 								staff = part.get_staff (header.no_staff)
 								if header.clef is not None:
+									logger.info (f'Clef found on staff {header.no_staff} at measure {current_measure_no}')
 									clef_staff = header.clef.get_notation_clef()
 									staff.set_current_clef (clef_staff)
 									measure_for_part.add_clef (clef_staff)
@@ -233,6 +234,9 @@ class OmrScore:
 									# We will display the key signature at the beginning
 									# of the current measure
 									measure_for_part.add_key_signature (key_sign)
+							else:
+								logger.error (f'Staff {header.no_staff} does not exist for part {part.id}')
+								
 						# Add the measure to its part (notational events are added there)
 						part.append_measure (measure_for_part)
 						# Keep the array of current measures indexed by part
@@ -255,14 +259,15 @@ class OmrScore:
 						for item in voice.items:
 							# Decode the event
 							(event, event_region) = self.decode_event(current_part, item) 
+							logger.info (f'Adding event {event.id} to voice {voice.id}')
 							# Manage beams
-							'''if current_beam != item.beam_id:
+							if current_beam != item.beam_id:
 								if current_beam != None:
 									# The previous event was the end of the beam
 									previous_event.stop_beam(current_beam)
 								if item.beam_id != None:
 									event.start_beam(item.beam_id)
-								current_beam =  item.beam_id'''
+								current_beam =  item.beam_id
 							previous_event = event
 							
 							voice_part.append_event(event)

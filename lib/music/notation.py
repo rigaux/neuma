@@ -92,6 +92,8 @@ class KeySignature:
 		Represented as the number of sharps (same as music21)
 	'''
 	
+	counter = 0
+
 	def __init__(self, nb_sharps=0, nb_flats=0, nb_naturals=0) :
 		if nb_sharps > 0:
 			self.m21_key_signature = m21.key.KeySignature(nb_sharps)
@@ -99,7 +101,8 @@ class KeySignature:
 			self.m21_key_signature = m21.key.KeySignature((-1) * nb_flats)
 		else:
 			self.m21_key_signature = m21.key.KeySignature(0)
-		self.m21_key_signature.id = "ktodo"
+		self.m21_key_signature.id = f"ksign{KeySignature.counter}"
+		KeySignature.counter += 1
 
 	# Layer over the music21 functions
 	def accidentalByStep(self, pitch):
@@ -112,7 +115,8 @@ class Clef:
 	'''
 		Same as m21
 	'''
-	
+	counter = 0
+
 	# DMOS encoding of clefs
 	DMOS_TREBLE_CLEF="G"
 	DMOS_BASS_CLEF="F"
@@ -132,8 +136,9 @@ class Clef:
 			self.m21_clef = m21.clef.TenorClef()
 		elif clef_code == self.BASS_CLEF:
 			self.m21_clef = m21.clef.BassClef()
-		self.m21_clef.id = "c98"
-
+		self.m21_clef.id = f"clef{Clef.counter}"
+		Clef.counter += 1
+		
 	@staticmethod 
 	def decode_from_dmos (dmos_code, dmos_height):
 		#print ("Decode " + dmos_code)
