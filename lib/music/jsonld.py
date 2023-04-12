@@ -10,6 +10,9 @@ class JsonLD:
 		A general utility class to manage JSON LD specifics
 	'''
 	
+	# JSON LD ontologies
+	SCORELIB_ONTOLOGY_URI="https://github.com/polifonia-project/scorelib-ontology"
+
 	def __init__(self, ontos) :
 		''' 
 		   ontos is an array of prefix-iri pairs, from which types are taken

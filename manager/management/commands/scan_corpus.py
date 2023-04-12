@@ -18,7 +18,7 @@ from lib.music.Score import *
 from lib.music.Voice import IncompleteBarsError
 
 
-from search.IndexWrapper import IndexWrapper
+from neumasearch.IndexWrapper import IndexWrapper
 
 # List of actions
 
@@ -38,7 +38,7 @@ DESCRIPTORJSON_ACTION="descriptorjson"
 ANALYZE_CORPUS_ACTION = "analyze"
 ANALYZE_OPUS_ACTION = "analyze_opus"
 
-EXTRACT_FEATURES_FROM_CORPUS_ACTION = "features_corpus"
+EXTRACT_FEATURES_ACTION = "extract_features"
 
 class Command(BaseCommand):
 	"""Scan a corpus specified as input, and apply some action"""
@@ -130,7 +130,7 @@ class Command(BaseCommand):
 				except corpus.DoesNotExist:
 					raise CommandError('corpus "%s" does not exist' % corpusref)
 
-			elif action == EXTRACT_FEATURES_FROM_CORPUS_ACTION:
+			elif action == EXTRACT_FEATURES_ACTION:
 				"""
 				Extract features and metadata info from the corpus and save in database
 				"""

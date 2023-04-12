@@ -170,6 +170,7 @@ def handle_neuma_ref_request(request, full_neuma_ref):
 	if request.method == "GET":
 		if object_type == OPUS_RESOURCE:
 			return JSONResponse(neuma_object.to_json(request))
+			#return JSONResponse(neuma_object.to_jsonld())
 		elif object_type == CORPUS_RESOURCE:
 			return JSONResponse(corpus_to_rest(neuma_object))
 		elif object_type == INTERNAL_REF_RESOURCE:

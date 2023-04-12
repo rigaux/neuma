@@ -23,7 +23,11 @@ from django.conf import settings
 from lib.music.Score import *
 from lib.music.jsonld import JsonLD
 
+# Annotation model
 import lib.music.annotation as annot_mod
+
+# For serialization of Opus 
+import lib.music.opusmeta as opusmeta_mod
 
 # For tree models
 from mptt.models import MPTTModel, TreeForeignKey
@@ -49,6 +53,7 @@ import transcription
 from django.db.models.sql.where import OR
 from jinja2.nodes import Or
 from numpy.distutils.fcompiler import none
+from pip._vendor.requests.api import request
 
 # Get an instance of a logger
 # See https://realpython.com/python-logging/
@@ -485,7 +490,7 @@ class Corpus(models.Model):
 			tab_opus.append(opus.to_jsonld())
 
 		has_opus = {"hasOpus": tab_opus}
-		return jsonld.get_context() | dict_corpus | has_opus 
+		return jsonld.get_context() | dict_corpus #| has_opus 
 	
 	@staticmethod
 	def import_from_zip(zfile, parent_corpus, zip_name):
@@ -760,6 +765,10 @@ class Opus(models.Model):
 	title = models.CharField(max_length=255)
 	lyricist = models.CharField(max_length=255,null=True, blank=True)
 	composer = models.CharField(max_length=255,null=True, blank=True)
+	
+	# Linked data to the composer entity
+	composer_ld = models.ForeignKey(Person, null=True,blank=True,on_delete=models.PROTECT)
+
 	ref = models.CharField(max_length=255,unique=True)
 	external_link  = models.CharField(max_length=255,null=True, blank=True)
 	
@@ -1017,55 +1026,51 @@ class Opus(models.Model):
 		result = opus.delete()
 		return result
 
-	def to_json(self, request):
-		"""
-		  Create a dictionary that can be used for JSON exports
-		"""
-		metas = []
-		for meta in self.get_metas():
-			metas.append({"meta_key": meta.meta_key, "meta_value": meta.meta_value})
-		sources = []
+	def to_serializable(self, absolute_url):
+		" Produce a serialisable object from the Opus data"
+				
+				
+
+		if self.composer_ld is not None:
+			opusmeta = opusmeta_mod.OpusMeta(self.ref, self.title, 
+											self.composer_ld.dbpedia_uri)
+		else:
+			opusmeta = opusmeta_mod.OpusMeta(self.ref, self.title, 
+											self.composer)
+			
+		# Adding sources
 		for source in self.opussource_set.all ():
-			sources.append(source.to_json(request))
-		files = {}
-		my_url = request.build_absolute_uri("/")[:-1]
+			opusmeta.add_source(source.to_serializable(absolute_url))
+
+		# Adding meta fields (features)
+		for meta in self.get_metas():
+			feature = opusmeta_mod.OpusFeature (meta.meta_key, meta.meta_value)
+			opusmeta.add_feature(feature)
+
+		# Adding files
 		for fname, fattr in Opus.FILE_NAMES.items():
 			the_file = getattr(self, fattr)
 			if the_file:
-				files[fname] = {"url": my_url + the_file.url}
-	
-		return {"ref": self.local_ref(), 
-				 "title": self.title,
-				 "composer": self.composer, 
-				 "lyricist": self.lyricist, 
-				 "corpus": self.corpus.ref,
-				 "meta_fields": metas,
-				 "sources": sources,
-				 "files": files}
-		
+				opus_file = opusmeta_mod.OpusFile (fname, absolute_url + the_file.url)
+				opusmeta.add_file(opus_file)
+		return opusmeta
 
+	def to_json(self, request):
+		"""
+		  Produces a JSON representation (useful for REST services)
+		"""
+		# We need the absolute URL 
+		abs_url = request.build_absolute_uri("/")[:-1]
+		opusmeta = self.to_serializable(abs_url)
+		return opusmeta.to_json()
+	
 
 	def to_jsonld (self):
-		my_url = "http://neuma.huma-num.fr/"
-		dict = {"@id": self.ref, 
-			     "@type": "Opus",
-				"hasOpusTitle": self.title,
-				}
 		
-		features = []
-		for meta in self.get_metas ():
-			if meta.meta_key == OpusMeta.MK_COMPOSER:
-				dict["hasAuthor"] = meta.meta_value
-			else:
-				features.append(ScoreFeature(meta.meta_key, meta.meta_value).to_json())
-		if len(features) > 0:
-			dict["hasFeature"] = features
-		if self.mei:
-			dict["hasScore"] = {"@type": "Score", 
-							    "@id": self.mei.url,
-							    "uri": my_url + self.mei.url
-							    }
-		return dict
+		my_url = "http://neuma.huma-num.fr/"
+		
+		opusmeta = self.to_serializable(my_url)
+		return opusmeta.to_jsonld()
 
 class OpusMeta(models.Model):
 	opus = models.ForeignKey(Opus,on_delete=models.CASCADE)
@@ -1211,18 +1216,16 @@ class OpusSource (models.Model):
 	def __str__(self):  # __unicode__ on Python 2
 		return "(" + self.opus.ref + ") " + self.ref
 
-	def to_json(self, request):
+	def to_serializable(self, abs_url):
 		"""
-		  Create a dictionary that can be used for JSON exports
+		  Create an object that can be serialized for JSON exports
 		"""
-		source_dict =  {"ref": self.ref, 
-					"description": self.description,
-				"source_type": self.source_type.code, 
-				"mime_type": self.source_type.mime_type, 
-				"url": self.url}
+		source_dict = opusmeta_mod.OpusSource(
+			self.ref, self.source_type.code, self.source_type.mime_type, 
+			self.url)
+		source_dict.description = self.description
 		if self.source_file:
-			my_url = request.build_absolute_uri("/")[:-1]
-			source_dict["url"] = my_url + self.source_file.url
+			source_dict.url = abs_url + self.source_file.url
 			
 		return source_dict
 
