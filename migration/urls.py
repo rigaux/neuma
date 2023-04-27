@@ -1,4 +1,5 @@
-from django.conf.urls import url
+
+from django.urls import  path, include, re_path
 
 from . import views
 
@@ -7,7 +8,7 @@ from .views import ShowView
 
 app_name="migration"
 urlpatterns = [
-    url(r'^$', NeumaView.as_view(template_name="migration/index.html"), name='index'),
-    url(r'^migrate/$', views.migrate, name='migrate'),
-    url(r'^show/$', ShowView.as_view(template_name="migration/show.html"), name='show')
+    re_path(r'^$', NeumaView.as_view(template_name="migration/index.html"), name='index'),
+    re_path(r'^migrate/$', views.migrate, name='migrate'),
+    re_path(r'^show/$', ShowView.as_view(template_name="migration/show.html"), name='show')
 ]

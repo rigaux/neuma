@@ -13,7 +13,9 @@ Including another URLconf
     1. Add an import:  from blog import urls as blog_urls
     2. Add a URL to urlpatterns:  url(r'^blog/', include(blog_urls))
 """
-from django.conf.urls import include, url
+
+from django.urls import  path, re_path, include
+
 from django.contrib import admin
 from django.conf.urls.static import static
 from django.conf import settings
@@ -24,14 +26,14 @@ from neumautils.views import NeumaView
 import home.views
 
 urlpatterns = [
-    url(r'^$', NeumaView.as_view(template_name="home/index.html"), name='index'),
-    url (r'^neumadmin/', admin.site.urls),
-    url(r'^manager/', include('manager.urls', namespace="manager")),
-    url(r'^home/', include('home.urls', namespace="home")),
-    url(r'^quality/', include('quality.urls', namespace="quality")),
-    url(r'^scoreql/', include('scoreql.urls', namespace="scoreql")),
-    url(r'^rest/', include('rest.urls', namespace="rest")),
-    url(r'^migration/', include('migration.urls', namespace="migration")),
-    url(r'^transcription/', include('transcription.urls', namespace="transcription")),
-	url(r'^collabscore/', include('collabscore.urls', namespace="collabscore")),
+    re_path(r'^$', NeumaView.as_view(template_name="home/index.html"), name='index'),
+    re_path (r'^neumadmin/', admin.site.urls),
+    re_path(r'^manager/', include('manager.urls', namespace="manager")),
+    re_path(r'^home/', include('home.urls', namespace="home")),
+    re_path(r'^quality/', include('quality.urls', namespace="quality")),
+    re_path(r'^scoreql/', include('scoreql.urls', namespace="scoreql")),
+    re_path(r'^rest/', include('rest.urls', namespace="rest")),
+    re_path(r'^migration/', include('migration.urls', namespace="migration")),
+    re_path(r'^transcription/', include('transcription.urls', namespace="transcription")),
+	re_path(r'^collabscore/', include('collabscore.urls', namespace="collabscore")),
    ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

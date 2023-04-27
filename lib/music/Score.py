@@ -2,9 +2,19 @@
 import logging
 
 import music21 as m21
+from numpy.distutils.fcompiler import none
 
 #from neumasearch.MusicSummary import MusicSummary
 # No longer useful?
+
+'''
+the layout stream hierarchy is in perpetual beta, so some things 
+won’t work (for instance, reconstruction of standard stream from 
+layout stream doesn’t yet exist), but do look at the music21.layout 
+module for the docs and proper routines, especially  
+layout.divideByPages(normalStream).
+
+'''
 
 import verovio
 
@@ -34,11 +44,13 @@ class Score:
         Representation of a score as a hierarchy of sub-scores / voices
     """
 
-	# For OMR app: we can introduce an intermediate System level
-	use_systems = False
 	
-	def __init__(self, title="", composer="") :
+	def __init__(self, title="", composer="", use_layout=False) :
 		self.id = ""
+		
+		# We can explicitly decompose a Score in pages and systems (OMR)
+		self.use_layout = use_layout
+		
 		'''
 		   'A score is made of components, which can be either voices 
 		   (final) or parts. Follows the music21 recommended organization
@@ -46,12 +58,22 @@ class Score:
 		self.parts = []
 		
 		''' 
-            Optionnaly, a score is split in systems: mostly useful
+            Optionally, a score is split in pages and systems: mostly useful
             for OMR applications. In that case the current system
-            behaves as a sub-scre, and all call on parts are delegated to it
+            behaves as a sub-score, and all call on parts are delegated to it
+            
+            From music21: the proper hierarchy for a stream describing layout is:
+
+				LayoutScore->Page->System->Staff->Measure
+
+			where LayoutScore and Page are subclasses of stream.Opus, 
+			System is a subclass of Score, and Staff subclasses Part, so 
+			the normal music21 hierarchy of Opus*->Score->Part->Measure is 
+			preserved. (Where Opus* indicates  optional and able to 
+			embed other Opuses, like Opus->Opus->Opus->Score…)
 		'''
-		self.systems = []
-		self.current_system = None
+		self.pages = []
+		self.current_page = None
 
 		'''
 			We can store annotations on a score and any of its elemnts
@@ -61,7 +83,11 @@ class Score:
 		# For compatibility ...
 		self.components = list()
 		
-		self.m21_score = m21.stream.Score(id='mainScore')
+		if self.use_layout:
+			self.m21_score = m21.layout.LayoutScore(id='mainScore')
+		else:
+			self.m21_score = m21.stream.Score(id='mainScore')
+			
 		self.m21_score.metadata = m21.metadata.Metadata()
 		
 		self.m21_score.metadata.title = title
@@ -71,29 +97,17 @@ class Score:
 	
 	def get_parts(self):
 		'''
-			Get the list of parts, found either in the score itself or in the current system
+			Get the list of parts, found either in the score itself or in the current page
 		'''
-		if Score.use_systems:
-			return self.current_system.parts
+		if self.use_layout:
+			return self.current_page.get_parts()
 		else:
 			return self.parts
 
-	def add_system (self, system):
-		if Score.use_systems:
-			self.systems.append (system)
-			self.current_system = system
-			self.m21_score.append(system.m21_system)
-			
-	def add_system_break(self):
-		system_break = m21.layout.SystemLayout(isNew=True)
-		self.m21_score.append (system_break)
-			
-			
 	def add_part (self, part):
-		""" Add a part to the main score or to the current system"""
-		if Score.use_systems:
-			self.current_system.parts.append(part)	
-			self.current_system.m21_system.insert(0, part.m21_part)
+		""" Add a part to the main score or to the current page"""
+		if self.use_layout:
+			self.current_page.add_part(part)	
 		else:
 			self.parts.append(part)	
 			self.m21_score.insert(0, part.m21_part)
@@ -111,6 +125,11 @@ class Score:
 		
 		# Oups, the part has not been found ...
 		raise CScoreModelError ("Unable to find this part : " + id_part )
+
+	def add_page (self, page):
+		self.pages.append (page)
+		self.current_page = page
+		self.m21_score.append(page.m21_page)
 
 	def get_staff (self, no_staff):
 		''' 
@@ -265,6 +284,40 @@ class Score:
 	def add_annotation(self, annotation):
 		self.annotations.append(annotation)
 
+class Page:
+	"""
+        For OMR only: a cpntainer for systems  
+    """
+
+	def __init__(self, no_page) :
+		logger.info (f"Adding page {no_page}")
+		self.id = no_page
+
+		self.m21_page = m21.layout.Page(id=no_page)
+
+		# List of systems in the page
+		self.systems = []
+		self.current_system = None 
+		
+	def add_system (self, system):
+		self.systems.append (system)
+		self.current_system = system
+		self.m21_page.append(system.m21_system)
+			
+	def add_system_break(self):
+		system_break = m21.layout.SystemLayout(isNew=True)
+		self.m21_score.append (system_break)
+
+	def add_part (self, part):
+		""" Add a part to the current system"""
+		self.current_system.add_part(part)	
+
+	def get_parts(self):
+		'''
+			Get the list of parts in the current system
+		'''
+		return self.current_system.get_parts()
+
 class System:
 	"""
         For OMR only: all the sub-components (parts, etc) are allocated to a single system 
@@ -274,11 +327,17 @@ class System:
 		logger.info (f"Adding system {no_system}")
 		self.id = no_system
 
-		self.m21_system = m21.stream.System(id=no_system)
+		self.m21_system = m21.layout.System(id=no_system)
 
 		# List of parts in the system
 		self.parts = []
 		
+	def add_part (self, part):
+		self.parts.append(part)	
+		self.m21_system.insert(0, part.m21_part)		
+
+	def get_parts(self):
+		return self.parts
 
 class Part:
 	"""
@@ -353,6 +412,7 @@ class Measure:
 	
 	# Sequence for generating measure ids
 	sequence_measure = 0
+	
 	def __init__(self, no_measure) :
 		Measure.sequence_measure += 1
 		self.no = no_measure

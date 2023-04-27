@@ -157,10 +157,9 @@ class OmrScore:
 			Builds a score (instance of our score model) from the Omerized document
 		'''
 		
-		# We use systems
-		score_model.Score.use_systems = True
-		
-		score = score_model.Score()
+		# Create an OMR score (with layout)
+		score = score_model.Score(use_layout=True)
+		current_page_no = 0
 		current_measure_no = 0
 		
 		MIN_MEASURE_NO = 2
@@ -168,9 +167,11 @@ class OmrScore:
 
 
 		for page in self.pages:
+			score_page = score_model.Page(page.no_page)
+			score.add_page(score_page)
 			for system in page.systems:
 				score_system = score_model.System(system.id)
-				score.add_system(score_system)
+				score_page.add_system(score_system)
 				
 				# Headers defines the parts and their staves in this system
 				for header in system.headers:
@@ -261,23 +262,24 @@ class OmrScore:
 							(event, event_region) = self.decode_event(current_part, item) 
 							logger.info (f'Adding event {event.id} to voice {voice.id}')
 							# Manage beams
-							if current_beam != item.beam_id:
+							'''if current_beam != item.beam_id:
 								if current_beam != None:
 									# The previous event was the end of the beam
 									previous_event.stop_beam(current_beam)
 								if item.beam_id != None:
 									event.start_beam(item.beam_id)
-								current_beam =  item.beam_id
+								current_beam =  item.beam_id'''
 							previous_event = event
 							
 							voice_part.append_event(event)
 								
-							# Annotate this event
-							annotation = annot_mod.Annotation.create_annot_from_xml_to_image(
-								self.creator, self.uri, event.id, 
-								self.score_image_url, event_region.string_xyhw(), 
-								constants_mod.IREGION_NOTE_CONCEPT)
-							score.add_annotation (annotation)
+							# Annotate this event if the region is known
+							if event_region is not None:
+								annotation = annot_mod.Annotation.create_annot_from_xml_to_image(
+									self.creator, self.uri, event.id, 
+									self.score_image_url, event_region.string_xyhw(), 
+									constants_mod.IREGION_NOTE_CONCEPT)
+								score.add_annotation (annotation)
 							# Did we met errors ?
 							for error in item.errors:
 								annotation = annot_mod.Annotation.create_annot_from_error (
@@ -286,16 +288,16 @@ class OmrScore:
 								score.add_annotation (annotation)
 								
 						# End of items for this measure. Close any pending beam
-						if current_beam != None:
+						'''if current_beam != None:
 							previous_event.stop_beam(current_beam)
-							current_beam =  None
+							current_beam =  None'''
 						# Add the voice to the measure of the relevant part
 						current_measure.add_voice (voice_part)
 					#if current_measure_no >= MAX_MEASURE_NO:
 					#	return score
 
 				# Add a system break to better mimic the initial score organization
-				score.add_system_break()
+				#score.add_system_break()
 
 				#if system.id == 0:
 				#	break
@@ -313,9 +315,10 @@ class OmrScore:
 		duration = score_events.Duration(voice_item.duration.numer, voice_item.duration.denom)
 		
 		# The symbol in the duration contains the region of the event
-		if 	voice_item.duration.symbol.region is None:
-			logger.error ("A voice item without region has been met")
-			raise CScoreParserError ("A voice item without region has been met")
+		#  We accept events without region, to simplify the JSON notation
+		#if 	voice_item.duration.symbol.region is None:
+		#	logger.error ("A voice item without region has been met")
+		#	raise CScoreParserError ("A voice item without region has been met")
 		event_region = voice_item.duration.symbol.region
 
 		if voice_item.note_attr is not None:
@@ -372,6 +375,7 @@ class OmrScore:
 		else:
 			logger.error ("A voice event with unknown type has been met")
 			raise CScoreParserError ("A voice event with unknown type has been met")
+		
 		return (event, event_region)
 
 class Point:
@@ -441,9 +445,9 @@ class Symbol:
 	"""
 	def __init__(self, json_symbol):
 		self.label = json_symbol["label"]
+		self.region = None
 		if "region" in json_symbol:
 			self.region = Region(json_symbol["region"])
-		
 
 	def __str__(self):
 		return f'({self.label},{self.region})'
