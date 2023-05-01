@@ -284,9 +284,11 @@ class Score:
 	def add_annotation(self, annotation):
 		self.annotations.append(annotation)
 
+
 class Page:
 	"""
         For OMR only: a cpntainer for systems  
+         Does not work with music21....
     """
 
 	def __init__(self, no_page) :
@@ -304,9 +306,6 @@ class Page:
 		self.current_system = system
 		self.m21_page.append(system.m21_system)
 			
-	def add_system_break(self):
-		system_break = m21.layout.SystemLayout(isNew=True)
-		self.m21_score.append (system_break)
 
 	def add_part (self, part):
 		""" Add a part to the current system"""
@@ -321,6 +320,7 @@ class Page:
 class System:
 	"""
         For OMR only: all the sub-components (parts, etc) are allocated to a single system 
+        Does not work with music21....
     """
 
 	def __init__(self, no_system) :
@@ -428,6 +428,9 @@ class Measure:
 		
 	def add_voice (self, voice):
 		self.m21_measure.insert (0, voice.m21_stream)
+	def add_system_break(self):
+		system_break = m21.layout.SystemLayout(isNew=True)
+		self.m21_measure.insert (system_break)
 		
 
 class CScoreModelError(Exception):

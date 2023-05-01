@@ -20,6 +20,7 @@ import lib.music.constants as constants_mod
 import verovio
 
 from .constants import *
+from numpy import False_
 
 
 # Get an instance of a logger
@@ -46,6 +47,8 @@ c_format = logging.Formatter('%(name)s - %(levelname)s - %(message)s')
 c_handler.setFormatter(c_format)
 #logger.addHandler(c_handler)
 
+def set_logging_level(level):
+	logger.setLevel(level)
 
 class CollabScoreParser:
 	"""
@@ -158,8 +161,7 @@ class OmrScore:
 		'''
 		
 		# Create an OMR score (with layout)
-		score = score_model.Score(use_layout=True)
-		current_page_no = 0
+		score = score_model.Score(use_layout=False)
 		current_measure_no = 0
 		
 		MIN_MEASURE_NO = 2
@@ -167,11 +169,12 @@ class OmrScore:
 
 
 		for page in self.pages:
-			score_page = score_model.Page(page.no_page)
-			score.add_page(score_page)
+			#score_page = score_model.Page(page.no_page)
+			#score.add_page(score_page)
 			for system in page.systems:
-				score_system = score_model.System(system.id)
-				score_page.add_system(score_system)
+				#score_system = score_model.System(system.id)
+				#score_page.add_system(score_system)
+				system_begins = True
 				
 				# Headers defines the parts and their staves in this system
 				for header in system.headers:
@@ -201,10 +204,15 @@ class OmrScore:
 					# Create a new measure for each part
 					current_measures = {}
 					for part in score.get_parts():
-						# IMPORTANT: Works for a part with a single staff. Else, we probably need to
+						# IMPORTANT: Works for a part with a single staff. 
+						# Else, we probably need to
 						# add a measure for each staff. 
-						
 						measure_for_part = score_model.Measure(current_measure_no)
+						if 	system_begins:
+							## Add a system break
+							measure_for_part.add_system_break()
+							system_begins = False
+						
 						
 						# Annotate this measure
 						'''annotation = annot_mod.Annotation.create_annot_from_xml_to_image(
@@ -216,6 +224,7 @@ class OmrScore:
 						# Check if the measure starts with a change of clef or meter
 						for header in measure.headers:
 							if part.staff_exists(header.no_staff):
+								# This header does relate to the current part
 								staff = part.get_staff (header.no_staff)
 								if header.clef is not None:
 									logger.info (f'Clef found on staff {header.no_staff} at measure {current_measure_no}')
@@ -235,8 +244,9 @@ class OmrScore:
 									# We will display the key signature at the beginning
 									# of the current measure
 									measure_for_part.add_key_signature (key_sign)
-							else:
-								logger.error (f'Staff {header.no_staff} does not exist for part {part.id}')
+							#else:
+							#    Not a pb: we found a header that relates to another part
+							#	logger.error (f'Staff {header.no_staff} does not exist for part {part.id}')
 								
 						# Add the measure to its part (notational events are added there)
 						part.append_measure (measure_for_part)
@@ -295,9 +305,6 @@ class OmrScore:
 						current_measure.add_voice (voice_part)
 					#if current_measure_no >= MAX_MEASURE_NO:
 					#	return score
-
-				# Add a system break to better mimic the initial score organization
-				#score.add_system_break()
 
 				#if system.id == 0:
 				#	break
@@ -377,6 +384,9 @@ class OmrScore:
 			raise CScoreParserError ("A voice event with unknown type has been met")
 		
 		return (event, event_region)
+
+	def write_as_musicxml(self, out_file):
+		self.get_score().write_as_musicxml (out_file)
 
 class Point:
 	"""
@@ -484,7 +494,8 @@ class Measure:
 	"""
 	
 	def __init__(self, json_measure):
-		self.region = Region (json_measure["region"])
+		if "region" in json_measure:
+			self.region = Region (json_measure["region"])
 		self.headers =[]
 		for json_header in json_measure["headers"]:
 			self.headers.append(MeasureHeader(json_header))
