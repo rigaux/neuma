@@ -5,9 +5,7 @@ from fractions import Fraction
 
 import lib.music.notation as score_notation
 
-import logging
-logging.basicConfig(level=logging.DEBUG)
-logger = logging.getLogger(__name__)
+import lib.music.Score as score_mod
 
 '''
  Classes representing musical event (e.g., pairs (duratioin, value)
@@ -29,8 +27,14 @@ class Duration:
 
 class Event:
 	'''
-		Super-class for anything (note, rest, chord) that occurs for a given duration
+		Super-class for anything (note, rest, chord, clef) that occurs 
+		at a given position in a voice
 	'''
+	
+	TYPE_CHORD = "chord"
+	TYPE_CLEF = "clef"
+	TYPE_NOTE = "note"
+	TYPE_REST = "rest"
 	
 	# A counter for all events. It consists of i) a global part representing the context
 	# (ie, a measure in a part), and ii) a local counter for events met in this context
@@ -48,31 +52,41 @@ class Event:
 		self.id = f'{Event.counter_context}n{Event.counter_event}'
 		self.duration = duration
 		self.m21_event = None 
+		self.type = Event.TYPE_NOTE
+		# Mostly used for hidden rests 
+		self.visible = True
 
 	def is_note(self):
 		return False
 	def is_rest(self):
 		return False
-
+	
+	def set_visibility(self, visibility):
+		self.visible = visibility
+		if visibility == False:
+			self.m21_event.style.hideObjectOnPrint = True 
+		else:
+			self.m21_event.style.hideObjectOnPrint = False 
+			
 	def add_articulation (self, art):
 		self.m21_event.articulations.append(art.m21_articulation)
 
 	def start_beam(self, beam_id):
 		if not self.is_rest():
-			logger.info (f"Start a beam : {beam_id}" )
+			score_mod.logger.info (f"Start a beam : {beam_id}" )
 
 			# TODO: solve circular import pb
 			beam = score_notation.Beam()
 			self.m21_event.beams.append(beam.m21_beam)
 		else:
-			logger.warning ("Trying to start a beam ({beam_id}) on a rest")
+			score_mod.logger.warning ("Trying to start a beam ({beam_id}) on a rest")
 
 	def stop_beam(self, beam_id):
 		if not self.is_rest():
-			logger.info (f"Stop a beam : {beam_id}" )
+			score_mod.logger.info (f"Stop a beam : {beam_id}" )
 			self.m21_event.beams.append("stop")
 		else:
-			logger.warning (f"Trying to stop a beam ({beam_id}) on a rest")
+			score_mod.logger.warning (f"Trying to stop a beam ({beam_id}) on a rest")
 
 	def id(self):
 		return self.m21_event.id
@@ -111,6 +125,7 @@ class Note (Event):
 				no_staff=UNDEFINED_STAFF, tied=False) :
 		super ().__init__(duration)
 		
+		self.type = Event.TYPE_NOTE
 		self.alter = alter
 		self.pitch_class = pitch_class
 
@@ -140,7 +155,7 @@ class Chord (Event):
 	
 	def __init__(self,  duration, no_staff, notes) :
 		super ().__init__(duration)
-		
+		self.type = Event.TYPE_CHORD
 		# Create the m21 representation: encode 
 		m21_notes = []
 		for note in notes:
@@ -166,6 +181,8 @@ class Rest (Event):
 	
 	def __init__(self,  duration, no_staff) :
 		super ().__init__(duration)
+		self.type = Event.TYPE_REST
+
 		self.m21_event = m21.note.Rest()
 		self.m21_event.duration = duration.m21_duration
 		self.m21_event.id = f'{Event.counter_context}r{Event.counter_event}'

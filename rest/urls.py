@@ -33,22 +33,22 @@ schema_view = get_schema_view(
 
 urlpatterns = [
     # Welcome message
-     re_path('', views.welcome, name='welcome'),
+     path('', views.welcome, name='welcome'),
 
    #### Swagger documentation
    #re_path('apidoc/', include_docs_paths(title='Neuma REST API documentation')),
     re_path(r'^swagger(?P<format>\.json|\.yaml)$', schema_view.without_ui(cache_timeout=0), name='schema-json'),
   re_path('swagger/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
-   re_path('redoc/', schema_view.with_ui('redoc', cache_timeout=0), name='schema-redoc'),
+   path('redoc/', schema_view.with_ui('redoc', cache_timeout=0), name='schema-redoc'),
 
     ###############
     ## MISC SERVICE
     ###############
-    re_path(r'^misc/user/$', views.handle_user_request, name='handle_user_request'),
+    path('misc/user/$', views.handle_user_request, name='handle_user_request'),
     ###############
     ## META DATA
     ###############
-    re_path(r'^analysis/_models/(?P<model_code>.+)/_concepts/_all/$', views.handle_concepts_request, name='handle_concepts_request'),
+    path('analysis/_models/<str:model_code>/_concepts/_all/$', views.handle_concepts_request, name='handle_concepts_request'),
     re_path(r'^analysis/_models/(?P<model_code>.+)/_concepts/(?P<concept_code>.+)/_all/$', views.handle_concepts_request, name='handle_concepts_request'),
     #re_path(r'^analysis/models/(?P<model_code>.+)/concepts/(?P<encoding>.+)/$', views.handle_concepts_request, name='handle_concepts'),
     ################
@@ -86,8 +86,8 @@ urlpatterns = [
     ################
     # OPUS / CORPUS
     ################    
-    re_path('collections/', views.welcome_collections, name='welcome_collections'),
-    re_path(r'^collections/_corpora/$', views.TopLevelCorpusList.as_view(), name='handle_tl_corpora_request'),
+    path('collections/', views.welcome_collections, name='welcome_collections'),
+    path('collections/_corpora/$', views.TopLevelCorpusList.as_view(), name='handle_tl_corpora_request'),
     re_path(r'^collections/(?P<full_neuma_ref>(.+))/_corpora/$', views.CorpusList.as_view(), name='handle_corpora_request'),
     re_path(r'collections/(?P<full_neuma_ref>(.*))/_opera/$', views.handle_opera_request, name='handle_opera_request'),
     re_path(r'collections/(?P<full_neuma_ref>(.*))/_files/$',views.handle_files_request, name='handle_files_request'),

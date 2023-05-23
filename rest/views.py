@@ -479,7 +479,9 @@ def corpus_to_rest(corpus):
 	}
 	if corpus.parent:
 		answer["parent"] = corpus.parent.ref
-	return answer
+		
+	return corpus.to_json()
+	#return answer
 
 
 @csrf_exempt

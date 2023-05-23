@@ -375,11 +375,11 @@ class Part:
 		# The staff has not been found: raise an exception
 		raise CScoreModelError (f'Unable to find staff {no_staff} in part {self.id}')
 
-	def add_clef_to_staff (self, no_staff, no_measure, clef):
+	def add_clef_to_staff (self, no_staff, clef):
 		# A new clef at the beginning of measure for this staff
 		if self.staff_exists (no_staff):
 			staff = self.get_staff (no_staff)
-			staff.add_clef (no_measure, clef)
+			staff.set_current_clef (clef)
 		else:
 			# Unknown staff: raise an exception
 			print ("Unknown staff : " + no_staff)
@@ -407,14 +407,15 @@ class Part:
 
 class Measure:
 	"""
-		Representation of a measure
+		Representation of a measure, which belongs to a part
 	"""
 	
 	# Sequence for generating measure ids
 	sequence_measure = 0
 	
-	def __init__(self, no_measure) :
+	def __init__(self, part, no_measure) :
 		Measure.sequence_measure += 1
+		self.part = part
 		self.no = no_measure
 		self.id = Measure.sequence_measure
 		self.m21_measure = m21.stream.Measure(id=f'm{self.id}', number=no_measure)
