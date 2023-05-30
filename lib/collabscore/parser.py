@@ -63,9 +63,19 @@ class ParserConfig:
 			self.system_max = config["system_max"]
 		else:
 			self.system_max = sys.maxsize
+		if "measure_min" in config:
+			self.measure_min = config["measure_min"]
+		else:
+			self.measure_min = 0
+		if "measure_max" in config:
+			self.measure_max = config["measure_max"]
+		else:
+			self.measure_max = sys.maxsize
 
 	def print (self):
-		print (f'''Parser configuration:\nsystem_min={self.system_min}\nsystem_max={self.system_max}''')
+		print (f"Parser configuration:\n" +
+		         f"system_min={self.system_min}\nsystem_max={self.system_max}\n" +
+			     f"measure_min={self.measure_min}\nmeasure_max={self.measure_max}")
 			
 class CollabScoreParser:
 	"""
@@ -202,7 +212,8 @@ class OmrScore:
 				# Headers defines the parts and their staves in this system
 				for header in system.headers:
 					# Safety: an id should not start with a digit
-					header.id_part = "P" + header.id_part
+					if header.id_part[0].isdigit():
+						header.id_part = "P" + header.id_part
 					if score.part_exists(header.id_part):
 						logger.info (f"Part {header.id_part} already exists")
 						part = score.get_part(header.id_part)
@@ -220,8 +231,13 @@ class OmrScore:
 				
 				for measure in system.measures:
 					current_measure_no += 1
-					#if   current_measure_no > MAX_MEASURE_NO :
-					#	continue
+					if (current_measure_no < self.config.measure_min) or (
+					    current_measure_no > self.config.measure_max):
+						continue
+				
+					# Reset accidentals met so far
+					score.reset_accidentals()
+					
 					logger.info (f'Process measure {current_measure_no}')
 					
 					# Create a new measure for each part
@@ -297,7 +313,6 @@ class OmrScore:
 						for item in voice.items:
 							# Decode the event
 							(event, event_region, type_event) = self.decode_event(current_part, item) 
-							logger.info (f'Adding event {event.id} to voice {voice.id}')
 							# Manage beams
 							if current_beam != item.beam_id:
 								if current_beam != None:
@@ -307,6 +322,8 @@ class OmrScore:
 									event.start_beam(item.beam_id)
 								current_beam =  item.beam_id
 							previous_event = event
+
+							logger.info (f'Adding event {event.id} to voice {voice.id}')
 							
 							if type_event == "event":
 								voice_part.append_event(event)
@@ -376,7 +393,11 @@ class OmrScore:
 			
 				# Get the default alter
 				def_alter = staff.current_key_signature.accidentalByStep(pitch_class)
-					
+				
+				if def_alter == score_events.Note.ALTER_NATURAL:
+					logger.warning (f'Default alter code {def_alter}.')
+				
+				
 				# Decode from the DMOS input codification
 				if head.alter == None:
 					alter = def_alter
@@ -384,8 +405,11 @@ class OmrScore:
 					alter = score_events.Note.ALTER_FLAT
 				elif head.alter.label  == SHARP_SYMBOL:
 					alter = score_events.Note.ALTER_SHARP
-				else:  
+				elif head.alter.label  == NATURAL_SYMBOL:
 					alter = score_events.Note.ALTER_NATURAL
+				else:  
+					logger.warning (f'Unrecognized alter code {head.alter}. Replaced by None')
+					alter = score_events.Note.ALTER_NONE
 					
 				# Did we just met an accidental?
 				if (alter != score_events.Note.ALTER_NONE):
@@ -395,6 +419,8 @@ class OmrScore:
 					# Is there a previous accidental on this staff for this pitch class?
 					alter = staff.get_accidental(pitch_class)
 					
+				#if pitch_class == "D" and octave == 6:
+				#	print (f"FOUND D6. Alter = '{alter}'")
 				note = score_events.Note(pitch_class, octave, duration, alter, head.no_staff)
 				# Check articulations
 				for json_art in head.articulations:
@@ -429,6 +455,9 @@ class OmrScore:
 
 	def write_as_musicxml(self, out_file):
 		self.get_score().write_as_musicxml (out_file)
+
+	def write_as_mei(self, out_file):
+		self.get_score().write_as_mei (out_file)
 
 class Point:
 	"""
@@ -554,8 +583,11 @@ class Voice:
 	
 	def __init__(self, json_voice):
 		self.id = json_voice["id"]
+		self.id_part =  json_voice["id_part"]
 		# Safety
-		self.id_part =  "P" + json_voice["id_part"]
+		if self.id_part[0].isdigit():
+			self.id_part =  "P" + self.id_part
+		
 		self.items = []
 		for json_item in json_voice["elements"]:
 			self.items.append(VoiceItem (json_item))

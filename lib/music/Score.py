@@ -142,6 +142,11 @@ class Score:
 		# The staff has not been found: raise an exception
 		raise CScoreModelError (f'Unable to find staff {no_staff} in part {part.id}')
 
+	def reset_accidentals(self):
+		# Used when a new measure starts: we forget all accidentals met before
+		for part in self.get_parts():
+			part.reset_accidentals()
+
 	def write_as_musicxml(self, filename):
 			''' Produce the MusicXML encoding thanks to Music21'''
 			self.m21_score.write ("musicxml", filename)
@@ -399,6 +404,11 @@ class Part:
 		system_break = m21.layout.SystemLayout(isNew=True)
 		self.m21_part.append (system_break)
 
+	def reset_accidentals(self):
+		# Used when a new measure starts: we fortget all accidentals met before
+		for staff in self.staves:
+			staff.reset_accidentals()
+			
 	@staticmethod
 	def create_part_id (id_part):
 		# Create a string that identifies the part
@@ -420,6 +430,13 @@ class Measure:
 		self.id = Measure.sequence_measure
 		self.m21_measure = m21.stream.Measure(id=f'm{self.id}', number=no_measure)
 		self.m21_measure.style.absoluteX = 23
+		
+		# We keep the clef for each staff at the beginning of measure. They
+		# are used to determine the pitch from the head's height
+		self.initial_clefs = {}
+		for staff in part.staves():
+			self.initial_clefs[staff.id] = staff.current_clef
+		
 	def add_time_signature(self, time_signature):
 		self.m21_measure.insert(0,  time_signature.m21_time_signature)
 	def add_clef(self, clef):

@@ -4,6 +4,8 @@ import music21 as m21
 from collections import namedtuple, OrderedDict
 from fractions import Fraction
 
+import lib.music.Score as score_mod
+
 #from home.templatetags.extras import scale_degree, semitoneconv
 #from home.templatetags.extras import rhythm_figures_print
 
@@ -31,7 +33,7 @@ class Voice:
 		self.m21_stream.append(event.m21_event)
 
 	def append_clef(self, clef, no_staff):
-		print (f"Add a clef to staff {no_staff}")
+		score_mod.logger.info (f"Add a clef to staff {no_staff}")
 		# Inform the staff that the clef has changed
 		self.part.add_clef_to_staff (no_staff, clef)
 		

@@ -49,7 +49,7 @@ urlpatterns = [
     ## META DATA
     ###############
     path('analysis/_models/<str:model_code>/_concepts/_all/', views.handle_concepts_request, name='handle_concepts_request'),
-    path(r'^analysis/_models/<str:model_code>/_concepts/<str:concept_code>/_all/', views.handle_concepts_request, name='handle_concepts_request'),
+    path('analysis/_models/<str:model_code>/_concepts/<str:concept_code>/_all/', views.handle_concepts_request, name='handle_concepts_request'),
     #re_path(r'^analysis/models/(?P<model_code>.+)/concepts/(?P<encoding>.+)/$', views.handle_concepts_request, name='handle_concepts'),
     ################
     # SOURCES
@@ -59,7 +59,7 @@ urlpatterns = [
     # GET a source description, or POST an update on a source
     re_path(r'collections/(?P<full_neuma_ref>(.*))/_sources/(?P<source_ref>[-\w]+)/$',views.handle_source_request, name='handle_source_request'),
     # PUT a new source or GET the list of sources of an Opus
-    path(r'collections/<str:full_neuma_ref>/_sources/',views.handle_sources_request, name='handle_sources_request'),
+    path('collections/<str:full_neuma_ref>/_sources/',views.handle_sources_request, name='handle_sources_request'),
     ################
     # ANNOTATIONS
     ################
