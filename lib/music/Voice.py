@@ -4,6 +4,8 @@ import music21 as m21
 from collections import namedtuple, OrderedDict
 from fractions import Fraction
 
+import lib.music.Score as score_mod
+
 #from home.templatetags.extras import scale_degree, semitoneconv
 #from home.templatetags.extras import rhythm_figures_print
 
@@ -15,9 +17,10 @@ class Voice:
 		with non-null duration
 	"""
 	
-	def __init__(self, id) :
+	def __init__(self, part, voice_id) :
 		# A voice has an id, and the sequence is represented as a Music21 stream
-		self.id = id
+		self.part = part
+		self.id = voice_id
 		self.m21_stream = m21.stream.Voice()
 		return
 	
@@ -28,6 +31,13 @@ class Voice:
 	
 	def append_event (self, event):
 		self.m21_stream.append(event.m21_event)
+
+	def append_clef(self, clef, no_staff):
+		score_mod.logger.info (f"Add a clef to staff {no_staff}")
+		# Inform the staff that the clef has changed
+		self.part.add_clef_to_staff (no_staff, clef)
+		
+		self.m21_stream.append(clef.m21_clef)
 
 	def get_half_step_intervals(self):
 		'''Return half-steps intervals'''

@@ -56,7 +56,7 @@ class Staff:
 
 	'''
 	    All these functions are now useless. To be removed
-	'''
+	
 		
 	def add_clef (self, no_measure, clef):
 		self.clef_events[no_measure] = clef
@@ -73,7 +73,8 @@ class Staff:
 		return (no_measure in self.time_signature_events.keys())
 	def get_time_signature (self, no_measure):
 		return self.time_signature_events[no_measure]
-
+	'''
+		
 class TimeSignature:
 	'''
 		Represented as a fraction
@@ -128,6 +129,8 @@ class Clef:
 	BASS_CLEF = m21.clef.BassClef
 	
 	def __init__(self, clef_code) :
+		self.id = f"clef{Clef.counter}"
+
 		if clef_code == self.TREBLE_CLEF:
 			self.m21_clef = m21.clef.TrebleClef()
 		elif clef_code == self.ALTO_CLEF:
@@ -136,7 +139,7 @@ class Clef:
 			self.m21_clef = m21.clef.TenorClef()
 		elif clef_code == self.BASS_CLEF:
 			self.m21_clef = m21.clef.BassClef()
-		self.m21_clef.id = f"clef{Clef.counter}"
+		self.m21_clef.id = self.id
 		Clef.counter += 1
 		
 	@staticmethod 

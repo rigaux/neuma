@@ -77,6 +77,14 @@ class Person (models.Model):
 	def __str__(self):  # __unicode__ on Python 2
 		return self.first_name  + "  " + self.last_name
 	
+	def to_json (self):
+		return {"first_name": self.first_name,
+			"last_name": self.last_name,
+			"year_birth": self.year_birth,
+			"year_death": self.year_death,
+			"dbpedia_uri": self.dbpedia_uri			
+			}
+	
 class Licence (models.Model):
 	'''Description of a licence'''
 	code = models.CharField(max_length=25,primary_key=True)
@@ -226,7 +234,7 @@ class Corpus(models.Model):
 		}
 		
 		if self.composer is not None:
-			core["composer"] = self.composer.dbpedia_uri
+			core["composer"] = self.composer.to_json()
 		return core
 
 		if self.composer is not None:

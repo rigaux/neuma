@@ -1,7 +1,7 @@
 
 # import the logging library
 import logging
-
+import sys
 import json
 import jsonref
 from jsonref import JsonRef
@@ -20,7 +20,6 @@ import lib.music.constants as constants_mod
 import verovio
 
 from .constants import *
-
 
 # Get an instance of a logger
 # See https://realpython.com/python-logging/
@@ -46,7 +45,38 @@ c_format = logging.Formatter('%(name)s - %(levelname)s - %(message)s')
 c_handler.setFormatter(c_format)
 #logger.addHandler(c_handler)
 
+def set_logging_level(level):
+	logger.setLevel(level)
 
+class ParserConfig:
+	"""
+	  Defines the part of the input which are processed. 
+	  Useful for testing
+	"""
+	def __init__(self, config={}):
+		# Input: a dict taken from a config file
+		if "system_min" in config:
+			self.system_min = config["system_min"]
+		else:
+			self.system_min = 0
+		if "system_max" in config:
+			self.system_max = config["system_max"]
+		else:
+			self.system_max = sys.maxsize
+		if "measure_min" in config:
+			self.measure_min = config["measure_min"]
+		else:
+			self.measure_min = 0
+		if "measure_max" in config:
+			self.measure_max = config["measure_max"]
+		else:
+			self.measure_max = sys.maxsize
+
+	def print (self):
+		print (f"Parser configuration:\n" +
+		         f"system_min={self.system_min}\nsystem_max={self.system_max}\n" +
+			     f"measure_min={self.measure_min}\nmeasure_max={self.measure_max}")
+			
 class CollabScoreParser:
 	"""
 
@@ -133,7 +163,7 @@ class OmrScore:
 	"""
 	  A structured representation of the score supplied by the OMR tool
 	"""
-	def __init__(self, uri, json_data):
+	def __init__(self, uri, json_data, config={}):
 		"""
 			Input: a validated JSON object. The method builds
 			a representation based on the Python classes
@@ -150,7 +180,9 @@ class OmrScore:
 		# Analyze pages
 		for json_page in json_data["pages"]:
 			self.pages.append(Page(json_page))
-
+			
+		self.config = ParserConfig(config)
+		self.config.print()
 
 	def get_score(self):
 		'''
@@ -158,25 +190,30 @@ class OmrScore:
 		'''
 		
 		# Create an OMR score (with layout)
-		score = score_model.Score(use_layout=True)
+		score = score_model.Score(use_layout=False)
 		current_page_no = 0
+		current_system_no = 0
 		current_measure_no = 0
 		
-		MIN_MEASURE_NO = 2
-		MAX_MEASURE_NO = 1
-
-
 		for page in self.pages:
-			score_page = score_model.Page(page.no_page)
-			score.add_page(score_page)
+			page_begins = True
+			#score_page = score_model.Page(page.no_page)
+			#score.add_page(score_page)
 			for system in page.systems:
-				score_system = score_model.System(system.id)
-				score_page.add_system(score_system)
+				current_system_no += 1
+				if (current_system_no < self.config.system_min) or (
+					    current_system_no > self.config.system_max):
+					continue
+
+				#score_system = score_model.System(system.id)
+				#score_page.add_system(score_system)
+				system_begins = True
 				
 				# Headers defines the parts and their staves in this system
 				for header in system.headers:
 					# Safety: an id should not start with a digit
-					header.id_part = "P" + header.id_part
+					if header.id_part[0].isdigit():
+						header.id_part = "P" + header.id_part
 					if score.part_exists(header.id_part):
 						logger.info (f"Part {header.id_part} already exists")
 						part = score.get_part(header.id_part)
@@ -194,17 +231,31 @@ class OmrScore:
 				
 				for measure in system.measures:
 					current_measure_no += 1
-					#if   current_measure_no > MAX_MEASURE_NO :
-					#	continue
+					if (current_measure_no < self.config.measure_min) or (
+					    current_measure_no > self.config.measure_max):
+						continue
+				
+					# Reset accidentals met so far
+					score.reset_accidentals()
+					
 					logger.info (f'Process measure {current_measure_no}')
 					
 					# Create a new measure for each part
 					current_measures = {}
 					for part in score.get_parts():
-						# IMPORTANT: Works for a part with a single staff. Else, we probably need to
+						# IMPORTANT: Works for a part with a single staff. 
+						# Else, we probably need to
 						# add a measure for each staff. 
+						measure_for_part = score_model.Measure(part, current_measure_no)
 						
-						measure_for_part = score_model.Measure(current_measure_no)
+						# Adding system breaks
+						if 	page_begins:
+							system_begins = False
+							page_begins = False
+						elif system_begins:
+							## Add a system break
+							measure_for_part.add_system_break()
+							system_begins = False
 						
 						# Annotate this measure
 						'''annotation = annot_mod.Annotation.create_annot_from_xml_to_image(
@@ -216,6 +267,7 @@ class OmrScore:
 						# Check if the measure starts with a change of clef or meter
 						for header in measure.headers:
 							if part.staff_exists(header.no_staff):
+								# This header does relate to the current part
 								staff = part.get_staff (header.no_staff)
 								if header.clef is not None:
 									logger.info (f'Clef found on staff {header.no_staff} at measure {current_measure_no}')
@@ -235,8 +287,9 @@ class OmrScore:
 									# We will display the key signature at the beginning
 									# of the current measure
 									measure_for_part.add_key_signature (key_sign)
-							else:
-								logger.error (f'Staff {header.no_staff} does not exist for part {part.id}')
+							#else:
+							#    Not a pb: we found a header that relates to another part
+							#	logger.error (f'Staff {header.no_staff} does not exist for part {part.id}')
 								
 						# Add the measure to its part (notational events are added there)
 						part.append_measure (measure_for_part)
@@ -254,24 +307,35 @@ class OmrScore:
 							f'{voice.id_part}m{current_measure.id}{voice.id}')
 
 						# Create the voice
-						voice_part = voice_model.Voice(id=voice.id)
+						voice_part = voice_model.Voice(part=current_part,voice_id=voice.id)
 						current_beam = None
 						previous_event = None
 						for item in voice.items:
 							# Decode the event
-							(event, event_region) = self.decode_event(current_part, item) 
-							logger.info (f'Adding event {event.id} to voice {voice.id}')
+							(event, event_region, type_event) = self.decode_event(current_part, item) 
 							# Manage beams
-							'''if current_beam != item.beam_id:
+							if current_beam != item.beam_id:
 								if current_beam != None:
 									# The previous event was the end of the beam
 									previous_event.stop_beam(current_beam)
 								if item.beam_id != None:
 									event.start_beam(item.beam_id)
-								current_beam =  item.beam_id'''
+								current_beam =  item.beam_id
 							previous_event = event
+
+							logger.info (f'Adding event {event.id} to voice {voice.id}')
 							
-							voice_part.append_event(event)
+							if type_event == "event":
+								voice_part.append_event(event)
+							elif type_event == "clef":
+								# The staff id is in the voice item
+								no_staff = item.no_staff_clef
+								# We found a clef change								
+								voice_part.append_clef(event, no_staff)
+								
+							else:
+								logger.error (f'Unknown event type {type_event} for voice {voice.id}')
+								
 								
 							# Annotate this event if the region is known
 							if event_region is not None:
@@ -288,16 +352,13 @@ class OmrScore:
 								score.add_annotation (annotation)
 								
 						# End of items for this measure. Close any pending beam
-						'''if current_beam != None:
+						if current_beam != None:
 							previous_event.stop_beam(current_beam)
-							current_beam =  None'''
+							current_beam =  None
 						# Add the voice to the measure of the relevant part
 						current_measure.add_voice (voice_part)
 					#if current_measure_no >= MAX_MEASURE_NO:
 					#	return score
-
-				# Add a system break to better mimic the initial score organization
-				#score.add_system_break()
 
 				#if system.id == 0:
 				#	break
@@ -332,7 +393,11 @@ class OmrScore:
 			
 				# Get the default alter
 				def_alter = staff.current_key_signature.accidentalByStep(pitch_class)
-					
+				
+				if def_alter == score_events.Note.ALTER_NATURAL:
+					logger.warning (f'Default alter code {def_alter}.')
+				
+				
 				# Decode from the DMOS input codification
 				if head.alter == None:
 					alter = def_alter
@@ -340,8 +405,11 @@ class OmrScore:
 					alter = score_events.Note.ALTER_FLAT
 				elif head.alter.label  == SHARP_SYMBOL:
 					alter = score_events.Note.ALTER_SHARP
-				else:  
+				elif head.alter.label  == NATURAL_SYMBOL:
 					alter = score_events.Note.ALTER_NATURAL
+				else:  
+					logger.warning (f'Unrecognized alter code {head.alter}. Replaced by None')
+					alter = score_events.Note.ALTER_NONE
 					
 				# Did we just met an accidental?
 				if (alter != score_events.Note.ALTER_NONE):
@@ -351,6 +419,8 @@ class OmrScore:
 					# Is there a previous accidental on this staff for this pitch class?
 					alter = staff.get_accidental(pitch_class)
 					
+				#if pitch_class == "D" and octave == 6:
+				#	print (f"FOUND D6. Alter = '{alter}'")
 				note = score_events.Note(pitch_class, octave, duration, alter, head.no_staff)
 				# Check articulations
 				for json_art in head.articulations:
@@ -366,17 +436,28 @@ class OmrScore:
 				for json_art in head.articulations:
 					articulation = score_events.Articulation(json_art["placement"], json_art["label"])
 					event.add_articulation(articulation)
-
 		elif voice_item.rest_attr is not None:
 			# It is a rest
 			for head in voice_item.rest_attr.heads:
 				staff = part.get_staff (head.no_staff)
 			event = score_events.Rest(duration, head.no_staff)
+			event.set_visibility(voice_item.rest_attr.visible)
+		elif voice_item.clef_attr is not None:
+			#This is a clef change 
+			event = voice_item.clef_attr.get_notation_clef()
+			event_region = voice_item.clef_attr.symbol.region
+			return (event, event_region, "clef")
 		else:
 			logger.error ("A voice event with unknown type has been met")
 			raise CScoreParserError ("A voice event with unknown type has been met")
 		
-		return (event, event_region)
+		return (event, event_region, "event")
+
+	def write_as_musicxml(self, out_file):
+		self.get_score().write_as_musicxml (out_file)
+
+	def write_as_mei(self, out_file):
+		self.get_score().write_as_mei (out_file)
 
 class Point:
 	"""
@@ -445,9 +526,11 @@ class Symbol:
 	"""
 	def __init__(self, json_symbol):
 		self.label = json_symbol["label"]
-		self.region = None
+		
 		if "region" in json_symbol:
 			self.region = Region(json_symbol["region"])
+		else: 
+			self.region = None
 
 	def __str__(self):
 		return f'({self.label},{self.region})'
@@ -484,7 +567,8 @@ class Measure:
 	"""
 	
 	def __init__(self, json_measure):
-		self.region = Region (json_measure["region"])
+		if "region" in json_measure:
+			self.region = Region (json_measure["region"])
 		self.headers =[]
 		for json_header in json_measure["headers"]:
 			self.headers.append(MeasureHeader(json_header))
@@ -499,8 +583,11 @@ class Voice:
 	
 	def __init__(self, json_voice):
 		self.id = json_voice["id"]
+		self.id_part =  json_voice["id_part"]
 		# Safety
-		self.id_part =  "P" + json_voice["id_part"]
+		if self.id_part[0].isdigit():
+			self.id_part =  "P" + self.id_part
+		
 		self.items = []
 		for json_item in json_voice["elements"]:
 			self.items.append(VoiceItem (json_item))
@@ -515,11 +602,15 @@ class VoiceItem:
 		self.note_attr = None
 		self.rest_attr = None
 		self.clef_attr = None
+		self.no_staff_clef = None
 		self.beam_id = None
 		
 		self.duration = Duration (json_voice_item["duration"])
 		if "no_group" in json_voice_item:
-			self.beam_id = json_voice_item["no_group"]
+			no_group = json_voice_item["no_group"]
+			# Assume that 0 is a no-value
+			if no_group > 0:
+				self.beam_id = json_voice_item["no_group"]
 		if "direction" in json_voice_item:
 			self.direction = json_voice_item["direction"]
 		if "att_note" in json_voice_item:
@@ -529,6 +620,7 @@ class VoiceItem:
 			self.rest_attr = NoteAttr (json_voice_item["att_rest"])
 		if "att_clef" in json_voice_item:
 			self.clef_attr  = Clef (json_voice_item["att_clef"])
+			self.no_staff_clef = json_voice_item["att_clef"]["no_staff"]
 		self.errors = []
 		if "errors" in json_voice_item:
 			for json_error in json_voice_item["errors"]:
@@ -546,6 +638,9 @@ class NoteAttr:
 		
 		self.nb_heads = json_note_attr["nb_heads"]
 		self.heads = []
+		self.visible = True
+		if "visible" in json_note_attr:
+			self.visible = json_note_attr["visible"]
 		for json_head in json_note_attr["heads"]:
 			note = Note (json_head)
 			
@@ -589,10 +684,11 @@ class Clef:
 	def __init__(self, json_clef):
 		self.symbol =  Symbol (json_clef["symbol"])
 		self.height  = json_clef["height"]
-
+		
 	def get_notation_clef(self):
 		# Decode the DMOS infos
-		return score_notation.Clef.decode_from_dmos(self.symbol.label, self.height)
+		return score_notation.Clef.decode_from_dmos(self.symbol.label, 
+												self.height)
 		
 class KeySignature:
 	"""
