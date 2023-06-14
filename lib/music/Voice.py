@@ -22,8 +22,28 @@ class Voice:
 		self.part = part
 		self.id = voice_id
 		self.m21_stream = m21.stream.Voice()
+		
+		# For OMR: The current clefs are used to decode symbols on staves
+		self.current_clefs = {}
+
 		return
 	
+	def set_current_clefs(self, cur_clefs):
+		'''
+		  Initialize the clefs for all the staves 
+		'''
+		
+		for staff_id, clef in cur_clefs.items():
+			self.current_clefs[staff_id] = clef
+
+	def get_current_clef_for_staff(self, staff_id):
+		# What is the last clef met on this staff ?
+		if not (staff_id in self.current_clefs.keys()):
+			# Oups, no such staff 
+			raise CScoreModelError (f"No staff ‘{staff_id}' for voice {self.id}")
+		else:
+			return self.current_clefs[staff_id]
+
 	def set_from_m21(self, m21stream):
 		"""Feed the voice representation from a MusicXML document"""
 		
@@ -34,6 +54,8 @@ class Voice:
 
 	def append_clef(self, clef, no_staff):
 		score_mod.logger.info (f"Add a clef to staff {no_staff}")
+		# The current clef changes for the voice
+		self.current_clefs[no_staff] = clef
 		# Inform the staff that the clef has changed
 		self.part.add_clef_to_staff (no_staff, clef)
 		

@@ -174,6 +174,8 @@ class Clef:
 		pitch.diatonicNoteNum = diatonic_num
 		return (pitch.step, pitch.octave)
 
+	def __str__ (self):
+		return f"{self.m21_clef}"
 
 class Beam:
 	'''

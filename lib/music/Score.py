@@ -387,7 +387,7 @@ class Part:
 			staff.set_current_clef (clef)
 		else:
 			# Unknown staff: raise an exception
-			print ("Unknown staff : " + no_staff)
+			raise CScoreModelError (f'Unable to find staff {no_staff} in part {self.id}')
 
 	def add_accidental (self, no_staff, pitch_class, acc):
 		staff = self.get_staff(no_staff)
@@ -434,13 +434,31 @@ class Measure:
 		# We keep the clef for each staff at the beginning of measure. They
 		# are used to determine the pitch from the head's height
 		self.initial_clefs = {}
-		for staff in part.staves():
+		for staff in part.staves:
 			self.initial_clefs[staff.id] = staff.current_clef
 		
+	def get_initial_clef_for_staff(self, staff_id):
+		if not (staff_id in self.initial_clefs.keys()):
+			# Oups, no such staff 
+			raise CScoreModelError (f"No staff ‘{staff_id}' for measure {self.no}")
+		else:
+			return self.initial_clefs[staff_id]
+	def set_initial_clef_for_staff(self, staff_id, clef):
+		if not (staff_id in self.initial_clefs.keys()):
+			# Oups, no such staff 
+			raise CScoreModelError (f"No staff ‘{staff_id}' for measure {self.no}")
+		else:
+			self.initial_clefs[staff_id] = clef
+			
+		# We add the clef to music 21 measure. Sth strange: no staff specified...
+		self.m21_measure.insert(0,  clef.m21_clef)
+
+	def print_initial_clefs(self):
+		for staff_id, clef in self.initial_clefs.items():
+			print (f"Measure {self.no}, staff {staff_id}: initial clef {clef}")
+			
 	def add_time_signature(self, time_signature):
 		self.m21_measure.insert(0,  time_signature.m21_time_signature)
-	def add_clef(self, clef):
-		self.m21_measure.insert(0,  clef.m21_clef)
 	def add_key_signature(self, key_signature):
 		self.m21_measure.insert(0,  key_signature.m21_key_signature)
 		

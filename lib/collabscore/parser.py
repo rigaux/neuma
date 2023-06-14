@@ -247,7 +247,6 @@ class OmrScore:
 						# Else, we probably need to
 						# add a measure for each staff. 
 						measure_for_part = score_model.Measure(part, current_measure_no)
-						
 						# Adding system breaks
 						if 	page_begins:
 							system_begins = False
@@ -273,7 +272,7 @@ class OmrScore:
 									logger.info (f'Clef found on staff {header.no_staff} at measure {current_measure_no}')
 									clef_staff = header.clef.get_notation_clef()
 									staff.set_current_clef (clef_staff)
-									measure_for_part.add_clef (clef_staff)
+									measure_for_part.set_initial_clef_for_staff(staff.id, clef_staff)
 								if header.time_signature is not None:
 									logger.info (f'Time signature found on staff {header.no_staff} at measure {current_measure_no}')
 									time_sign = header.time_signature.get_notation_object()
@@ -296,8 +295,8 @@ class OmrScore:
 						# Keep the array of current measures indexed by part
 						current_measures[part.id] = measure_for_part
 					
-
 					for voice in measure.voices:
+
 						# Get the part the voice belongs to
 						current_part = score.get_part(voice.id_part)
 						current_measure = current_measures[voice.id_part]
@@ -308,11 +307,15 @@ class OmrScore:
 
 						# Create the voice
 						voice_part = voice_model.Voice(part=current_part,voice_id=voice.id)
+						# The initial clefs are those of the measure
+						voice_part.set_current_clefs(current_measure.initial_clefs)
+						
 						current_beam = None
+						
 						previous_event = None
 						for item in voice.items:
 							# Decode the event
-							(event, event_region, type_event) = self.decode_event(current_part, item) 
+							(event, event_region, type_event) = self.decode_event(voice_part, item) 
 							# Manage beams
 							if current_beam != item.beam_id:
 								if current_beam != None:
@@ -330,7 +333,7 @@ class OmrScore:
 							elif type_event == "clef":
 								# The staff id is in the voice item
 								no_staff = item.no_staff_clef
-								# We found a clef change								
+								# We found a clef change
 								voice_part.append_clef(event, no_staff)
 								
 							else:
@@ -357,16 +360,11 @@ class OmrScore:
 							current_beam =  None
 						# Add the voice to the measure of the relevant part
 						current_measure.add_voice (voice_part)
-					#if current_measure_no >= MAX_MEASURE_NO:
-					#	return score
-
-				#if system.id == 0:
-				#	break
 		
 		return score
 
 
-	def decode_event(self, part, voice_item):
+	def decode_event(self, voice, voice_item):
 		'''
 			Produce an event (from our score model) and its region by decoding the OMR input
 		'''
@@ -387,11 +385,12 @@ class OmrScore:
 			events = []
 			for head in voice_item.note_attr.heads:
 				no_staff = head.no_staff # Will be used as the chord staff.
-				staff = part.get_staff (head.no_staff)
+				current_clef = voice.get_current_clef_for_staff(no_staff)
 				# The head position gives the position of the note on the staff
-				(pitch_class, octave)  = staff.current_clef.decode_pitch (head.height)
+				(pitch_class, octave)  = current_clef.decode_pitch (head.height)
 			
 				# Get the default alter
+				staff = voice.part.get_staff(no_staff)
 				def_alter = staff.current_key_signature.accidentalByStep(pitch_class)
 				
 				if def_alter == score_events.Note.ALTER_NATURAL:
@@ -439,8 +438,7 @@ class OmrScore:
 		elif voice_item.rest_attr is not None:
 			# It is a rest
 			for head in voice_item.rest_attr.heads:
-				staff = part.get_staff (head.no_staff)
-			event = score_events.Rest(duration, head.no_staff)
+				event = score_events.Rest(duration, head.no_staff)
 			event.set_visibility(voice_item.rest_attr.visible)
 		elif voice_item.clef_attr is not None:
 			#This is a clef change 
