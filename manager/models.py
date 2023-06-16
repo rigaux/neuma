@@ -620,7 +620,7 @@ class Corpus(models.Model):
 					json_doc = json_file.read()
 					opus.load_from_dict (corpus, json.loads(json_doc.decode('utf-8')))
 					
-					# Check whether a source file eists for each source
+					# Check whether a source file exists for each source
 					for source in opus.opussource_set.all():
 						if opus_files_desc["source_files"] != "":
 							# Yep we found one
@@ -892,7 +892,8 @@ class Opus(models.Model):
 			if (dict_opus["meta_fields"] != None):
 				for m in dict_opus["meta_fields"]:
 					self.add_meta (m["meta_key"], m["meta_value"])
-		if ("sources" in dict_opus.keys()):
+		if ("sources" in dict_opus.keys() 
+		         and type(dict_opus["sources"]) in {list} ):
 			if (dict_opus["sources"] != None):
 				for source in dict_opus["sources"]:
 					self.add_source (source)
