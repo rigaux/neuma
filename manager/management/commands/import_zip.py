@@ -20,6 +20,7 @@ class Command(BaseCommand):
 		parser.add_argument('-a', dest='async_mode')
 		parser.add_argument('-c', dest='parent_corpus_ref')
 		parser.add_argument('-r', dest='corpus_ref')
+		parser.add_argument('-o', dest='import_options')
 
 	def handle(self, *args, **options):
 			
@@ -38,6 +39,10 @@ class Command(BaseCommand):
 			print ("You MUST provide the ref of the parent corpus")
 			exit(1)
 		
+		import_options = []
+		if options['import_options'] is not None:
+			import_options.append(options['import_options'])
+			
 		if query_yes_no("Do you really want to import the zip archive %s in the parent corpus '%s'" % (options["file_path"],
 						 options["parent_corpus_ref"]), 
 		       			"no") == False:
@@ -52,9 +57,7 @@ class Command(BaseCommand):
 				Workflow.async_import (upload, corpus_ref)
 			else:
 				print ("Running in synchronous mode")
-				Workflow.import_zip(zf, 
-								parent_corpus,
-								corpus_ref)						 
+				Workflow.import_zip(zf, parent_corpus, corpus_ref, import_options)						 
 		except Corpus.DoesNotExist:
 			raise CommandError('Corpus with ref "%s" does not exist' % options['parent_corpus_ref'])
 			exit(1)

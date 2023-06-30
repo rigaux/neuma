@@ -257,11 +257,11 @@ class OmrScore:
 							system_begins = False
 						
 						# Annotate this measure
-						'''annotation = annot_mod.Annotation.create_annot_from_xml_to_image(
+						annotation = annot_mod.Annotation.create_annot_from_xml_to_image(
 							self.creator, self.uri, measure_for_part.id, 
 							self.score_image_url, measure.region.string_xyhw(), 
 							constants_mod.IREGION_MEASURE_CONCEPT)
-						score.add_annotation (annotation)'''
+						score.add_annotation (annotation)
 						
 						# Check if the measure starts with a change of clef or meter
 						for header in measure.headers:
@@ -539,6 +539,11 @@ class Page:
 	"""
 	
 	def __init__(self, json_page):
+		if "page_url" in json_page:
+			self.page_url = Region(json_page["page_url"])
+		else: 
+			self.page_url = None
+
 		self.no_page = json_page["no_page"]
 		self.systems=[]
 		for json_system in json_page["systems"]:

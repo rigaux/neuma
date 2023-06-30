@@ -41,6 +41,14 @@ var tabNames = [
 {% endif %}
 </script>
 
+
+ {% if dmos_report %}
+ <h3>Report from DMOS data processing</h3>
+ 
+   <div>
+   {{dmos_report}}
+   </div>
+   
 <h1>
     <ul class="toolbar active">
 
@@ -62,6 +70,8 @@ if request.session.search_context.pattern != ""
   </div>
   endif 
  -->
+ 
+ {% endif %}
  
 <dl class="description">
 	<dt>{% trans "Corpus" %}</dt>
@@ -108,6 +118,17 @@ if request.session.search_context.pattern != ""
             href="{{opus.summary.url}}">Summary</a> 
             {% endif %}
            </dd>
+           
+           
+          {% for source in opus.opussource_set.all %}
+           {% if source.ref == "dmos" and source.source_file %}
+           <dd>
+            <a href="{{source.source_file.url}}"> DMOS file exists:</a>
+                        <a href="{% url 'home:opus' opus.ref %}?load_dmos=1">Load from DMOS</a>
+           </dd>
+               {% endif %}  
+          {% endfor %}
+      
 </dl>
 <!-- fin div .description -->
 

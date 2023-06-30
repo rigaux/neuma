@@ -5,7 +5,8 @@ from django.shortcuts import render
 from manager.models import (
 	Corpus,
 	Opus,
-	Annotation
+	Annotation,
+	OpusSource
 )
 from django.conf import settings
 from django.core.files.base import ContentFile
@@ -16,6 +17,7 @@ import jsonref
 import jsonschema
 import json
 from numpy import True_
+from lib.music.opusmeta import OpusSource
 
 
 def index(request):
@@ -51,7 +53,7 @@ def tests(request, opus_ref):
 	opus = Opus.objects.get(ref=opus_ref)
 	url_dmos =""
 	for source in opus.opussource_set.all():
-		if source.ref == "dmos":
+		if source.ref == OpusSource.DMOS_REF:
 			url_dmos = request.build_absolute_uri(source.source_file.url)
 	if url_dmos == "":
 		context['message'] = "No DMOS file wih this Opus " 

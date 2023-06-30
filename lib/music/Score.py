@@ -155,8 +155,12 @@ class Score:
 			''' Produce the MEI encoding thanks to Verovio'''
 			tk = verovio.toolkit()
 			tmp_file = filename + "score.xml"
+			tmp_file = "/tmp/tmp.xml"
+			print (f"Write in {tmp_file}")
 			self.m21_score.write ("musicxml", tmp_file)
+			print (f"Load  {tmp_file}")
 			tk.loadFile(tmp_file)
+			print (f"Convert to MEI and write")
 			with open(filename, "w") as mei_file:
 				mei_file.write(tk.getMEI())
 
@@ -183,8 +187,7 @@ class Score:
 
 		except Exception as ex:
 			self.m21_score = None
-			print ("Error while loading from xml:" + str(ex))
-			print ("Some error raised while attempting to transform MEI to XML.")
+			print ("Score::load_from_xml error: " + str(ex))
 
 
 	def load_component(self, m21stream):
@@ -196,7 +199,8 @@ class Score:
 		# Extract the voices
 		if m21stream.hasVoices():
 			for m21voice in m21stream.voices:
-				voice = Voice(self.id + "-" + str(default_voice_id))
+				# NB: self is assumed to be a part
+				voice = Voice(self, self.id + "-" + str(default_voice_id))
 				voice.set_from_m21(m21voice)
 				#print ("Create voice in component "	self.id	" with id "	voice.id)
 				default_voice_id += 1
@@ -216,7 +220,7 @@ class Score:
 
 		# Last case: no voice, no part: the stream itself is a voice
 		if not m21stream.hasVoices() and not m21stream.hasPartLikeStreams():
-			voice = Voice(self.id + "-" + str(default_voice_id))
+			voice = Voice(self, self.id + "-" + str(default_voice_id))
 
 			m21voice = m21.stream.Voice(m21stream.flat.notesAndRests.stream().elements)
 			# print ("Create voice in component "	self.id	" with id "	voice.id)

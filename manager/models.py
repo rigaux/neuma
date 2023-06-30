@@ -3,13 +3,17 @@ from datetime import datetime
 from urllib.request import urlopen
 import io
 import json
+import jsonref
+import jsonschema
+
+
 import zipfile
 import os
 
 from django.db import models
 from django.core.files import File
 from django.core.files.temp import NamedTemporaryFile
-from django.core.files.base import ContentFile
+from django.core.files.base import ContentFile, File
 
 from .utils import OverwriteStorage
 
@@ -25,6 +29,9 @@ from lib.music.jsonld import JsonLD
 
 # Annotation model
 import lib.music.annotation as annot_mod
+
+# DMOS parser
+from lib.collabscore.parser import CollabScoreParser, OmrScore
 
 # For serialization of Opus 
 import lib.music.opusmeta as opusmeta_mod
@@ -751,7 +758,7 @@ class Corpus(models.Model):
 				try:
 					if opus.title == opus_ref:
 						#print ("Title = " + opus.title + " Try to obtain metadata")
-						# Try to find metadata in the XML file with music21
+						logger.info ("Try to find metadata in the XML file with music21")
 						score = opus.get_score()
 						if score.get_title() != None and len(score.get_title()) > 0:
 							opus.title = score.get_title()
@@ -851,6 +858,8 @@ class Opus(models.Model):
 		# Search if exists
 		try:
 			source = OpusSource.objects.get(opus=self,ref=source_dict["ref"])
+			source.description = source_dict["description"]
+			source.url=source_dict["url"]
 		except OpusSource.DoesNotExist as e:
 			stype = SourceType.objects.get(code=source_dict["source_type"])
 			source = OpusSource(opus=self,
@@ -858,7 +867,18 @@ class Opus(models.Model):
 							description=source_dict["description"],
 							source_type=stype,
 							url=source_dict["url"])
-			source.save()
+		source.save()
+		return source
+
+	def copy_mei_as_source(self):
+		# Save the MEI file as a reference source 
+		if self.mei:
+			source_dict = {"ref": "ref_mei", 
+						"source_type": SourceType.STYPE_MEI,
+						"description": "Référence MEI",
+						"url": ""}
+			source = self.add_source (source_dict)
+			source.source_file.save("ref_mei.xml", File(self.mei))
 
 	def load_from_dict(self, corpus, dict_opus, files={}, opus_url=""):
 		"""Load content from a dictionary.
@@ -897,6 +917,16 @@ class Opus(models.Model):
 			if (dict_opus["sources"] != None):
 				for source in dict_opus["sources"]:
 					self.add_source (source)
+
+		# Cas ou la source contient une réf Gallica
+		if ("sources" in dict_opus.keys() 
+		         and isinstance(dict_opus["sources"], str)):
+			source_dict = {"ref": "gallica", 
+						"source_type": "JPEG",
+						"description": "Lien Gallica",
+						"url": dict_opus["sources"]}
+			self.add_source (source_dict)
+			print ("Source Gallica: " + dict_opus["sources"] )
 
 		# Get the Opus files
 		for fname, desc  in files.items():
@@ -1038,13 +1068,11 @@ class Opus(models.Model):
 	def to_serializable(self, absolute_url):
 		" Produce a serialisable object from the Opus data"
 				
-				
-
 		if self.composer_ld is not None:
-			opusmeta = opusmeta_mod.OpusMeta(self.ref, self.title, 
+			opusmeta = opusmeta_mod.OpusMeta(self.local_ref(), self.title, 
 											self.composer_ld.dbpedia_uri)
 		else:
-			opusmeta = opusmeta_mod.OpusMeta(self.ref, self.title, 
+			opusmeta = opusmeta_mod.OpusMeta(self.local_ref(), self.title, 
 											self.composer)
 			
 		# Adding sources
@@ -1080,6 +1108,52 @@ class Opus(models.Model):
 		
 		opusmeta = self.to_serializable(my_url)
 		return opusmeta.to_jsonld()
+	
+	def parse_dmos(self):
+		dmos_dir = os.path.join("file://" + settings.BASE_DIR, 'static/json/', 'dmos')
+
+		# Where is the schema?
+		schema_dir = os.path.join(dmos_dir, 'schema/')
+		# The main schema file
+		schema_file = os.path.join(schema_dir, 'dmos_schema.json')
+		# Parse the schema
+		try:
+			parser = CollabScoreParser(schema_file, schema_dir)
+		except jsonschema.SchemaError as ex:
+			return "Schema parsing error: " + ex.message
+		except Exception as ex:
+			return  "Unexpected error during parser initialization: " + str (ex)
+
+		dmos_data = None
+		for source in self.opussource_set.all ():
+			if source.ref == OpusSource.DMOS_REF:
+				if source.source_file:
+					with open (source.source_file.path, "r") as meifile:
+						dmos_data = json.loads(source.source_file.read())
+		if dmos_data == None:
+			return "Unable to find the DMOS file ??"
+		try:
+			parser.validate_data (dmos_data)
+		except Exception as ex:
+			return "DMOS file validation error : " + str(ex)
+		
+		# Parse DMOS data
+		omr_score = OmrScore (self.get_url(), dmos_data)
+		score = omr_score.get_score()
+	
+		# Store the MusicXML file in the opus
+		#score.write_as_musicxml ("/tmp/score.xml")
+		#with open("/tmp/score.xml") as f:
+		#	score_xml = f.read()
+		#	self.musicxml.save("score.xml", ContentFile(score_xml))
+	
+		# Generate and store the MEI file
+		score.write_as_mei ("/tmp/score.mei")
+		with open("/tmp/score.mei") as f:
+			score_mei = f.read()
+			self.mei.save("mei.xml", ContentFile(score_mei))
+
+		return "DMOS data parsed"
 
 class OpusMeta(models.Model):
 	opus = models.ForeignKey(Opus,on_delete=models.CASCADE)
@@ -1197,6 +1271,14 @@ class SourceType (models.Model):
 	description = models.TextField()
 	mime_type = models.CharField(max_length=255)
 
+	# List of accepted codes
+	STYPE_MEI = "MEI"
+	STYPE_DMOS = "DMOS"
+	STYPE_MXML = "MusicXML"
+	STYPE_JPEG = "JPEG"
+	STYPE_PDF = "PDF"
+	STYPE_MPEG = "M"
+		
 	class Meta:
 		db_table = "SourceType"	
 
@@ -1213,6 +1295,10 @@ class OpusSource (models.Model):
 	creation_timestamp = models.DateTimeField('Created', auto_now_add=True)
 	update_timestamp = models.DateTimeField('Updated', auto_now=True)
 
+	# Codes for normalized references
+	DMOS_REF = "dmos"
+	MEI_REF = "ref_mei"
+	
 	def upload_path(self, filename):
 		'''Set the path where source files must be stored'''
 		source_ref = self.opus.ref.replace(settings.NEUMA_ID_SEPARATOR, "-")

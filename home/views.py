@@ -32,6 +32,7 @@ from neumasearch.Sequence import Sequence
 from neumautils.views import NeumaView
 import xml.etree.ElementTree as ET
 
+
 from .forms import *
 
 
@@ -417,6 +418,8 @@ class OpusView(NeumaView):
 		else:
 			context["explain"] = False
 
+		if 'load_dmos' in self.request.GET:
+			context["dmos_report"] =  opus.parse_dmos()
 		return context
 
 	def get(self, request, *args, **kwargs):

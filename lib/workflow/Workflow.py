@@ -50,6 +50,11 @@ class Workflow:
 		Operators triggered when a score is inserted / updated
 	"""
 	
+	# Some codes for workflow options
+	
+	# To save an imported MEI a the reference source
+	IMPOPT_SAVE_MEI="mei_as_source"
+
 	def __init__(self) :
 		 return
 	
@@ -838,9 +843,13 @@ class Workflow:
 		return descriptors_dict
 
 	@staticmethod 
-	def import_zip(zip, parent_corpus, corpus_ref):
+	def import_zip(zip, parent_corpus, corpus_ref, options=[]):
 		list_imported = Corpus.import_from_zip(zip, parent_corpus, corpus_ref)
 		
+		if Workflow.IMPOPT_SAVE_MEI in options:
+			for opus in list_imported:
+				print (f"Saving MEI file of {opus.ref} as reference MEI")
+				opus.copy_mei_as_source()
 		# Produce descriptors and index the corpus in ElasticSearch
 		#Workflow.index_corpus(upload.corpus, True)
 		return list_imported
