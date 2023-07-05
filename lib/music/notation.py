@@ -4,6 +4,8 @@ import music21 as m21
 
 import lib.music.events as score_events
 
+import lib.music.Score as score_mod
+
 '''
  Classes representing music notation elements
 '''
@@ -176,6 +178,30 @@ class Clef:
 
 	def __str__ (self):
 		return f"{self.m21_clef}"
+
+class Dynamics ():
+	"""
+		Dynamics = directions
+	"""
+	
+	PIANO="p"
+	PIANISSIMO="pp"
+	FORTE="f"
+	FORTISSIMO="ff"
+	MEZZOPIANO="mp"
+	MEZZOFORTE="mf"
+	
+	def __init__(self, placement, dyn_type) :
+		if dyn_type == Dynamics.PIANO:
+			self.m21_dynamic = m21.dynamics.Dynamic('p')
+		elif dyn_type == Dynamics.FORTE:
+			self.m21_dynamic = m21.dynamics.Dynamic('f')
+		else:
+			raise score_mod.CScoreModelError (f"Unknown dynaics type: '{dyn_type}'")
+
+		self.m21_dynamic.placement = placement
+		
+		return
 
 class Beam:
 	'''

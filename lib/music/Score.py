@@ -156,11 +156,11 @@ class Score:
 			tk = verovio.toolkit()
 			tmp_file = filename + "score.xml"
 			tmp_file = "/tmp/tmp.xml"
-			print (f"Write in {tmp_file}")
+			#print (f"Write in {tmp_file}")
 			self.m21_score.write ("musicxml", tmp_file)
-			print (f"Load  {tmp_file}")
+			#print (f"Load  {tmp_file}")
 			tk.loadFile(tmp_file)
-			print (f"Convert to MEI and write")
+			#print (f"Convert to MEI and write")
 			with open(filename, "w") as mei_file:
 				mei_file.write(tk.getMEI())
 
@@ -368,6 +368,10 @@ class Part:
 		# There should be a add_subpart method for recursive structure. Not
 		# used for the moment
 
+	def clear_staves(self):
+		# To call when we reinitialize a system or a page
+		self.staves = []
+		
 	def add_staff (self, staff):
 		self.staves.append(staff)
 	def staff_exists (self, no_staff):
@@ -440,6 +444,7 @@ class Measure:
 		self.initial_clefs = {}
 		for staff in part.staves:
 			self.initial_clefs[staff.id] = staff.current_clef
+			#print (f"Initial clef for measure {self.no} and staff {staff.id}: {staff.current_clef}")
 		
 	def get_initial_clef_for_staff(self, staff_id):
 		if not (staff_id in self.initial_clefs.keys()):

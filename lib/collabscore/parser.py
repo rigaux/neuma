@@ -24,7 +24,7 @@ from .constants import *
 # Get an instance of a logger
 # See https://realpython.com/python-logging/
 
-logging.basicConfig(level=logging.DEBUG)
+#logging.basicConfig(level=logging.INFO)
 
 logger = logging.getLogger(__name__)
 
@@ -55,6 +55,11 @@ class ParserConfig:
 	"""
 	def __init__(self, config={}):
 		# Input: a dict taken from a config file
+		if "log_level" in config:
+			self.log_level=config["log_level"]
+		else:
+			self.log_level=logging.DEBUG
+		set_logging_level(self.log_level)
 		if "system_min" in config:
 			self.system_min = config["system_min"]
 		else:
@@ -73,7 +78,7 @@ class ParserConfig:
 			self.measure_max = sys.maxsize
 
 	def print (self):
-		print (f"Parser configuration:\n" +
+		print (f"Parser configuration:\nLog level={self.log_level}\n" +
 		         f"system_min={self.system_min}\nsystem_max={self.system_max}\n" +
 			     f"measure_min={self.measure_min}\nmeasure_max={self.measure_max}")
 			
@@ -178,8 +183,9 @@ class OmrScore:
 										"collabscore")
 		self.pages = []
 		# Analyze pages
-		for json_page in json_data["pages"]:
-			self.pages.append(Page(json_page))
+		if "pages" in json_data:
+			for json_page in json_data["pages"]:
+				self.pages.append(Page(json_page))
 			
 		self.config = ParserConfig(config)
 		self.config.print()
@@ -217,6 +223,7 @@ class OmrScore:
 					if score.part_exists(header.id_part):
 						logger.info (f"Part {header.id_part} already exists")
 						part = score.get_part(header.id_part)
+						part.clear_staves()
 					else:
 						logger.info (f"Creating part {header.id_part}")
 						part = score_model.Part(id_part=header.id_part)
@@ -269,9 +276,9 @@ class OmrScore:
 								# This header does relate to the current part
 								staff = part.get_staff (header.no_staff)
 								if header.clef is not None:
-									logger.info (f'Clef found on staff {header.no_staff} at measure {current_measure_no}')
 									clef_staff = header.clef.get_notation_clef()
 									staff.set_current_clef (clef_staff)
+									logger.info (f'Clef {clef_staff} found on staff {header.no_staff} at measure {current_measure_no}')
 									measure_for_part.set_initial_clef_for_staff(staff.id, clef_staff)
 								if header.time_signature is not None:
 									logger.info (f'Time signature found on staff {header.no_staff} at measure {current_measure_no}')
@@ -335,7 +342,6 @@ class OmrScore:
 								no_staff = item.no_staff_clef
 								# We found a clef change
 								voice_part.append_clef(event, no_staff)
-								
 							else:
 								logger.error (f'Unknown event type {type_event} for voice {voice.id}')
 								
@@ -418,23 +424,40 @@ class OmrScore:
 					# Is there a previous accidental on this staff for this pitch class?
 					alter = staff.get_accidental(pitch_class)
 					
-				#if pitch_class == "D" and octave == 6:
-				#	print (f"FOUND D6. Alter = '{alter}'")
 				note = score_events.Note(pitch_class, octave, duration, alter, head.no_staff)
 				# Check articulations
 				for json_art in head.articulations:
-					articulation = score_events.Articulation(json_art["placement"], json_art["label"])
-					note.add_articulation(articulation)
+					if json_art["label"] in ARTICULATIONS_LIST:
+						articulation = score_events.Articulation(json_art["placement"], json_art["label"])
+						note.add_articulation(articulation)
+					elif json_art["label"] in EXPRESSIONS_LIST:
+						expression = score_events.Expression(json_art["placement"], json_art["label"])
+						note.add_expression(expression)
+					elif json_art["label"] in DYNAMICS_LIST:
+						dynamic = score_notation.Dynamics(json_art["placement"], json_art["label"])
+						# A dynamic is inserted in the music flow
+						#events.append(dynamic)
 				events.append(note)
+				
 			if len(events) == 1:
 				# A single note
 				event = events[0]
 			else:
 				# A chord
 				event = score_events.Chord (duration, no_staff, events)
+				# REPEATED: factorize with above
 				for json_art in head.articulations:
-					articulation = score_events.Articulation(json_art["placement"], json_art["label"])
-					event.add_articulation(articulation)
+					if json_art["label"] in ARTICULATIONS_LIST:
+						articulation = score_events.Articulation(json_art["placement"], json_art["label"])
+						event.add_articulation(articulation)
+					elif json_art["label"] in EXPRESSIONS_LIST:
+						expression = score_events.Expression(json_art["placement"], json_art["label"])
+						event.add_expression(expression)
+					elif json_art["label"] in DYNAMICS_LIST:
+						dynamic = score_notation.Dynamics(json_art["placement"], json_art["label"])
+						# A dynamic is inserted in the music flow
+						#events.append(dynamic)
+
 		elif voice_item.rest_attr is not None:
 			# It is a rest
 			for head in voice_item.rest_attr.heads:

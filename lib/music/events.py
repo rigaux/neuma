@@ -71,6 +71,9 @@ class Event:
 	def add_articulation (self, art):
 		self.m21_event.articulations.append(art.m21_articulation)
 
+	def add_expression (self, expr):
+		self.m21_event.expressions.append(expr.m21_expression)
+
 	def start_beam(self, beam_id):
 		if not self.is_rest():
 			score_mod.logger.info (f"Start a beam : {beam_id}" )
@@ -98,16 +101,47 @@ class Articulation ():
 	
 	STACCATO = "staccato"
 	ACCENT = "accent"
+	TENUTO="tenuto"
+	MARCATO="marcato"
+	CODA="coda"
+	SEGNO="segno"
+
 	
 	def __init__(self, placement, art_type) :
 		if art_type == Articulation.STACCATO:
 			self.m21_articulation = m21.articulations.Staccato()
 		elif art_type == Articulation.ACCENT:
 			self.m21_articulation = m21.articulations.Accent()
+		elif art_type == Articulation.TENUTO:
+			self.m21_articulation = m21.articulations.Tenuto()
 		else:
-			raise Exception ("Unknown articulation type: " + art_type)
+			raise score_mod.CScoreModelError (f"Unknown articulation type: '{art_type}'")
 
 		self.m21_articulation.placement = placement
+		return
+
+class Expression ():
+	"""
+		Expression = a directive attached to a note
+	"""
+	
+	FERMATA="fermata"
+	TRILL="trill"
+	ARPEGGIO="arpeggio"
+	
+	def __init__(self, placement, expr_type) :
+		if  expr_type == Expression.FERMATA:
+			self.m21_expression = m21.expressions.Fermata()
+		elif  expr_type == Expression.TRILL:
+			self.m21_expression = m21.expressions.Trill()
+		elif  expr_type == Expression.ARPEGGIO:
+			#self.m21_expression = m21.expressions.ArpeggioMark('normal')
+			self.m21_expression = m21.expressions.Trill()
+			print ("Arpeggio mark unknown by Music21??")
+		else:
+			raise score_mod.CScoreModelError (f"Unknown expression type: '{expr_type}'")
+
+		self.m21_expression.placement = placement
 		return
 
 class Note (Event):
