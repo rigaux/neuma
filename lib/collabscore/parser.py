@@ -9,7 +9,6 @@ import jsonschema
 
 from fractions import Fraction
 
-
 import lib.music.Score as score_model
 import lib.music.Voice as voice_model
 import lib.music.events as score_events
