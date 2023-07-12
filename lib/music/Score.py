@@ -22,13 +22,13 @@ import verovio
 from .Voice import Voice
 from . import notation
 
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.WARNING)
 logger = logging.getLogger(__name__)
 
 
 # For the console
 c_handler = logging.StreamHandler()
-c_handler.setLevel(logging.DEBUG)
+c_handler.setLevel(logging.WARNING)
 c_format = logging.Formatter('%(name)s - %(levelname)s - %(message)s')
 c_handler.setFormatter(c_format)
 #logger.addHandler(c_handler)
@@ -435,8 +435,8 @@ class Measure:
 		Measure.sequence_measure += 1
 		self.part = part
 		self.no = no_measure
-		self.id = Measure.sequence_measure
-		self.m21_measure = m21.stream.Measure(id=f'm{self.id}', number=no_measure)
+		self.id = f'm{Measure.sequence_measure}' 
+		self.m21_measure = m21.stream.Measure(id=self.id, number=no_measure)
 		self.m21_measure.style.absoluteX = 23
 		
 		# We keep the clef for each staff at the beginning of measure. They

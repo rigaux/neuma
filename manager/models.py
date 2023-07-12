@@ -1128,8 +1128,7 @@ class Opus(models.Model):
 		for source in self.opussource_set.all ():
 			if source.ref == OpusSource.DMOS_REF:
 				if source.source_file:
-					with open (source.source_file.path, "r") as meifile:
-						dmos_data = json.loads(source.source_file.read())
+					dmos_data = json.loads(source.source_file.read())
 		if dmos_data == None:
 			return "Unable to find the DMOS file ??"
 		try:
@@ -1142,18 +1141,19 @@ class Opus(models.Model):
 		score = omr_score.get_score()
 	
 		# Store the MusicXML file in the opus
-		'''score.write_as_musicxml ("/tmp/score.xml")
+		score.write_as_musicxml ("/tmp/score.xml")
 		with open("/tmp/score.xml") as f:
 			score_xml = f.read()
 			self.musicxml.save("score.xml", ContentFile(score_xml))
-		'''	
+		
 		# Generate and store the MEI file
-		score.write_as_mei ("/tmp/score_mei.xml")
+		'''score.write_as_mei ("/tmp/score_mei.xml")
 		with open("/tmp/score_mei.xml") as f:
 			score_mei = f.read()
 			self.mei.save("mei.xml", ContentFile(score_mei))
+		'''
 		
-		return "DMOS data parsed"
+		return score
 
 class OpusMeta(models.Model):
 	opus = models.ForeignKey(Opus,on_delete=models.CASCADE)

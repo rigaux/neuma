@@ -30,7 +30,7 @@ logger = logging.getLogger(__name__)
 
 # Create file handler
 f_handler = logging.FileHandler(__name__ + '.log')
-f_handler.setLevel(logging.DEBUG)
+f_handler.setLevel(logging.WARNING)
 # Create formatters and add it to handlers
 f_format = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 f_handler.setFormatter(f_format)
@@ -39,7 +39,7 @@ logger.addHandler(f_handler)
 
 # For the console
 c_handler = logging.StreamHandler()
-c_handler.setLevel(logging.DEBUG)
+c_handler.setLevel(logging.WARNING)
 c_format = logging.Formatter('%(name)s - %(levelname)s - %(message)s')
 c_handler.setFormatter(c_format)
 #logger.addHandler(c_handler)
@@ -57,7 +57,7 @@ class ParserConfig:
 		if "log_level" in config:
 			self.log_level=config["log_level"]
 		else:
-			self.log_level=logging.DEBUG
+			self.log_level=logging.WARNING
 		set_logging_level(self.log_level)
 		if "system_min" in config:
 			self.system_min = config["system_min"]
@@ -202,6 +202,8 @@ class OmrScore:
 		
 		for page in self.pages:
 			page_begins = True
+			
+				
 			#score_page = score_model.Page(page.no_page)
 			#score.add_page(score_page)
 			for system in page.systems:
@@ -265,11 +267,12 @@ class OmrScore:
 						# Annotate this measure
 						annotation = annot_mod.Annotation.create_annot_from_xml_to_image(
 							self.creator, self.uri, measure_for_part.id, 
-							self.score_image_url, measure.region.string_xyhw(), 
+							page.page_url, measure.region.string_xyhw(), 
 							constants_mod.IREGION_MEASURE_CONCEPT)
+						#print(f'Inserting annotation on measure {measure_for_part.id}, with target {annotation.target} ')
 						score.add_annotation (annotation)
 						
-						# Check if the measure starts with a change of clef or meter
+						# Check if a staff starts with a change of clef or meter
 						for header in measure.headers:
 							if part.staff_exists(header.no_staff):
 								# This header does relate to the current part
@@ -562,9 +565,9 @@ class Page:
 	
 	def __init__(self, json_page):
 		if "page_url" in json_page:
-			self.page_url = Region(json_page["page_url"])
+			self.page_url = json_page["page_url"]
 		else: 
-			self.page_url = None
+			self.page_url = "Unknwon page URL ..."
 
 		self.no_page = json_page["no_page"]
 		self.systems=[]

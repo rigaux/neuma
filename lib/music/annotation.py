@@ -167,6 +167,9 @@ class Target:
 		# If the annotation itself has a URI, it may be given
 		self.resource = resource
 		return
+	
+	def __str__ (self):
+		return str(self.resource)
 
 	def get_json_obj(self):
 		return {"resource": self.resource.get_json_obj(), "type": "SpecificResource"}
@@ -250,6 +253,9 @@ class SpecificResource(Resource):
 		super().__init__(source)
 		self.selector = selector
 
+	def __str__ (self):
+		return f"Target: {self.source} - {self.selector}"
+
 	def get_json_obj(self):
 		return {"source": self.source, 
 			"selector": self.selector.get_json_obj()}
@@ -273,6 +279,8 @@ class FragmentSelector:
 		# The value that specifies the fragment
 		self.value = value
 
+	def __str__ (self):
+			return f"Fragment selector conform to {self.conforms_to} with value {self.value}"
 	def get_json_obj(self):
 		''' 
 			Return an object for JSON serialisation

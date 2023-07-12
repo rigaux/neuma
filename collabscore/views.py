@@ -130,8 +130,10 @@ def tests(request, opus_ref):
 		if dba.body is not None:
 			dba.body.delete()
 		dba.delete()
-	for annotation in score.annotations:
+	for annotation in omr_score.annotations:
 		annotation.target.resource.source = score.uri
+		print (f'Inserting annotation with target {annotation.target} ')
+
 		db_annot = Annotation.create_from_web_annotation(request.user, opus, annotation)
 		db_annot.target.save()
 		if db_annot.body is not None:

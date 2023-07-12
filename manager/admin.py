@@ -14,6 +14,9 @@ class CorpusAdmin(GuardedModelAdmin):
 class OpusAdmin(GuardedModelAdmin):
     search_fields = ("ref", "title", "composer")
  
+class OpusSourceAdmin(GuardedModelAdmin):
+    search_fields = ("ref",  "url")
+
 
 class OpusMetaAdmin(GuardedModelAdmin):
     search_fields = ("meta_key", "meta_value")
@@ -41,7 +44,7 @@ admin.site.register(Opus, OpusAdmin)
 admin.site.register(OpusMeta, OpusMetaAdmin)
 admin.site.register(AnalyticModel, AnalyticModelAdmin)
 admin.site.register(SourceType)
-admin.site.register(OpusSource)
+admin.site.register(OpusSource,OpusSourceAdmin)
 admin.site.register(Annotation)
 admin.site.register(Resource)
 admin.site.register(SimMatrix)

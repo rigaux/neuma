@@ -102,7 +102,7 @@ class Articulation ():
 	STACCATO = "staccato"
 	ACCENT = "accent"
 	TENUTO="tenuto"
-	MARCATO="marcato"
+	STRONG_ACCENT="strong-accent"
 	CODA="coda"
 	SEGNO="segno"
 
@@ -114,6 +114,8 @@ class Articulation ():
 			self.m21_articulation = m21.articulations.Accent()
 		elif art_type == Articulation.TENUTO:
 			self.m21_articulation = m21.articulations.Tenuto()
+		elif art_type == Articulation.STRONG_ACCENT:
+			self.m21_articulation = m21.articulations.StrongAccent()
 		else:
 			raise score_mod.CScoreModelError (f"Unknown articulation type: '{art_type}'")
 
