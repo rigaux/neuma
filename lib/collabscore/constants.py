@@ -56,7 +56,9 @@ SMB_8THREST_HEAD = "8thresthead"
 # Alterations
 
 FLAT_SYMBOL="flat"
+DFLAT_SYMBOL="dFlat"
 SHARP_SYMBOL="sharp"
+DSHARP_SYMBOL="dSharp"
 NATURAL_SYMBOL="natural"
 	
 # Articulations

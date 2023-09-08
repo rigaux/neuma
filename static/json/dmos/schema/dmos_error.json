@@ -2,11 +2,21 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "dmos_error.json",
   "title": "Schema of DMOS errors",
-  "description": "TBD",
+  "description": "Encoding of an error reported by DMOS: a code, and a list of key-values",
   "type": "object",
   "properties": {
-     "message": {"type": "string"}
+     "code": {"decription": "Normalized code specifying the error type", "type": "string"},
+     "values": {"type": "array", 
+                "items": { "type": "object", 
+                 "properties": {
+                       "key": {"type": "string"},
+                      "value": {"type": "any"}
+                  },
+                  "required": ["key","value"],
+                  "additionalProperties": false
+                }
+      }
   },
-   "required": ["message"],
+  "required": ["code"],
   "additionalProperties": false
 }

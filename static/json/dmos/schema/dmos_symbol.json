@@ -1,12 +1,12 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "dmos_symbol.json",
-  "title": "Symbol description",
+  "$id": "dmos_tuplet_info.json",
+  "title": "Description of a tuplet",
   "type": "object",
   "properties": {
-     "label": {"type": "string"},
-     "region": {"$ref": "dmos_region.json"}
+    "num": {"description": "Used for tuplet: gives the actual number of events wrt the expected one (specified by numbase)", "type": "integer"},
+    "num_base": {"description": "Used for tuplet: gives the expected number of events wrt the actual one (specified by num)", "type": "integer"}
    },
-   "required": ["label"],
+   "required": ["num","num_base"],
   "additionalProperties": false
 }

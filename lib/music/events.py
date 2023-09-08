@@ -49,7 +49,7 @@ class Event:
 		
 	def __init__(self, duration) :
 		Event.counter_event += 1
-		self.id = f'{Event.counter_context}n{Event.counter_event}'
+		self.id = f'{Event.counter_context}E{Event.counter_event}'
 		self.duration = duration
 		self.m21_event = None 
 		self.type = Event.TYPE_NOTE
@@ -153,7 +153,9 @@ class Note (Event):
 	UNDEFINED_STAFF = 0
 	
 	ALTER_FLAT = "-"
+	ALTER_DOUBLE_FLAT = "--"
 	ALTER_SHARP = "#"
+	ALTER_DOUBLE_SHARP = "##"	
 	ALTER_NATURAL = "n"
 	ALTER_NONE = ""
 		

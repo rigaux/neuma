@@ -1,0 +1,12 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "dmos_symbol.json",
+  "title": "Symbol description",
+  "type": "object",
+  "properties": {
+     "label": {"type": "string"},
+     "region": {"$ref": "dmos_region.json"}
+   },
+   "required": ["label"],
+  "additionalProperties": false
+}

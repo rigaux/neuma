@@ -15,10 +15,12 @@ import lib.music.events as score_events
 import lib.music.notation as score_notation
 import lib.music.annotation as annot_mod
 import lib.music.constants as constants_mod
+import lib.music.source as source_mod
 
 import verovio
 
 from .constants import *
+from lib.music.source import ScoreImgManifest
 
 # Get an instance of a logger
 # See https://realpython.com/python-logging/
@@ -59,6 +61,15 @@ class ParserConfig:
 		else:
 			self.log_level=logging.WARNING
 		set_logging_level(self.log_level)
+		
+		if "page_min" in config:
+			self.page_min = config["page_min"]
+		else:
+			self.page_min = 0
+		if "page_max" in config:
+			self.page_max = config["page_max"]
+		else:
+			self.page_max = sys.maxsize
 		if "system_min" in config:
 			self.system_min = config["system_min"]
 		else:
@@ -78,6 +89,7 @@ class ParserConfig:
 
 	def print (self):
 		print (f"Parser configuration:\nLog level={self.log_level}\n" +
+		         f"page_min={self.page_min}\npage_max={self.page_max}\n" +
 		         f"system_min={self.system_min}\nsystem_max={self.system_max}\n" +
 			     f"measure_min={self.measure_min}\nmeasure_max={self.measure_max}")
 			
@@ -167,7 +179,7 @@ class OmrScore:
 	"""
 	  A structured representation of the score supplied by the OMR tool
 	"""
-	def __init__(self, uri, json_data, config={}):
+	def __init__(self, uri, json_data, config={}, manifest=None):
 		"""
 			Input: a validated JSON object. The method builds
 			a representation based on the Python classes
@@ -180,11 +192,43 @@ class OmrScore:
 		self.creator = annot_mod.Creator ("collabscore", 
 										annot_mod.Creator.SOFTWARE_TYPE, 
 										"collabscore")
+		
+		# Keep the structure of the score
+		self.manifest = source_mod.ScoreImgManifest(self.id, self.uri)
+		
+		current_page_no = 0
+		current_system_no = 0
+		current_measure_no = 0
+		
 		self.pages = []
 		# Analyze pages
 		if "pages" in json_data:
 			for json_page in json_data["pages"]:
-				self.pages.append(Page(json_page))
+				current_page_no += 1
+				page = Page(json_page)
+				self.pages.append(page)
+							
+				# Create the manifest from the source
+				if manifest is None:
+					src_page = source_mod.ScoreImgPage(page.page_url, current_page_no)
+					for system in page.systems:
+						current_system_no += 1
+						src_system = source_mod.ScoreImgSystem(current_system_no)
+						src_page.add_system(src_system)
+					
+						for header in system.headers:
+							src_staff = source_mod.ScoreImgStaff(header.no_staff)
+							src_system.add_staff(src_staff)
+							# Without further information, we assume one staff = one part
+							# Safety: an id should not start with a digit
+							if header.id_part[0].isdigit():
+								header.id_part = "P" + header.id_part
+								src_staff.add_part(header.id_part)
+
+					self.manifest.add_page(src_page)
+				else:
+					# Use the supplied manifest
+					self.manifest = manifest
 			
 		self.config = ParserConfig(config)
 		self.config.print()
@@ -196,14 +240,35 @@ class OmrScore:
 		
 		# Create an OMR score (with layout)
 		score = score_model.Score(use_layout=False)
+		
+		for page in self.pages:
+			for system in page.systems:
+				for header in system.headers:
+					# Safety: an id should not start with a digit
+					if header.id_part[0].isdigit():
+						header.id_part = "P" + header.id_part
+					if score.part_exists(header.id_part):
+						logger.info (f"Part {header.id_part} already exists")
+					else:
+						logger.info (f"Creating part {header.id_part}")
+						part = score_model.Part(id_part=header.id_part)
+						score.add_part(part)
+			
+	
+		# Main scan: we fill the parts with measures
 		current_page_no = 0
 		current_system_no = 0
 		current_measure_no = 0
 		
 		for page in self.pages:
+			current_page_no += 1
+			if (current_page_no < self.config.page_min) or (
+					    current_page_no > self.config.page_max):
+				continue
+
+			print (f"Processing page {current_page_no}")
 			page_begins = True
 			
-				
 			#score_page = score_model.Page(page.no_page)
 			#score.add_page(score_page)
 			for system in page.systems:
@@ -226,9 +291,12 @@ class OmrScore:
 						part = score.get_part(header.id_part)
 						part.clear_staves()
 					else:
-						logger.info (f"Creating part {header.id_part}")
+						# Should not happen: parts have been created once for all
+						logger.error (f"Part {header.id_part} should have been already created")
 						part = score_model.Part(id_part=header.id_part)
 						score.add_part(part)
+						# Create the part, but result undefined...
+						
 					# Add the staff
 					part.add_staff (score_notation.Staff(header.no_staff))
 					
@@ -256,9 +324,10 @@ class OmrScore:
 						# add a measure for each staff. 
 						measure_for_part = score_model.Measure(part, current_measure_no)
 						# Adding system breaks
-						if 	page_begins:
-							system_begins = False
+						if 	page_begins and current_page_no > 1:
+							measure_for_part.add_page_break()
 							page_begins = False
+							system_begins = False
 						elif system_begins:
 							## Add a system break
 							measure_for_part.add_system_break()
@@ -312,7 +381,7 @@ class OmrScore:
 						
 						# Reset the event counter
 						score_events.Event.reset_counter(
-							f'{voice.id_part}m{current_measure.id}{voice.id}')
+							f'F{current_page_no}{voice.id_part}M{current_measure.id}{voice.id}')
 
 						# Create the voice
 						voice_part = voice_model.Voice(part=current_part,voice_id=voice.id)
@@ -379,7 +448,8 @@ class OmrScore:
 		
 		# Duration of the event: the DMOS encoding is 1 from whole note, 2 for half, etc.
 		# Our encoding (music21) is 1 for quarter note. Hence the computation
-		duration = score_events.Duration(voice_item.duration.numer, voice_item.duration.denom)
+		duration = score_events.Duration(voice_item.duration.numer * voice_item.numbase, 
+										voice_item.duration.denom * voice_item.num)
 		
 		# The symbol in the duration contains the region of the event
 		#  We accept events without region, to simplify the JSON notation
@@ -410,8 +480,12 @@ class OmrScore:
 					alter = def_alter
 				elif head.alter.label == FLAT_SYMBOL:
 					alter = score_events.Note.ALTER_FLAT
+				elif head.alter.label == DFLAT_SYMBOL:
+					alter = score_events.Note.ALTER_DOUBLE_FLAT
 				elif head.alter.label  == SHARP_SYMBOL:
 					alter = score_events.Note.ALTER_SHARP
+				elif head.alter.label  == DSHARP_SYMBOL:
+					alter = score_events.Note.ALTER_DOUBLE_SHARP
 				elif head.alter.label  == NATURAL_SYMBOL:
 					alter = score_events.Note.ALTER_NATURAL
 				else:  
@@ -567,7 +641,7 @@ class Page:
 		if "page_url" in json_page:
 			self.page_url = json_page["page_url"]
 		else: 
-			self.page_url = "Unknwon page URL ..."
+			self.page_url = "Unknwown"
 
 		self.no_page = json_page["no_page"]
 		self.systems=[]
@@ -632,6 +706,8 @@ class VoiceItem:
 		self.clef_attr = None
 		self.no_staff_clef = None
 		self.beam_id = None
+		self.num = 1
+		self.numbase = 1
 		
 		self.duration = Duration (json_voice_item["duration"])
 		if "no_group" in json_voice_item:
@@ -639,6 +715,11 @@ class VoiceItem:
 			# Assume that 0 is a no-value
 			if no_group > 0:
 				self.beam_id = json_voice_item["no_group"]
+		if "num" in json_voice_item:
+			self.num = json_voice_item["num"]
+		if "numbase" in json_voice_item:
+			self.numbase = int (json_voice_item["numbase"] / 2)
+
 		if "direction" in json_voice_item:
 			self.direction = json_voice_item["direction"]
 		if "att_note" in json_voice_item:
@@ -698,6 +779,7 @@ class Note:
 		self.articulations = []
 		if "alter" in json_note:
 			self.alter = Symbol (json_note["alter"])
+		
 		if "tied" in json_note:
 			self.tied = json_note["tied"]
 

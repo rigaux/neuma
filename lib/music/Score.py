@@ -476,6 +476,9 @@ class Measure:
 	def add_system_break(self):
 		system_break = m21.layout.SystemLayout(isNew=True)
 		self.m21_measure.insert (system_break)
+	def add_page_break(self):
+		system_break = m21.layout.PageLayout(isNew=True)
+		self.m21_measure.insert (system_break)
 		
 
 class CScoreModelError(Exception):

@@ -81,14 +81,16 @@ class TimeSignature:
 	'''
 		Represented as a fraction
 	'''
-
+	counter = 0
+	
 	def __init__(self, numer, denom) :
 		#self.fraction = Fraction (numer, denom)
 		self.numer = numer
 		self.denom = denom
 		# m21 duration is the float obtained from the fraction
 		self.m21_time_signature = m21.meter.TimeSignature('{}/{}'.format(self.numer, self.denom))
-		self.m21_time_signature.id = "tstoto"
+		self.m21_time_signature.id = f"tsign{TimeSignature.counter}" 
+		TimeSignature.counter += 1
 
 class KeySignature:
 	'''
