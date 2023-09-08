@@ -58,6 +58,9 @@ class Annotation:
 		# Default style
 		self.style = Style ("square", "content6")
 		
+	def __str__ (self):
+		return f"Anot. model:{self.annotation_model} body:{self.body} target:{self.target}"
+	
 	def format_id(self):
 		return f'annot{self.id}' 
 
@@ -127,6 +130,9 @@ class Annotation:
 		body_selector = FragmentSelector(FragmentSelector.IMAGE_SELECTOR, region)
 		body_resource = SpecificResource(image_url, body_selector)
 		body = ResourceBody(body_resource)
+		
+		#print(f'Inserting annotation with concept {annot_concept} from {target} on element {xml_id}, with body {body} ')
+			
 		return Annotation(Annotation.get_new_id(), creator, target, body, 
 							AM_IMAGE_REGION, annot_concept, 
 							Annotation.MOTIVATION_LINKING,
@@ -200,6 +206,9 @@ class TextualBody(Body):
 		self.value = value
 		return
 
+	def __str__ (self):
+		return self.value
+	
 	def get_json_obj(self):
 		return {"type": "TextualBody", "value": self.value}
 
@@ -213,6 +222,9 @@ class ResourceBody(Body):
 		self.type = "resource_body"
 		self.resource = resource
 		return
+
+	def __str__(self):
+		return f"ResourceBody. Source: {self.resource}"
 
 	def get_json_obj(self):
 		return {"type": "SpecificResource", 
@@ -244,6 +256,8 @@ class Resource:
 	def get_json_obj(self):
 		return {"source": self.source}
 
+	def __str__ (self):
+		return f"Resource object {self.source}"
 class SpecificResource(Resource):
 	'''
 	  Reference to a specific part of a source

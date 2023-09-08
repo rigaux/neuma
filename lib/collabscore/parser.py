@@ -188,6 +188,7 @@ class OmrScore:
 		self.id = 1 #json_data["id"]
 		self.score_image_url = "http://" # json_data["score_image_url"]
 		#self.date = json_data["date"]
+		self.json_data = json_data
 		
 		self.creator = annot_mod.Creator ("collabscore", 
 										annot_mod.Creator.SOFTWARE_TYPE, 
@@ -334,11 +335,12 @@ class OmrScore:
 							system_begins = False
 						
 						# Annotate this measure
+						target = measure.region.string_xyhw()
 						annotation = annot_mod.Annotation.create_annot_from_xml_to_image(
 							self.creator, self.uri, measure_for_part.id, 
 							page.page_url, measure.region.string_xyhw(), 
 							constants_mod.IREGION_MEASURE_CONCEPT)
-						#print(f'Inserting annotation on measure {measure_for_part.id}, with target {annotation.target} ')
+						#print(f'Inserting annotation {target} on measure {measure_for_part.id}, with target {annotation.target} ')
 						score.add_annotation (annotation)
 						
 						# Check if a staff starts with a change of clef or meter
@@ -641,7 +643,7 @@ class Page:
 		if "page_url" in json_page:
 			self.page_url = json_page["page_url"]
 		else: 
-			self.page_url = "Unknwown"
+			self.page_url = "Unspecified page URL"
 
 		self.no_page = json_page["no_page"]
 		self.systems=[]

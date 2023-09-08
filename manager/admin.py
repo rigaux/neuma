@@ -15,7 +15,7 @@ class OpusAdmin(GuardedModelAdmin):
     search_fields = ("ref", "title", "composer")
  
 class OpusSourceAdmin(GuardedModelAdmin):
-    search_fields = ("ref",  "url")
+    search_fields = ("opus__ref", "ref",  "url")
 
 
 class OpusMetaAdmin(GuardedModelAdmin):

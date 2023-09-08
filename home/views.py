@@ -431,6 +431,7 @@ class OpusView(NeumaView):
 				dba.delete()
 			# Store new annotations
 			for annotation in context["dmos_score"] .annotations:
+				#print (annotation)
 				annotation.target.resource.source = score.uri
 				db_annot = Annotation.create_from_web_annotation(self.request.user, 
 															opus, 

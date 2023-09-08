@@ -231,7 +231,7 @@ if request.session.search_context.pattern != ""
         {% endif %}
   
                <li>  {% if "change_corpus" in user_corpus_perms %}
-           Actions :  <a  href="{% url 'home:opus' opus.ref %}?edit_source=1&source_id={{source.id}}">
+           Actions :  <a   href="{% url 'admin:manager_opussource_change' source.id %}">
                            Edit
                          </a> </li>
                   </ul>       
