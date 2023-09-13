@@ -6,19 +6,19 @@
  * Use Verovio to load and display a MEI doc.
  */
 
-function displayWithVerovio(opusRef, meiUrl, target, highlights) {
+function displayWithVerovio(opusRef, meiUrl, target, highlights, options) {
 	/* Create the Vevorio toolkit instance */
 	var vrvToolkit = new verovio.toolkit();
-	var vrvOptions = {
-		inputFormat : 'mei',
+	/*var vrvOptions = {
 		scale : 35,
 		pageHeight : 20000,
-		adjustPageHeight : 1,
-		border : 0,
-		ignoreLayout : 1
+		adjustPageHeight : 1
 	};
-	vrvToolkit.setOptions(vrvOptions);
+*/
+	vrvToolkit.setOptions(options);
 
+ 	console.log("Verovio has loaded!");
+ 
 	// Where do we show the score
 	var vrvDiv = document.getElementById(target);
 
@@ -34,8 +34,10 @@ function displayWithVerovio(opusRef, meiUrl, target, highlights) {
 		// Get all XML fragments
 		alter = GetAnnotations(opusRef, "quality",  "composer") 
 
+		 console.log("Calling ShowScore");
 		showScore(vrvToolkit, meiUrl, vrvDiv, alter)
 		
+		 console.log("ShowScore  has been called!");
 		// Links to the pages produced by Verovio
 		var links = document.getElementById("links");
 		var nbPages = vrvToolkit.getPageCount()
@@ -88,7 +90,6 @@ function compDisplayWithVerovio(meiUrl, target1,target2) {
 	/* Create the Vevorio toolkit instance */
 	var vrvToolkit = new verovio.toolkit();
 	var vrvOptions = {
-		inputFormat : 'mei',
 		scale : 35,
 		pageHeight : 20000,
 		adjustPageHeight : 1,
@@ -138,12 +139,9 @@ function displayComparisonWithVerovio(opusRef, meiUrl, target, highlights) {
 	/* Create the Vevorio toolkit instance */
 	var vrvToolkit = new verovio.toolkit();
 	var vrvOptions = {
-		inputFormat : 'mei',
 		scale : 35,
 		pageHeight : 20000,
-		adjustPageHeight : 1,
-		border : 0,
-		ignoreLayout : 1
+		adjustPageHeight : 1
 	};
 	vrvToolkit.setOptions(vrvOptions);
 
@@ -233,16 +231,17 @@ function reloadScore() {
  */
 
 function showScore(vrvToolkit, meiUrl, vrvDiv, alter=[]) {
-	var serializer = new XMLSerializer();
+	  
+	  console.log ("Appel showScore " + vrvDiv)
+	  fetch(meiUrl)
+	        .then( (response) => response.text() )
+	        .then( (meiXML) => {
+	          let svg = vrvToolkit.renderData(meiXML, {});
+	          vrvDiv.innerHTML = svg;
+	    });
 
-	/* Load the MEI file using HTTP GET */
-    $.ajax({
-        async: false,
-        type: "GET",
-        url: meiUrl,
-         data: '',
-        success: function(data) {
-			
+ 			/*
+             Old code managing "'alter" data. Do not know what it means
 			for (var j = 0; j < alter.length; j++){
 				frag = alter[j]
 				console.log ("Found alter for " + frag.note_id + ": " + frag.xml_fragment)
@@ -251,15 +250,7 @@ function showScore(vrvToolkit, meiUrl, vrvDiv, alter=[]) {
 				var current_node = $(data).find('note[xml\\:id="' + frag.note_id + '"]')
 				$(data).find('note[xml\\:id="' + frag.note_id + '"]').replaceWith (frag.xml_fragment)
 			}
-
-			var meiString = serializer.serializeToString(data);
-			
-			var vrvData = vrvToolkit.loadData(meiString + "\n");
-			// Now show the score
-			vrvDiv.innerHTML = vrvToolkit.renderPage(currentPage);
-		}
-    });
-    
+         */
 }
 
 /**

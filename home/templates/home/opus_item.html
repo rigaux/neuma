@@ -43,33 +43,6 @@
     </h5>
     
        {% if opus.mei %}
- 
-     
-    <script type="text/javascript">
-    /* Load the file using HTTP GET */
-    console.log ("Get {{opus.mei.url}}")
-        var vrvOptions = {
-        inputFormat : 'mei',
-        scale : 35,
-        pageHeight : 100,
-        adjustPageHeight : 1,
-        border : 0,
-        ignoreLayout : 1
-    };
-
-    vrvToolkit.setOptions(vrvOptions);
-    
-    $.ajax({
-    url: "{{opus.mei.url}}"
-    , dataType: "text"
-    , success: function(data) {
-        var svg = vrvToolkit.renderData(data);
-        $("#incipit{{opus.id}}").html(svg);
-    },
-    error: function (xhr, ajaxOptions, thrownError) {
-        console.log("Error with document {{opus.mei.url}} " + xhr.status);
-      }
-});</script>       
 
     <table class="preview"><tr>
         <td valign="top">
@@ -77,6 +50,20 @@
         </td>
     </tr>
     </table>
+    
+     
+    <script type="text/javascript">
+    /* Load the file using HTTP GET */
+    console.log ("Get {{opus.mei.url}}")
+    var vrvOptions = {
+        scale : 35,
+        pageHeight : 100,
+        adjustPageHeight : 1
+    };
+    vrvToolkit.setOptions(vrvOptions);
+   var vrvDiv = document.getElementById("incipit{{opus.id}}");
+   showScore(vrvToolkit, "{{opus.mei.url}}", vrvDiv, [], vrvOptions) 
+    </script>       
 {% endif %}
 
 </div>

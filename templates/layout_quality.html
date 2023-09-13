@@ -49,21 +49,23 @@
     {% if opus.mei %} 
 	<script type="text/javascript">
 	 
+	console.log ("Verovio part")
 	 var isPlaying = false;
 	 var ids = [];
 	 var vrvToolkit;
 	 var page = 1
 	 
 	 // Call JS function when the document is loaded
-	 $(document).ready(function() {
+	 document.addEventListener("DOMContentLoaded", (event) => {
 
-	        // Copy the pattern in the page 
-	        clonePattern("seepartition", "pattern_score");
+	     console.log ("Dom loaded")
+	    // Copy the pattern in the page 
+	    clonePattern("seepartition", "pattern_score");
 
-	        // Display the score with Verovio
-	        var highlights =[];
-	        highlights = {{matching_ids}}
-	        vrvToolkit= displayWithVerovio("{{opus.ref}}", "{{opus.mei.url}}", "verovio", highlights);
+		// Display the score with Verovio    
+	    var highlights =[];
+	        //highlights = {{matching_ids}}
+	        vrvToolkit= displayWithVerovio("{{opus.ref}}", "{{opus.mei.url}}", "verovio", "{}", {});
 
 	        // Create the MIDI player
 	        $("#player").midiPlayer({
@@ -72,8 +74,7 @@
 	            onStop: midiStop,
 	            width: 250
 	        });
-	      
-	    });    
+	 });
 	 </script>
 	{% endif %}
 </body>

@@ -8,6 +8,12 @@ import json
   via the concept of "Manifest" inspired by IIIF 
 '''
 
+class ScoreImgPart:
+	'''
+	   Core structure of a score = parts. We keep the id, name,
+	    abbrevation
+	 '''
+	
 class ScoreImgManifest:
 	'''
 		Describes the organization of an image of set of images 
