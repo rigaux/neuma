@@ -221,14 +221,13 @@ class OmrScore:
 							src_staff = source_mod.ScoreImgStaff(header.no_staff)
 							src_system.add_staff(src_staff)
 							# Without further information, we assume one staff = one part
-							# Safety: an id should not start with a digit
-							if header.id_part[0].isdigit():
-								header.id_part = "P" + header.id_part
-								src_staff.add_part(header.id_part)
-
+							src_part = source_mod.ScoreImgPart(header.id_part, header.id_part, header.id_part)
+							self.manifest.add_part(src_part)
+							src_staff.add_part(header.id_part)
 					self.manifest.add_page(src_page)
 				else:
 					# Use the supplied manifest
+					print ("Using the supplied manifest")
 					self.manifest = manifest
 			
 		self.config = ParserConfig(config)
@@ -242,19 +241,11 @@ class OmrScore:
 		# Create an OMR score (with layout)
 		score = score_model.Score(use_layout=False)
 		
-		for page in self.pages:
-			for system in page.systems:
-				for header in system.headers:
-					# Safety: an id should not start with a digit
-					if header.id_part[0].isdigit():
-						header.id_part = "P" + header.id_part
-					if score.part_exists(header.id_part):
-						logger.info (f"Part {header.id_part} already exists")
-					else:
-						logger.info (f"Creating part {header.id_part}")
-						part = score_model.Part(id_part=header.id_part)
-						score.add_part(part)
-			
+		# The manifest tells us the parts of the score: we create them
+		for src_part in self.manifest.get_parts():
+			part = score_model.Part(id_part=src_part.id, name=src_part.name, 
+												abbreviation=src_part.abbreviation)
+			score.add_part(part)			
 	
 		# Main scan: we fill the parts with measures
 		current_page_no = 0
@@ -267,7 +258,10 @@ class OmrScore:
 					    current_page_no > self.config.page_max):
 				continue
 
-			print (f"Processing page {current_page_no}")
+			# Get the page from the manifest
+			mnf_page = self.manifest.get_page(current_page_no)
+			
+			#print (f"Processing page {current_page_no}")
 			page_begins = True
 			
 			#score_page = score_model.Page(page.no_page)
@@ -278,28 +272,33 @@ class OmrScore:
 					    current_system_no > self.config.system_max):
 					continue
 
+				# Get the system from the manifest
+				mnf_system = mnf_page.get_system(current_system_no)
+
 				#score_system = score_model.System(system.id)
 				#score_page.add_system(score_system)
 				system_begins = True
 				
+				# We clear the staves for all parts of the score: maybe a part
+				# is not represented in this specific system
+				for part in score.parts:
+					part.clear_staves()
+					
 				# Headers defines the parts and their staves in this system
 				for header in system.headers:
-					# Safety: an id should not start with a digit
-					if header.id_part[0].isdigit():
-						header.id_part = "P" + header.id_part
-					if score.part_exists(header.id_part):
-						logger.info (f"Part {header.id_part} already exists")
-						part = score.get_part(header.id_part)
-						part.clear_staves()
-					else:
-						# Should not happen: parts have been created once for all
-						logger.error (f"Part {header.id_part} should have been already created")
-						part = score_model.Part(id_part=header.id_part)
-						score.add_part(part)
-						# Create the part, but result undefined...
-						
-					# Add the staff
-					part.add_staff (score_notation.Staff(header.no_staff))
+					# Get the staff from the manifest
+					mnf_staff = mnf_system.get_staff(header.no_staff)
+					# Get the part
+					# IMPORTANT: maybe we have several parts for this staff
+					for id_part in mnf_staff.parts:
+						if score.part_exists(id_part):
+							logger.info (f"Add staff {header.no_staff} to part {id_part}")
+							part = score.get_part(id_part)
+							# Add the staff
+							part.add_staff (score_notation.Staff(header.no_staff))		
+						else:
+							# Should not happen: parts have been created once for all
+							logger.error (f"Part {id_part} should have been already created")
 					
 				# Now we scan the measures. DMOS gives us a measure
 				# for all the parts of the system. Therefore we add 
@@ -320,9 +319,11 @@ class OmrScore:
 					# Create a new measure for each part
 					current_measures = {}
 					for part in score.get_parts():
-						# IMPORTANT: Works for a part with a single staff. 
-						# Else, we probably need to
-						# add a measure for each staff. 
+						# We ignore the part if it does not have a staff for the current system
+						#if not part.has_staves():
+						#	print (f"We do no add a measure for part {part.id} and measure {current_measure_no}")
+						#	continue
+						
 						measure_for_part = score_model.Measure(part, current_measure_no)
 						# Adding system breaks
 						if 	page_begins and current_page_no > 1:
@@ -377,9 +378,17 @@ class OmrScore:
 					
 					for voice in measure.voices:
 
-						# Get the part the voice belongs to
-						current_part = score.get_part(voice.id_part)
-						current_measure = current_measures[voice.id_part]
+						# Here is gets tricky. DMOS gives has 'id_part' the staff where
+						# the first voice event appears. From this staff, we deduce
+						# the part the voice belongs to
+						mnf_staff = mnf_system.get_staff(voice.id_staff)
+						for id_part in mnf_staff.parts:
+							# Assume that this is the first part							
+							current_part = score.get_part(id_part)
+							# Ignore othe possible parts in the staff
+							break
+						
+						current_measure = current_measures[current_part.id]
 						
 						# Reset the event counter
 						score_events.Event.reset_counter(
@@ -464,7 +473,7 @@ class OmrScore:
 			# It can be a note or a chord
 			events = []
 			for head in voice_item.note_attr.heads:
-				no_staff = head.no_staff # Will be used as the chord staff.
+				no_staff = StaffHeader.make_id_staff(head.no_staff) # Will be used as the chord staff.
 				current_clef = voice.get_current_clef_for_staff(no_staff)
 				# The head position gives the position of the note on the staff
 				(pitch_class, octave)  = current_clef.decode_pitch (head.height)
@@ -687,10 +696,8 @@ class Voice:
 	
 	def __init__(self, json_voice):
 		self.id = json_voice["id"]
-		self.id_part =  json_voice["id_part"]
-		# Safety
-		if self.id_part[0].isdigit():
-			self.id_part =  "P" + self.id_part
+		self.id_part =  StaffHeader.make_id_part ( json_voice["id_part"])
+		self.id_staff =  StaffHeader.make_id_staff ( json_voice["id_part"])
 		
 		self.items = []
 		for json_item in json_voice["elements"]:
@@ -731,7 +738,7 @@ class VoiceItem:
 			self.rest_attr = NoteAttr (json_voice_item["att_rest"])
 		if "att_clef" in json_voice_item:
 			self.clef_attr  = Clef (json_voice_item["att_clef"])
-			self.no_staff_clef = json_voice_item["att_clef"]["no_staff"]
+			self.no_staff_clef = StaffHeader.make_id_staff(json_voice_item["att_clef"]["no_staff"])
 		self.errors = []
 		if "errors" in json_voice_item:
 			for json_error in json_voice_item["errors"]:
@@ -887,18 +894,26 @@ class StaffHeader:
 	"""
 	
 	def __init__(self, json_system_header):
-		self.id_part =json_system_header["id_part"]
-		self.no_staff =json_system_header["no_staff"]
+		self.id_part = StaffHeader.make_id_part (json_system_header["id_part"])
+		self.no_staff = StaffHeader.make_id_staff( json_system_header['no_staff'])
 		if "first_bar" in json_system_header:
 			self.first_bar = Segment(json_system_header["first_bar"])
 
+	@staticmethod
+	def make_id_staff (no_staff):
+		return f"Staff{no_staff}"
+	
+	@staticmethod
+	def make_id_part (id_part):
+		return f"Part{id_part}"
+	
 class MeasureHeader:
 	"""
 		Representation of a measure header
 	"""
 	
 	def __init__(self, json_measure_header):
-		self.no_staff = json_measure_header["no_staff"] 
+		self.no_staff = StaffHeader.make_id_staff(json_measure_header["no_staff"] )
 		self.clef = None 
 		self.key_signature = None 
 		self.time_signature = None 

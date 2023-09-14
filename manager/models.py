@@ -27,8 +27,9 @@ from django.conf import settings
 from lib.music.Score import *
 from lib.music.jsonld import JsonLD
 
-# Annotation model
+# Score model
 import lib.music.annotation as annot_mod
+import lib.music.source as source_mod
 
 # DMOS parser
 from lib.collabscore.parser import CollabScoreParser, OmrScore
@@ -462,6 +463,10 @@ class Corpus(models.Model):
 					nb_source_files += 1
 					source_compressor.write(source.source_file.path, 
 							source.ref + "." + source.source_file.path.split(".")[-1])
+				if source.manifest:
+					nb_source_files += 1
+					source_compressor.write(source.manifest.path, 
+							source.ref + "_mnf." + source.manifest.path.split(".")[-1])
 			source_compressor.close()
 			if nb_source_files > 0:
 				source_file = opus.local_ref() +  '.szip'
@@ -637,11 +642,17 @@ class Corpus(models.Model):
 							for fname in source_zip.namelist():
 								base, extension = decompose_zip_name (fname)
 								if base == source.ref:
-									#print ("File " + fname + " found for source  " + source.ref)
+									# The file contains the source itself
 									sfile_content = source_zip.read(fname)
 									source.source_file.save(fname, ContentFile(sfile_content))
 									# In that case the URL is irrelevant
 									source.url=""
+									source.save()
+								if base == source.ref + "_mnf":
+									# The file contains the source manifest
+									print ("Import manifest")
+									manifest_content = source_zip.read(fname)
+									source.manifest.save(fname, ContentFile(manifest_content))
 									source.save()
 
 				# OK, we loaded metada : save
@@ -1129,6 +1140,12 @@ class Opus(models.Model):
 			if source.ref == OpusSource.DMOS_REF:
 				if source.source_file:
 					dmos_data = json.loads(source.source_file.read())
+				if source.manifest:
+					print ("Found a manifest")
+					json_manifest = json.loads(source.manifest.read())
+					manifest = source_mod.ScoreImgManifest.from_json(json_manifest)
+				else:
+					manifest = None
 		if dmos_data == None:
 			return "Unable to find the DMOS file ??"
 		try:
@@ -1137,21 +1154,22 @@ class Opus(models.Model):
 			return "DMOS file validation error : " + str(ex)
 		
 		# Parse DMOS data
-		omr_score = OmrScore (self.get_url(), dmos_data)
+		omr_score = OmrScore (self.get_url(), dmos_data, {}, manifest)
 		score = omr_score.get_score()
 	
 		# Store the MusicXML file in the opus
+		print ("Replace XML file")
 		score.write_as_musicxml ("/tmp/score.xml")
 		with open("/tmp/score.xml") as f:
 			score_xml = f.read()
 			self.musicxml.save("score.xml", ContentFile(score_xml))
 		
 		# Generate and store the MEI file
-		'''score.write_as_mei ("/tmp/score_mei.xml")
+		print ("Replace MEI file")
+		score.write_as_mei ("/tmp/score_mei.xml")
 		with open("/tmp/score_mei.xml") as f:
 			score_mei = f.read()
 			self.mei.save("mei.xml", ContentFile(score_mei))
-		'''
 		
 		return score
 
@@ -1304,6 +1322,7 @@ class OpusSource (models.Model):
 		source_ref = self.opus.ref.replace(settings.NEUMA_ID_SEPARATOR, "-")
 		return 'sources/' + source_ref + '/' + filename
 	source_file = models.FileField(upload_to=upload_path,null=True,storage=OverwriteStorage())
+	manifest = models.FileField(upload_to=upload_path,null=True,storage=OverwriteStorage())
 
 	class Meta:
 		db_table = "OpusSource"	

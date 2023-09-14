@@ -40,7 +40,7 @@ class Voice:
 		# What is the last clef met on this staff ?
 		if not (staff_id in self.current_clefs.keys()):
 			# Oups, no such staff 
-			raise CScoreModelError (f"No staff ‘{staff_id}' for voice {self.id}")
+			raise score_mod.CScoreModelError (f"No staff ‘{staff_id}' for voice {self.id}")
 		else:
 			return self.current_clefs[staff_id]
 

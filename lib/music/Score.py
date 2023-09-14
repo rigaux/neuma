@@ -3,6 +3,7 @@ import logging
 
 import music21 as m21
 from numpy.distutils.fcompiler import none
+from numpy import True_, False_
 
 #from neumasearch.MusicSummary import MusicSummary
 # No longer useful?
@@ -353,14 +354,14 @@ class Part:
 		Representation of a part as a hierarchy of parts / voices
 	"""
 	
-	def __init__(self, id_part, name="", abbr_name="") :
+	def __init__(self, id_part, name="", abbreviation="") :
 		self.id = id_part
 		
 		self.m21_part = m21.stream.Part(id=id_part)
 		# Metadata
 		self.m21_part.id  = "P" + id_part
 		self.m21_part.partName  = name
-		self.m21_part.partAbbreviation = abbr_name
+		self.m21_part.partAbbreviation = abbreviation
 
 		# List of staves the part is displayed on
 		self.staves = []
@@ -372,8 +373,16 @@ class Part:
 		# To call when we reinitialize a system or a page
 		self.staves = []
 		
+	def has_staves(self):
+		# Check if at least one staff is allocated to the part
+		if len(self.staves) > 0:
+			return True
+		else:
+			return False
+		
 	def add_staff (self, staff):
 		self.staves.append(staff)
+		
 	def staff_exists (self, no_staff):
 		for staff in self.staves:
 			if staff.id == no_staff:
