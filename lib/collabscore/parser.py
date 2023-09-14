@@ -227,7 +227,6 @@ class OmrScore:
 					self.manifest.add_page(src_page)
 				else:
 					# Use the supplied manifest
-					print ("Using the supplied manifest")
 					self.manifest = manifest
 			
 		self.config = ParserConfig(config)

@@ -1161,15 +1161,15 @@ class Opus(models.Model):
 		print ("Replace XML file")
 		score.write_as_musicxml ("/tmp/score.xml")
 		with open("/tmp/score.xml") as f:
-			score_xml = f.read()
-			self.musicxml.save("score.xml", ContentFile(score_xml))
+			self.musicxml = File(f,name="score.xml")
+			self.save()
 		
 		# Generate and store the MEI file
-		print ("Replace MEI file")
 		score.write_as_mei ("/tmp/score_mei.xml")
 		with open("/tmp/score_mei.xml") as f:
-			score_mei = f.read()
-			self.mei.save("mei.xml", ContentFile(score_mei))
+			print ("Replace MEI file")
+			self.mei = File(f,name="mei.xml")
+			self.save()
 		
 		return score
 
