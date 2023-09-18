@@ -58,10 +58,6 @@ from manager.models import (
 	SourceType
 )
 
-
-# For transcription services
-from transcription.models import QParse, Grammar, GrammarRule
-
 from lib.workflow.Workflow import Workflow, workflow_import_zip
 from quality.lib.NoteTree_v2 import MonophonicScoreTrees
 
@@ -71,7 +67,6 @@ from music21 import converter, mei
 import lib.music.Score as score_model
 import lib.music.annotation as annot_mod
 import lib.music.constants as constants_mod
-from lib.collabscore.parser import CollabScoreParser
 
 from lib.music.Score import *
 from .forms import *

@@ -56,8 +56,7 @@ from hashlib import md5
 from lib.neumautils.stats import symetrical_chi_square
 from lib.neumautils.matrix_transform import matrix_transform
 from lib.neumautils.kmedoids import cluster
-from lib.music.Voice import IncompleteBarsError
-import transcription
+
 from django.db.models.sql.where import OR
 from jinja2.nodes import Or
 from numpy.distutils.fcompiler import none

@@ -32,14 +32,7 @@
                      <li><a href="{% url 'quality:index' %}">{% trans "Quality" %}
                     </a></li>
                       {% endif %}
-    
-                    {% if current_view == "collabscore:index" %}
-                    <li class='selected'><a  href="{% url 'collabscore:index' %}">{% trans "Collabscore" %}
-                    </a></li>
-                    {% else %}
-                     <li><a href="{% url 'collabscore:index' %}">{% trans "Collabscore" %}
-                    </a></li>
-                      {% endif %}
+ 
 					<li><a href="{% url 'home:contact' %}">{% trans "Contact" %}</a>
 					</li>
 				</ul></li>

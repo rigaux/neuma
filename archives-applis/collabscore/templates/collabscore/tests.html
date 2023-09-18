@@ -37,10 +37,9 @@
     const app = new Verovio.App(document.getElementById("app"), {});
 
     // Load a file (MEI or MusicXML)
-	var score_url = 
 	console.log ("Loading {{opus_url}}");
 
-    fetch("{{opus_url}}")
+    fetch("https://www.verovio.org/editor/brahms.mei")
         .then(function(response) {
             return response.text();
         })

@@ -30,6 +30,7 @@ CircularAudioBuffer.prototype.filledBuffers = function () {
 
 // returns whether buffers are all filled
 CircularAudioBuffer.prototype.full = function () {
+    //console.debug(this.filledBuffers());
     return this.filledBuffers() >= this.slots - 1;
 }
 
@@ -67,25 +68,29 @@ var circularBuffer;
 var emptyBuffer;
 
 function initAudio() {
-    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    source = audioCtx.createBufferSource();
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)({sampleRate:SAMPLE_RATE});
     scriptNode = audioCtx.createScriptProcessor(BUFFER, 0, channels);
-    circularBuffer = new CircularAudioBuffer(4);
+    scriptNode.onaudioprocess = onAudioProcess;
+    
+    source = audioCtx.createBufferSource();
+    circularBuffer = new CircularAudioBuffer(8);
     emptyBuffer = audioCtx.createBuffer(channels, BUFFER, SAMPLE_RATE);
     
-    scriptNode.onaudioprocess = onAudioProcess;
     source.connect(scriptNode);
     source.start(0);
+    console.debug("initAudio");
 }
 
 function startAudio() {    
     scriptNode.connect(audioCtx.destination);
+    console.debug("startAudio");
 }
 
 function pauseAudio() {
+    circularBuffer.reset();
     scriptNode.disconnect();
+	console.debug("pauseAudio");
 }
-
 
 
 /************************************************************************
@@ -100,7 +105,7 @@ function processAudio(buffer_loc, size) {
     var buffer = circularBuffer.prepare();
     var left_buffer_f32 = buffer.getChannelData(0);
     var right_buffer_f32 = buffer.getChannelData(1);
-    
+        
     // Copy emscripten memory (OpenAL stereo16 format) to JS
     for (var i = 0; i < size; i++) {
         left_buffer_f32[i] = MidiPlayer.HEAP16[(buffer_loc >> 1) + 2 * i + 0] / 32768;
@@ -128,11 +133,11 @@ function updateProgress(current, total) {
 
 function completeConversion(status) {
     midiPlayer_drainBuffer = true;
-    console.log('complete conversion');
+    console.debug('completeConversion');
     midiPlayer_convertionJob = null;
     // Not a pause
     if (_EM_signalStop != 2) {
-        stop();   
+        setTimeout(stop, 1000);   
     }
 }
 
@@ -152,11 +157,12 @@ var midiPlayer_totalTime;
 
 // variables
 var midiPlayer_isLoaded = false;
+var midiPlayer_isAudioInit = false;
 var midiPlayer_input = null;
 var midiPlayer_lastMillisec = 0;
 var midiPlayer_midiName = ''
 var midiPlayer_convertionJob = null;
-var midiPlayer_currentSamples = 0;
+var midiPlayer_currentSamples = ULONG_MAX;
 var midiPlayer_totalSamples = 0;
 var midiPlayer_updateRate = 50;
 var midiPlayer_drainBuffer = false;
@@ -167,37 +173,29 @@ var midiPlayer_onStop = null;
 var midiPlayer_onUpdate = null;
 
 var MidiPlayer = {
-    filePackagePrefixURL: "./",
     noInitialRun: true,
     totalDependencies: 1,
     monitorRunDependencies: function(left) {
         //console.log(this.totalDependencies);
         //console.log(left);
-        if (left == 0) {
+        if ((left == 0) && !midiPlayer_isLoaded) {
           console.log("MidiPlayer is loaded");
           midiPlayer_isLoaded = true;
-          setTimeout(initAudio, 100);
-          if (midiPlayer_input != null) {
-              console.log("MIDI file set");
-              setTimeout(function() {convertFile("midi.midi", convertDataURIToBinary(midiPlayer_input));}, 200);
-          }
-  
         }
     }
 };
-MidiModule(MidiPlayer); 
-
  
 function onAudioProcess(audioProcessingEvent) {
     var generated = circularBuffer.use();
     
-    if (! generated && midiPlayer_drainBuffer) {
+    if (!generated && midiPlayer_drainBuffer) {
         // wait for remaining buffer to drain before disconnect audio
-        pauseAudio();
+	if (_EM_signalStop == 2) // If paused only. If stopped, let the buffer be emptied
+           pauseAudio();
         midiPlayer_drainBuffer = false;
         return;
     }
-    if (! generated) {
+    if (!generated) {
         //console.log('buffer under run!!')
         generated = emptyBuffer;
     }
@@ -260,6 +258,15 @@ function pause() {
 }
 
 function play() {
+    if (!midiPlayer_isLoaded) {
+        console.error("MidiPlayer is not loaded yet");
+        return;
+    }
+    if (!midiPlayer_isAudioInit) {
+          initAudio();
+          midiPlayer_isAudioInit = true;
+    }
+
     _EM_seekSamples = midiPlayer_currentSamples;
     if (midiPlayer_convertionJob) {
         return;
@@ -277,9 +284,10 @@ function stop() {
     _EM_signalStop = 1;
     _EM_seekSamples = 0;
     circularBuffer.reset();
-    
+    pauseAudio();
+	
     midiPlayer_totalSamples = 0;
-    midiPlayer_currentSamples = 0;
+    midiPlayer_currentSamples = ULONG_MAX;
     midiPlayer_progress.style.width = '0%';
     midiPlayer_playingTime.innerHTML = "00.00";
     midiPlayer_totalTime.innerHTML = "00.00";
@@ -301,7 +309,7 @@ function runConversion() {
     
     var sleep = 10;
     circularBuffer.reset();
-    setTimeout(startAudio, 100);
+    startAudio();
 
     console.log(midiPlayer_convertionJob);
         
@@ -319,7 +327,6 @@ function runConversion() {
     
     $.fn.midiPlayer = function (options) {
 
-    	
         var options = $.extend({
             // These are the defaults.
             color: "#556b2f",
@@ -335,6 +342,10 @@ function runConversion() {
         // update rate should not be less than 10 milliseconds
         options.updateRate = Math.max(options.updateRate, 10);
         
+        if(options.locateFile) MidiPlayer.locateFile = options.locateFile;
+
+        MidiModule(MidiPlayer);
+
         $.fn.midiPlayer.play = function (song) {
             if (midiPlayer_isLoaded == false) {
                 midiPlayer_input = song;
@@ -351,6 +362,10 @@ function runConversion() {
                 }
             }
         };
+
+        $.fn.midiPlayer.pause = function () {
+            pause();
+        };
         
         $.fn.midiPlayer.seek = function (millisec) {
             if (midiPlayer_totalSamples == 0) return;
@@ -364,21 +379,27 @@ function runConversion() {
         };
         
         // Create the player
+        var play_button = $("<a class=\"icon play\" id=\"midiPlayer_play\"></a>");
+        play_button.on("click",play);
+        var pause_button = $("<a class=\"icon pause\" id=\"midiPlayer_pause\"></a>");
+        pause_button.on("click",pause);
+        var stop_button = $("<a class=\"icon stop\" id=\"midiPlayer_stop\"></a>");
+        stop_button.on("click",stop);
         this.append("<div id=\"midiPlayer_div\"></div>");
         $("#midiPlayer_div").append("<div id=\"midiPlayer_playingTime\">0:00</div>")
             .append("<div id=\"midiPlayer_bar\"><div id=\"midiPlayer_progress\"></div></div>")
             .append("<div id=\"midiPlayer_totalTime\">0:00</div>")
-            .append("<a class=\"icon play\" id=\"midiPlayer_play\" onclick=\"play()\"></a>")
-            .append("<a class=\"icon pause\" id=\"midiPlayer_pause\" onclick=\"pause()\"></a>")
-            .append("<a class=\"icon stop\" id=\"midiPlayer_stop\" onclick=\"stop()\"></a>");
-            
+            .append(play_button)
+            .append(pause_button)
+            .append(stop_button);
+
         $("#midiPlayer_div").css("width", options.width + 200);
         $("#midiPlayer_bar").css("width", options.width);
         $("#midiPlayer_progress").css("background", options.color);
         
         // Assign the global variables
         midiPlayer_onStop = options.onStop;
-        midiPlayer_onUpdate = options.onUnpdate; 
+        midiPlayer_onUpdate = options.onUpdate; 
         midiPlayer_updateRate = options.updateRate;
         midiPlayer_bar = document.getElementById('midiPlayer_bar');
         midiPlayer_progress = document.getElementById('midiPlayer_progress');

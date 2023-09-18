@@ -75,14 +75,6 @@ urlpatterns = [
     re_path (r'^collections/(?P<full_neuma_ref>(.*))/_annotations/(?P<model_code>[-\w]+)/_all/$', views.handle_annotations_request, name='handle_annotations_model_request'),
     # Get or delete the list of annotations for an object, a model and a concept
     re_path (r'^collections/(?P<full_neuma_ref>(.*))/_annotations/(?P<model_code>[-\w]+)/(?P<concept_code>.+)/_all/$', views.handle_annotations_request, name='handle_annotations_concept_request'),
-    #################
-    # Transcription
-    #################
-    # Access to a grammar by its name
-    re_path('transcription/_qparse/', views.qparse, name='grammars'),
-    re_path('transcription/grammars/', views.grammars, name='grammars'),
-    re_path('transcription/grammars/<str:grammar_name>/', views.grammar, name='grammar'),
-
     ################
     # OPUS / CORPUS
     ################    
@@ -97,6 +89,4 @@ urlpatterns = [
     # Generic request to a corpus or an opus 
     re_path (r'^collections/(?P<full_neuma_ref>(.*))/$', views.handle_neuma_ref_request, name='handle_neuma_ref_request'),
     # OTF Transcription
-    re_path(r'transcription/midi_message', views.receive_midi_messages, name="midi_message"),
-    re_path(r'transcription/test_midi_message', views.test_midi_messages, name='test_midi_message'),
 ]

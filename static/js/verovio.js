@@ -9,12 +9,7 @@
 function displayWithVerovio(opusRef, meiUrl, target, highlights, options) {
 	/* Create the Vevorio toolkit instance */
 	var vrvToolkit = new verovio.toolkit();
-	/*var vrvOptions = {
-		scale : 35,
-		pageHeight : 20000,
-		adjustPageHeight : 1
-	};
-*/
+
 	vrvToolkit.setOptions(options);
 
  	console.log("Verovio has loaded!");
@@ -230,9 +225,9 @@ function reloadScore() {
  * Ajax call: get the MEI file and show the score
  */
 
-function showScore(vrvToolkit, meiUrl, vrvDiv, alter=[]) {
-	  
-	  console.log ("Appel showScore " + vrvDiv)
+function showScore(vrvToolkit, meiUrl, vrvDiv, alter=[]) 
+{
+	  // Load MEI file
 	  fetch(meiUrl)
 	        .then( (response) => response.text() )
 	        .then( (meiXML) => {

@@ -878,6 +878,104 @@ class Workflow:
 	#	print("Following error encountered on Opus "+str(opus))
 	#	print("	> "+str(e))
 
+	@staticmethod
+	def compute_grammar(corpus):
+		grammar = Grammar.objects.filter(corpus=corpus)[0]
+		print("Retrieving grammar representation from database")
+		grammar_str = grammar.get_str_repr(allow_zero_weights= True)
+		print("Retrieving the rules from database")
+		rules = GrammarRule.objects.filter(grammar=grammar).order_by('creation_timestamp')
+		rules_size = rules.count()
+
+		with open(os.path.join('transcription', 'grammars', 'grammar.txt'), 'w') as f:
+			f.write(grammar_str)
+		print("Grammar Written")
+		failure_counter = 0  # to keep track of the number of failure
+		opera = corpus.get_opera()
+		flatMeasuresDurations = []
+		time_signature = []  # initialized empty, it is update in the first bar
+		for opus in opera:
+			score = Score()
+			print("Title : " + opus.title)
+			score.load_from_xml(opus.mei.path, "mei")
+
+			# save the duration tree for each bar
+			for part_index, part in enumerate(score.m21_score.parts):  # loop through parts
+				for measure_index, measure_with_rests in enumerate(part.getElementsByClass('Measure')):
+					if measure_with_rests.timeSignature is not None:  # update the time_signature if there is a time_signature change
+						time_signature.append(measure_with_rests.timeSignature)
+					if len(measure_with_rests.voices) == 0:  # there is a single Voice ( == for the library there are no voices)
+						measure = delete_rests(measure_with_rests)
+						flatMeasuresDurations.append(
+							list(measure.getElementsByClass('GeneralNote')))
+					else:  # there are multiple voices (or an array with just one voice)
+						for voice_with_rest in measure_with_rests.voices:
+							voice = delete_rests(voice_with_rest)
+							# print(list(voice.getElementsByClass('GeneralNote')))
+							flatMeasuresDurations.append(
+								list(voice.getElementsByClass('GeneralNote')))
+
+		# process and sum over all the bars
+		time_signature_str = str(time_signature[0].numerator) + "/" + str(time_signature[0].denominator)
+		print("Number of rules: " + str(rules_size))
+		sum_rule = {}  # long enough vector. zip will cut it
+
+		for dur in flatMeasuresDurations:
+			try:
+				nested_list_dur = notes_to_nested_list(dur, std_div=std_div1, tempo=time_signature_str)
+				num_list = dur_to_number(nested_list_dur)
+				c_input = preprocess_number_list(num_list)
+				grammar_input_path = local_settings.GRAMMAR_INPUT_PATH
+				script_path = local_settings.SCHEMAS_PATH
+				config_path= local_settings.QPARSELIB_CONFIG_PATH
+				unix_command = "{0} -i {1} -tree \"{2}\" -config {3} -v 0".format(script_path, grammar_input_path,
+																		  c_input, config_path)
+				print(unix_command)
+				if os.name == 'nt': #on windows, we call the ubuntu bash
+					# print("windows system detected")
+					c_output = subprocess.check_output(["bash", "-c", unix_command])
+				else:
+					# print("Unix system detected")
+					c_output = subprocess.check_output(unix_command, shell=True)
+				# print(c_output.decode("utf-8").splitlines()[2])
+				rule_list = json.loads(c_output.decode("utf-8").splitlines()[2]) #some useless stuff in the first 2 rows
+				# print(rule_list)
+				sum_rule = { k: sum_rule.get(k, 0) + rule_list.get(k, 0) for k in set(sum_rule) | set(rule_list) } #"sum" the two dictionaries
+				# print("Did it!")
+			except:
+				print("Parsing failed for durations: ")
+				print([e.duration.quarterLength for e in dur])
+				failure_counter += 1
+
+		# add the not-normalized weigth to the grammar
+		for i, r in enumerate(rules):
+			if str(i) not in sum_rule:
+				r.weight = 0
+				r.save()
+			else:
+				r.weight = sum_rule[str(i)]
+				r.save()
+		# normalize the weight for each head
+		heads = GrammarState.objects.filter(grammar=grammar)
+		for head in heads:
+			rules = GrammarRule.objects.filter(grammar=grammar, head=head).all()
+			weight_sum = sum([rule.weight for rule in rules])
+			for i, r in enumerate(rules):
+				unnormalized_weight = r.weight
+				if unnormalized_weight != 0:  # that is true only if weight sum is >0, so that shoul avoid divisions by 0
+					r.weight = unnormalized_weight / weight_sum
+					r.save()
+		# save the number of failures
+		grammar.parse_failures_ratio = failure_counter / len(flatMeasuresDurations)
+		print("Failure counter= " + str(failure_counter / len(flatMeasuresDurations)))
+		grammar.save()
+
+		# print the weighted grammar
+		grammar_str = Grammar.objects.filter(corpus=corpus)[0].get_str_repr()
+
+		with open(os.path.join('transcription', 'grammars', 'weighted_grammar.txt'), 'w') as f:
+			f.write(grammar_str)
+
 def createJsonDescriptors(opus):
 		"""returns the Json representation of an opus"""
 		opusdict = {}

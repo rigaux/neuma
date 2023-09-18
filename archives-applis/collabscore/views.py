@@ -50,6 +50,13 @@ def index(request):
 def tests(request, opus_ref):
 	context = {"titre": "Tests Philippe"}
 
+
+	return render(request, 'collabscore/tests.html', context)
+
+
+def tests_complet(request, opus_ref):
+	context = {"titre": "Tests Philippe"}
+
 	opus = Opus.objects.get(ref=opus_ref)
 	url_dmos =""
 	for source in opus.opussource_set.all():
@@ -141,4 +148,5 @@ def tests(request, opus_ref):
 		db_annot.save()
 
 	return render(request, 'collabscore/tests.html', context)
+
 

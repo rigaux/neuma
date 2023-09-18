@@ -20,7 +20,6 @@ $(function() {
 });
 </script>
 {% include "alternate-banner.html" %}
-{% include "midi-player.html" %}
 
 
 <script language="JavaScript" type="text/JavaScript">
@@ -121,11 +120,12 @@ if request.session.search_context.pattern != ""
            
            
           {% for source in opus.opussource_set.all %}
-           {% if source.ref == "dmos" and source.source_file %}
+      <!--    {% if source.ref == "dmos" and source.source_file %}
            <dd>
             <a href="{{source.source_file.url}}"> DMOS file exists:</a>
                         <a href="{% url 'home:opus' opus.ref %}?load_dmos=1">Load from DMOS</a>
            </dd>
+            -->  
                {% endif %}  
           {% endfor %}
       
@@ -186,6 +186,11 @@ if request.session.search_context.pattern != ""
 
 	<ul id="links" class="paginator"></ul>
 
+   <button id="playMIDI">Ecouter la transcription MIDI</button>
+        <button id="stopMIDI">Stop</button>        
+        <button id="prevPage">Previous page</button>
+        <button id="nextPage">Next page</button>
+
 	<div>
 		<div id="verovio"></div>
 	</div>
@@ -205,8 +210,6 @@ if request.session.search_context.pattern != ""
 	
  
 	{% endif %}
-	
-	  <button onclick="play_midi(vrvToolkit, song)">Play</button> 
 	
 </div>
 
