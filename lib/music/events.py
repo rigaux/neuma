@@ -185,7 +185,11 @@ class Note (Event):
 	def get_pitch_class(self):
 		return self.pitch_class
 
-
+	def start_tie(self):
+		self.m21_event.tie = m21.tie.Tie('start')
+	def stop_tie(self):
+		self.m21_event.tie = m21.tie.Tie('stop')
+		
 class Chord (Event):
 	"""
 		Representation of a chord = a list of notes

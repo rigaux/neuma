@@ -484,7 +484,6 @@ class OmrScore:
 				if def_alter == score_events.Note.ALTER_NATURAL:
 					logger.warning (f'Default alter code {def_alter}.')
 				
-				
 				# Decode from the DMOS input codification
 				if head.alter == None:
 					alter = def_alter
@@ -511,6 +510,11 @@ class OmrScore:
 					alter = staff.get_accidental(pitch_class)
 					
 				note = score_events.Note(pitch_class, octave, duration, alter, head.no_staff)
+				# Check ties
+				if head.tied_forward:
+					note.start_tie()
+				if head.tied_backward:
+					note.stop_tie()
 				# Check articulations
 				for json_art in head.articulations:
 					if json_art["label"] in ARTICULATIONS_LIST:
@@ -778,18 +782,28 @@ class Note:
 	"""
 	
 	def __init__(self, json_note):
-		self.tied = False
+		self.tied_forward = False
+		self.tied_backward = False
+		self.id_forward = 0
+		self.id_backward = 0
 		self.alter = None
 
 		self.head_symbol =  Symbol (json_note["head_symbol"])
 		self.no_staff  = json_note["no_staff"]
 		self.height  = json_note["height"]
+		
 		self.articulations = []
 		if "alter" in json_note:
 			self.alter = Symbol (json_note["alter"])
 		
-		if "tied" in json_note:
-			self.tied = json_note["tied"]
+		if "tiedForward" in json_note:
+			self.tied_forward = json_note["tiedForward"]
+		if "tiedBackward" in json_note:
+			self.tied_backward = json_note["tiedBackward"]
+		if "idForward" in json_note:
+			self.id_forward = json_note["idForward"]
+		if "idBackward" in json_note:
+			self.id_backward = json_note["idBackward"]
 
 	def add_articulation(self, placement, json_art):
 		self.articulations.append({"placement": placement, "label": json_art["label"]})
