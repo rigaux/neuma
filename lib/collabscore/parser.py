@@ -294,7 +294,11 @@ class OmrScore:
 							logger.info (f"Add staff {header.no_staff} to part {id_part}")
 							part = score.get_part(id_part)
 							# Add the staff
-							part.add_staff (score_notation.Staff(header.no_staff))		
+							staff = score_notation.Staff(header.no_staff)
+							# See if the manifest gives an explicit time signature
+							if mnf_staff.time_signature is not None:
+								staff.set_current_key_signature (mnf_staff.time_signature.get_notation_object())
+							part.add_staff (staff)			
 						else:
 							# Should not happen: parts have been created once for all
 							logger.error (f"Part {id_part} should have been already created")
@@ -428,12 +432,14 @@ class OmrScore:
 								
 								
 							# Annotate this event if the region is known
-							if event_region is not None:
+							# We do not do that for the moment
+							'''if event_region is not None:
 								annotation = annot_mod.Annotation.create_annot_from_xml_to_image(
 									self.creator, self.uri, event.id, 
 									self.score_image_url, event_region.string_xyhw(), 
 									constants_mod.IREGION_NOTE_CONCEPT)
 								score.add_annotation (annotation)
+							'''
 							# Did we met errors ?
 							for error in item.errors:
 								annotation = annot_mod.Annotation.create_annot_from_error (
@@ -458,8 +464,10 @@ class OmrScore:
 		
 		# Duration of the event: the DMOS encoding is 1 from whole note, 2 for half, etc.
 		# Our encoding (music21) is 1 for quarter note. Hence the computation
-		duration = score_events.Duration(voice_item.duration.numer * voice_item.numbase, 
-										voice_item.duration.denom * voice_item.num)
+		
+		
+		duration = score_events.Duration(voice_item.duration.numer * voice_item.tuplet_info.num_base, 
+										voice_item.duration.denom * voice_item.tuplet_info.num)
 		
 		# The symbol in the duration contains the region of the event
 		#  We accept events without region, to simplify the JSON notation
@@ -511,9 +519,11 @@ class OmrScore:
 					
 				note = score_events.Note(pitch_class, octave, duration, alter, head.no_staff)
 				# Check ties
-				if head.tied_forward:
+				if head.tied and head.tied=="forward":
+					#print (f"Tied note start with id {head.id_tie}")
 					note.start_tie()
-				if head.tied_backward:
+				if head.tied and head.tied=="backward":
+					#print (f"Tied note ends with id {head.id_tie}")
 					note.stop_tie()
 				# Check articulations
 				for json_art in head.articulations:
@@ -718,7 +728,7 @@ class VoiceItem:
 		self.clef_attr = None
 		self.no_staff_clef = None
 		self.beam_id = None
-		self.num = 1
+		self.tuplet_info  =  TupletInfo ({"num":1, "numbase": 1})
 		self.numbase = 1
 		
 		self.duration = Duration (json_voice_item["duration"])
@@ -727,10 +737,9 @@ class VoiceItem:
 			# Assume that 0 is a no-value
 			if no_group > 0:
 				self.beam_id = json_voice_item["no_group"]
-		if "num" in json_voice_item:
-			self.num = json_voice_item["num"]
-		if "numbase" in json_voice_item:
-			self.numbase = int (json_voice_item["numbase"] / 2)
+				
+		if "tuplet_info" in json_voice_item:
+			self.tuplet_info = TupletInfo (json_voice_item["tuplet_info"])
 
 		if "direction" in json_voice_item:
 			self.direction = json_voice_item["direction"]
@@ -782,10 +791,8 @@ class Note:
 	"""
 	
 	def __init__(self, json_note):
-		self.tied_forward = False
-		self.tied_backward = False
-		self.id_forward = 0
-		self.id_backward = 0
+		self.tied  = "none"
+		self.id_tie = 0
 		self.alter = None
 
 		self.head_symbol =  Symbol (json_note["head_symbol"])
@@ -796,14 +803,10 @@ class Note:
 		if "alter" in json_note:
 			self.alter = Symbol (json_note["alter"])
 		
-		if "tiedForward" in json_note:
-			self.tied_forward = json_note["tiedForward"]
-		if "tiedBackward" in json_note:
-			self.tied_backward = json_note["tiedBackward"]
-		if "idForward" in json_note:
-			self.id_forward = json_note["idForward"]
-		if "idBackward" in json_note:
-			self.id_backward = json_note["idBackward"]
+		if "tied" in json_note:
+			self.tied = json_note["tied"]
+		if "id_tie" in json_note:
+			self.id_tie  = json_note["id_tie"]
 
 	def add_articulation(self, placement, json_art):
 		self.articulations.append({"placement": placement, "label": json_art["label"]})
@@ -886,6 +889,16 @@ class Duration:
 			rational_fraction = Fraction (self.numer * 1.75 / self.denom)
 			self.numer, self.denom = rational_fraction.numerator, rational_fraction.denominator
 
+
+
+class TupletInfo:
+	"""
+		Info for tuplets
+	"""
+	
+	def __init__(self, json_tinfo):
+		self.num = json_tinfo["num"]
+		self.num_base = int (json_tinfo["numbase"])
 
 class TimeSignature:
 	"""

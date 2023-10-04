@@ -22,7 +22,8 @@ class CorpusForm(forms.ModelForm):
 
     class Meta:
         model = Corpus
-        fields = ('title', 'ref', 'short_title', 'description', 'short_description', 'is_public', 'cover')
+        fields = ('title', 'ref', 'short_title', 'description', 
+				  'short_description', 'is_public', 'cover')
 
 
 class OpusForm(ModelForm):
@@ -76,6 +77,7 @@ class OpusSourceForm(ModelForm):
         self.fields['opus'].required = False
         self.fields['url'].required = False
         self.fields['source_file'].required = False
+        self.fields['manifest'].required = False
         #self.fields['creation_timestamp'].required = False
         #self.fields['update_timestamp'].required = False
         self.fields['source_type'] = forms.ModelChoiceField(queryset=SourceType.objects.all())
@@ -90,6 +92,7 @@ class OpusSourceForm(ModelForm):
             'description',
             'url',
             'source_file', 
+            'manifest',
             "id_source",
             Submit('submit', 'Sauvegarder')
          )

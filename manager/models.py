@@ -1170,6 +1170,30 @@ class Opus(models.Model):
 			self.mei = File(f,name="mei.xml")
 			self.save()
 		
+		opus_url = self.musicxml.url	
+		# Now we know the full url of the MEI document
+		score.uri = self.mei.url
+		user_annot = User.objects.get(username=settings.COMPUTER_USER_NAME)
+		# <clean existing annotations
+		for dba in Annotation.objects.filter(opus=self):
+			if dba.target is not None:
+				dba.target.delete()
+			if dba.body is not None:
+				dba.body.delete()
+			dba.delete()
+
+
+		print (f'Inserting annotations')
+		for annotation in score.annotations:
+			annotation.target.resource.source = score.uri
+
+			db_annot = Annotation.create_from_web_annotation(user_annot, 
+															self, annotation)
+			db_annot.target.save()
+			if db_annot.body is not None:
+				db_annot.body.save()
+			db_annot.save()
+
 		return score
 
 class OpusMeta(models.Model):

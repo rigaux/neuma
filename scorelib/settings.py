@@ -9,6 +9,9 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 MEDIA_ROOT = os.path.join(os.path.dirname(BASE_DIR), 'media')
 MEDIA_URL = '/media/'
 
+# Allows to include remote JS files
+SECURE_CROSS_ORIGIN_OPENER_POLICY = None
+
 # For temp. files
 TMP_DIR = os.path.join(os.path.dirname(BASE_DIR), 'media','tmp')
 

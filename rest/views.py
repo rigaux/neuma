@@ -186,9 +186,9 @@ def handle_neuma_ref_request(request, full_neuma_ref):
 					return Response(status=status.HTTP_404_NOT_FOUND)
 			else:
 				print(
-					"REST call for note request. Opus:"
+					"REST call for internal element request. Opus:"
 					+ opus.ref
-					+ " Note: "
+					+ " Element: "
 					+ element_id
 				)
 				obj = {"id": element_id, "annotations": []}

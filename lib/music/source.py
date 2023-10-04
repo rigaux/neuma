@@ -2,6 +2,8 @@
 import json
 
 import lib.music.Score as score_mod
+import lib.music.notation as score_notation
+
 '''
   Classes describing sources of abstract scores: images, audio, etc.
   
@@ -167,20 +169,51 @@ class ScoreImgStaff:
 	
 	def __init__(self, id_staff) :
 		self.id = id_staff
+		# Sometimes the time signature is implicit from the context
+		# and we must add it
+		self.time_signature = None
 		self.parts  = []
 
 	def add_part(self, id_part):
 		self.parts.append(id_part)
 		
 	def to_json (self):
-		return {"id": self.id,
+		obj =  {"id": self.id,
 			     "parts": self.parts
 			    }
-		
+		if self.time_signature is not None:
+			obj["time_signature"] = self.time_signature.to_json()
+		return obj
+	
 	@staticmethod
 	def from_json (json_mnf):
 		staff = ScoreImgStaff(json_mnf["id"])
 		for id_part in json_mnf["parts"]:
 			staff.add_part(id_part)
+		if "time_signature" in json_mnf:
+			print ("Found a time signature ")
+			staff.time_signature = ScoreImgTimeSig.from_json(json_mnf["time_signature"])
 		return staff
 		
+class ScoreImgTimeSig:
+	"""
+	  Sometimes we must add the time signature
+	"""
+	def __init__(self, count, unit) :
+		self.count = count
+		self.unit  = unit
+
+	def to_json (self):
+		return {"count": self.count,
+			     "unit": self.unit
+			    }
+		
+	def get_notation_object(self):
+		return score_notation.TimeSignature (self.count, self.unit)
+	
+	
+	@staticmethod
+	def from_json (json_ts):
+		return ScoreImgTimeSig(json_ts["count"], json_ts["unit"])
+
+	

@@ -27,10 +27,8 @@ function displayWithVerovio(opusRef, meiUrl, target, highlights, options) {
 		return;
 	} else {
 		// Get all XML fragments
-		alter = GetAnnotations(opusRef, "quality",  "composer") 
-
 		 console.log("Calling ShowScore");
-		showScore(vrvToolkit, meiUrl, vrvDiv, alter)
+		showScore(vrvToolkit, meiUrl, vrvDiv)
 		
 		 console.log("ShowScore  has been called!");
 		// Links to the pages produced by Verovio
@@ -78,6 +76,7 @@ function displayWithVerovio(opusRef, meiUrl, target, highlights, options) {
 			// Add event handlers on notes
 			EventOverNotes(opusRef);
 	}
+	console.log ("Leave displayWithVerovio")
 	return vrvToolkit
 }
 
@@ -288,18 +287,27 @@ function EventOverNotes(opus_ref) {
  */
 
 function AddAnnotationAnchors(model_code, opusRef, annotations, show_annotation) {
-	console.log("AddAnnotationAnchors for model " + model_code + " and opus "
+	 scanElementByType("note", model_code, opusRef, annotations, show_annotation) ;
+	 scanElementByType("measure", model_code, opusRef, annotations, show_annotation); 
+	}
+	
+function scanElementByType(type_elt, model_code, opusRef, annotations, show_annotation) {
+	
+	console.log("AddAnnotationAnchors to element of type " + type_elt 
+	       + " for model " + model_code + " and opus "
 			+ opusRef + " show/hide " + show_annotation)
 	// Loop on the notes, search for annotations 
-	$(".note").each(
+	$("." + type_elt).each(
 			function(i) {
 				var note = document.getElementById($(this).attr("id"))
 				// Keeping the list of offsets to stack the vertical position of anchors
 				var offsets = new Object();
 				
+				console.log ("Searching element with id " + note.id)
 				if (annotations.hasOwnProperty(note.id)) {
 					nb_annotations = annotations[note.id].length
 					for (var i = 0; i < nb_annotations; i++) {
+					console.log ("Found annotation " + i)
 						// We identify the anchor with
 						// opus_ref@note_id@annotation_id@model_code
 						annotation = annotations[note.id][i]
@@ -318,6 +326,7 @@ function AddAnnotationAnchors(model_code, opusRef, annotations, show_annotation)
 						circle.setAttributeNS(null, 'id', annotation_id);
 						if (show_annotation == true) {
 							circle.onclick = function(event) {
+								console.log ("Click on circle")
 								var opus_ref = $(this).attr("id").split('@')[0]
 								var note_id = $(this).attr("id").split('@')[1]
 								var annotation_id = $(this).attr("id").split(

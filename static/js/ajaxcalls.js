@@ -554,9 +554,6 @@ function getNoteDescription(opus_ref, note_id, annotation_id, model_code) {
 		}
 	});
 	
-	url_rest = '/rest/collections/' + opus_ref.replace(/:/g, "/")  + '/' +  note_id
-	console.log ("Call element description at " + url_rest)
-
 	/* Load the MEI file using HTTP GET */
 	url_mei = '/rest/collections/' + opus_ref.replace(/:/g, "/")  + '/mei.xml/'
 	console.log ("Load MEI file  " + url_mei)
@@ -567,9 +564,10 @@ function getNoteDescription(opus_ref, note_id, annotation_id, model_code) {
     success: function(xml) {
     	
     // Find the note thanks to its id
-    var children = $(xml).find('note[xml\\:id="' + note_id + '"]')
+    var children = $(xml).find('*[xml\\:id="' + note_id + '"]')
     
     children.each(function(iNote){
+		console.log ("Found an element")
     	// Put the serialized note element in the XML editor
     	var xmlText = new XMLSerializer().serializeToString(children[iNote]);
     	var infobox = document.getElementById("infobox")
@@ -585,6 +583,9 @@ function getNoteDescription(opus_ref, note_id, annotation_id, model_code) {
   });            
 
   // Ajax call to get the annotations, and display them in the infobox
+	url_rest = '/rest/collections/' + opus_ref.replace(/:/g, "/")  + '/' +  note_id
+	console.log ("Call annotations for element " + url_rest)
+
 	$.ajax({
 		url : url_rest,
 		type : 'GET',
@@ -594,7 +595,7 @@ function getNoteDescription(opus_ref, note_id, annotation_id, model_code) {
 			var infobox = document.getElementById("infobox")
 			
 			if (infobox) {
-
+              console.log ("In infobox")
 				// Annotation creation
 				if (current_user.username != "") {
 					$("#annotation-create-form" ).empty()
@@ -610,11 +611,12 @@ function getNoteDescription(opus_ref, note_id, annotation_id, model_code) {
 				$("#annotation_element_id").html (note_id)
 				$("#annotations_list").empty ()
 				for (i in data.annotations) {
+                    console.log ("Annotation " + i)
 					annotation = data.annotations[i]
 					// We only show the annotations of the current annotation model
-			//console.log ("Annotation model " +  annotation.annotation_model  + " model code " + model_code)
+			        console.log ("Annotation model " +  annotation.annotation_model  + " model code " + model_code)
 					if (annotation.annotation_model == model_code) {
-						 // console.log ("Add annotation to the list")
+						 console.log ("Add annotation to the list")
 					annot_elem = $( "#annotation_description" ).clone();
 					// Change the annotation values in the form
 					annot_elem.find("#annotation_opus_ref").val (opus_ref);
@@ -667,6 +669,7 @@ function getNoteDescription(opus_ref, note_id, annotation_id, model_code) {
 				}
 
 				// Make the info box visible
+				console.log("Show infobox")
 				$("#infobox").show()
 
 				// Add a link to play from this note
