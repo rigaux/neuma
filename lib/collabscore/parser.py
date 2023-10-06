@@ -243,9 +243,30 @@ class OmrScore:
 		
 		# The manifest tells us the parts of the score: we create them
 		for src_part in self.manifest.get_parts():
-			part = score_model.Part(id_part=src_part.id, name=src_part.name, 
+			# Parts are identified by the part id + staff id. In general
+			# there is only on staff per part
+			if not self.manifest.is_a_part_group(src_part.id):
+				id_part_staff = src_part.id + "-" + "1"
+				part = score_model.Part(id_part=id_part_staff, name=src_part.name, 
 												abbreviation=src_part.abbreviation)
-			score.add_part(part)			
+				score.add_part(part)			
+			else:
+				# It is a part group. Create one PartStaff for each staff of the part 
+				staff_group = []
+				i_staff = 1
+				for staff in self.manifest.groups[src_part.id]:
+					id_part_staff = src_part.id + "-" + f"{i_staff}"
+					i_staff+= 1
+					part = score_model.Part(id_part=id_part_staff, name=src_part.name, 
+												abbreviation=src_part.abbreviation,
+												part_type="partstaff")
+					staff_group.append(part.m21_part)
+					score.add_part(part)
+				# + a Staff grouo for the global part
+				part_group = score_model.Part(id_part=src_part.id, name=src_part.name, 
+												abbreviation=src_part.abbreviation,
+												part_type="group", group=staff_group)
+				score.add_part(part_group)
 	
 		# Main scan: we fill the parts with measures
 		current_page_no = 0
@@ -288,24 +309,34 @@ class OmrScore:
 					part.clear_staves()
 					
 				# Headers defines the parts and their staves in this system
+				staff_counter = {}
+					
 				for header in system.headers:
 					# Get the staff from the manifest
 					mnf_staff = mnf_system.get_staff(header.no_staff)
 					# Get the part
 					# IMPORTANT: maybe we have several parts for this staff
 					for id_part in mnf_staff.parts:
-						if score.part_exists(id_part):
-							logger.info (f"Add staff {header.no_staff} to part {id_part}")
-							part = score.get_part(id_part)
-							
-								
+						# We count the number of times this part is met
+						if id_part not in staff_counter.keys():
+							staff_counter[id_part] = 1
+						else:
+							staff_counter[id_part] += 1
+						
+						# So the score part is obtained by concatenating the counter
+						score_part_id = id_part + "-" + f"{staff_counter[id_part]}"
+						if score.part_exists(score_part_id):
+							print(f"Add staff {header.no_staff} to part {score_part_id}")
+							logger.info (f"Add staff {header.no_staff} to part {score_part_id}")
+							part = score.get_part(score_part_id)
+
 							# Add the staff
 							staff = score_notation.Staff(header.no_staff)
 
 							# See what we inherit from the previous staves of the part
-							if id_part in previous_staves.keys():
-								for prev_staff in previous_staves[id_part]:
-									logger.info(f"Inherited TS for part {id_part} (in staff {prev_staff.id}):  {prev_staff.current_time_signature}")
+							if score_part_id in previous_staves.keys():
+								for prev_staff in previous_staves[score_part_id]:
+									logger.info(f"Inherited TS for part {score_part_id} (in staff {prev_staff.id}):  {prev_staff.current_time_signature}")
 									staff.set_current_time_signature(prev_staff.current_time_signature)
 								
 							# See if the manifest gives an explicit time signature
@@ -334,7 +365,7 @@ class OmrScore:
 					score.reset_accidentals()
 					
 					logger.info (f'Process measure {current_measure_no}, to be inserted at position {score.duration()}')
-					
+
 					# Create a new measure for each part
 					current_measures = {}
 					for part in score.get_parts():
@@ -361,6 +392,8 @@ class OmrScore:
 							constants_mod.IREGION_MEASURE_CONCEPT)
 						score.add_annotation (annotation)
 						
+						#print (f"In measure {current_measure_no} Looking for part {part.id}")
+
 						# Check if a staff starts with a change of clef or meter
 						for header in measure.headers:
 							if part.staff_exists(header.no_staff):
@@ -404,15 +437,27 @@ class OmrScore:
 						# Keep the array of current measures indexed by part
 						current_measures[part.id] = measure_for_part
 					
+					staff_counter = {}
 					for voice in measure.voices:
-
 						# Here is gets tricky. DMOS gives has 'id_part' the staff where
 						# the first voice event appears. From this staff, we deduce
 						# the part the voice belongs to
 						mnf_staff = mnf_system.get_staff(voice.id_staff)
 						for id_part in mnf_staff.parts:
+							if id_part not in staff_counter:
+								staff_counter[id_part] = {"counter": 0}
+							# Transpose the id of the staff to a sequence
+							if voice.id_staff not in staff_counter[id_part]:
+								staff_counter[id_part]["counter"] += 1
+								print (f"Creating transposition for staff {voice.id_staff}. Counter: {staff_counter[id_part]['counter']}")
+								staff_counter[id_part][voice.id_staff] = staff_counter[id_part]["counter"]
+
+							# So the score part is obtained by concatenating the counter
+							score_part_id = id_part + "-" + f"{staff_counter[id_part][voice.id_staff]}"
+
+							print (f"Found a voice on staff {voice.id_staff}. Looking for part {score_part_id}")
 							# Assume that this is the first part							
-							current_part = score.get_part(id_part)
+							current_part = score.get_part(score_part_id)
 							# Ignore the possible parts in the staff
 							current_staff = current_part.get_staff (voice.id_staff)
 							break

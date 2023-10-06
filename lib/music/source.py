@@ -3,6 +3,7 @@ import json
 
 import lib.music.Score as score_mod
 import lib.music.notation as score_notation
+from numpy import True_
 
 '''
   Classes describing sources of abstract scores: images, audio, etc.
@@ -45,6 +46,8 @@ class ScoreImgManifest:
 		self.pages = []
 		# List of parts. A dictionary because parts'id is unique
 		self.parts = {}
+		# Groups = parts with more than on staff
+		self.groups = {}
 		
 	def add_page(self, page):
 		self.pages.append(page)
@@ -74,7 +77,9 @@ class ScoreImgManifest:
 		for json_part in json_mnf["parts"]:
 			part = ScoreImgPart.from_json(json_part)
 			manifest.add_part(part)
-			
+		
+		manifest.create_groups()
+		
 		return manifest
 
 	def to_json (self):
@@ -87,6 +92,21 @@ class ScoreImgManifest:
 		return {"id": self.id, "url": self.url,
 			     "pages": pages_json, "parts": parts_json}
 
+	def create_groups(self):
+		# Collect groups found in pages.
+		# Warning: in an extreme case we must manage group at the system level
+		for page in self.pages:
+			for id_part, staves in page.groups.items():
+				if not id_part in self.groups.keys():
+					print (f"Found a group for part {id_part}")
+					self.groups[id_part] = staves
+
+	def is_a_part_group (self, id_part):
+		if id_part in self.groups.keys():
+			return True
+		else:
+			return False
+	
 	def print (self):
 		print (json.dumps(self.to_json()))
 		
@@ -99,6 +119,7 @@ class ScoreImgPage:
 		self.url  = url
 		self.number = nb
 		self.systems  = []
+		self.groups = {}
 
 	def add_system(self, system):
 		self.systems.append(system)
@@ -117,6 +138,7 @@ class ScoreImgPage:
 		for json_system in json_mnf["systems"]:
 			system = ScoreImgSystem.from_json(json_system)
 			page.add_system(system)
+		page.create_groups()
 
 		return page
 
@@ -126,6 +148,14 @@ class ScoreImgPage:
 			systems_json.append(system.to_json())
 		return {"url": self.url, "number": self.number, "systems": systems_json}
 
+	def create_groups(self):
+		# Collect groups found in systems.
+		# Warning: in an extreme case we must manage group at the system level
+		for system in self.systems:
+			for id_part, staves in system.groups.items():
+				if not id_part in self.groups.keys():
+					self.groups[id_part] = staves
+
 class ScoreImgSystem:
 	'''
 		A system in a page, containing staves
@@ -134,6 +164,7 @@ class ScoreImgSystem:
 	def __init__(self, number) :
 		self.number = number
 		self.staves  = []
+		self.groups = {}
 
 	def add_staff(self, staff):
 		self.staves.append(staff)
@@ -152,6 +183,9 @@ class ScoreImgSystem:
 		for json_staff in json_mnf["staves"]:
 			staff = ScoreImgStaff.from_json(json_staff)
 			system.add_staff(staff)
+			
+		system.create_groups()
+		
 		return system
 
 	def to_json (self):
@@ -161,6 +195,21 @@ class ScoreImgSystem:
 		return {"number": self.number, "staves": staves_json}
 
 		
+	def create_groups(self):
+		# identify parts that spread over several staves (ie keyboards)
+		parts_staves = {}
+		for staff in self.staves:
+			for id_part in staff.parts:
+				if id_part in parts_staves.keys():
+					parts_staves[id_part].append(staff)
+				else:
+					parts_staves[id_part] = [staff]
+					
+		# OK, now find parts with more that one staff
+		for id_part, staves in parts_staves.items():
+			if len(staves) > 1:
+				self.groups[id_part] = staves
+	
 class ScoreImgStaff:
 	'''
 		A staff in a system, which contains one or several parts

@@ -2,8 +2,6 @@
 import logging
 
 import music21 as m21
-from numpy.distutils.fcompiler import none
-from numpy import True_, False_
 
 #from neumasearch.MusicSummary import MusicSummary
 # No longer useful?
@@ -116,7 +114,12 @@ class Score:
 
 	def add_part (self, part):
 		""" Add a part to the main score or to the current page"""
-		self.parts.append(part)	
+		
+		if not part.part_type == "group":
+			# We do not insert the StaffGroup in the list of parts 
+			# because we never insert anything there
+			self.parts.append(part)	
+
 		self.m21_score.insert(0, part.m21_part)
 				
 	def part_exists (self, id_part):
@@ -360,14 +363,31 @@ class Part:
 		Representation of a part as a hierarchy of parts / voices
 	"""
 	
-	def __init__(self, id_part, name="", abbreviation="") :
+	SINGLE_PART="standard"
+	GROUP_PART="group"
+	STAFF_PART="partstaff"
+	
+	def __init__(self, id_part, name="", abbreviation="", part_type=SINGLE_PART, group=[]) :
 		self.id = id_part
+		self.staff_group = [] # For parts with multiple PartStaff
 		
-		self.m21_part = m21.stream.Part(id=id_part)
+		if part_type==Part.GROUP_PART:
+			print (f"Creating a part group for part {id_part}")
+			self.m21_part = m21.layout.StaffGroup(group, 
+								 name=name, abbreviation=abbreviation,
+								 symbol='brace')
+			self.staff_group = group
+		elif part_type == Part.STAFF_PART:
+			print (f"Creating a part Staff for part {id_part}")
+			self.m21_part = m21.stream.PartStaff(id=id_part)
+		else:
+			self.m21_part = m21.stream.Part(id=id_part)
+	
 		# Metadata
 		self.m21_part.id  = "P" + id_part
 		self.m21_part.partName  = name
 		self.m21_part.partAbbreviation = abbreviation
+		self.part_type = part_type
 
 		# List of staves the part is displayed on
 		self.staves = []
