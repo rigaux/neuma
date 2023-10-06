@@ -144,7 +144,7 @@ class ScoreImgSystem:
 				return staff
 		
 		# Oups should never happpen
-		raise score_mod.CScoreModelError (f"Searching a non existing staff {in_staff} in system {self.number}")
+		raise score_mod.CScoreModelError (f"Searching a non existing staff {id_staff} in system {self.number}")
 
 	@staticmethod
 	def from_json (json_mnf):
@@ -191,7 +191,6 @@ class ScoreImgStaff:
 		for id_part in json_mnf["parts"]:
 			staff.add_part(id_part)
 		if "time_signature" in json_mnf:
-			print ("Found a time signature ")
 			staff.time_signature = ScoreImgTimeSig.from_json(json_mnf["time_signature"])
 		return staff
 		

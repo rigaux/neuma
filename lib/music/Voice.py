@@ -26,7 +26,11 @@ class Voice:
 		# For OMR: The current clefs are used to decode symbols on staves
 		self.current_clefs = {}
 
+		# For decoding durations, the time signature is sometimes required
 		return
+	
+	def set_current_time_signature(self, ts):
+		self.current_time_signature = ts
 	
 	def set_current_clefs(self, cur_clefs):
 		'''

@@ -5,6 +5,7 @@ import music21 as m21
 import lib.music.events as score_events
 
 import lib.music.Score as score_mod
+from numpy import True_, False_
 
 '''
  Classes representing music notation elements
@@ -29,6 +30,7 @@ class Staff:
 		self.id = no_staff
 		self.current_clef = Clef(Clef.TREBLE_CLEF)
 		self.current_key_signature = KeySignature() 
+		self.current_time_signature = TimeSignature() 
 
 		# Probably not useful at the end, since these notations are
 		# directly injected in the music21 measure.
@@ -55,6 +57,8 @@ class Staff:
 		self.current_clef = clef
 	def set_current_key_signature (self, key):
 		self.current_key_signature = key
+	def set_current_time_signature (self, ts):
+		self.current_time_signature = ts
 
 	'''
 	    All these functions are now useless. To be removed
@@ -83,7 +87,7 @@ class TimeSignature:
 	'''
 	counter = 0
 	
-	def __init__(self, numer, denom) :
+	def __init__(self, numer=4, denom=4) :
 		#self.fraction = Fraction (numer, denom)
 		self.numer = numer
 		self.denom = denom
@@ -92,6 +96,9 @@ class TimeSignature:
 		self.m21_time_signature.id = f"tsign{TimeSignature.counter}" 
 		TimeSignature.counter += 1
 
+	def __str__ (self):
+		return f"Time signature {self.numer} / {self.denom}"
+	
 class KeySignature:
 	'''
 		Represented as the number of sharps (same as music21)
@@ -145,6 +152,13 @@ class Clef:
 			self.m21_clef = m21.clef.BassClef()
 		self.m21_clef.id = self.id
 		Clef.counter += 1
+		
+	def equals(self, other):
+		# Check if two clefs are identical
+		if other.m21_clef == self.m21_clef:
+			return True
+		else:
+			return False
 		
 	@staticmethod 
 	def decode_from_dmos (dmos_code, dmos_height):

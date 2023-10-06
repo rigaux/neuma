@@ -77,6 +77,11 @@ class Score:
 		self.current_page = None
 
 		'''
+			Reset all counters
+		'''
+		Measure.sequence_measure = 0
+		
+		'''
 			We can store annotations on a score and any of its elemnts
 		'''
 		self.annotations = []
@@ -96,6 +101,10 @@ class Score:
 		
 		return
 	
+	def duration(self):
+		# Music21 conventions
+		return self.m21_score.duration
+	
 	def get_parts(self):
 		'''
 			Get the list of parts, found either in the score itself or in the current page
@@ -107,12 +116,9 @@ class Score:
 
 	def add_part (self, part):
 		""" Add a part to the main score or to the current page"""
-		if self.use_layout:
-			self.current_page.add_part(part)	
-		else:
-			self.parts.append(part)	
-			self.m21_score.insert(0, part.m21_part)
-	
+		self.parts.append(part)	
+		self.m21_score.insert(0, part.m21_part)
+				
 	def part_exists (self, id_part):
 		for part in self.get_parts():
 				if part.id == id_part:
@@ -294,7 +300,7 @@ class Score:
 	def add_annotation(self, annotation):
 		self.annotations.append(annotation)
 
-
+'''
 class Page:
 	"""
         For OMR only: a cpntainer for systems  
@@ -322,16 +328,15 @@ class Page:
 		self.current_system.add_part(part)	
 
 	def get_parts(self):
-		'''
 			Get the list of parts in the current system
-		'''
 		return self.current_system.get_parts()
 
+
 class System:
-	"""
+
         For OMR only: all the sub-components (parts, etc) are allocated to a single system 
         Does not work with music21....
-    """
+
 
 	def __init__(self, no_system) :
 		logger.info (f"Adding system {no_system}")
@@ -348,7 +353,8 @@ class System:
 
 	def get_parts(self):
 		return self.parts
-
+'''
+	
 class Part:
 	"""
 		Representation of a part as a hierarchy of parts / voices
@@ -370,7 +376,16 @@ class Part:
 		# used for the moment
 
 	def clear_staves(self):
-		# To call when we reinitialize a system or a page
+		'''
+		   To call when we reinitialize a system or a page
+		'''
+		
+		# Keep the current status of each staff in terms of signatures and clef
+		'''staves_status = {}
+		for staff in self.staves():
+			staves_status
+		'''
+		# Ok forget the staves
 		self.staves = []
 		
 	def has_staves(self):
@@ -411,11 +426,13 @@ class Part:
 		staff.add_accidental( pitch_class, acc)
 
 	def append_measure (self, measure):
-		# Check if we need to insert clef or signature at the beginning
-		# of the measure
-		
 		logger.info (f'Adding measure {measure.no} to part {self.id}')
 		self.m21_part.append(measure.m21_measure)
+
+	def insert_measure (self, position, measure):
+		logger.info (f'Inserting measure {measure.no} at position {position} in part {self.id}')
+		print(f'Inserting measure {measure.no} at position {position} in part {self.id}')
+		self.m21_part.insert(position, measure.m21_measure)
 
 	def add_system_break(self):
 		system_break = m21.layout.SystemLayout(isNew=True)
@@ -461,15 +478,17 @@ class Measure:
 			raise CScoreModelError (f"No staff ‘{staff_id}' for measure {self.no}")
 		else:
 			return self.initial_clefs[staff_id]
+		
 	def set_initial_clef_for_staff(self, staff_id, clef):
 		if not (staff_id in self.initial_clefs.keys()):
 			# Oups, no such staff 
 			raise CScoreModelError (f"No staff ‘{staff_id}' for measure {self.no}")
 		else:
-			self.initial_clefs[staff_id] = clef
-			
-		# We add the clef to music 21 measure. Sth strange: no staff specified...
-		self.m21_measure.insert(0,  clef.m21_clef)
+			# No need to change the clef if it is already there
+			if not self.initial_clefs[staff_id].equals(clef):
+				self.initial_clefs[staff_id] = clef
+				# We add the clef to music 21 measure. Sth strange: no staff specified...
+				self.m21_measure.insert(0,  clef.m21_clef)
 
 	def print_initial_clefs(self):
 		for staff_id, clef in self.initial_clefs.items():
@@ -489,6 +508,10 @@ class Measure:
 		system_break = m21.layout.PageLayout(isNew=True)
 		self.m21_measure.insert (system_break)
 		
+	def length(self):
+		# Music21 conventions
+		return self.m21_measure.duration
+
 
 class CScoreModelError(Exception):
 	def __init__(self, *args):

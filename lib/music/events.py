@@ -16,11 +16,14 @@ class Duration:
 		A duration is a fraction of a quarter note
 	'''
 	
-	def __init__(self, numer, denom) :
+	def __init__(self, numer, denom, whole=False) :
 		self.fraction = Fraction (numer, denom)
 		
 		# m21 duration is the float obtained from the fraction
-		self.m21_duration = m21.duration.Duration(self.fraction)
+		if not whole:
+			self.m21_duration = m21.duration.Duration(self.fraction)
+		else:
+			self.m21_duration = m21.duration.Duration(type="whole")
 
 	def __repr__(self):
 		return f'Duration({self.m21_duration})'

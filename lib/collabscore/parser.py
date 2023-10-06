@@ -21,6 +21,7 @@ import verovio
 
 from .constants import *
 from lib.music.source import ScoreImgManifest
+from numpy import False_
 
 # Get an instance of a logger
 # See https://realpython.com/python-logging/
@@ -250,6 +251,7 @@ class OmrScore:
 		current_page_no = 0
 		current_system_no = 0
 		current_measure_no = 0
+		current_position = 0
 		
 		for page in self.pages:
 			current_page_no += 1
@@ -280,7 +282,9 @@ class OmrScore:
 				
 				# We clear the staves for all parts of the score: maybe a part
 				# is not represented in this specific system
+				previous_staves = {}
 				for part in score.parts:
+					previous_staves[part.id] = part.staves
 					part.clear_staves()
 					
 				# Headers defines the parts and their staves in this system
@@ -293,11 +297,20 @@ class OmrScore:
 						if score.part_exists(id_part):
 							logger.info (f"Add staff {header.no_staff} to part {id_part}")
 							part = score.get_part(id_part)
+							
+								
 							# Add the staff
 							staff = score_notation.Staff(header.no_staff)
+
+							# See what we inherit from the previous staves of the part
+							if id_part in previous_staves.keys():
+								for prev_staff in previous_staves[id_part]:
+									logger.info(f"Inherited TS for part {id_part} (in staff {prev_staff.id}):  {prev_staff.current_time_signature}")
+									staff.set_current_time_signature(prev_staff.current_time_signature)
+								
 							# See if the manifest gives an explicit time signature
 							if mnf_staff.time_signature is not None:
-								staff.set_current_key_signature (mnf_staff.time_signature.get_notation_object())
+								staff.set_current_time_signature (mnf_staff.time_signature.get_notation_object())
 							part.add_staff (staff)			
 						else:
 							# Should not happen: parts have been created once for all
@@ -308,7 +321,10 @@ class OmrScore:
 				# one measure to each part, and add the voice to the measure
 				# based on its part_id assignment
 				
+				initial_measure = True
 				for measure in system.measures:
+					current_position = score.duration().quarterLength
+					# print (f'Process measure {current_measure_no}, to be inserted at position {current_position}')
 					current_measure_no += 1
 					if (current_measure_no < self.config.measure_min) or (
 					    current_measure_no > self.config.measure_max):
@@ -317,16 +333,16 @@ class OmrScore:
 					# Reset accidentals met so far
 					score.reset_accidentals()
 					
-					logger.info (f'Process measure {current_measure_no}')
+					logger.info (f'Process measure {current_measure_no}, to be inserted at position {score.duration()}')
 					
 					# Create a new measure for each part
 					current_measures = {}
 					for part in score.get_parts():
 						# We ignore the part if it does not have a staff for the current system
-						#if not part.has_staves():
-						#	print (f"We do no add a measure for part {part.id} and measure {current_measure_no}")
-						#	continue
-						
+						'''if not part.has_staves():
+							print (f"Skipping measure {current_measure_no} for part {part.id}")
+							continue
+						'''
 						measure_for_part = score_model.Measure(part, current_measure_no)
 						# Adding system breaks
 						if 	page_begins and current_page_no > 1:
@@ -339,12 +355,10 @@ class OmrScore:
 							system_begins = False
 						
 						# Annotate this measure
-						target = measure.region.string_xyhw()
 						annotation = annot_mod.Annotation.create_annot_from_xml_to_image(
 							self.creator, self.uri, measure_for_part.id, 
 							page.page_url, measure.region.string_xyhw(), 
 							constants_mod.IREGION_MEASURE_CONCEPT)
-						#print(f'Inserting annotation {target} on measure {measure_for_part.id}, with target {annotation.target} ')
 						score.add_annotation (annotation)
 						
 						# Check if a staff starts with a change of clef or meter
@@ -352,6 +366,12 @@ class OmrScore:
 							if part.staff_exists(header.no_staff):
 								# This header does relate to the current part
 								staff = part.get_staff (header.no_staff)
+								if header.region is not None:
+									# Record the region of the measure for the current staff
+									annotation = annot_mod.Annotation.create_annot_from_xml_to_image(
+										self.creator, self.uri, measure_for_part.id, 
+										page.page_url, header.region.string_xyhw(), 
+										constants_mod.IREGION_MEASURE_STAFF_CONCEPT)
 								if header.clef is not None:
 									clef_staff = header.clef.get_notation_clef()
 									staff.set_current_clef (clef_staff)
@@ -360,8 +380,12 @@ class OmrScore:
 								if header.time_signature is not None:
 									logger.info (f'Time signature found on staff {header.no_staff} at measure {current_measure_no}')
 									time_sign = header.time_signature.get_notation_object()
-									# staff.add_time_signature (current_measure_no, time_sign)
+									staff.set_current_time_signature (time_sign)
 									measure_for_part.add_time_signature (time_sign)
+								else:
+									if initial_measure:
+										measure_for_part.add_time_signature (staff.current_time_signature)
+									
 								if header.key_signature is not None:
 									logger.info (f'Key signature found on staff {header.no_staff} at measure {current_measure_no}')
 									key_sign = header.key_signature.get_notation_object()
@@ -375,6 +399,7 @@ class OmrScore:
 							#	logger.error (f'Staff {header.no_staff} does not exist for part {part.id}')
 								
 						# Add the measure to its part (notational events are added there)
+						#part.insert_measure (current_position, measure_for_part)
 						part.append_measure (measure_for_part)
 						# Keep the array of current measures indexed by part
 						current_measures[part.id] = measure_for_part
@@ -388,7 +413,8 @@ class OmrScore:
 						for id_part in mnf_staff.parts:
 							# Assume that this is the first part							
 							current_part = score.get_part(id_part)
-							# Ignore othe possible parts in the staff
+							# Ignore the possible parts in the staff
+							current_staff = current_part.get_staff (voice.id_staff)
 							break
 						
 						current_measure = current_measures[current_part.id]
@@ -401,11 +427,18 @@ class OmrScore:
 						voice_part = voice_model.Voice(part=current_part,voice_id=voice.id)
 						# The initial clefs are those of the measure
 						voice_part.set_current_clefs(current_measure.initial_clefs)
-						
-						current_beam = None
-						
+						# The current time signature is useful to decode whole notes
+						voice_part.set_current_time_signature(current_staff.current_time_signature)
+
+						current_beam = None						
 						previous_event = None
 						for item in voice.items:
+							# Duration exception: in case of "whole" note, depends 
+							# on the time signature
+							if item.duration.whole:
+								item.duration.numer =  voice_part.current_time_signature.numer
+								item.duration.denom = 1
+								
 							# Decode the event
 							(event, event_region, type_event) = self.decode_event(voice_part, item) 
 							# Manage beams
@@ -417,8 +450,6 @@ class OmrScore:
 									event.start_beam(item.beam_id)
 								current_beam =  item.beam_id
 							previous_event = event
-
-							logger.info (f'Adding event {event.id} to voice {voice.id}')
 							
 							if type_event == "event":
 								voice_part.append_event(event)
@@ -453,7 +484,9 @@ class OmrScore:
 							current_beam =  None
 						# Add the voice to the measure of the relevant part
 						current_measure.add_voice (voice_part)
-		
+						
+						# This is not longer the initial measure of the system
+						initial_measure = False		
 		return score
 
 
@@ -488,6 +521,8 @@ class OmrScore:
 				# Get the default alter
 				staff = voice.part.get_staff(no_staff)
 				def_alter = staff.current_key_signature.accidentalByStep(pitch_class)
+
+				logger.info (f'Adding note head to staff {no_staff} with current clef {staff.current_clef}.')
 				
 				if def_alter == score_events.Note.ALTER_NATURAL:
 					logger.warning (f'Default alter code {def_alter}.')
@@ -864,9 +899,12 @@ class Duration:
 
 	def __init__(self, json_duration):
 		self.symbol = Symbol (json_duration["symbol"])
+		self.whole = False
+		
 		if self.symbol.label not  in DURATION_SYMBOLS_LIST:
 			raise CScoreParserError (f'Unknown symbol name: {self.symbol.label}')
 		if self.symbol.label == SMB_WHOLE_NOTE or self.symbol.label == SMB_WHOLE_REST:
+			self.whole = True
 			self.numer, self.denom =   4, 1
 		elif self.symbol.label == SMB_HALF_NOTE or self.symbol.label == SMB_HALF_REST:
 			self.numer, self.denom =   2, 1
@@ -940,10 +978,13 @@ class MeasureHeader:
 	
 	def __init__(self, json_measure_header):
 		self.no_staff = StaffHeader.make_id_staff(json_measure_header["no_staff"] )
+		self.region = None 
 		self.clef = None 
 		self.key_signature = None 
 		self.time_signature = None 
 		
+		if "region" in json_measure_header:
+			self.region = Region (json_measure_header["region"])
 		if "clef" in json_measure_header:
 			self.clef = Clef(json_measure_header["clef"])
 		if "key_signature" in json_measure_header:
