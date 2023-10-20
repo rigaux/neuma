@@ -191,8 +191,8 @@ class Score:
 				#If the score is in XML format
 				self.m21_score = m21.converter.parse(xml_path)
 			
+			
 			# ignore the following bc it cause errors
-
 			self.load_component(self.m21_score)
 
 		except Exception as ex:
@@ -372,13 +372,13 @@ class Part:
 		self.staff_group = [] # For parts with multiple PartStaff
 		
 		if part_type==Part.GROUP_PART:
-			print (f"Creating a part group for part {id_part}")
+			#print (f"Creating a part group for part {id_part}")
 			self.m21_part = m21.layout.StaffGroup(group, 
 								 name=name, abbreviation=abbreviation,
 								 symbol='brace')
 			self.staff_group = group
 		elif part_type == Part.STAFF_PART:
-			print (f"Creating a part Staff for part {id_part}")
+			#print (f"Creating a part Staff for part {id_part}")
 			self.m21_part = m21.stream.PartStaff(id=id_part)
 		else:
 			self.m21_part = m21.stream.Part(id=id_part)
@@ -395,6 +395,16 @@ class Part:
 		# There should be a add_subpart method for recursive structure. Not
 		# used for the moment
 
+	@staticmethod
+	def make_part_id (id_part, no_staff):
+		'''
+		  Following the music21 model, a part is on a staff. So the identification
+		  is from the part id and the staff number. In case
+		  of multi-staves parts, we create one part per staff, and a part group
+		  that contain both  
+		'''
+		return f"{id_part}-{no_staff}"
+	
 	def clear_staves(self):
 		'''
 		   To call when we reinitialize a system or a page
@@ -524,10 +534,22 @@ class Measure:
 	def add_system_break(self):
 		system_break = m21.layout.SystemLayout(isNew=True)
 		self.m21_measure.insert (system_break)
+		# We show the current clef at the beginning of staves
+		self.insert_initial_signatures()
+
 	def add_page_break(self):
 		system_break = m21.layout.PageLayout(isNew=True)
 		self.m21_measure.insert (system_break)
+		self.insert_initial_signatures()
 		
+	def insert_initial_signatures(self):
+		# If the measure is the first of score/part/staff, we report
+		# the current clef and other initial symboles
+		for staff in self.part.staves:
+			# First of system? We insert the current clef
+			self.m21_measure.insert(0,  staff.current_clef.m21_clef)
+		
+	
 	def length(self):
 		# Music21 conventions
 		return self.m21_measure.duration

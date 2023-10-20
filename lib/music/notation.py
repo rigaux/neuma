@@ -28,7 +28,7 @@ class Staff:
 		    notion of 'position'
 		'''
 		self.id = no_staff
-		self.current_clef = Clef(Clef.TREBLE_CLEF)
+		self.current_clef = Clef(Clef.NO_CLEF)
 		self.current_key_signature = KeySignature() 
 		self.current_time_signature = TimeSignature() 
 
@@ -138,6 +138,7 @@ class Clef:
 	ALTO_CLEF = m21.clef.AltoClef
 	TENOR_CLEF = m21.clef.AltoClef
 	BASS_CLEF = m21.clef.BassClef
+	NO_CLEF = m21.clef.NoClef
 	
 	def __init__(self, clef_code) :
 		self.id = f"clef{Clef.counter}"
@@ -150,6 +151,8 @@ class Clef:
 			self.m21_clef = m21.clef.TenorClef()
 		elif clef_code == self.BASS_CLEF:
 			self.m21_clef = m21.clef.BassClef()
+		elif clef_code == self.NO_CLEF:
+			self.m21_clef = m21.clef.NoClef()
 		self.m21_clef.id = self.id
 		Clef.counter += 1
 		

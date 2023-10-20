@@ -21,7 +21,7 @@ import verovio
 
 from .constants import *
 from lib.music.source import ScoreImgManifest
-from numpy import False_
+from numpy import False_, True_
 
 # Get an instance of a logger
 # See https://realpython.com/python-logging/
@@ -246,7 +246,7 @@ class OmrScore:
 			# Parts are identified by the part id + staff id. In general
 			# there is only on staff per part
 			if not self.manifest.is_a_part_group(src_part.id):
-				id_part_staff = src_part.id + "-" + "1"
+				id_part_staff = score_model.Part.make_part_id(src_part.id, "1")
 				part = score_model.Part(id_part=id_part_staff, name=src_part.name, 
 												abbreviation=src_part.abbreviation)
 				score.add_part(part)			
@@ -255,7 +255,7 @@ class OmrScore:
 				staff_group = []
 				i_staff = 1
 				for staff in self.manifest.groups[src_part.id]:
-					id_part_staff = src_part.id + "-" + f"{i_staff}"
+					id_part_staff = score_model.Part.make_part_id(src_part.id, i_staff)
 					i_staff+= 1
 					part = score_model.Part(id_part=id_part_staff, name=src_part.name, 
 												abbreviation=src_part.abbreviation,
@@ -286,8 +286,6 @@ class OmrScore:
 			#print (f"Processing page {current_page_no}")
 			page_begins = True
 			
-			#score_page = score_model.Page(page.no_page)
-			#score.add_page(score_page)
 			for system in page.systems:
 				current_system_no += 1
 				if (current_system_no < self.config.system_min) or (
@@ -305,6 +303,7 @@ class OmrScore:
 				# is not represented in this specific system
 				previous_staves = {}
 				for part in score.parts:
+					# keep the previous staff: it contains info about current clef, etc 
 					previous_staves[part.id] = part.staves
 					part.clear_staves()
 					
@@ -324,9 +323,8 @@ class OmrScore:
 							staff_counter[id_part] += 1
 						
 						# So the score part is obtained by concatenating the counter
-						score_part_id = id_part + "-" + f"{staff_counter[id_part]}"
+						score_part_id = score_model.Part.make_part_id(id_part, staff_counter[id_part])
 						if score.part_exists(score_part_id):
-							print(f"Add staff {header.no_staff} to part {score_part_id}")
 							logger.info (f"Add staff {header.no_staff} to part {score_part_id}")
 							part = score.get_part(score_part_id)
 
@@ -355,7 +353,7 @@ class OmrScore:
 				initial_measure = True
 				for measure in system.measures:
 					current_position = score.duration().quarterLength
-					# print (f'Process measure {current_measure_no}, to be inserted at position {current_position}')
+					#print (f'Process measure {current_measure_no}, to be inserted at position {current_position}')
 					current_measure_no += 1
 					if (current_measure_no < self.config.measure_min) or (
 					    current_measure_no > self.config.measure_max):
@@ -375,16 +373,16 @@ class OmrScore:
 							continue
 						'''
 						measure_for_part = score_model.Measure(part, current_measure_no)
-						# Adding system breaks
+						# Adding score, pages and system breaks
 						if 	page_begins and current_page_no > 1:
 							measure_for_part.add_page_break()
 							page_begins = False
 							system_begins = False
-						elif system_begins:
+						elif system_begins and current_system_no > 1:
 							## Add a system break
 							measure_for_part.add_system_break()
 							system_begins = False
-						
+
 						# Annotate this measure
 						annotation = annot_mod.Annotation.create_annot_from_xml_to_image(
 							self.creator, self.uri, measure_for_part.id, 
@@ -437,6 +435,8 @@ class OmrScore:
 						# Keep the array of current measures indexed by part
 						current_measures[part.id] = measure_for_part
 					
+					# The staff_counter is a dictionary that gives the numbers of
+					# staves already met for a specific part
 					staff_counter = {}
 					for voice in measure.voices:
 						# Here is gets tricky. DMOS gives has 'id_part' the staff where
@@ -448,14 +448,14 @@ class OmrScore:
 								staff_counter[id_part] = {"counter": 0}
 							# Transpose the id of the staff to a sequence
 							if voice.id_staff not in staff_counter[id_part]:
+								# We are meeting a new staff for this part
 								staff_counter[id_part]["counter"] += 1
-								print (f"Creating transposition for staff {voice.id_staff}. Counter: {staff_counter[id_part]['counter']}")
+								#print (f"Creating transposition for staff {voice.id_staff}. Counter: {staff_counter[id_part]['counter']}")
 								staff_counter[id_part][voice.id_staff] = staff_counter[id_part]["counter"]
 
-							# So the score part is obtained by concatenating the counter
+							# So the score part is obtained by concatenating the counter to the part's id
 							score_part_id = id_part + "-" + f"{staff_counter[id_part][voice.id_staff]}"
-
-							print (f"Found a voice on staff {voice.id_staff}. Looking for part {score_part_id}")
+							#print (f"Found a voice on staff {voice.id_staff}. Looking for part {score_part_id}")
 							# Assume that this is the first part							
 							current_part = score.get_part(score_part_id)
 							# Ignore the possible parts in the staff
