@@ -43,10 +43,15 @@ class IndexWrapper:
 		"""
 		   Connect to the ElasticSearch server, and open the index
 		"""
+		
+		es_config = settings.ELASTIC_SEARCH
+		conn_string =  es_config["scheme"] + es_config["host"] + ":" + str(es_config["port"])
 		if auth_login is None:
-			self.elastic_search = Elasticsearch(host=settings.ELASTIC_SEARCH["host"], 
+			'''self.elastic_search = Elasticsearch(host=settings.ELASTIC_SEARCH["host"], 
 											port=settings.ELASTIC_SEARCH["port"],
 											index=settings.ELASTIC_SEARCH["index"])
+			'''
+			self.elastic_search = Elasticsearch(conn_string)
 		else:
 			self.elastic_search = Elasticsearch(host=settings.ELASTIC_SEARCH["host"], 
 											port=settings.ELASTIC_SEARCH["port"],
@@ -87,7 +92,7 @@ class IndexWrapper:
 			score = opus.get_score()
 
 			# New change: store MS in ES
-			music_summary = score.get_music_summary()
+			music_summary = MusicSummary.get_music_summary(score)
 			music_summary.opus_id = opus.ref
 			msummary_for_es = music_summary.encode()
 
@@ -202,9 +207,12 @@ class IndexWrapper:
 		else:
 			search = self.get_search(search_context)
 			 
+		# Get results
+		
+		#query = Q("multi_match", query='King', fields=['title', 'body'])
+		#search = Search(using=self.elastic_search).query(query)
 		logger.info ("Search doc sent to ElasticSearch: " + str(search.to_dict()))
 		print ("Search doc sent to ElasticSearch: " + str(search.to_dict()).replace("'", "\""))
-		# Get results
 		results = search.execute()
 
 		# Create the result by decoding the opus got from ElasticSearch
@@ -214,8 +222,6 @@ class IndexWrapper:
 		# Philippe la boucle  "for hit in search.scan()" plante sur Humanum...
 		for hit in search:
 			try:
-				if hit.corpus_ref == 'all:composers:liyanfei': continue
-				# Nicolas rajout de ce test car des documents de mappings peuvent apparaitre dans elasticsearch 6.1.2
 				if "ref" in hit:
 					opus = Opus.objects.get(ref=hit["ref"])
 					matching_ids = []
@@ -333,19 +339,24 @@ class IndexWrapper:
 		Create the search object with ElasticSearch DSL
 		"""
 		search = Search(using=self.elastic_search)
-		search = search.params (size=settings.MAX_ITEMS_IN_RESULT)
+		#search = search.params (size=settings.MAX_ITEMS_IN_RESULT)
 		# Do we search in a specific corpus?
 		if search_context.ref and search_context.ref != "all":
-			search = search.query("prefix", corpus_ref=search_context.ref)
+			q_corpus = Q("multi_match", query=search_context.ref, fields=['corpus_ref'])
+			search = search.query(q_corpus)
+			# Why  ??
+			#search = search.query("prefix", corpus_ref=search_context.ref)
 
+		
 		# Do we search for keywords?
 		if search_context.keywords:
 			# Searching for the keywords in titles and composers
 			q_title = Q("multi_match", query=search_context.keywords, fields=['lyrics', 'composer', 'title'])
 			# Searching for the keywords in lyrics
-			q_lyrics = Q("match_phrase", lyrics__value=search_context.keywords)
+			#q_lyrics = Q("match_phrase", lyrics__value=search_context.keywords)
 			# Combine the search
-			search = search.query(q_title | q_lyrics)
+			#search = search.query(q_title | q_lyrics)
+			search = search.query(q_title)
 
 		# Do we search a melodic pattern
 		if search_context.is_pattern_search():

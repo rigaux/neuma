@@ -1,6 +1,6 @@
 import hashlib
 import urllib
-
+import datetime
 import subprocess
 
 import jsonschema
@@ -636,10 +636,22 @@ def handle_source_file_request(request, full_neuma_ref, source_ref):
 	try:
 		source = OpusSource.objects.get(opus=opus,ref=source_ref)
 	except OpusSource.DoesNotExist:
-		return Response(status=status.HTTP_404_NOT_FOUND)
+		#print (f"Source {source_ref} does not exists in opus {opus.ref}")		
+		# Special case for DMOS source: we create a default one
+		if source_ref == "dmos":
+			source_type = SourceType.objects.get(code=SourceType.STYPE_DMOS)
+			source = OpusSource (opus=opus,ref=source_ref,source_type=source_type,
+				description=f"Created via REST call on {datetime.date.today()}",url ="")
+			source.save()
+		else:
+			return Response(status=status.HTTP_404_NOT_FOUND)
 
 	for filename, filecontent in request.FILES.items():
 		source.source_file.save(filename, filecontent)
+		
+		# Special case DMOS: parse the file and create XML files
+		if source_ref=="dmos":
+			opus.parse_dmos()
 	return JSONResponse("Source file uploaded")
 
 ############

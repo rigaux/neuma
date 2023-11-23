@@ -973,11 +973,11 @@ class Opus(models.Model):
 		# Try to obtain the MEI document, which contains IDs
 
 		if self.mei:
-			#print ("Load from MEI")
+			print ("Load from MEI")
 			score.load_from_xml(self.mei.path, "mei")
 			return score
 		elif self.musicxml:
-			#print ("Load from MusicXML")
+			print ("Load from MusicXML")
 			score.load_from_xml(self.musicxml.path, "musicxml")
 			return score
 		else:

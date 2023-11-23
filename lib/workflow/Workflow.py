@@ -31,6 +31,7 @@ from xml.dom import minidom
 from lib.neuma.rest import Client
 
 from lib.music.Score import *
+from lib.neumasearch.MusicSummary import MusicSummary
 
 # Music analysis module
 import music21 as m21
@@ -203,6 +204,7 @@ class Workflow:
 		if the recursion parameter is True)
 		"""
 
+		i=0
 		for opus in Opus.objects.filter(corpus__ref=corpus.ref):
 			Workflow.index_opus(opus)
 
@@ -249,9 +251,10 @@ class Workflow:
 		
 		# Produce the Opus descriptors
 		Workflow.produce_opus_descriptor(opus)
-		
-		# Compute and store feartues
+		print ("Descriptors produced")
+		# Compute and store features
 		Workflow.extract_features_from_opus(opus)
+		print ("Features extracted")
 
 		# Store the descriptors and the features in Elastic Search
 		index_wrapper = IndexWrapper()
@@ -342,29 +345,6 @@ class Workflow:
 			return
 
 	@staticmethod
-	def analyze_patterns_in_opus(opus):
-		'''
-		Analyze melodic, diatonic and rhythmic patterns within an opus and store statistics
-		'''
-		print ("Analyze patterns in opus " + opus.ref)
-
-		try:
-			score = opus.get_score()
-		except:
-			print("Could not get score for opus" + opus.ref)
-			return {},{},{},{},{},{}
-
-		#If there is an error while tranforming MEI into XML format, skip this opus
-		if score.m21_score == None:
-			return {},{},{},{},{},{}
-
-		# First, compute the music summary and store it as a file
-		music_summary = score.get_music_summary()
-		music_summary.opus_id = opus.ref
-		opus.summary.save("summary.json", ContentFile(music_summary.encode()))
-
-
-	@staticmethod
 	def extract_features_from_corpus(corpus, recursion=True):
 		"""
 		(Re)extract features and metadata for all the opuses of a corpus (and its descendants
@@ -449,18 +429,7 @@ class Workflow:
 			if m21.instrument.partitionByInstrument(m21_score) != None:
 				for part in m21.instrument.partitionByInstrument(m21_score):
 					info["instruments"].append(part.getInstrument().instrumentName)
-		
-		'''
-		  Is it really useful ?
-		nameCount = m21.analysis.pitchAnalysis.pitchAttributeCount(m21_score, 'name')
-		dict_common_pitch = {}
-		for n, count in nameCount.most_common(10):
-			dict_common_pitch[n] = nameCount[n]
-		json_commonpitch = json.dumps(dict_common_pitch)
-		info["most_common_pitches"] = json_commonpitch
-		info["most_common_pitches"]
-		''' 
-					
+						
 		# TODO: this needs to be json encoded
 		if not (OpusMeta.MK_LOWEST_PITCH_EACH_PART in opus_metas) or forced:
 			pitchmin_eachpart = {}
@@ -590,61 +559,6 @@ class Workflow:
 		except:
 			#When the analysis finish, no value would be assigned to mel_pat_dict etc.. thus simply return void
 			return
-
-	@staticmethod
-	def analyze_patterns_in_opus(opus):
-		'''
-		Analyze melodic, diatonic and rhythmic patterns within an opus and store statistics
-		'''
-		print ("Analyze patterns in opus " + opus.ref)
-
-		try:
-			score = opus.get_score()
-		except:
-			print("Could not get score for opus" + opus.ref)
-			return {},{},{},{},{},{}
-
-		#If there is an error while tranforming MEI into XML format, skip this opus
-		if score.m21_score == None:
-			return {},{},{},{},{},{}
-
-		# First, compute the music summary and store it as a file
-		music_summary = score.get_music_summary()
-		music_summary.opus_id = opus.ref
-		opus.summary.save("summary.json", ContentFile(music_summary.encode()))
-
-		# Find patterns within each Voice of an Opus
-		for part_id, part in music_summary.parts.items():
-			for voice_id, voice in part.items():
-				for n in range(3, 12):
-					# Melody descriptor
-					mel_descr = voice.get_melody_encoding(False, n)
-			
-					# 'N' is used as segregation between patterns in descriptor
-					pattern_list = mel_descr.split("N")
-
-					#not recording opus ref for each pattern anymore bc there are too many patterns
-					#mel_pat_dict, mel_opus_dict = Workflow.get_patterns_from_descr(pattern_list, opus, part_id, voice_id, settings.MELODY_DESCR)
-					mel_pat_dict = Workflow.get_patterns_from_descr(pattern_list, opus, part_id, voice_id, settings.MELODY_DESCR)
-
-					#Diatonic descriptor
-					dia_descr = voice.get_diatonic_encoding(False, n)
-				
-					pattern_list = dia_descr.split("N")
-
-					#dia_pat_dict, dia_opus_dict = Workflow.get_patterns_from_descr(pattern_list, opus, part_id, voice_id, settings.DIATONIC_DESCR)
-					dia_pat_dict = Workflow.get_patterns_from_descr(pattern_list, opus, part_id, voice_id, settings.DIATONIC_DESCR)
- 
-					# Rhythm descriptor
-					rhy_descr = voice.get_rhythm_encoding(n)
-				
-					###rhythm_encoding = self.rhythms_to_ngrams(self.get_rhythms())
-					pattern_list = rhy_descr.split("N")
-				
-					#rhy_pat_dict, rhy_opus_dict = Workflow.get_patterns_from_descr(pattern_list, opus, part_id, voice_id, settings.RHYTHM_DESCR)
-					rhy_pat_dict = Workflow.get_patterns_from_descr(pattern_list, opus, part_id, voice_id, settings.RHYTHM_DESCR)
-
-		return mel_pat_dict, dia_pat_dict, rhy_pat_dict, {}, {}, {}#, mel_opus_dict, dia_opus_dict, rhy_opus_dict
 	
 	@staticmethod
 	def get_patterns_from_descr(pattern_list, opus, part_id, voice_id, descriptor):
@@ -746,7 +660,7 @@ class Workflow:
 					return
 
 				# First, compute the music summary and store it as a file
-				music_summary = score.get_music_summary()
+				music_summary = MusicSummary.get_music_summary(score)
 				music_summary.opus_id = opus.ref
 				#opus.summary.save("summary.json", ContentFile(music_summary.encode()))
 				#print (json.dumps(json_summary, indent=4, separators=(',', ': ')))

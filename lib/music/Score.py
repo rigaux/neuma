@@ -190,11 +190,10 @@ class Score:
 			else:
 				#If the score is in XML format
 				self.m21_score = m21.converter.parse(xml_path)
-			
-			
+							
 			# ignore the following bc it cause errors
 			self.load_component(self.m21_score)
-
+			
 		except Exception as ex:
 			self.m21_score = None
 			print ("Score::load_from_xml error: " + str(ex))
@@ -264,25 +263,6 @@ class Score:
 				# Add the voices of the sub-components
 				voices += comp.get_all_voices()
 		return voices
-	
-	def get_music_summary(self):
-		'''Produce a compact representation of a score for search operations
-		
-		   No longeer used? Seee MusicSummary line 57
-		
-		music_summary = MusicSummary()
-		# Adds a single part, for historical reasons: we do not care about parts
-		# for search operations
-		part_id = "all_parts"
-		music_summary.add_part(part_id)
-		# Now add all the voices
-		voices = self.get_all_voices()
-		for voice in voices:
-			music_summary.add_voice_to_part(part_id, voice.id, voice)
-			
-		return music_summary
-		'''
-		return
 	
 	def get_title(self):
 		if self.m21_score.metadata:

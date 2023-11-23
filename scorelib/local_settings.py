@@ -8,7 +8,8 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 #
 # Access to ElasticSearch
 #
-ELASTIC_SEARCH = {"host": "localhost", "port": 9200, "index": "scorelib"}
+ELASTIC_SEARCH = {"scheme": "http://", 
+				"host": "localhost", "port": 9200, "index": "scorelib"}
 
 DATABASES = {
     'default': {

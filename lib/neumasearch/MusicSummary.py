@@ -167,7 +167,7 @@ class MusicSummary:
 			return "", 1000000
 
 	@staticmethod
-	def get_music_summary(self, score):
+	def get_music_summary(score):
 		'''Produce a compact representation of a score for search operations'''
 		music_summary = MusicSummary()
 		# Adds a single part, for historical reasons: we do not care about parts
