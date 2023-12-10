@@ -631,7 +631,8 @@ def handle_source_file_request(request, full_neuma_ref, source_ref):
 	if type(neuma_object) is Opus:
 		opus = neuma_object
 	else:
-		return Response(status=status.HTTP_404_NOT_FOUND)
+		return JSONResponse({"status": "ko", "message": f"Unknown opus: {full_neuma_ref}"})
+		#return Response(status=status.HTTP_404_NOT_FOUND)
 
 	try:
 		source = OpusSource.objects.get(opus=opus,ref=source_ref)
@@ -644,7 +645,8 @@ def handle_source_file_request(request, full_neuma_ref, source_ref):
 				description=f"Created via REST call on {datetime.date.today()}",url ="")
 			source.save()
 		else:
-			return Response(status=status.HTTP_404_NOT_FOUND)
+			return JSONResponse({"status": "ko", "message": f"Invalid source reference: {source_ref} (expected 'dmos')"})
+			#return Response(status=status.HTTP_404_NOT_FOUND)
 
 	for filename, filecontent in request.FILES.items():
 		source.source_file.save(filename, filecontent)
@@ -652,7 +654,7 @@ def handle_source_file_request(request, full_neuma_ref, source_ref):
 		# Special case DMOS: parse the file and create XML files
 		if source_ref=="dmos":
 			opus.parse_dmos()
-	return JSONResponse("Source file uploaded")
+	return JSONResponse({"status": "ok", "message": "Source file uploaded"})
 
 ############
 ###

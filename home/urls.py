@@ -18,6 +18,8 @@ urlpatterns = [
     re_path(r'^services$', NeumaView.as_view(template_name="home/services.html"), name='services'),
     re_path(r'^collections$', NeumaView.as_view(template_name="home/collections.html"), name='collections'),
     re_path(r'^contact$', NeumaView.as_view(template_name="home/contact.html"), name='contact'),
+	re_path(r'^testVerovio', NeumaView.as_view(template_name="home/testVerovio.html"), name='contact'),
+ 	re_path(r'^IIIF/(?P<iiif_ref>.+)/$', views.iiif, name='IIIF'),
      re_path(r'^test', NeumaView.as_view(template_name="home/test.html"), name='test'),
    re_path(r'^auth', AuthView.as_view(template_name="home/index.html"), name='auth'),
    re_path(r'^form_login', TemplateView.as_view(template_name="home/form_login.html"), name='form_login'),

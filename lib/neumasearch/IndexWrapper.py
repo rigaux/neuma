@@ -45,13 +45,13 @@ class IndexWrapper:
 		"""
 		
 		es_config = settings.ELASTIC_SEARCH
-		conn_string =  es_config["scheme"] + es_config["host"] + ":" + str(es_config["port"])
+		#conn_string =  es_config["scheme"] + es_config["host"] + ":" + str(es_config["port"])
 		if auth_login is None:
-			'''self.elastic_search = Elasticsearch(host=settings.ELASTIC_SEARCH["host"], 
+			self.elastic_search = Elasticsearch(host=settings.ELASTIC_SEARCH["host"], 
 											port=settings.ELASTIC_SEARCH["port"],
 											index=settings.ELASTIC_SEARCH["index"])
-			'''
-			self.elastic_search = Elasticsearch(conn_string)
+			
+			# self.elastic_search = Elasticsearch(conn_string)
 		else:
 			self.elastic_search = Elasticsearch(host=settings.ELASTIC_SEARCH["host"], 
 											port=settings.ELASTIC_SEARCH["port"],
@@ -100,6 +100,7 @@ class IndexWrapper:
 				meta={'id': opus.ref, 'index': settings.ELASTIC_SEARCH["index"]},
 				corpus_ref=opus.corpus.ref,
 				ref=opus.ref,
+				local_ref=opus.local_ref(),
 				summary = msummary_for_es,
 				title=opus.title,
 				composer=opus.composer,
@@ -351,7 +352,7 @@ class IndexWrapper:
 		# Do we search for keywords?
 		if search_context.keywords:
 			# Searching for the keywords in titles and composers
-			q_title = Q("multi_match", query=search_context.keywords, fields=['lyrics', 'composer', 'title'])
+			q_title = Q("multi_match", query=search_context.keywords, fields=['lyrics', 'composer', 'ref', 'local_ref', 'title'])
 			# Searching for the keywords in lyrics
 			#q_lyrics = Q("match_phrase", lyrics__value=search_context.keywords)
 			# Combine the search
@@ -433,6 +434,7 @@ class OpusIndex(Document):
 	corpus_ref = Text()
 	id = Integer()
 	ref = Text()
+	local_ref = Text()	
 	title = Text()
 	lyricist = Text()
 	composer = Text()

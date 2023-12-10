@@ -118,18 +118,10 @@ if request.session.search_context.pattern != ""
             {% endif %}
            </dd>
            
+       
+ 
            
-          {% for source in opus.opussource_set.all %}
-      <!--    {% if source.ref == "dmos" and source.source_file %}
-           <dd>
-            <a href="{{source.source_file.url}}"> DMOS file exists:</a>
-                        <a href="{% url 'home:opus' opus.ref %}?load_dmos=1">Load from DMOS</a>
-           </dd>
-            -->  
-               {% endif %}  
-          {% endfor %}
-      
-</dl>
+  </dl>
 <!-- fin div .description -->
 
            
@@ -178,7 +170,31 @@ if request.session.search_context.pattern != ""
 
 <div class="clearer">&nbsp;</div>
 
+
+<div class="clearer">&nbsp;</div>
+
 <div id="score" style="display: block">
+
+
+<template id="display-verovio-score">
+ 
+ 
+     <p>Affiche partition</p>
+	<ul id="links" class="paginator"></ul>
+
+   <button id="playMIDI">Ecouter la transcription MIDI</button>
+        <button id="stopMIDI">Stop</button>        
+        <button id="prevPage">Previous page</button>
+        <button id="nextPage">Next page</button>
+
+	<div>
+		<div id="verovio"></div>
+	</div>
+ 
+</template>
+
+<display-verovio-score opus_ref="{{opus.ref}}" mei_url="{{opus.mei.url}}">
+</display-verovio-score>
 
 <!-- if request.session.search_context.pattern != "" and opus.mei  -->
 
@@ -216,34 +232,107 @@ if request.session.search_context.pattern != ""
 
 <div class="clearer">&nbsp;</div>
 
+
+<script>
+
+/*******************************************************************************
+ * Show a source with Verovio APP
+ ******************************************************************************/
+
+function displaySource(src, type, target) {
+
+   console.log ("Display source " + src + " with type " + type + " in " + target) 
+
+   if (type == "ref_mei" || type=="mei") {
+	   // Ajout d'un element display-score-verovio
+	   target_div = document.getElementById(target)
+	   if (target_div == null) {
+		   console.log ("Unknown element " + target)
+	   }
+	   else {
+		   target_div.innerHTML = ""
+		   console.log ("Ajout element display score")
+		   const text = document.createElement('div');   
+		   const dvs = document.createElement('display-verovio-score');   
+		   dvs.setAttribute('mei_url', src);
+		   target_div.appendChild(dvs)
+	   }
+   } 
+   else if (type == 'image/jpeg') {
+   
+	  new Tify({
+		  container: '#' + target,
+		  manifestUrl: 'https://gallica.bnf.fr/iiif/ark:/12148/bpt6k1174892k/manifest.json',
+		  viewer: {
+			    immediateRender: false,
+			  },
+		})
+   }
+
+}
+</script>   
+   
+   
 <!--   Tab for sources  -->
 <div id="sources" style="display: none">
-  
-  
-  <h3>List of sources for this opus</h3>
-     <ul>
-      {% for source in opus.opussource_set.all %}
-           <li> Reference: {{ source.ref}}. Description: {{source.description}}
-             <ul>
-               <li> Type: {{source.source_type.mime_type}}</li>
-               <li> Url: <a href="{{source.url}}">{{source.url}}</a></li>
-               {% if source.source_file %}
-                    <li>File : 
-        <a href="{{source.source_file.url}}">{{source.source_file.url}}</a>
-        </li>
-        {% endif %}
-  
-               <li>  {% if "change_corpus" in user_corpus_perms %}
-           Actions :  <a   href="{% url 'admin:manager_opussource_change' source.id %}">
-                           Edit
-                         </a> </li>
-                  </ul>       
-               {% endif %}  
-          </li>
-      {% endfor %}
-   </ul>
 
+
+     <table border="0" width="100%">
+       <tr>
+        <th>
+          Main MEI file
+        </th>
+     {% for source in opus.opussource_set.all %}
+         <th>
+          <b>{{source.ref}}</b> ({{source.source_type.mime_type}}). 
+           {{source.description}}
+           {% if source.source_file %}
+           <a href="{{source.source_file.url}}">File</a>
+           {% else %}
+               <a href="{{source.url}}">Link</a>
+          {% endif %}
+           
+         </th>
+      {% endfor %}
+      </tr>
+       <tr>
+       <td nowrap=1> 
+       <a onclick="displaySource('{{opus.mei.url}}', 'mei', 'source1')" href="#">Show left</a> |
+       <a onclick="displaySource('{{opus.mei.url}}', 'mei', 'source2')" href="#">Show right</a>
+    </td>
+      {% for source in opus.opussource_set.all %}
+        <td>
+         {% if source.source_file %}      
+           <a onclick="displaySource('{{source.source_file.url}}', 'mei', 'source1')" href="#">Show left</a> |
+           <a onclick="displaySource('{{source.source_file.url}}', 'mei', 'source2')" href="#">Show right</a>
+         {% else %}
+           <a href="{% url 'home:IIIF' source.url %} " target="_blank" href="#">Show</a> |
+         {% endif %} 
+        {% if "change_corpus" in user_corpus_perms %}
+        
+           | <a href="{% url 'admin:manager_opussource_change' source.id %}">
+                           Edit
+                   </a> 
+               {% endif %}  
+         </td>
+      {% endfor %}
+      </tr>
+   </table>
+   
   
+<table width="100%">
+<tr nobreak=1>
+<td width="50%">
+  <div  id="source1"/>
+</td>
+<td width="50%">
+  <div id="source2"/>
+</td>
+</tr>
+</table>
+ 
+    <div id="tify" style="height: 640px"></div>
+
 </div>
 
 <div class="clearer">&nbsp;</div>
@@ -305,6 +394,121 @@ if request.session.search_context.pattern != ""
      }
    );
   </script>
+
+
+    {% if opus.mei %} 
+	<script type="text/javascript">
+	 
+	console.log ("Verovio part")
+	 var isPlaying = false;
+	 var ids = [];
+	 var vrvToolkit;
+	 var page = 1
+	 
+	  var vrvOptions = {
+		scale : 35,
+		pageHeight : 20000,
+		adjustPageHeight : 1
+    	};
+
+	  var vrvOptions2 = {
+				scale : 35,
+				breaks: "encoded"
+		    	};
+
+	 // Call JS function when the document is loaded
+	 document.addEventListener("DOMContentLoaded", (event) => {
+
+	     console.log ("Dom loaded")
+	    // Copy the pattern in the page 
+	    clonePattern("seepartition", "pattern_score");
+
+		// Display the score with Verovio    
+	    var highlights =[];
+	    //highlights = {{matching_ids}}
+	    
+	    // Keep a variable to the notation div id
+        let notationElement = document.getElementById("verovio");
+
+	    vrvToolkit = displayWithVerovio("{{opus.ref}}", "{{opus.mei.url}}", "verovio", "{}", vrvOptions2);
+
+        // The current page, which will change when playing through the piece
+        let currentPage = 1;
+
+        /**
+        The handler to start playing the file
+       **/
+       const playMIDIHandler = function () {
+           // Get the MIDI file from the Verovio toolkit
+           let base64midi = vrvToolkit.renderToMIDI();
+           // Add the data URL prefixes describing the content
+           let midiString = 'data:audio/midi;base64,' + base64midi;
+           // Pass it to play to MIDIjs
+           MIDIjs.play(midiString);
+       }
+
+       /**
+        The handler to stop playing the file
+       **/
+       const stopMIDIHandler = function () {
+           MIDIjs.stop();
+       }
+
+       const midiHightlightingHandler = function (event) {
+           // Remove the attribute 'playing' of all notes previously playing
+           let playingNotes = document.querySelectorAll('g.note.playing');
+           for (let playingNote of playingNotes) playingNote.classList.remove("playing");
+
+           // Get elements at a time in milliseconds (time from the player is in seconds)
+           let currentElements = vrvToolkit.getElementsAtTime(event.time * 1000);
+
+           if (currentElements.page == 0) {
+        	    console.log ("Page 0")
+        	    return;
+           }
+
+           if (currentElements.page != currentPage) {
+               currentPage = currentElements.page;
+               document.getElementById("notation").innerHTML = vrvToolkit.renderToSVG(currentPage);
+           }
+
+           // Get all notes playing and set the class
+           for (note of currentElements.notes) {
+               let noteElement = document.getElementById(note);
+               if (noteElement) noteElement.classList.add("playing");
+           }
+       }
+
+   /**
+       Wire up the button to actually work.
+   */
+   const nextPageHandler = function () {
+       currentPage = Math.min(currentPage + 1, vrvToolkit.getPageCount());
+       notationElement.innerHTML = vrvToolkit.renderToSVG(currentPage);
+   }
+
+   const prevPageHandler = function () {
+       currentPage = Math.max(currentPage - 1, 1);
+       notationElement.innerHTML = vrvToolkit.renderToSVG(currentPage);
+   }
+
+   /**
+       Wire up the buttons to actually work.
+   */
+   document.getElementById("playMIDI").addEventListener("click", playMIDIHandler);
+   document.getElementById("stopMIDI").addEventListener("click", stopMIDIHandler);
+   document.getElementById("nextPage").addEventListener("click", nextPageHandler);
+   document.getElementById("prevPage").addEventListener("click", prevPageHandler);
+
+   /**
+   Set the function as message callback
+
+  MIDIjs.player_callback = midiHightlightingHandler;
+   */
+	       
+	 });
+	 </script>
+	{% endif %}
 
   <!-- Parameters supplied to the ComputeAnnotations() Ajax call -->
 <input id="compute_opus_ref" type="hidden" name="opus_ref" value="{{opus.ref}}"/>

@@ -253,8 +253,8 @@ class Workflow:
 		Workflow.produce_opus_descriptor(opus)
 		print ("Descriptors produced")
 		# Compute and store features
-		Workflow.extract_features_from_opus(opus)
-		print ("Features extracted")
+		#Workflow.extract_features_from_opus(opus)
+		#print ("Features extracted")
 
 		# Store the descriptors and the features in Elastic Search
 		index_wrapper = IndexWrapper()

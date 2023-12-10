@@ -2,13 +2,182 @@
  * Verovio functions
  **/
 
+
 /**
+ A custom element to display and interact with scores
+**/
+
+
+class DisplayVerovioScore extends HTMLElement {
+	
+  static observedAttributes = ["opus_ref"];
+  static verovio = null
+  static shadow = null
+ 
+  
+  constructor() {
+    super();
+    
+    // Properties
+    this.opus_ref = ""
+  	this.current_page = 1
+	this.vrvToolkit = new verovio.toolkit()
+
+	// Load the template	
+  	let template = document.getElementById("display-verovio-score");
+    let templateContent = template.content;
+
+	// Create a shadow root
+    this.shadow = this.attachShadow({ mode: "open" });
+    this.shadow.appendChild(templateContent.cloneNode(true));
+
+	DisplayVerovioScore.verovio = this.vrvToolkit
+	DisplayVerovioScore.shadow = this.shadow
+
+  }
+  
+  connectedCallback() {
+	
+    // Take attribute content and put it inside the info span
+    this.opus_ref = this.getAttribute('opus_ref');
+    this.mei_url = this.getAttribute('mei_url');
+    
+    var vrv_options = {
+				scale : 35,
+				breaks: "encoded"
+		    	};
+
+	// Create the Vevorio toolkit instance
+	
+	this.vrvToolkit.setOptions(vrv_options);
+ 
+	// Where do we show the score
+	this.score_div = this.shadow.getElementById("verovio");
+
+	if (this.score_div == null) {
+		console.log("Cannot find target = " + target);
+		return;
+	} else {
+		// Get all XML fragments
+		 console.log("Calling ShowScore");
+		showScore(this.vrvToolkit, this.mei_url, this.score_div)
+		
+		// Add event handlers
+		this.shadow.getElementById("nextPage").addEventListener("click", 
+		            () => { this.current_page = Math.min(this.current_page + 1, this.vrvToolkit.getPageCount());
+		                    this.nextPageHandler (this.vrvToolkit, 
+		                             this.score_div, this.current_page);
+		                  });
+		this.shadow.getElementById("prevPage").addEventListener("click", 
+		            () => { this.current_page = Math.max(this.current_page - 1, 1);
+		                    this.prevPageHandler (this.vrvToolkit, 
+		                             this.score_div, this.current_page);
+		                  });
+		this.shadow.getElementById("playMIDI").addEventListener("click", 
+		            () => { 
+		                    this.playMIDIHandler (this.vrvToolkit);
+		                  });
+		this.shadow.getElementById("stopMIDI").addEventListener("click", 
+									this.stopMIDIHandler);
+
+
+ 		 /**
+ 		  Set the function as message callback
+ 		 */
+ 		 MIDIjs.player_callback = this.midiHightlightingHandler;
+
+	}
+
+	console.log ("Fin callback avec texte " + this.opus_ref + " / "  + this.mei_url)
+  }
+
+  disconnectedCallback() {
+    console.log("Custom element removed from page.");
+  }
+
+  adoptedCallback() {
+    console.log("Custom element moved to new page.");
+  }
+
+  attributeChangedCallback(name, oldValue, newValue) {
+   console.log(`Attribute ${name} has changed.`);
+  }
+  
+  
+  nextPageHandler (verovio, target, current_page) {
+       target.innerHTML = verovio.renderToSVG(current_page);
+   }
+
+  prevPageHandler (verovio, target, current_page) {
+       target.innerHTML = verovio.renderToSVG(current_page);
+   }
+
+  /**
+        The handler to start playing the file
+  **/
+  playMIDIHandler (verovio) {
+       // Get the MIDI file from the Verovio toolkit
+       let base64midi = verovio.renderToMIDI();
+       // Add the data URL prefixes describing the content
+        let midiString = 'data:audio/midi;base64,' + base64midi;
+           // Pass it to play to MIDIjs
+           MIDIjs.play(midiString);
+   }
+   
+  /**
+        The handler to stop playing the file
+   **/
+   stopMIDIHandler () {
+           MIDIjs.stop();
+       }
+
+	/**
+      Notes highlighting
+   **/
+   
+    midiHightlightingHandler (event) {
+	console.log ("Callling midi handler")
+     // Remove the attribute 'playing' of all notes previously playing
+           let playingNotes = DisplayVerovioScore.shadow.querySelectorAll('g.note.playing');
+           for (let playingNote of playingNotes) {
+               playingNote.classList.remove("playing");
+			}
+           // Get elements at a time in milliseconds (time from the player is in seconds)
+           let currentElements = DisplayVerovioScore.verovio.getElementsAtTime(event.time * 1000);
+
+           if (currentElements.page == 0) {
+        	    console.log ("Page 0")
+        	    return;
+           }
+
+           if (currentElements.page != currentPage) {
+               currentPage = currentElements.page;
+               DisplayVerovioScore.shadow.getElementById("notation").innerHTML = DisplayVerovioScore.vrvToolkit.renderToSVG(currentPage);
+           }
+
+           // Get all notes playing and set the class
+           for (let note of currentElements.notes) {
+				console.log ("Show playing")
+               let noteElement = DisplayVerovioScore.shadow.getElementById(note);
+               if (noteElement) noteElement.classList.add("playing");
+           }
+       }
+
+}
+
+customElements.define("display-verovio-score", DisplayVerovioScore);
+
+
+/**
+
  * Use Verovio to load and display a MEI doc.
  */
+
 
 function displayWithVerovio(opusRef, meiUrl, target, highlights, options) {
 	/* Create the Vevorio toolkit instance */
 	var vrvToolkit = new verovio.toolkit();
+
 
 	vrvToolkit.setOptions(options);
 
@@ -434,6 +603,8 @@ console.log ("Clear annnotation for  " + concept_type)
 	})
 }
 
+
+
 /*******************************************************************************
  * MIDI Player function
  ******************************************************************************/
@@ -502,3 +673,18 @@ var midiStop = function() {
 	//$("#player").hide();
 	isPlaying = false;
 }
+
+
+
+   /**
+      Navigation functions
+   */
+   const nextPageHandler = function () {
+       currentPage = Math.min(currentPage + 1, vrvToolkit.getPageCount());
+       notationElement.innerHTML = vrvToolkit.renderToSVG(currentPage);
+   }
+
+   const prevPageHandler = function () {
+       currentPage = Math.max(currentPage - 1, 1);
+       notationElement.innerHTML = vrvToolkit.renderToSVG(currentPage);
+   }
