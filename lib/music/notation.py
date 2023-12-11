@@ -176,7 +176,7 @@ class Clef:
 			return Clef (Clef.TENOR_CLEF)
 		else:
 			# Should not happen
-			logging.error('Unable to decode DMOS code for clef: ' + dmos_code 
+			score_mod.logger.error('Unable to decode DMOS code for clef: ' + dmos_code 
 						+ " " + str(dmos_height))
 			return Clef (TREBLE_CLEF)
 
@@ -188,7 +188,13 @@ class Clef:
 		
 		#print ("Decode pitch from height " + str(height) + " and clef " + self.m21_clef)
 		# The note of the lowest line
-		diatonic_num_base = self.m21_clef.lowestLine
+		if hasattr(self.m21_clef, 'lowestLine'):
+			diatonic_num_base = self.m21_clef.lowestLine
+		else:
+			# Strange, we got a note but we do not know the key ?!
+			score_mod.logger.warning(f"Found a note symbol without having a Clef ?  Assuming G")
+			diatonic_num_base = m21.clef.TrebleClef().lowestLine
+			
 		# We add the line obtained from DMOS
 		diatonic_num = diatonic_num_base + height
 		pitch = m21.pitch.Pitch() 

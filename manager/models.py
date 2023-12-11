@@ -1345,7 +1345,7 @@ class OpusSource (models.Model):
 		source_ref = self.opus.ref.replace(settings.NEUMA_ID_SEPARATOR, "-")
 		return 'sources/' + source_ref + '/' + filename
 	source_file = models.FileField(upload_to=upload_path,null=True,storage=OverwriteStorage())
-	manifest = models.FileField(upload_to=upload_path,null=True,storage=OverwriteStorage())
+	manifest = models.FileField(upload_to=upload_path,blank=True,null=True,storage=OverwriteStorage())
 
 	class Meta:
 		db_table = "OpusSource"	

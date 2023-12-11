@@ -399,10 +399,12 @@ class OmrScore:
 								staff = part.get_staff (header.no_staff)
 								if header.region is not None:
 									# Record the region of the measure for the current staff
+									print ("Found annotation for measure staff")
 									annotation = annot_mod.Annotation.create_annot_from_xml_to_image(
 										self.creator, self.uri, measure_for_part.id, 
 										page.page_url, header.region.string_xyhw(), 
 										constants_mod.IREGION_MEASURE_STAFF_CONCEPT)
+									score.add_annotation (annotation)
 								if header.clef is not None:
 									clef_staff = header.clef.get_notation_clef()
 									staff.set_current_clef (clef_staff)
