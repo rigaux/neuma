@@ -1135,15 +1135,18 @@ class Opus(models.Model):
 			return  "Unexpected error during parser initialization: " + str (ex)
 
 		dmos_data = None
+		dmos_source =None
 		for source in self.opussource_set.all ():
 			if source.ref == OpusSource.DMOS_REF:
-				if source.source_file:
-					dmos_data = json.loads(source.source_file.read())
-				if source.manifest:
+				dmos_source = source
+				if dmos_source.source_file:
+					dmos_data = json.loads(dmos_source.source_file.read())
+				if dmos_source.manifest:
 					print ("Found a manifest")
-					json_manifest = json.loads(source.manifest.read())
+					json_manifest = json.loads(dmos_source.manifest.read())
 					manifest = source_mod.ScoreImgManifest.from_json(json_manifest)
 				else:
+					print ("No manifest")
 					manifest = None
 		if dmos_data == None:
 			return "Unable to find the DMOS file ??"
@@ -1170,7 +1173,13 @@ class Opus(models.Model):
 			self.mei = File(f,name="mei.xml")
 			self.save()
 		
-		opus_url = self.musicxml.url	
+		# Store the manifest 
+		for source in self.opussource_set.all ():
+			if source.ref == OpusSource.DMOS_REF:
+				print ("Save the manifest")
+				source.manifest = ContentFile(json.dumps(omr_score.manifest.to_json()), name="manifest.json")
+				source.save()
+		
 		# Now we know the full url of the MEI document
 		score.uri = self.mei.url
 		user_annot = User.objects.get(username=settings.COMPUTER_USER_NAME)
@@ -1181,7 +1190,6 @@ class Opus(models.Model):
 			if dba.body is not None:
 				dba.body.delete()
 			dba.delete()
-
 
 		print (f'Inserting annotations')
 		for annotation in score.annotations:

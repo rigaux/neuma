@@ -21,7 +21,8 @@ class DisplayVerovioScore extends HTMLElement {
     // Properties
     this.opus_ref = ""
   	this.current_page = 1
-	this.vrvToolkit = new verovio.toolkit()
+  	
+ 	   this.vrvToolkit = new verovio.toolkit()
 
 	// Load the template	
   	let template = document.getElementById("display-verovio-score");

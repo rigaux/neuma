@@ -29,13 +29,15 @@ var tabNames = [
 	            {"tabId": "tab1", "divId": "score"}, 
                 {"tabId": "tab2", "divId":"sources"},
                 {"tabId": "tab3", "divId":"features"},
-                {"tabId": "tab4", "divId":"manage"}
+                {"tabId": "tab4", "divId":"comparison"},
+                {"tabId": "tab5", "divId":"manage"}
                 ]
  {% else %}
 var tabNames = [
 	     {"tabId": "tab1", "divId": "score"}, 
          {"tabId": "tab2", "divId":"sources"},
-         {"tabId": "tab3", "divId":"features"}
+         {"tabId": "tab3", "divId":"features"},
+         {"tabId": "tab4", "divId":"comparison"}
                 ]
 {% endif %}
 </script>
@@ -159,10 +161,12 @@ if request.session.search_context.pattern != ""
 			onClick="TabClick(tabNames, 0);">Score</a></li>
 		<li id="tab2"><a href="#"
 			onClick="TabClick(tabNames, 1);">Sources</a></li>
-        		<li id="tab3"><a href="#"
+        <li id="tab3"><a href="#"
 			onClick="TabClick(tabNames, 2);">Features</a></li>
+        <li id="tab4"><a href="#"
+			onClick="TabClick(tabNames, 3);">Comparison</a></li>
          {% if "change_corpus" in user_corpus_perms %}
-           <li id="tab4"><a href="#" onClick="TabClick(tabNames, 3);">Manage</a></li>
+           <li id="tab5"><a href="#" onClick="TabClick(tabNames, 4);">Manage</a></li>
         {% endif %}
 		</li>
 	</ul>
@@ -171,16 +175,11 @@ if request.session.search_context.pattern != ""
 <div class="clearer">&nbsp;</div>
 
 
-<div class="clearer">&nbsp;</div>
-
+<!--   Tab for main score  -->
 <div id="score" style="display: block">
 
 
 <template id="display-verovio-score">
- 
- 
-     <p>Affiche partition</p>
-	<ul id="links" class="paginator"></ul>
 
    <button id="playMIDI">Ecouter la transcription MIDI</button>
         <button id="stopMIDI">Stop</button>        
@@ -198,8 +197,33 @@ if request.session.search_context.pattern != ""
 
     {%if  opus.mei  %}
  
+<script>
+	  var vrvOptions = {
+		scale : 35,
+		pageHeight : 20000,
+		adjustPageHeight : 1
+    	};
+
+	  var vrvOptions2 = {
+				scale : 35,
+				breaks: "encoded"
+		    	};
+
+	 // Call JS function when the document is loaded
+	 document.addEventListener("DOMContentLoaded", (event) => {
+
+   /**
+   Set the function as message callback
+
+  MIDIjs.player_callback = midiHightlightingHandler;
+   */
+	       
+	 });
+</script>
+
 <display-verovio-score opus_ref="{{opus.ref}}" mei_url="{{opus.mei.url}}">
 </display-verovio-score>
+
 	{% else %}
 	<ul class="toolbar">
 		<li class="download"><a href="{{opus.url_musicxml}}"
@@ -360,6 +384,32 @@ function displaySource(src, type, target) {
   </div>
 </div>
 
+
+<!--   Tab for comparison  -->
+<div id="comparison" style="display: none">
+ 
+ <div>
+    <table border='0' width="100%">
+    <tr>
+    <td width="50%">
+    {% if opus.mei %} 
+    <display-verovio-score opus_ref="{{opus.ref}}" mei_url="{{opus.mei.url}}">
+</display-verovio-score>
+  {% endif %}
+  </td>
+  <td  width="50%">
+  {% for source in opus.opussource_set.all %}
+         {% if source.ref == 'ref_mei' %} 
+             <display-verovio-score opus_ref="{{source.ref}}" mei_url="{{source.source_file.url}}">
+</display-verovio-score>         
+         {%  endif   %}
+  {% endfor %}
+</td>
+  </tr>
+  </table>
+  </div>
+</div>
+
 {% endblock content %}
 
  {% block opus_menu %}
@@ -373,8 +423,6 @@ function displaySource(src, type, target) {
   {% include "annotation-templates.html" %}
   {% include "annotation-infobox.html" %}
 
-
-       
   <script type="text/javascript">
    $(document).ready(function() {
               
@@ -383,41 +431,6 @@ function displaySource(src, type, target) {
      }
    );
   </script>
-
-
-    {% if opus.mei %} 
-	<script type="text/javascript">
-	 
-	console.log ("Verovio part")
-	 var isPlaying = false;
-	 var ids = [];
-	 var vrvToolkit;
-	 var page = 1
-	 
-	  var vrvOptions = {
-		scale : 35,
-		pageHeight : 20000,
-		adjustPageHeight : 1
-    	};
-
-	  var vrvOptions2 = {
-				scale : 35,
-				breaks: "encoded"
-		    	};
-
-	 // Call JS function when the document is loaded
-	 document.addEventListener("DOMContentLoaded", (event) => {
-
-
-   /**
-   Set the function as message callback
-
-  MIDIjs.player_callback = midiHightlightingHandler;
-   */
-	       
-	 });
-	 </script>
-	{% endif %}
 
   <!-- Parameters supplied to the ComputeAnnotations() Ajax call -->
 <input id="compute_opus_ref" type="hidden" name="opus_ref" value="{{opus.ref}}"/>
