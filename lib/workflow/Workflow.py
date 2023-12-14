@@ -1,49 +1,47 @@
 
-from manager.models import Corpus, Opus, Descriptor, Patterns, OpusMeta
+import zipfile, os.path, io, json, sys, shutil
+
+from manager.models import Corpus, Opus, Descriptor, Patterns, OpusMeta, OpusSource, OpusDiff
 import os
 import re
 import subprocess
 from django.core.files import File
 from django.core.files.base import ContentFile
-import json
-import sys
+
 from neumautils.duration_tree import *
 
 import ast
 
 from django.conf import settings
 
-from neumasearch.IndexWrapper import IndexWrapper
-
-import zipfile, os.path, io
+# For computing score diffs
+from lib.musicdiff import DetailLevel
+from musicdiff.annotation import AnnScore
+from musicdiff.comparison import Comparison
+from musicdiff.visualization import Visualization
 
 import logging
-
-
 # Get an instance of a logger
 logger = logging.getLogger(__name__)
-
 
 from django.contrib.auth.models import User
 from xml.dom import minidom
 
-# To communicate with Neuma
-from lib.neuma.rest import Client
 
 from lib.music.Score import *
 from lib.neumasearch.MusicSummary import MusicSummary
+from neumasearch.IndexWrapper import IndexWrapper
 
 # Music analysis module
+import converter21
 import music21 as m21
-from music21 import converter
+
 import logging
 
 from django_q.tasks import *
 from scorelib.analytic_concepts import *
 
 from quality.lib.Processor import QualityProcessor
-
-
 
 class Workflow:
 	"""
@@ -58,144 +56,84 @@ class Workflow:
 	def __init__(self) :
 		 return
 	
-
 	@staticmethod
-	def produce_mei(corpus, recursion=True):
-		"""
-		Produce the MEI file by applying an XSLT tranforsm to the MusicXML doc.
-		"""
-		print("Produce all missing MEI file for corpus " + corpus.title)
-		for opus in Opus.objects.filter(corpus__ref=corpus.ref):
-			Workflow.produce_opus_mei(opus)
-		print("MEI files produced for corpus " + corpus.title)
-
-		# Recursive call
-		if recursion:
-			children = corpus.get_children(False)
-			for child in children:
-				Workflow.produce_mei(child, recursion)
-
-	@staticmethod
-	def produce_opus_mei(opus, replace=False):
-		# First take the script template depending on the OS
-		if os.name == 'nt': #Windows
-			with open(os.path.join(settings.SCRIPTS_ROOT, 'mxml2mei.bat')) as script_file:
-				script_file = script_file.read()
-		else:
-			with open(os.path.join(settings.SCRIPTS_ROOT, 'mxml2mei.sh')) as script_file:
-				script_file = script_file.read()
-				
-		# Get the script template by replacing the deployment-dependent paths
-		sfile = script_file.replace ("{saxon_path}", os.path.join(settings.BASE_DIR, "lib","saxon")).replace("{xsl_path}", settings.SCRIPTS_ROOT).replace("{tmp_dir}", settings.TMP_DIR)
-
-		# Take care: we never replace an existing MEI unless explicitly allowed
-		if opus.musicxml and (not opus.mei or replace):
-			try:
-				with open(opus.musicxml.path) as musicxml_file:
-					musicxml = musicxml_file.read()
-						
-				# Remove the DTD: avoids Web accesses, timeouts, etc.
-				pattern = re.compile("<!DOCTYPE(.*?)>", re.DOTALL)
-				mxml_without_type = re.sub(pattern, "", musicxml)
-				# Write the MusicXML without DTD in the tmp area
-				mxml_file = open(os.path.join(settings.TMP_DIR, "score.xml"),"w")
-				mxml_file.write(mxml_without_type)
-				mxml_file.close()
-						
-				# Create and run a script to convert the MusicXML with XSLT
-				convert_file = sfile.replace ("{musicxml_path}", os.path.join(settings.TMP_DIR,"score.xml")).replace("{opus_ref}", opus.ref)
-				if os.name == 'nt':
-					script_name = f = os.path.join(settings.TMP_DIR, "cnv_mei_" + str(opus.id) + ".bat") #for windows
-				else:
-					script_name = f = os.path.join(settings.TMP_DIR, "cnv_mei_" + str(opus.id) + ".sh")
-				f = open(script_name,"w")
-				f.write(convert_file)
-				f.close()
-				print ("Conversion script created in " + script_name)
-				if os.name != 'nt':
-					subprocess.call(["chmod", "a+x", script_name])
-				else: #on windows no need to chmod
-					print("Detected OS: Windows")
-
-				# Now, run the script
-				if os.name == 'nt': #if it's window
-					result = subprocess.call(script_name)
-				else:
-					result = subprocess.call(script_name)
-				if result == 0:
-					print ("Success : import the MEI file")
-					with open(os.path.join(settings.TMP_DIR ,"mei.xml")) as mei_file:
-						opus.mei.save ("mei.xml", File(mei_file))
-				else:
-					print ("Error converting the MusicXML file")
-			except  Exception as ex:
-				print ("Exception for opus " + opus.ref + " Message:" + str(ex))
-		else:
-			logger.info("MEI file already exists: we do not override it")
-			
-	@staticmethod
-	def produce_temp_mei(path_to_musicxml, mei_number):
-		"""
-		Temporary produce and save a MEI file (with name: {mei_name}) from a music xml file.
-		This does not involve the database
-		mei_name : can be either the integer 1 or 2
-		return: the path to the MEI file
-		"""
-		# First take the script template depending on the OS
-		if os.name == 'nt': #Windows still to implement
-			with open(os.path.join(settings.SCRIPTS_ROOT, 'mxml2mei.bat')) as script_file:
-				script_file = script_file.read()
-		else:
-			with open(os.path.join(settings.SCRIPTS_ROOT, 'mxml2mei_param_name.sh')) as script_file:
-				script_file = script_file.read()
+	def compute_opus_diff(opus, 
+						detail= DetailLevel.GeneralNotesOnly, show_pdf=False):
 		
-		#create the correct mei name
-		if mei_number == 1:
-			mei_name = "comp_temp_mei_1"
-		elif mei_number == 2:
-			mei_name = "comp_temp_mei_2"
-		else:
-			 raise Exception("mei_name can be either the integer 1 or 2")
-		# Get the script template by replacing the deployment-dependent paths
-		# WARNING: Highly risky function because it will delete files from the memory
-		sfile = script_file.replace ("{saxon_path}", os.path.join(settings.BASE_DIR, "lib","saxon")).replace("{xsl_path}", settings.SCRIPTS_ROOT).replace("{tmp_dir}", settings.TMP_DIR).replace("{mei_name}", mei_name)
+		'''
+		  Take two MEI files associated to the opus
+		  Evaluate their difference withe musicdiff package
+		  Return the list of operations
+		'''
+		
+		if opus.mei is None:
+			raise Exception(f"No MEI file in opus {opus.ref}")
+			exit(1)
+
+		# Use the new Humdrum/MEI importers from converter21 in place of the ones in music21...
+		# Comment out this line to go back to music21's built-in Humdrum/MEI importers.
+		converter21.register()
+
+		source_mei = None
+		for source in opus.opussource_set.all ():
+			if source.ref == OpusSource.MEI_REF:
+				source_mei = source.source_file
+		
+		if source_mei is None:
+			print ("Unable to the find the reference MEI (there should be a ref_mei source)")
+
+		# For converters, the MEI extension is required
+		omr_path = "/tmp/omr.mei"
+		ref_path = "/tmp/ref.mei"
+
+		shutil.copyfile(opus.mei.path, omr_path)
+		shutil.copyfile(source_mei.path, ref_path)
+		
+		# The following is taken from the musicdiff module, file __init__.py
+		
+		score1 = m21.converter.parse(omr_path, forceSource=True)
+		score2 = m21.converter.parse(ref_path, forceSource=True)
+		
+		# scan each score, producing an annotated wrapper
+		annotated_score1: AnnScore = AnnScore(score1, detail)
+		annotated_score2: AnnScore = AnnScore(score2, detail)
+
+		'''
+		num_diffs: int | None = diff(omr_path, ref_path, 
+								detail=detail,
+								visualize_diffs=show_pdf)
+		'''
+		
+		diff_list, _cost = Comparison.annotated_scores_diff(annotated_score1, 
+														annotated_score2)
+
+		# Mark the score with operations
+		# you can change these three colors as you like...
+		# Visualization.INSERTED_COLOR = 'red'
+		# Visualization.DELETED_COLOR = 'red'
+		# Visualization.CHANGED_COLOR = 'red'
+		# color changed/deleted/inserted notes, add descriptive text for each change, etc
+		Visualization.mark_diffs(score1, score2, diff_list)
 
 
-		# Produce the MEI
-		try:
-			with open(path_to_musicxml) as musicxml_file: #check if the file exist
-				musicxml = musicxml_file.read()
+		# Remove existing diffs
+		OpusDiff.objects.filter(opus=opus).delete()
+
+		opus_diff = OpusDiff (opus=opus)
+		# Store the MusicXML file in the Comparison object
+		# Generate and store the MEI file
+		score1.write ("musicxml", "/tmp/mei1.xml")
+		with open("/tmp/mei1.xml") as f:
+			print ("Replace first MEI file")
+			opus_diff.mei_omr = File(f,name="omr.mei")
+			opus_diff.save()
+		score2.write ("musicxml", "/tmp/mei2.xml")
+		with open("/tmp/mei2.xml") as f:
+			print ("Replace second MEI file")
+			opus_diff.mei_ref= File(f,name="ref.mei")
+			opus_diff.save()
 			
-			# Remove the DTD: avoids Web accesses, timeouts, etc.
-			pattern = re.compile("<!DOCTYPE(.*?)>", re.DOTALL)
-			mxml_without_type = re.sub(pattern, "", musicxml)
-			# Write the MusicXML without DTD in the tmp area
-			mxml_file = open(os.path.join(settings.TMP_DIR, "temp_xml_score.xml"),"w")
-			mxml_file.write(mxml_without_type)
-			mxml_file.close()
-					
-			# Create and run a script to convert the MusicXML with XSLT
-			if os.name == 'nt':
-				script_name = f = os.path.join(settings.TMP_DIR, "cnv_temp_mei.bat") #for windows
-			else:
-				script_name = f = os.path.join(settings.TMP_DIR, "cnv_temp_mei.sh")
-			with open(script_name,"w") as f:
-				f.write(sfile)
-			if os.name != 'nt':
-				subprocess.call(["chmod", "a+x", script_name])
-			else: #on windows no need to chmod
-				print("Detected OS: Windows")
-
-			# Now, run the script
-			if os.name == 'nt': #if it's window
-				result = subprocess.call(script_name)
-			else:
-				result = subprocess.call(script_name)
-			if result == 0:
-				print ("Success : created the temporary MEI file for comparison")
-				return {"path_to_temp_mei": str(os.path.join(settings.TMP_DIR ,mei_name + ".xml"))}
-		except  Exception as ex:
-			print ("Exception: " + str(ex))
+		return len(diff_list)
 
 	@staticmethod
 	def index_corpus(corpus, recursion=True):

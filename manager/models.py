@@ -1204,6 +1204,19 @@ class Opus(models.Model):
 
 		return score
 
+
+class OpusDiff(models.Model):
+	
+	def upload_path(self, filename):
+		'''Set the path where opus-related files must be stored'''
+		return 'corpora/%s/%s' % (self.opus.ref.replace(settings.NEUMA_ID_SEPARATOR, "/"), filename)
+
+	# Record the differences between two MEI versions of an Opus
+	opus = models.ForeignKey(Opus,on_delete=models.CASCADE)
+	mei_omr = models.FileField(upload_to=upload_path,null=True,blank=True,storage=OverwriteStorage())
+	mei_ref = models.FileField(upload_to=upload_path,null=True,blank=True,storage=OverwriteStorage(), max_length=255)
+
+
 class OpusMeta(models.Model):
 	opus = models.ForeignKey(Opus,on_delete=models.CASCADE)
 	meta_key = models.CharField(max_length=255)

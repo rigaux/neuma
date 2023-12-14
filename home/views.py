@@ -22,7 +22,7 @@ from django.core.files.base import ContentFile
 import requests
 
 import lxml.etree as etree
-from manager.models import Corpus, Opus, Upload, Bookmark, SimMeasure, Licence, Annotation, AnalyticModel, AnalyticConcept
+from manager.models import Corpus, Opus, Upload, Bookmark, SimMeasure, Licence, Annotation, AnalyticModel, AnalyticConcept, OpusDiff
 from music import *
 from neuma.rest import Client
 from neumasearch.IndexWrapper import IndexWrapper
@@ -395,6 +395,7 @@ class OpusView(NeumaView):
 		score = opus.get_score()
 		context["opus"] = opus
 		context["score"] = score
+		context["opus_diff"] = OpusDiff.objects.get(opus=opus)
 
 		# get meta values 
 		context["meta_values"] = opus.get_metas()

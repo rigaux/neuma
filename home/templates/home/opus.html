@@ -388,26 +388,27 @@ function displaySource(src, type, target) {
 <!--   Tab for comparison  -->
 <div id="comparison" style="display: none">
  
+    {% if opus_diff %} 
  <div>
     <table border='0' width="100%">
     <tr>
     <td width="50%">
-    {% if opus.mei %} 
-    <display-verovio-score opus_ref="{{opus.ref}}" mei_url="{{opus.mei.url}}">
+
+    <display-verovio-score opus_ref="{{opus.ref}}" mei_url="{{opus_diff.mei_omr.url}}">
 </display-verovio-score>
-  {% endif %}
+
   </td>
   <td  width="50%">
-  {% for source in opus.opussource_set.all %}
-         {% if source.ref == 'ref_mei' %} 
-             <display-verovio-score opus_ref="{{source.ref}}" mei_url="{{source.source_file.url}}">
+             <display-verovio-score opus_ref="{{source.ref}}" mei_url="{{opus_diff.mei_ref.url}}">
 </display-verovio-score>         
-         {%  endif   %}
-  {% endfor %}
+
 </td>
   </tr>
   </table>
   </div>
+  {% else %}
+    No comparison data available
+    {% endif %}
 </div>
 
 {% endblock content %}
