@@ -97,13 +97,7 @@ class Workflow:
 		# scan each score, producing an annotated wrapper
 		annotated_score1: AnnScore = AnnScore(score1, detail)
 		annotated_score2: AnnScore = AnnScore(score2, detail)
-
-		'''
-		num_diffs: int | None = diff(omr_path, ref_path, 
-								detail=detail,
-								visualize_diffs=show_pdf)
-		'''
-		
+	
 		diff_list, _cost = Comparison.annotated_scores_diff(annotated_score1, 
 														annotated_score2)
 
