@@ -1,11 +1,10 @@
 
-from datetime import datetime
+from datetime import datetime, date
 from urllib.request import urlopen
 import io
 import json
 import jsonref
 import jsonschema
-
 
 import zipfile
 import os
@@ -1173,6 +1172,21 @@ class Opus(models.Model):
 			self.mei = File(f,name="mei.xml")
 			self.save()
 		
+		# Generate the MIDI file
+		print ("Produce MIDI file")
+		midi_file = "/tmp/score.midi"
+		score.write_as_midi (midi_file)
+		try:
+			source = OpusSource.objects.get(opus=self,ref="midi")
+		except OpusSource.DoesNotExist:
+			source_type = SourceType.objects.get(code=SourceType.STYPE_MIDI)
+			source = OpusSource (opus=self,ref="midi",source_type=source_type,
+				url ="")
+		source.description=f"MIDI file generated on {date.today()}"
+		source.save()
+		with open(midi_file, "rb") as f:
+			source.source_file.save("score.midi", File(f))
+
 		# Store the manifest 
 		for source in self.opussource_set.all ():
 			if source.ref == OpusSource.DMOS_REF:
@@ -1336,6 +1350,7 @@ class SourceType (models.Model):
 	# List of accepted codes
 	STYPE_MEI = "MEI"
 	STYPE_DMOS = "DMOS"
+	STYPE_MIDI = "MIDI"
 	STYPE_MXML = "MusicXML"
 	STYPE_JPEG = "JPEG"
 	STYPE_PDF = "PDF"

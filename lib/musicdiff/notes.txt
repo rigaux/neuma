@@ -6,3 +6,11 @@ Files are mostly unchanged. I commented some
       - beaming (line 885, same file)
       
       
+Some tests have been added to prevent errors:
+
+  Line 961 of visualization.py, Rest do not have pitch, so 
+  we must check the following part
+   
+                   if hasattr(note2, "pitch"):
+                    if note2.pitch.accidental:
+                        note2.pitch.accidental.style.color = Visualization.DELETED_COLOR

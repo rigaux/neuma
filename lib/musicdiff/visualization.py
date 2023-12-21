@@ -958,8 +958,9 @@ class Visualization:
                     note2 = chord2.notes[idx]
                 if t.TYPE_CHECKING:
                     assert note2 is not None
-                if note2.pitch.accidental:
-                    note2.pitch.accidental.style.color = Visualization.DELETED_COLOR
+                if hasattr(note2, "pitch"):
+                    if note2.pitch.accidental:
+                        note2.pitch.accidental.style.color = Visualization.DELETED_COLOR
                 note2.style.color = Visualization.DELETED_COLOR
                 textExp = m21.expressions.TextExpression("deleted accidental")
                 textExp.style.color = Visualization.DELETED_COLOR

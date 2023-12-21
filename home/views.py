@@ -395,7 +395,11 @@ class OpusView(NeumaView):
 		score = opus.get_score()
 		context["opus"] = opus
 		context["score"] = score
-		context["opus_diff"] = OpusDiff.objects.get(opus=opus)
+		
+		try:
+			context["opus_diff"] = OpusDiff.objects.get(opus=opus)
+		except OpusDiff.DoesNotExist:
+			context["opus_diff"] = None
 
 		# get meta values 
 		context["meta_values"] = opus.get_metas()
