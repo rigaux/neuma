@@ -325,7 +325,7 @@ class OmrScore:
 						# So the score part is obtained by concatenating the counter
 						score_part_id = score_model.Part.make_part_id(id_part, staff_counter[id_part])
 						if score.part_exists(score_part_id):
-							logger.info (f"Add staff {header.no_staff} to part {score_part_id}")
+							#logger.info (f"Add staff {header.no_staff} to part {score_part_id}")
 							part = score.get_part(score_part_id)
 
 							# Add the staff
@@ -417,7 +417,6 @@ class OmrScore:
 									staff.set_current_time_signature (new_time_signature)
 									measure_for_part.add_time_signature (new_time_signature)
 								else:
-									logger.info (f'No time signature on staff {staff.id} at measure {current_measure_no}')
 									if new_time_signature is not None:
 										# Maybe we found a new time signature on other staves: we use them
 										staff.set_current_time_signature (new_time_signature)
@@ -575,37 +574,16 @@ class OmrScore:
 			
 				# Get the default alter
 				staff = voice.part.get_staff(no_staff)
-				def_alter = staff.current_key_signature.accidentalByStep(pitch_class)
-
-				logger.info (f'Adding note head to staff {no_staff} with current clef {staff.current_clef}.')
-				
-				if def_alter == score_events.Note.ALTER_NATURAL:
-					logger.warning (f'Default alter code {def_alter}.')
-				
-				# Decode from the DMOS input codification
-				if head.alter == None:
-					alter = def_alter
-				elif head.alter.label == FLAT_SYMBOL:
-					alter = score_events.Note.ALTER_FLAT
-				elif head.alter.label == DFLAT_SYMBOL:
-					alter = score_events.Note.ALTER_DOUBLE_FLAT
-				elif head.alter.label  == SHARP_SYMBOL:
-					alter = score_events.Note.ALTER_SHARP
-				elif head.alter.label  == DSHARP_SYMBOL:
-					alter = score_events.Note.ALTER_DOUBLE_SHARP
-				elif head.alter.label  == NATURAL_SYMBOL:
-					alter = score_events.Note.ALTER_NATURAL
-				else:  
-					logger.warning (f'Unrecognized alter code {head.alter}. Replaced by None')
-					alter = score_events.Note.ALTER_NONE
-					
 				# Did we just met an accidental?
-				if (alter != score_events.Note.ALTER_NONE):
-					# logger.info (f'Accidental {alter} met on staff {staff.id}')
-					staff.add_accidental (pitch_class, alter)
+				if (head.alter != score_events.Note.ALTER_NONE):
+					logger.info (f'Accidental {head.alter} met on staff {staff.id}')
+					staff.add_accidental (pitch_class, head.alter)
+					alter = head.alter
 				else:
-					# Is there a previous accidental on this staff for this pitch class?
+					# The staff records the status of accidentals
 					alter = staff.get_accidental(pitch_class)
+
+				logger.info (f'Adding note {pitch_class}{octave}-{alter} to staff {no_staff} with current clef {staff.current_clef}.')
 					
 				note = score_events.Note(pitch_class, octave, duration, alter, head.no_staff)
 				# Check ties
@@ -884,7 +862,7 @@ class Note:
 	def __init__(self, json_note):
 		self.tied  = "none"
 		self.id_tie = 0
-		self.alter = None
+		self.alter = score_events.Note.ALTER_NONE
 
 		self.head_symbol =  Symbol (json_note["head_symbol"])
 		self.no_staff  = json_note["no_staff"]
@@ -892,8 +870,20 @@ class Note:
 		
 		self.articulations = []
 		if "alter" in json_note:
-			self.alter = Symbol (json_note["alter"])
-		
+			alter_label = json_note["alter"]["label"]
+			if alter_label == FLAT_SYMBOL:
+				self.alter = score_events.Note.ALTER_FLAT
+			elif alter_label == DFLAT_SYMBOL:
+				self.alter = score_events.Note.ALTER_DOUBLE_FLAT
+			elif alter_label  == SHARP_SYMBOL:
+				self.alter = score_events.Note.ALTER_SHARP
+			elif alter_label  == DSHARP_SYMBOL:
+				self.alter = score_events.Note.ALTER_DOUBLE_SHARP
+			elif alter_label  == NATURAL_SYMBOL:
+				self.alter = score_events.Note.ALTER_NATURAL
+			else:  
+				logger.warning (f'Unrecognized alter code {alter_label}. Replaced by None')
+
 		if "tied" in json_note:
 			self.tied = json_note["tied"]
 		if "id_tie" in json_note:

@@ -50,9 +50,15 @@ class Staff:
 	def add_accidental (self, pitch_class, acc):
 		# Record accidentals met in a measure
 		self.accidentals[pitch_class] = acc
-	def get_accidental (self, pitch_class):
-		return self.accidentals[pitch_class]
 		
+	def get_accidental (self, pitch_class):
+				
+		if self.accidentals[pitch_class] != "":
+			return self.accidentals[pitch_class]
+		else:
+			# The key signature holds
+			return self.current_key_signature.accidentalByStep(pitch_class)
+
 	def set_current_clef (self, clef):
 		self.current_clef = clef
 	def set_current_key_signature (self, key):
