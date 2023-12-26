@@ -351,6 +351,7 @@ class OmrScore:
 				# based on its part_id assignment
 				
 				initial_measure = True
+				new_time_signature = None
 				for measure in system.measures:
 					current_position = score.duration().quarterLength
 					#print (f'Process measure {current_measure_no}, to be inserted at position {current_position}')
@@ -412,11 +413,18 @@ class OmrScore:
 									measure_for_part.set_initial_clef_for_staff(staff.id, clef_staff)
 								if header.time_signature is not None:
 									logger.info (f'Time signature found on staff {header.no_staff} at measure {current_measure_no}')
-									time_sign = header.time_signature.get_notation_object()
-									staff.set_current_time_signature (time_sign)
-									measure_for_part.add_time_signature (time_sign)
+									new_time_signature = header.time_signature.get_notation_object()
+									staff.set_current_time_signature (new_time_signature)
+									measure_for_part.add_time_signature (new_time_signature)
 								else:
-									if initial_measure:
+									logger.info (f'No time signature on staff {staff.id} at measure {current_measure_no}')
+									if new_time_signature is not None:
+										# Maybe we found a new time signature on other staves: we use them
+										staff.set_current_time_signature (new_time_signature)
+										measure_for_part.add_time_signature (new_time_signature)
+									elif initial_measure:
+										# Rare occurrence: non time signature on the
+										# initial measure: we hope it is stored in the staff
 										measure_for_part.add_time_signature (staff.current_time_signature)
 									
 								if header.key_signature is not None:
@@ -601,12 +609,13 @@ class OmrScore:
 					
 				note = score_events.Note(pitch_class, octave, duration, alter, head.no_staff)
 				# Check ties
-				if head.tied and head.tied=="forward":
+				'''if head.tied and head.tied=="forward":
 					#print (f"Tied note start with id {head.id_tie}")
 					note.start_tie()
 				if head.tied and head.tied=="backward":
 					#print (f"Tied note ends with id {head.id_tie}")
 					note.stop_tie()
+				'''
 				# Check articulations
 				for json_art in head.articulations:
 					if json_art["label"] in ARTICULATIONS_LIST:
