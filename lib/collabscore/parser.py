@@ -7,6 +7,7 @@ import jsonref
 from jsonref import JsonRef
 import jsonschema
 
+
 from fractions import Fraction
 
 import lib.music.Score as score_model
@@ -16,8 +17,6 @@ import lib.music.notation as score_notation
 import lib.music.annotation as annot_mod
 import lib.music.constants as constants_mod
 import lib.music.source as source_mod
-
-import verovio
 
 from .constants import *
 from lib.music.source import ScoreImgManifest
@@ -212,14 +211,14 @@ class OmrScore:
 							
 				# Create the manifest from the source
 				if manifest is None:
-					src_page = source_mod.ScoreImgPage(page.page_url, current_page_no)
+					src_page = source_mod.ScoreImgPage(page.page_url, current_page_no,self.manifest)
 					for system in page.systems:
 						current_system_no += 1
-						src_system = source_mod.ScoreImgSystem(current_system_no)
+						src_system = source_mod.ScoreImgSystem(current_system_no, src_page)
 						src_page.add_system(src_system)
 					
 						for header in system.headers:
-							src_staff = source_mod.ScoreImgStaff(header.no_staff)
+							src_staff = source_mod.ScoreImgStaff(header.no_staff, src_system)
 							src_system.add_staff(src_staff)
 							# Without further information, we assume one staff = one part
 							src_part = source_mod.ScoreImgPart(header.id_part, header.id_part, header.id_part)
@@ -250,6 +249,7 @@ class OmrScore:
 				part = score_model.Part(id_part=id_part_staff, name=src_part.name, 
 												abbreviation=src_part.abbreviation)
 				score.add_part(part)			
+				logger.info (f"Add a single-staff part {id_part_staff}")
 			else:
 				# It is a part group. Create one PartStaff for each staff of the part 
 				staff_group = []
@@ -260,14 +260,19 @@ class OmrScore:
 					part = score_model.Part(id_part=id_part_staff, name=src_part.name, 
 												abbreviation=src_part.abbreviation,
 												part_type="partstaff")
+					logger.info (f"Add a staff part {id_part_staff} in a part group")
 					staff_group.append(part.m21_part)
 					score.add_part(part)
 				# + a Staff grouo for the global part
 				part_group = score_model.Part(id_part=src_part.id, name=src_part.name, 
 												abbreviation=src_part.abbreviation,
 												part_type="group", group=staff_group)
+				logger.info (f"Add a part group {src_part.id} with {i_staff} staff-parts")
 				score.add_part(part_group)
 	
+		logger.info (f"")
+		logger.info (f"== End of score structure creation. Scanning pages ===")
+
 		# Main scan: we fill the parts with measures
 		current_page_no = 0
 		current_system_no = 0
@@ -280,6 +285,9 @@ class OmrScore:
 					    current_page_no > self.config.page_max):
 				continue
 
+			logger.info (f"")
+			logger.info (f'Process page {current_page_no}')
+
 			# Get the page from the manifest
 			mnf_page = self.manifest.get_page(current_page_no)
 			
@@ -291,6 +299,9 @@ class OmrScore:
 				if (current_system_no < self.config.system_min) or (
 					    current_system_no > self.config.system_max):
 					continue
+
+				logger.info (f"")
+				logger.info (f'Process system {current_system_no}')
 
 				# Get the system from the manifest
 				mnf_system = mnf_page.get_system(current_system_no)
@@ -308,50 +319,35 @@ class OmrScore:
 					part.clear_staves()
 					
 				# Headers defines the parts and their staves in this system
-				staff_counter = {}
-					
 				for header in system.headers:
 					# Get the staff from the manifest
 					mnf_staff = mnf_system.get_staff(header.no_staff)
-					# Get the part
-					# IMPORTANT: maybe we have several parts for this staff
-					for id_part in mnf_staff.parts:
-						# We count the number of times this part is met
-						if id_part not in staff_counter.keys():
-							staff_counter[id_part] = 1
-						else:
-							staff_counter[id_part] += 1
-						
-						# So the score part is obtained by concatenating the counter
-						score_part_id = score_model.Part.make_part_id(id_part, staff_counter[id_part])
-						if score.part_exists(score_part_id):
-							#logger.info (f"Add staff {header.no_staff} to part {score_part_id}")
-							part = score.get_part(score_part_id)
-
-							# Add the staff
-							staff = score_notation.Staff(header.no_staff)
-
-							# See what we inherit from the previous staves of the part
-							if score_part_id in previous_staves.keys():
-								for prev_staff in previous_staves[score_part_id]:
-									logger.info(f"Inherited TS for part {score_part_id} (in staff {prev_staff.id}):  {prev_staff.current_time_signature}")
-									staff.set_current_time_signature(prev_staff.current_time_signature)
+					score_part_id = mnf_staff.local_part_id
+					if score.part_exists(score_part_id):
+						#logger.info (f"Add staff {header.no_staff} to part {score_part_id}")
+						part = score.get_part(score_part_id)
+						# Add the staff to the system
+						staff = score_notation.Staff(header.no_staff)
+						# See what we inherit from the previous staves of the part
+						if score_part_id in previous_staves.keys():
+							for prev_staff in previous_staves[score_part_id]:
+								#logger.info(f"Inherited TS for part {score_part_id} (in staff {prev_staff.id}):  {prev_staff.current_time_signature}")
+								staff.set_current_time_signature(prev_staff.current_time_signature)
 								
 							# See if the manifest gives an explicit time signature
 							if mnf_staff.time_signature is not None:
 								staff.set_current_time_signature (mnf_staff.time_signature.get_notation_object())
 							part.add_staff (staff)			
-						else:
-							# Should not happen: parts have been created once for all
-							logger.error (f"Part {id_part} should have been already created")
+					else:
+						# Should not happen: parts have been created once for all
+						logger.error (f"Part {id_part} should have been already created")
 					
-				# Now we scan the measures. DMOS gives us a measure
-				# for all the parts of the system. Therefore we add 
-				# one measure to each part, and add the voice to the measure
-				# based on its part_id assignment
+				# Now, for the current system, we know the parts and the staves for 
+				# each part, initialized with their time signatures
+				# We scan the measures. DMOS gives us a measure for all the parts of the system. 
+				# We add one measure to each part.
 				
 				initial_measure = True
-				new_time_signature = None
 				for measure in system.measures:
 					current_position = score.duration().quarterLength
 					#print (f'Process measure {current_measure_no}, to be inserted at position {current_position}')
@@ -360,9 +356,10 @@ class OmrScore:
 					    current_measure_no > self.config.measure_max):
 						continue
 				
-					# Reset accidentals met so far
+					# Accidentals are reset at the beginning of measures
 					score.reset_accidentals()
 					
+					logger.info (f"")
 					logger.info (f'Process measure {current_measure_no}, to be inserted at position {score.duration()}')
 
 					# Create a new measure for each part
@@ -390,88 +387,72 @@ class OmrScore:
 							page.page_url, measure.region.string_xyhw(), 
 							constants_mod.IREGION_MEASURE_CONCEPT)
 						score.add_annotation (annotation)
-						
-						#print (f"In measure {current_measure_no} Looking for part {part.id}")
-
-						# Check if a staff starts with a change of clef or meter
-						for header in measure.headers:
-							if part.staff_exists(header.no_staff):
-								# This header does relate to the current part
-								staff = part.get_staff (header.no_staff)
-								if header.region is not None:
-									# Record the region of the measure for the current staff
-									# print ("Found annotation for measure staff")
-									annotation = annot_mod.Annotation.create_annot_from_xml_to_image(
-										self.creator, self.uri, measure_for_part.id, 
-										page.page_url, header.region.string_xyhw(), 
-										constants_mod.IREGION_MEASURE_STAFF_CONCEPT)
-									score.add_annotation (annotation)
-								if header.clef is not None:
-									clef_staff = header.clef.get_notation_clef()
-									staff.set_current_clef (clef_staff)
-									logger.info (f'Clef {clef_staff} found on staff {header.no_staff} at measure {current_measure_no}')
-									measure_for_part.set_initial_clef_for_staff(staff.id, clef_staff)
-								if header.time_signature is not None:
-									logger.info (f'Time signature found on staff {header.no_staff} at measure {current_measure_no}')
-									new_time_signature = header.time_signature.get_notation_object()
-									staff.set_current_time_signature (new_time_signature)
-									measure_for_part.add_time_signature (new_time_signature)
-								else:
-									if new_time_signature is not None:
-										# Maybe we found a new time signature on other staves: we use them
-										staff.set_current_time_signature (new_time_signature)
-										measure_for_part.add_time_signature (new_time_signature)
-									elif initial_measure:
-										# Rare occurrence: non time signature on the
-										# initial measure: we hope it is stored in the staff
-										measure_for_part.add_time_signature (staff.current_time_signature)
-									
-								if header.key_signature is not None:
-									logger.info (f'Key signature found on staff {header.no_staff} at measure {current_measure_no}')
-									key_sign = header.key_signature.get_notation_object()
-									# The key signature impacts all subsequent events on the staff
-									staff.set_current_key_signature (key_sign)
-									# We will display the key signature at the beginning
-									# of the current measure
-									measure_for_part.add_key_signature (key_sign)
-							#else:
-							#    Not a pb: we found a header that relates to another part
-							#	logger.error (f'Staff {header.no_staff} does not exist for part {part.id}')
 								
 						# Add the measure to its part (notational events are added there)
-						#part.insert_measure (current_position, measure_for_part)
 						part.append_measure (measure_for_part)
 						# Keep the array of current measures indexed by part
 						current_measures[part.id] = measure_for_part
+						
+					# Measure headers (DMOS) tells us, for each staff, if 
+					# one starts with a change of clef or meter
+					new_time_signature = None
+					for header in measure.headers:
+						# Identify the part, staff and measure, from the staff id
+						id_part = mnf_system.get_staff(header.no_staff).local_part_id
+						part = score.get_part (id_part)
+						staff = part.get_staff (header.no_staff)
+						measure_for_part = current_measures[part.id]
+						
+						if header.region is not None:
+							# Record the region of the measure for the current staff
+							annotation = annot_mod.Annotation.create_annot_from_xml_to_image(
+									self.creator, self.uri, measure_for_part.id, 
+									page.page_url, header.region.string_xyhw(), 
+									constants_mod.IREGION_MEASURE_STAFF_CONCEPT)
+							score.add_annotation (annotation)
+						if header.clef is not None:
+							clef_staff = header.clef.get_notation_clef()
+							staff.set_current_clef (clef_staff)
+							logger.info (f'Clef {clef_staff} found on staff {header.no_staff} at measure {current_measure_no}')
+							measure_for_part.set_initial_clef_for_staff(staff.id, clef_staff)
+						if header.time_signature is not None:
+							new_time_signature = header.time_signature.get_notation_object()
+							logger.info (f'Time signature  {new_time_signature} found on staff {header.no_staff} at measure {current_measure_no}')
+							staff.set_current_time_signature (new_time_signature)
+							measure_for_part.add_time_signature (new_time_signature)
+						else:
+							if initial_measure:
+								# Rare occurrence: no time signature on the
+								# initial measure: we hope it is stored in the staff
+								measure_for_part.add_time_signature (staff.current_time_signature)
+								# Sanity: we found at least one time signature change, it should
+								# apply to all staves
+							if new_time_signature is not None:
+								ts = new_time_signature.copy()
+								staff.set_current_time_signature (ts)
+								measure_for_part.add_time_signature (ts)
+								
+						if header.key_signature is not None:
+							key_sign = header.key_signature.get_notation_object()
+							logger.info (f'Key signature {key_sign} found on staff {header.no_staff} at measure {current_measure_no}')
+							# The key signature impacts all subsequent events on the staff
+							staff.set_current_key_signature (key_sign)
+							# We will display the key signature at the beginning
+							# of the current measure
+							measure_for_part.add_key_signature (key_sign)
 					
-					# The staff_counter is a dictionary that gives the numbers of
-					# staves already met for a specific part
-					staff_counter = {}
+					# Now we scan the voices
 					for voice in measure.voices:
-						# Here is gets tricky. DMOS gives has 'id_part' the staff where
+						# DMOS gives has 'id_part' the staff where
 						# the first voice event appears. From this staff, we deduce
 						# the part the voice belongs to
 						mnf_staff = mnf_system.get_staff(voice.id_staff)
-						for id_part in mnf_staff.parts:
-							if id_part not in staff_counter:
-								staff_counter[id_part] = {"counter": 0}
-							# Transpose the id of the staff to a sequence
-							if voice.id_staff not in staff_counter[id_part]:
-								# We are meeting a new staff for this part
-								staff_counter[id_part]["counter"] += 1
-								#print (f"Creating transposition for staff {voice.id_staff}. Counter: {staff_counter[id_part]['counter']}")
-								staff_counter[id_part][voice.id_staff] = staff_counter[id_part]["counter"]
-
-							# So the score part is obtained by concatenating the counter to the part's id
-							score_part_id = id_part + "-" + f"{staff_counter[id_part][voice.id_staff]}"
-							#print (f"Found a voice on staff {voice.id_staff}. Looking for part {score_part_id}")
-							# Assume that this is the first part							
-							current_part = score.get_part(score_part_id)
-							# Ignore the possible parts in the staff
-							current_staff = current_part.get_staff (voice.id_staff)
-							break
-						
+						current_part = score.get_part(mnf_staff.local_part_id)
+						current_staff = current_part.get_staff (voice.id_staff)
 						current_measure = current_measures[current_part.id]
+
+						logger.info (f"")
+						logger.info (f'Process voice {voice.id}, on staff {voice.id_staff} in part {current_part.id}')
 						
 						# Reset the event counter
 						score_events.Event.reset_counter(
@@ -551,16 +532,11 @@ class OmrScore:
 		
 		# Duration of the event: the DMOS encoding is 1 from whole note, 2 for half, etc.
 		# Our encoding (music21) is 1 for quarter note. Hence the computation
-		
-		
 		duration = score_events.Duration(voice_item.duration.numer * voice_item.tuplet_info.num_base, 
 										voice_item.duration.denom * voice_item.tuplet_info.num)
 		
 		# The symbol in the duration contains the region of the event
 		#  We accept events without region, to simplify the JSON notation
-		#if 	voice_item.duration.symbol.region is None:
-		#	logger.error ("A voice item without region has been met")
-		#	raise CScoreParserError ("A voice item without region has been met")
 		event_region = voice_item.duration.symbol.region
 
 		if voice_item.note_attr is not None:
@@ -587,13 +563,13 @@ class OmrScore:
 					
 				note = score_events.Note(pitch_class, octave, duration, alter, head.no_staff)
 				# Check ties
-				'''if head.tied and head.tied=="forward":
+				if head.tied and head.tied=="forward":
 					#print (f"Tied note start with id {head.id_tie}")
 					note.start_tie()
 				if head.tied and head.tied=="backward":
 					#print (f"Tied note ends with id {head.id_tie}")
 					note.stop_tie()
-				'''
+				
 				# Check articulations
 				for json_art in head.articulations:
 					if json_art["label"] in ARTICULATIONS_LIST:

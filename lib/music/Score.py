@@ -480,7 +480,7 @@ class Measure:
 		Measure.sequence_measure += 1
 		self.part = part
 		self.no = no_measure
-		self.id = f'm{Measure.sequence_measure}' 
+		self.id = f'm{no_measure}-{Measure.sequence_measure}' 
 		self.m21_measure = m21.stream.Measure(id=self.id, number=no_measure)
 		self.m21_measure.style.absoluteX = 23
 		

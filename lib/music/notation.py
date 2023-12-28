@@ -1,4 +1,4 @@
-
+import copy
 import music21 as m21
 
 
@@ -102,8 +102,12 @@ class TimeSignature:
 		self.m21_time_signature.id = f"tsign{TimeSignature.counter}" 
 		TimeSignature.counter += 1
 
+	def copy (self):
+		# Make a copy of the current object
+		return TimeSignature (self.numer, self.denom)
+	
 	def __str__ (self):
-		return f"Time signature {self.numer} / {self.denom}"
+		return f"({self.numer} / {self.denom})"
 	
 class KeySignature:
 	'''
@@ -129,6 +133,8 @@ class KeySignature:
 		else:
 			return score_events.Note.ALTER_NONE
 
+	def __str__ (self):
+		return f"{self.m21_key_signature.asKey()}"
 class Clef:
 	'''
 		Same as m21
@@ -208,7 +214,7 @@ class Clef:
 		return (pitch.step, pitch.octave)
 
 	def __str__ (self):
-		return f"{self.m21_clef}"
+		return f"({self.m21_clef.sign},{self.m21_clef.line})"
 
 class Dynamics ():
 	"""

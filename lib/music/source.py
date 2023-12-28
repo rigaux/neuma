@@ -62,7 +62,12 @@ class ScoreImgManifest:
 	
 	def add_part(self, part):
 		self.parts[part.id] = part
-		
+
+	def get_part(self, id_part):
+		if not (id_part in self.parts.keys()):
+			raise score_mod.CScoreModelError ("Searching a non existing part : " + id_part )		
+		return self.parts[id_part]
+			
 	def get_parts(self):
 		return self.parts.values()
 	
@@ -70,14 +75,17 @@ class ScoreImgManifest:
 	def from_json (json_mnf):
 		manifest = ScoreImgManifest( json_mnf["id"], json_mnf["url"])
 
-		for json_page in json_mnf["pages"]:
-			page = ScoreImgPage.from_json(json_page)
-			manifest.add_page(page)
-
+		# First decode the parts
 		for json_part in json_mnf["parts"]:
 			part = ScoreImgPart.from_json(json_part)
 			manifest.add_part(part)
 		
+		# The gen the structure in pages / systems / staves
+		for json_page in json_mnf["pages"]:
+			page = ScoreImgPage.from_json(json_page, manifest)
+			manifest.add_page(page)
+
+		# Analyze the structure to identify groups of staves (same part) 
 		manifest.create_groups()
 		
 		return manifest
@@ -98,7 +106,7 @@ class ScoreImgManifest:
 		for page in self.pages:
 			for id_part, staves in page.groups.items():
 				if not id_part in self.groups.keys():
-					print (f"Found a group for part {id_part}")
+					score_mod.logger.info(f"Found a group for part {id_part}")
 					self.groups[id_part] = staves
 
 	def is_a_part_group (self, id_part):
@@ -115,7 +123,8 @@ class ScoreImgPage:
 		A page of the score, containing systems
 	'''
 	
-	def __init__(self, url, nb):
+	def __init__(self, url, nb, manifest):
+		self.manifest = manifest
 		self.url  = url
 		self.number = nb
 		self.systems  = []
@@ -133,10 +142,10 @@ class ScoreImgPage:
 		raise score_mod.CScoreModelError (f"Searching a non existing system {nb} in page {self.number}")
 	
 	@staticmethod
-	def from_json (json_mnf):
-		page = ScoreImgPage(json_mnf["url"], json_mnf["number"])
+	def from_json (json_mnf, manifest):
+		page = ScoreImgPage(json_mnf["url"], json_mnf["number"], manifest)
 		for json_system in json_mnf["systems"]:
-			system = ScoreImgSystem.from_json(json_system)
+			system = ScoreImgSystem.from_json(json_system, page)
 			page.add_system(system)
 		page.create_groups()
 
@@ -161,7 +170,8 @@ class ScoreImgSystem:
 		A system in a page, containing staves
 	'''
 	
-	def __init__(self, number) :
+	def __init__(self, number, page) :
+		self.page = page
 		self.number = number
 		self.staves  = []
 		self.groups = {}
@@ -178,10 +188,10 @@ class ScoreImgSystem:
 		raise score_mod.CScoreModelError (f"Searching a non existing staff {id_staff} in system {self.number}")
 
 	@staticmethod
-	def from_json (json_mnf):
-		system = ScoreImgSystem(json_mnf["number"])
+	def from_json (json_mnf, page):
+		system = ScoreImgSystem(json_mnf["number"], page)
 		for json_staff in json_mnf["staves"]:
-			staff = ScoreImgStaff.from_json(json_staff)
+			staff = ScoreImgStaff.from_json(json_staff, system)
 			system.add_staff(staff)
 			
 		system.create_groups()
@@ -194,49 +204,80 @@ class ScoreImgSystem:
 			staves_json.append(staff.to_json())
 		return {"number": self.number, "staves": staves_json}
 
-		
 	def create_groups(self):
 		# identify parts that spread over several staves (ie keyboards)
 		parts_staves = {}
 		for staff in self.staves:
-			for id_part in staff.parts:
-				if id_part in parts_staves.keys():
-					parts_staves[id_part].append(staff)
+			for part in staff.parts:
+				if part.id in parts_staves.keys():
+					parts_staves[part.id].append(staff)
 				else:
-					parts_staves[id_part] = [staff]
+					parts_staves[part.id] = [staff]
 					
 		# OK, now find parts with more that one staff
 		for id_part, staves in parts_staves.items():
 			if len(staves) > 1:
 				self.groups[id_part] = staves
 	
+	def count_staves_for_part (self, id_part):
+		count = 0
+		for staff in self.staves:
+			for part in staff.parts:
+				if part.id == id_part:
+					count += 1
+		return count
+		
 class ScoreImgStaff:
 	'''
 		A staff in a system, which contains one or several parts
 		(referred to by their id)
 	'''
 	
-	def __init__(self, id_staff) :
+	def __init__(self, id_staff, system) :
+		self.system = system
 		self.id = id_staff
 		# Sometimes the time signature is implicit from the context
 		# and we must add it
 		self.time_signature = None
+		
+		# In principle we might have a list of parts on a same staff
 		self.parts  = []
-
+		
+		# The "local" part is a combination of the part ID and the staff number
+		# for this part. In case of a part "P1" with two staves, we will have for
+		# instance "P1-1" for the first staff and "P1-2" for the second. Useful
+		# for music21 StaffGroups structures
+		self.local_part_id = ""
+		
 	def add_part(self, id_part):
-		self.parts.append(id_part)
+		# For the time being we allow only one part per staff
+		
+		if len(self.parts) > 0:
+			raise score_mod.CScoreModelError (f"Cannot add several parts to a same staff. Not yet implemented")
+
+		self.parts.append(self.system.page.manifest.get_part(id_part))
+		
+		# How many staves for this part in the current system?
+		no_staff_part = self.system.count_staves_for_part (id_part) + 1
+		
+		# Warning: will not work in case we have several parts
+		self.local_part_id = score_mod.Part.make_part_id(id_part, no_staff_part)
 		
 	def to_json (self):
+		partids = []
+		for part in self.parts:
+			partids.append(part.id)
+			
 		obj =  {"id": self.id,
-			     "parts": self.parts
+			     "parts": self.partids
 			    }
 		if self.time_signature is not None:
 			obj["time_signature"] = self.time_signature.to_json()
 		return obj
 	
 	@staticmethod
-	def from_json (json_mnf):
-		staff = ScoreImgStaff(json_mnf["id"])
+	def from_json (json_mnf, system):
+		staff = ScoreImgStaff(json_mnf["id"], system)
 		for id_part in json_mnf["parts"]:
 			staff.add_part(id_part)
 		if "time_signature" in json_mnf:
