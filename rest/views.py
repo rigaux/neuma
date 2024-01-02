@@ -1,12 +1,12 @@
 import hashlib
 import urllib
 import datetime
-import subprocess
-
 import jsonschema
 import jsonref
 import json
 from jsonref import JsonRef
+
+import os 
 
 from xml.dom import minidom
 from django.core.files.base import ContentFile
@@ -37,10 +37,7 @@ from rest_framework import permissions
 
 from rest_framework import renderers
 from rest_framework.schemas import AutoSchema, ManualSchema
-from drf_yasg.utils import swagger_auto_schema
-import coreapi
 
-import json, os
 import mido
 from django.core.files.storage import default_storage
 from django.core.files.base import ContentFile
@@ -240,7 +237,6 @@ def get_concepts_level(db_model, parent):
 
 
 @csrf_exempt
-@swagger_auto_schema(methods=["get", "post"], auto_schema=None)
 @api_view(["GET", "POST"])
 def handle_concepts_request(request, model_code, concept_code="_all"):
 	"""
@@ -387,10 +383,6 @@ class CorpusList(APIView):
 	"""
 	List all corpus
 	"""
-
-	schema = ManualSchema(
-		fields=[coreapi.Field("full_neuma_ref", required=True, description="tototo")]
-	)
 
 	def get(self, request, full_neuma_ref=settings.NEUMA_ROOT_CORPUS_REF, format=None):
 		"""
@@ -664,7 +656,6 @@ def handle_source_file_request(request, full_neuma_ref, source_ref):
 
 
 @csrf_exempt
-@swagger_auto_schema(method="post", auto_schema=None)
 @api_view(["POST"])
 # Only authenticqted user cqn reauest q computqtion
 # @permission_classes((IsAuthenticated(), ))
@@ -705,7 +696,6 @@ def compute_annotations(request, full_neuma_ref, model_code):
 
 
 @csrf_exempt
-@swagger_auto_schema(methods=["get"], auto_schema=None)
 @api_view(["GET"])
 @permission_classes((permissions.IsAuthenticatedOrReadOnly, ))
 def handle_stats_annotations_request(
@@ -755,7 +745,6 @@ def handle_stats_annotations_request(
 
 
 @csrf_exempt
-@swagger_auto_schema(methods=["get"], auto_schema=None)
 @api_view(["GET", "DELETE"])
 @permission_classes((permissions.IsAuthenticatedOrReadOnly, ))
 def handle_annotations_request(
@@ -814,7 +803,6 @@ def handle_annotations_request(
 		return JSONResponse({"message": f"All annotations of {opus.ref} for annotation model {model_code} have been deleted"})
 
 @csrf_exempt
-@swagger_auto_schema(methods=["get", "post"], auto_schema=None)
 @api_view(["GET", "POST", "DELETE"])
 @permission_classes((permissions.IsAuthenticatedOrReadOnly, ))
 def handle_annotation_request(request, full_neuma_ref, annotation_id=-1):
@@ -843,7 +831,6 @@ def handle_annotation_request(request, full_neuma_ref, annotation_id=-1):
 
 
 @csrf_exempt
-@swagger_auto_schema(methods=["put"], auto_schema=None)
 @api_view(["PUT"])
 @permission_classes((permissions.IsAuthenticatedOrReadOnly, ))
 def put_annotation_request(request, full_neuma_ref):
@@ -1007,7 +994,6 @@ def save_external_opus(url_score):
 	return opus_ref
 
 @csrf_exempt
-@swagger_auto_schema(method="post", auto_schema=None)
 @api_view(["POST"])
 def compute_midi_distance(request):
 	""" Compute the distance and the list of differences between two MIDI 
@@ -1108,7 +1094,6 @@ def compute_midi_distance(request):
 
 
 @csrf_exempt
-@swagger_auto_schema(method="post", auto_schema=None)
 @api_view(["POST"])
 def compute_score_distance(request):
 	""" Compute the distance and the list of differences between two scores 
@@ -1261,76 +1246,6 @@ def grammar(request, grammar_name):
 				return JSONResponse(
 					{"error": 1, "message": str(e)}, status=status.HTTP_400_BAD_REQUEST
 				)
-
-
-@csrf_exempt
-@api_view(["GET"])
-def qparse(request):
-	"""
-	Run the QParse program
-	"""
-	try:
-		jsonInput = json.loads(request.body.decode())
-
-		# Find the grammar
-		grammar_name = jsonInput["grammar"]
-		input_name = jsonInput["name"]
-		print(grammar_name)
-		try:
-			grammar = Grammar.objects.get(name=grammar_name)
-		except Grammar.DoesNotExist:
-			return JSONResponse({"error": 1, "message": "Grammar " + grammar_name 
-									+ " does not exist"}, status=status.HTTP_200_OK)
-		# Write the grammar in a TMP file
-		grammar_file_name = os.path.join(settings.TMP_DIR, grammar_name + ".txt")
-		with open(grammar_file_name, "w") as grammar_file:
-			grammar_file.write(grammar.get_str_repr())
-						
-		#initialize the output json
-		out_json = {
-			'name':input_name,
-			'grammar':grammar_name,
-			'voices':[]
-		}
-
-		# iterate over voices
-		for i, voice in enumerate(jsonInput["voices"]):
-			print("Processing voice", i)
-			input_file_name = os.path.join(settings.TMP_DIR, input_name + "_" + str(i) + ".txt")
-			output_file_name = os.path.join(settings.TMP_DIR, input_name + "_" + str(i) + "-out.txt")
-			with open(input_file_name, "w") as ifile:
-				ifile.write(QParse.encodeInputVoiceAsText(voice))
-
-			# OK ready for calling qparse. read the script, replace variables and execute
-			with open(os.path.join(settings.SCRIPTS_ROOT, 'qparse.sh')) as script_file:
-				script_file_content = script_file.read()
-			# Get the script template by replacing the deployment-dependent paths
-			sfile_content = script_file_content.replace ("{qparse_bin_dir}", settings.QPARSE_BIN_DIR
-										 ).replace("{config_file_path}", settings.CONFIG_FILE_PATH
-										 ).replace("{grammar_file}", grammar_file_name
-										).replace("{input_file}", input_file_name
-										).replace ("{output_file}", output_file_name)
-			sfile_name = os.path.join(settings.TMP_DIR, "qparse_" + input_name  + "_" + str(i) + ".sh")
-			with open(sfile_name, "w") as script_file:
-				script_file.write(sfile_content)
-			# Execute the script 
-			subprocess.call(["chmod", "a+x", sfile_name])
-			result = subprocess.call(sfile_name)
-
-			# read the output file and extract the list of measures
-			output_content = ""
-			with open(output_file_name) as output_file:
-				output_content  = output_file.read()
-			# extract a list of trees for the current voice from the qparse string output
-			voice_formatted_out = QParse.decodeOutput(output_content)
-			# add the list in the out_json file for the current voice
-			out_json['voices'].append(voice_formatted_out)
-
-
-		return JSONResponse(out_json,status=status.HTTP_200_OK)
-	except Exception as e:
-		return JSONResponse({"message": "Exception raised while trying to un QParse. "+ str(e)}, 
-							status=status.HTTP_400_BAD_REQUEST)
 
 
 ###################

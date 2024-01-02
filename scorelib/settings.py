@@ -54,7 +54,7 @@ INSTALLED_APPS = (
     "rest_framework",
     "mptt",
     'django_q',
-   'drf_yasg',
+   'drf_spectacular',
 )
 
 SESSION_SERIALIZER='django.contrib.sessions.serializers.PickleSerializer'
@@ -243,7 +243,15 @@ NB_NEIGHBORS = 10
 #
 # REST documentation
 #
-REST_FRAMEWORK = { 'DEFAULT_SCHEMA_CLASS': 'rest_framework.schemas.coreapi.AutoSchema' }
+REST_FRAMEWORK = {    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema', }
+
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'Neuma REST API',
+    'DESCRIPTION': 'API of the Neuma digital library',
+    'VERSION': '1.0.0',
+    'SERVE_INCLUDE_SCHEMA': False,
+    # OTHER SETTINGS
+}
 
 # Directory where the qprse program is to be found
 QPARSE_BIN_DIR = "/Users/philippe/git/qparselib"

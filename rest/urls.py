@@ -9,8 +9,6 @@ from .views import *
 
 
 from rest_framework import permissions
-from drf_yasg.views import get_schema_view
-from drf_yasg import openapi
 
 #from rest_framework.documentation import include_docs_paths
 
@@ -20,27 +18,9 @@ from drf_yasg import openapi
 app_name="rest"
 
 
-schema_view = get_schema_view(
-   openapi.Info(
-      title="Neuma REST API",
-      default_version='v1',
-      description="List and usage of Neuma REST services",
-   ),
-   public=False,
-   permission_classes=(permissions.AllowAny,),
-)
-
-
 urlpatterns = [
     # Welcome message
      path('', views.welcome, name='welcome'),
-
-   #### Swagger documentation
-   #re_path('apidoc/', include_docs_paths(title='Neuma REST API documentation')),
-    re_path(r'^swagger(?P<format>\.json|\.yaml)$', schema_view.without_ui(cache_timeout=0), name='schema-json'),
-  re_path('swagger/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
-   path('redoc/', schema_view.with_ui('redoc', cache_timeout=0), name='schema-redoc'),
-
     ###############
     ## MISC SERVICE
     ###############

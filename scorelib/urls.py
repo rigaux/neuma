@@ -22,12 +22,19 @@ from django.conf import settings
 
 from neumautils.views import NeumaView
 
+from drf_spectacular.views import SpectacularAPIView, SpectacularRedocView, SpectacularSwaggerView
 
 import home.views
 
 urlpatterns = [
     re_path(r'^$', NeumaView.as_view(template_name="home/index.html"), name='index'),
-    re_path (r'^neumadmin/', admin.site.urls),
+    re_path (r'^neumadmin/', admin.site.urls),    
+    #### OpenAPI documentation
+	path('api/v1/openapi/', SpectacularAPIView.as_view(), name='openapi'),
+    path('schema/', SpectacularAPIView.as_view(), name='schema'),
+	path('schema/swagger-ui/', SpectacularSwaggerView.as_view(url_name='schema'), name='swagger-ui'),
+	path('schema/redoc/', SpectacularRedocView.as_view(url_name='schema'), name='redoc'),
+
     re_path(r'^manager/', include('manager.urls', namespace="manager")),
     re_path(r'^home/', include('home.urls', namespace="home")),
     re_path(r'^quality/', include('quality.urls', namespace="quality")),
