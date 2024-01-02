@@ -177,6 +177,7 @@ class Note (Event):
 		self.m21_event.id = self.id
 		self.no_staff = no_staff
 		self.tied = tied
+		
 		return
 	
 	def is_note(self):

@@ -25,6 +25,8 @@ class Voice:
 		
 		# For OMR: The current clefs are used to decode symbols on staves
 		self.current_clefs = {}
+		# Still for OMR: we can disable automatic beaming
+		self.automatic_beaming = True
 
 		# For decoding durations, the time signature is sometimes required
 		return
@@ -54,6 +56,14 @@ class Voice:
 		self.m21_stream = m21stream	
 	
 	def append_event (self, event):
+		if self.automatic_beaming == False and event.is_note():
+			# In order to disable auto beam, we add a pseudo-beam in the music21
+			# event. Ugly but ...
+			event.m21_event.beams.append(m21.beam.Beam(type='start', number=1))
+			event.m21_event.beams.append(m21.beam.Beam(type='stop', number=1))
+			# No need to preserve the automatic beaming flag
+			self.automatic_beaming = True
+
 		self.m21_stream.append(event.m21_event)
 
 	def append_clef(self, clef, no_staff):
@@ -400,6 +410,9 @@ class Voice:
 
 		return invalid
 
+	def disable_autobeam(self):
+		self.automatic_beaming = False 
+		
 # FIXME
 class IncompleteBarsError(Exception):
 	pass

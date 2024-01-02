@@ -267,7 +267,7 @@ class OmrScore:
 				part_group = score_model.Part(id_part=src_part.id, name=src_part.name, 
 												abbreviation=src_part.abbreviation,
 												part_type="group", group=staff_group)
-				logger.info (f"Add a part group {src_part.id} with {i_staff} staff-parts")
+				logger.info (f"Add a part group {src_part.id} with {i_staff-1} staff-parts")
 				score.add_part(part_group)
 	
 		logger.info (f"")
@@ -464,7 +464,9 @@ class OmrScore:
 						voice_part.set_current_clefs(current_measure.initial_clefs)
 						# The current time signature is useful to decode whole notes
 						voice_part.set_current_time_signature(current_staff.current_time_signature)
-
+						# We disable automatic beaming
+						voice_part.automatic_beaming = False
+						
 						current_beam = None						
 						previous_event = None
 						for item in voice.items:

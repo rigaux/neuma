@@ -883,13 +883,13 @@ class Comparison:
             cost += 1
             op_list.append(("graceslashedit", annNote1, annNote2, 1))
         # add for the beamings
-        '''if annNote1.beamings != annNote2.beamings:
+        if annNote1.beamings != annNote2.beamings:
             beam_op_list, beam_cost = Comparison._beamtuplet_leveinsthein_diff(
                 annNote1.beamings, annNote2.beamings, annNote1, annNote2, "beam"
             )
             op_list.extend(beam_op_list)
             cost += beam_cost
-        '''
+        
         # add for the tuplets
         if annNote1.tuplets != annNote2.tuplets:
             tuplet_op_list, tuplet_cost = Comparison._beamtuplet_leveinsthein_diff(
