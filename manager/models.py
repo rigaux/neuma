@@ -48,7 +48,6 @@ import verovio
 from xml.dom import minidom
 import itertools
 import uuid
-from zlib import crc32
 from hashlib import md5
 
 # Note : we no longer need sklearn nor scipy
@@ -56,18 +55,22 @@ from lib.neumautils.stats import symetrical_chi_square
 from lib.neumautils.matrix_transform import matrix_transform
 from lib.neumautils.kmedoids import cluster
 
-from django.db.models.sql.where import OR
-from jinja2.nodes import Or
-from numpy.distutils.fcompiler import none
-from pip._vendor.requests.api import request
 
 # Get an instance of a logger
 # See https://realpython.com/python-logging/
 
 logging.basicConfig(level=logging.DEBUG)
-
 logger = logging.getLogger(__name__)
 
+# For the console
+c_handler = logging.StreamHandler()
+c_handler.setLevel(logging.INFO)
+c_format = logging.Formatter('%(name)s - %(levelname)s - %(message)s')
+c_handler.setFormatter(c_format)
+logger.addHandler(c_handler)
+
+def set_logging_level(level):
+	logger.setLevel(level)
 
 class Person (models.Model):
 	'''Persons (authors, composers, etc)'''
@@ -1275,7 +1278,7 @@ class OpusMeta(models.Model):
 		MK_NUM_OF_MEASURES: {"displayed_label": "Number of measures"},
 		MK_NUM_OF_NOTES: {"displayed_label": "Number of notes"},
 		ML_INSTRUMENTS: {"displayed_label": "Instruments"},
-		MK_LOWEST_PITCH_EACH_PART: {"displayed_label": "Lowest pitch each part"},
+		MK_LOWEST_PITCH_EACH_PART: {"displayed_label": "Lowest fpitch each part"},
 		MK_HIGHEST_PITCH_EACH_PART: {"displayed_label": "Highest pitch each part"},
 		MK_MOST_COMMON_PITCHES: {"displayed_label": "Most common pitches"},
 		MK_AVE_MELODIC_INTERVAL: {"displayed_label": "Average melodic interval"},
@@ -1372,10 +1375,6 @@ class OpusSource (models.Model):
 	creation_timestamp = models.DateTimeField('Created', auto_now_add=True)
 	update_timestamp = models.DateTimeField('Updated', auto_now=True)
 
-	# Codes for normalized references
-	DMOS_REF = "dmos"
-	MEI_REF = "ref_mei"
-	
 	def upload_path(self, filename):
 		'''Set the path where source files must be stored'''
 		source_ref = self.opus.ref.replace(settings.NEUMA_ID_SEPARATOR, "-")
@@ -1401,6 +1400,18 @@ class OpusSource (models.Model):
 			source_dict.url = abs_url + self.source_file.url
 			
 		return source_dict
+
+	def to_json(self, request):
+		"""
+		  Produces a JSON representation (useful for REST services)
+		"""
+		# We need the absolute URL 
+		abs_url = request.build_absolute_uri("/")[:-1]
+		src_dict = self.to_serializable(abs_url)
+		output = src_dict.to_json()
+		
+				
+		return output
 
 class Bookmark(models.Model):
 	'''Record accesses from user to opera'''

@@ -28,6 +28,9 @@ from rest_framework.parsers import JSONParser, FileUploadParser, MultiPartParser
 from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework.views import APIView
+from rest_framework import mixins
+from rest_framework import generics
+
 from rest_framework.response import Response
 from rest_framework.exceptions import ParseError
 
@@ -55,6 +58,13 @@ from manager.models import (
 	SourceType
 )
 
+from .serializers import (
+	ArkIdxCorpusSerializer,
+	ArkIdxElementSerializer,
+	ArkIdxElementChildSerializer,
+	create_arkidx_element_dict
+	)
+
 from lib.workflow.Workflow import Workflow, workflow_import_zip
 from quality.lib.NoteTree_v2 import MonophonicScoreTrees
 
@@ -64,11 +74,14 @@ from music21 import converter, mei
 import lib.music.Score as score_model
 import lib.music.annotation as annot_mod
 import lib.music.constants as constants_mod
+import lib.music.opusmeta as opusmeta_mod
 
 from lib.music.Score import *
 from .forms import *
 from django.conf.global_settings import LOGGING
 
+from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiExample
+from drf_spectacular.types import OpenApiTypes
 import logging
 
 # Get an instance of a logger
@@ -85,6 +98,7 @@ INTERNAL_REF_RESOURCE = "INTERNAL"  # For XML element inside an opus / MEI
 
 
 @csrf_exempt
+@extend_schema(operation_id="welcome")
 @api_view(["GET"])
 def welcome(request):
 	"""
@@ -302,19 +316,6 @@ def encode_concepts_in_latex(concepts, level):
 
 
 @csrf_exempt
-@api_view(["GET"])
-def handle_opus_concordance(request, opus_ref):
-	"""
-	Receives a JSON document encoding an event wrapped from the Web
-	"""
-	if request.method == "GET":
-		try:
-			opus = Opus.objects.get(ref=opus_ref)
-		except Opus.DoesNotExist:
-			return JSONResponse({"error": "Unknown opus"})
-
-
-@csrf_exempt
 @api_view(["POST"])
 # Only admin user can import an upload
 # @permission_classes((IsAdminUser, ))
@@ -378,7 +379,7 @@ class TopLevelCorpusList(APIView):
 
 		return JSONResponse(corpora)
 
-
+@extend_schema(operation_id="CorpusList")
 class CorpusList(APIView):
 	"""
 	List all corpus
@@ -548,7 +549,6 @@ def handle_sources_request(request, full_neuma_ref):
 	else:
 		return Response(status=status.HTTP_404_NOT_FOUND)
 
-
 	if request.method == "GET":
 		sources = []
 		for source in opus.opussource_set.all ():
@@ -580,7 +580,6 @@ def handle_source_request(request, full_neuma_ref, source_ref):
 	"""
 	  Manage requests on ONE source
 	"""
-
 	neuma_object, object_type = get_object_from_neuma_ref(full_neuma_ref)
 	if type(neuma_object) is Opus:
 		opus = neuma_object
@@ -631,7 +630,7 @@ def handle_source_file_request(request, full_neuma_ref, source_ref):
 	except OpusSource.DoesNotExist:
 		#print (f"Source {source_ref} does not exists in opus {opus.ref}")		
 		# Special case for DMOS source: we create a default one
-		if source_ref == "dmos":
+		if source_ref == opusmeta_mod.OpusSource.DMOS_REF:
 			source_type = SourceType.objects.get(code=SourceType.STYPE_DMOS)
 			source = OpusSource (opus=opus,ref=source_ref,source_type=source_type,
 				description=f"Created via REST call on {datetime.date.today()}",url ="")
@@ -644,7 +643,7 @@ def handle_source_file_request(request, full_neuma_ref, source_ref):
 		source.source_file.save(filename, filecontent)
 		
 		# Special case DMOS: parse the file and create XML files
-		if source_ref=="dmos":
+		if source_ref==opusmeta_mod.OpusSource.DMOS_REF:
 			opus.parse_dmos()
 	return JSONResponse({"status": "ok", "message": "Source file uploaded"})
 
@@ -1054,45 +1053,6 @@ def compute_midi_distance(request):
 		)
 
 
-# @csrf_exempt
-# @api_view(['POST'])
-# def compute_score_distance (request):
-#	 """ Compute the distance and the list of differences between two MIDI
-#		 The body must be a form-data with the fields:
-#			 "score1" a score with one voice
-#			 "score2" a score with one voice
-#	 """
-#	 if not "score1" in request.FILES and "score2" in request.FILES:
-#		 return JSONResponse({"error": "No score1 and score present in the request"}, status=status.HTTP_400_BAD_REQUEST)
-
-#	 #save localy the scores from the request
-#	 scorefile1 = request.FILES["score1"]
-#	 scorefile2 = request.FILES["score2"]
-#	 tmp_score1_path= os.path.join(settings.TMP_DIR, 'tmp_score1.xml') #the path of the temporary midi files
-#	 tmp_score2_path= os.path.join(settings.TMP_DIR, 'tmp_score2.xml')
-#	 if os.path.exists(tmp_score1_path): # first delete them if they already exist
-#		 os.remove(tmp_score1_path)
-#	 if os.path.exists(tmp_score2_path): # first delete them if they already exist
-#		 os.remove(tmp_score2_path)
-#	 default_storage.save(tmp_score1_path, ContentFile(scorefile1.read())) #save it
-#	 default_storage.save(tmp_score2_path, ContentFile(scorefile2.read()))
-
-#	 #ora leggi il file con music21 e fai l'analisi
-#	 score1 = converter.parse(tmp_score1_path)
-#	 score2 = converter.parse(tmp_score2_path)
-
-#	 #compute distance score and annotations
-#	 try:
-#		 cost, annotation_list = ComparisonProcessor.score_comparison(score1,score2)
-#		 print(cost)
-#		 print(annotation_list)
-#		 return JSONResponse({"scores_distance": cost,
-#							  "annotation_list" : annotation_list}, status=status.HTTP_200_OK)
-#	 except Exception as e:
-#		 print("Unable to retrieve the cost and annotations. Error: " + str(e))
-#		 return JSONResponse({"error": "Unable to retreive the cost and comparison annotations"}, status=status.HTTP_404_NOT_FOUND)
-
-
 @csrf_exempt
 @api_view(["POST"])
 def compute_score_distance(request):
@@ -1155,100 +1115,7 @@ def compute_score_distance(request):
 			status=status.HTTP_404_NOT_FOUND,
 		)
 
-
-####################
-#
-#		 TRANSCRIPTION API
-#
-###########################
-
-
-@csrf_exempt
-@api_view(["GET"])
-def grammars(request):
-	"""
-	Return the list of grammars
-	"""
-	grammars = []
-	for grammar in Grammar.objects.all():
-		grammars.append(
-			{
-				"name": grammar.name,
-				"meter_numerator": grammar.meter_numerator,
-				"meter_denominator": grammar.meter_denominator,
-			}
-		)
-
-	return JSONResponse(
-		{"nb": len(grammars), "grammars": grammars}, status=status.HTTP_200_OK
-	)
-
-
-@csrf_exempt
-@api_view(["GET", "POST", "PUT"])
-def grammar(request, grammar_name):
-	"""
-	The name of a grammar
-	"""
-
-	if request.method == "GET":
-		try:
-			grammar = Grammar.objects.get(name=grammar_name)
-			return JSONResponse(grammar.get_json(), status=status.HTTP_200_OK)
-			# return JSONResponse({"Resultat ": "OK"}, status = status.HTTP_200_OK)
-		except Grammar.DoesNotExist as e:
-			return Response(
-				"Grammar  " + grammar_name + " does not exist",
-				status=status.HTTP_404_NOT_FOUND,
-			)
-	elif request.method == "PUT":
-		# Check that the grammar does not exist
-		try:
-			grammar = Grammar.objects.get(name=grammar_name)
-			return JSONResponse(
-				{"error": 1, "message": "Grammar " + grammar_name + " already exists"},
-				status=status.HTTP_400_BAD_REQUEST,
-			)
-		except Grammar.DoesNotExist as e:
-			# Decode the input
-			try:
-				input_grammar = json.loads(request.body.decode())
-				grammar = Grammar(
-					name=grammar_name,
-					ns=input_grammar["ns"],
-					type_weight=input_grammar["type_weight"],
-					meter_numerator=input_grammar["meter_numerator"],
-					meter_denominator=input_grammar["meter_denominator"],
-					initial_state=input_grammar["initial_state"],
-				)
-				grammar.save()
-				for rule in input_grammar["rules"]:
-					body = []
-					occ = []
-					for b in rule["body"]:
-						body.append(b["state"])
-						occ.append(b["occ"])
-					gr_rule = GrammarRule(
-						grammar=grammar,
-						weight=rule["weight"],
-						head=rule["head"],
-						symbol=rule["symbol"],
-						body=body,
-						occurrences=occ,
-					)
-					gr_rule.save()
-
-				return JSONResponse(
-					{"error": 0, "message": "Grammar " + grammar_name + " created"},
-					status=status.HTTP_200_OK,
-				)
-			except Exception as e:
-				return JSONResponse(
-					{"error": 1, "message": str(e)}, status=status.HTTP_400_BAD_REQUEST
-				)
-
-
-###################
+####
 # OTF TRANSCRIPTION
 ###################
 @csrf_exempt
@@ -1275,3 +1142,73 @@ def receive_midi_messages(request):
 @api_view(["GET"])
 def test_midi_messages(request):
 	return JSONResponse({"Response": "Working"}, status=status.HTTP_200_OK)
+
+"""
+ArkIndex API implementation
+"""
+
+
+class ArkIdxRetrieveCorpus(APIView):
+	
+	serializer_class = ArkIdxCorpusSerializer
+	
+	@extend_schema(operation_id="RetrieveCorpus")
+	def get(self, request, id):
+		"""
+			Returns a corpus description
+		"""
+		try:
+			corpus = Corpus.objects.get(ref=id)
+			serializer = ArkIdxCorpusSerializer(corpus)
+			#serializer.is_valid(raise_exception=True)
+			return JSONResponse(serializer.data)
+		except Corpus.DoesNotExist:
+			return Response(status=status.HTTP_404_NOT_FOUND)
+
+@extend_schema(operation_id="ListElements",
+					  parameters=[
+			OpenApiParameter(name='top_level', description='Filter by top_level', required=False, type=str),
+			OpenApiParameter(name='with_has_children', description='Filter by children', required=False, type=str),
+			OpenApiParameter(name='with_classes', description='Filter by classes', required=False, type=bool),
+			]
+		)
+class ArkIdxListElements(generics.ListAPIView):
+	
+	serializer_class = ArkIdxElementSerializer
+	def get_queryset(self):
+		corpus_ref = self.kwargs['corpus']
+		return Opus.objects.filter(corpus__ref=corpus_ref)
+
+class ArkIdxListElementChildren(APIView):
+	
+	serializer_class = ArkIdxElementChildSerializer
+	
+	@extend_schema(operation_id="ListElementChildren",
+		parameters=[
+			OpenApiParameter(name='order', description='ordering of elements', required=False, type=str),
+			OpenApiParameter(name='with_has_children', description='Filter by children', required=False, type=str),
+			OpenApiParameter(name='with_classes', description='Filter by classes', required=False, type=bool),
+			]
+		)
+	
+	def get(self, request, id):
+		try:
+			opus = Opus.objects.get(ref = self.kwargs['id'])
+			source = OpusSource.objects.get(opus=opus,ref=opusmeta_mod.OpusSource.IIIF_REF)
+			# get an OpusSource object from the OpusMeta module
+			my_url = request.build_absolute_uri("/")[:-1]
+			source_dict = source.to_serializable(my_url)
+			imgs = []
+			i = 1
+			for img in source_dict.images:
+				zone = {"image": img.to_dict(),	"polygon": None}
+				imgs.append( create_arkidx_element_dict("Opus", 
+													source.ref + str(i), 
+											    source.ref + str(i),
+										  	    source.opus.ref, zone))
+				i = i+1
+			return Response(imgs)
+		except Opus.DoesNotExist:
+			return Response(status=status.HTTP_404_NOT_FOUND)
+		except OpusSource.DoesNotExist:
+			return Response(status=status.HTTP_404_NOT_FOUND)

@@ -39,7 +39,7 @@ urlpatterns = [
     # GET a source description, or POST an update on a source
     re_path(r'collections/(?P<full_neuma_ref>(.*))/_sources/(?P<source_ref>[-\w]+)/$',views.handle_source_request, name='handle_source_request'),
     # PUT a new source or GET the list of sources of an Opus
-    path('collections/<str:full_neuma_ref>/_sources/',views.handle_sources_request, name='handle_sources_request'),
+    re_path('collections/(?P<full_neuma_ref>(.*))/_sources/',views.handle_sources_request, name='handle_sources_request'),
     ################
     # ANNOTATIONS
     ################
@@ -68,5 +68,9 @@ urlpatterns = [
     re_path (r'^collections/(?P<full_neuma_ref>(.*))/*.xml$', views.handle_neuma_ref_request, name='handle_files_reauest'),
     # Generic request to a corpus or an opus 
     re_path (r'^collections/(?P<full_neuma_ref>(.*))/$', views.handle_neuma_ref_request, name='handle_neuma_ref_request'),
-    # OTF Transcription
+    #  ArkIndex API implementation
+    path('retrieve_corpus/<str:id>/', views.ArkIdxRetrieveCorpus.as_view(), name='retrieve_corpus'),
+   path('list_elements/<str:corpus>/', views.ArkIdxListElements.as_view(), name='list_element'),
+   path('list_element_children/<str:id>/', views.ArkIdxListElementChildren.as_view(), name='list_element_children'),
+    
 ]

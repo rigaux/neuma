@@ -1,6 +1,10 @@
 
 from lib.music.jsonld import JsonLD
 
+import lib.music.Score as score_mod
+
+import lib.neumautils.iiifutils as iiif_mod
+
 '''
  A class used to represent the metadata of an Opus
 '''
@@ -34,12 +38,40 @@ class OpusSource:
 	'''
 		A source (digital document referring to an Opus
 	'''
+	
+	# Codes for normalized references
+	DMOS_REF = "dmos"
+	MEI_REF = "ref_mei"
+	IIIF_REF = "gallica"
+	
 	def __init__(self, ref, source_type, mime_type, url):
 		self.ref = ref
 		self.source_type = source_type
 		self.mime_type = mime_type
 		self.url  = url
 		self.description = ""
+
+		# IIIF extraction: only for sources of type IIIF_REF
+		if self.ref == self.IIIF_REF:
+			iiif_proxy = iiif_mod.Proxy(iiif_mod.GALLICA_BASEURL)
+			self.images = []
+			# Extract the document identifier			
+			docid = OpusSource.extract_iiif_id(self.url)
+			try:
+				document = iiif_proxy.get_document(docid)
+				for i in range(document.nb_canvases):
+					canvas = document.get_canvas(i)
+					self.images.append(canvas.get_image(0))
+			except Exception as ex:
+				score_mod.logger.info(str(ex))
+		
+	@staticmethod
+	def extract_iiif_id (iiif_url):
+		split_url = iiif_url.split(iiif_mod.GALLICA_UI_BASEURL, 1)
+		if split_url is not None and len(split_url) > 0:
+			return split_url[1]
+		else:
+			raise score_mod.CScoreModelError (f"Invalid Gallica IIIF reference: {iiif_url}")
 		
 	def to_json (self):
 		source_dict =  {
@@ -48,7 +80,11 @@ class OpusSource:
 			"source_type": self.source_type, 
 			"mime_type": self.mime_type, 
 			"url": self.url}
-			
+		
+		if self.ref == self.IIIF_REF:
+			source_dict["images"] = []
+			for img in self.images:
+				source_dict["images"].append(img.to_dict())
 		return source_dict
 
 class OpusMeta:
