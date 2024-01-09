@@ -56,7 +56,7 @@ class OpusSource:
 			iiif_proxy = iiif_mod.Proxy(iiif_mod.GALLICA_BASEURL)
 			self.images = []
 			# Extract the document identifier			
-			docid = OpusSource.extract_iiif_id(self.url)
+			docid = iiif_mod.Proxy.decompose_gallica_ref(self.url)
 			try:
 				document = iiif_proxy.get_document(docid)
 				for i in range(document.nb_canvases):
@@ -65,13 +65,6 @@ class OpusSource:
 			except Exception as ex:
 				score_mod.logger.info(str(ex))
 		
-	@staticmethod
-	def extract_iiif_id (iiif_url):
-		split_url = iiif_url.split(iiif_mod.GALLICA_UI_BASEURL, 1)
-		if split_url is not None and len(split_url) > 0:
-			return split_url[1]
-		else:
-			raise score_mod.CScoreModelError (f"Invalid Gallica IIIF reference: {iiif_url}")
 		
 	def to_json (self):
 		source_dict =  {

@@ -49,6 +49,14 @@ class Proxy:
 	def get_document (self, identifier):
 		return Document (identifier)
 
+	@staticmethod
+	def decompose_gallica_ref (iiif_url):
+		split_url = iiif_url.split(GALLICA_UI_BASEURL, 1)
+		if split_url is not None and len(split_url) > 0:
+			return split_url[1]
+		else:
+			raise score_mod.CScoreModelError (f"Invalid Gallica IIIF reference: {iiif_url}")
+
 class Document:
 	
 	def __init__(self, identifier):
@@ -86,8 +94,7 @@ class Image:
 	def __init__(self, img_dict):
 		res =  img_dict["resource"]
 		self.format = res["format"]
-		print (f"Init image id = {res['@id']}")
-		self.url = res["@id"]
+		self.url = res["service"]["@id"]
 		self.width = res["width"]
 		self.height = res["height"]
 		

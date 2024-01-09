@@ -1,7 +1,4 @@
 from rest_framework import serializers
-from manager.models import OpusSource
-
-import lib.music.opusmeta as opusmeta_mod
 
 """
   Serializers for ArkIndex API
@@ -41,17 +38,10 @@ class ArkIdxElementSerializer(serializers.Serializer):
 	def to_representation(self, instance):
 		# Here, 'instance' is an Opus
 		
-		# zone a an object that represents an image. We take the first page of the
-		# 'gallica' source
-		zone = None 
-		for source in instance.opussource_set.all ():
-			if source.ref == opusmeta_mod.OpusSource.IIIF_REF:
-				source_dict = source.to_serializable("")
-				img = source_dict.images[0]
-				zone = {"image": img.to_dict(),	"polygon": None}
+		# An element that corresponds to an Opus is created without image
 
 		return create_arkidx_element_dict("Opus", instance.ref, instance.title,
-										  instance.corpus.ref, zone)
+										  instance.corpus.ref, True, None)
 
 class ArkIdxElementChildSerializer(serializers.Serializer):
 	"""
@@ -68,14 +58,15 @@ class ArkIdxElementChildSerializer(serializers.Serializer):
 
 			imgs.append( create_arkidx_element_dict("Opus", instance.ref, 
 											instance.ref,
-										  	instance.opus.ref, zone))
+										  	instance.opus.ref, True, 
+										  	zone))
 		return imgs
 
 ####
 ## Utility functions
 ####
 	
-def create_arkidx_element_dict(elt_type, id_element, name, corpus, zone):
+def create_arkidx_element_dict(elt_type, id_element, name, corpus, has_children, zone):
 	"""
 	  Create a serializable dict compliant to the ArkIndex format
 	"""
@@ -85,7 +76,7 @@ def create_arkidx_element_dict(elt_type, id_element, name, corpus, zone):
 					  "thumbnail_url": "",
 					  "metadata": [{}],
 					  "classes": [],
-					  "has_children": True,
+					  "has_children": has_children,
 					  "confidence": 1,
 					  "zone": zone
 					  }

@@ -1,12 +1,6 @@
 from rest_framework import routers
 from . import views
-from django.views.decorators.csrf import csrf_exempt
-
-
 from django.urls import  path, include, re_path
-
-from .views import *
-
 
 from rest_framework import permissions
 

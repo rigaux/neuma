@@ -1203,9 +1203,10 @@ class ArkIdxListElementChildren(APIView):
 			for img in source_dict.images:
 				zone = {"image": img.to_dict(),	"polygon": None}
 				imgs.append( create_arkidx_element_dict("Opus", 
-													source.ref + str(i), 
+													opus.local_ref() + "-" + source.ref + str(i), 
 											    source.ref + str(i),
-										  	    source.opus.ref, zone))
+										  	    source.opus.ref, 
+										  	    False, zone))
 				i = i+1
 			return Response(imgs)
 		except Opus.DoesNotExist:

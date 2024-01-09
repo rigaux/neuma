@@ -20,11 +20,11 @@ from django.contrib import admin
 from django.conf.urls.static import static
 from django.conf import settings
 
-from neumautils.views import NeumaView
 
 from drf_spectacular.views import SpectacularAPIView, SpectacularRedocView, SpectacularSwaggerView
 
-import home.views
+from neumautils.views import NeumaView
+
 
 urlpatterns = [
     re_path(r'^$', NeumaView.as_view(template_name="home/index.html"), name='index'),
