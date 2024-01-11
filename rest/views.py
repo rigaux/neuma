@@ -1205,7 +1205,7 @@ class ArkIdxListElementChildren(APIView):
 				zone = {"image": img.to_dict(),	"polygon": None}
 				imgs.append( create_arkidx_element_dict(serializers.PAGE_TYPE, 
 													opus.local_ref() + "-page" + str(i), 
-											    source.ref + str(i),
+											    opus.title + " - page " + str(i),
 										  	    source.opus.ref, 
 										  	    False, zone))
 				i = i+1

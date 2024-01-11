@@ -46,7 +46,8 @@ class ArkIdxElementSerializer(serializers.Serializer):
 		
 		# An element that corresponds to an Opus is created without image
 
-		return create_arkidx_element_dict(SCORE_TYPE, instance.ref, 
+		return create_arkidx_element_dict(SCORE_TYPE,
+										 instance.ref, 
 										instance.title,
 										  instance.corpus.ref, True, None)
 
@@ -56,18 +57,8 @@ class ArkIdxElementChildSerializer(serializers.Serializer):
 	"""
 	def to_representation(self, instance):
 		# Here, 'instance' is an OpusSource of type IIIF
-		
-		# get an OpusSource object from the OpusMeta module
-		source_dict = instance.to_serializable("")
-		imgs = []
-		for img in source_dict.images:
-			zone = {"image": img.to_dict(),	"polygon": None}
-
-			imgs.append( create_arkidx_element_dict(PAGE_TYPE, instance.ref, 
-											instance.ref,
-										  	instance.opus.ref, True, 
-										  	zone))
-		return imgs
+		# Not used, see views.py
+		return []
 
 
 class ArkIdxElementMetaDataSerializer(serializers.Serializer):
@@ -90,7 +81,7 @@ def create_arkidx_element_dict(elt_type, id_element, name, corpus, has_children,
 					  "name" :name,
 					  "corpus": corpus,
 					  "thumbnail_url": "",
-					  "metadata": [{"neuma_ref": id_element}],
+					  "metadata": [],
 					  "classes": [],
 					  "has_children": has_children,
 					  "confidence": 1,
