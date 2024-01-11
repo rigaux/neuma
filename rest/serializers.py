@@ -1,5 +1,11 @@
 from rest_framework import serializers
 
+
+# Types sent from the ArkIndex API
+SCORE_TYPE = "Score"
+PAGE_TYPE = "ScorePage"
+
+
 """
   Serializers for ArkIndex API
 """
@@ -40,7 +46,8 @@ class ArkIdxElementSerializer(serializers.Serializer):
 		
 		# An element that corresponds to an Opus is created without image
 
-		return create_arkidx_element_dict("Opus", instance.ref, instance.title,
+		return create_arkidx_element_dict(SCORE_TYPE, instance.ref, 
+										instance.title,
 										  instance.corpus.ref, True, None)
 
 class ArkIdxElementChildSerializer(serializers.Serializer):
@@ -56,11 +63,20 @@ class ArkIdxElementChildSerializer(serializers.Serializer):
 		for img in source_dict.images:
 			zone = {"image": img.to_dict(),	"polygon": None}
 
-			imgs.append( create_arkidx_element_dict("Opus", instance.ref, 
+			imgs.append( create_arkidx_element_dict(PAGE_TYPE, instance.ref, 
 											instance.ref,
 										  	instance.opus.ref, True, 
 										  	zone))
 		return imgs
+
+
+class ArkIdxElementMetaDataSerializer(serializers.Serializer):
+	"""
+		ArkIndex API -- Serialization of IIIF images links
+	"""
+	
+	key = serializers.CharField()
+	value = serializers.CharField()
 
 ####
 ## Utility functions
@@ -74,9 +90,10 @@ def create_arkidx_element_dict(elt_type, id_element, name, corpus, has_children,
 					  "name" :name,
 					  "corpus": corpus,
 					  "thumbnail_url": "",
-					  "metadata": [{}],
+					  "metadata": [{"neuma_ref": id_element}],
 					  "classes": [],
 					  "has_children": has_children,
 					  "confidence": 1,
 					  "zone": zone
 					  }
+

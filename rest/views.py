@@ -62,6 +62,7 @@ from .serializers import (
 	ArkIdxCorpusSerializer,
 	ArkIdxElementSerializer,
 	ArkIdxElementChildSerializer,
+	ArkIdxElementMetaDataSerializer,
 	create_arkidx_element_dict
 	)
 
@@ -1202,13 +1203,33 @@ class ArkIdxListElementChildren(APIView):
 			i = 1
 			for img in source_dict.images:
 				zone = {"image": img.to_dict(),	"polygon": None}
-				imgs.append( create_arkidx_element_dict("Opus", 
-													opus.local_ref() + "-" + source.ref + str(i), 
+				imgs.append( create_arkidx_element_dict(serializers.PAGE_TYPE, 
+													opus.local_ref() + "-page" + str(i), 
 											    source.ref + str(i),
 										  	    source.opus.ref, 
 										  	    False, zone))
 				i = i+1
 			return Response(imgs)
+		except Opus.DoesNotExist:
+			return Response(status=status.HTTP_404_NOT_FOUND)
+		except OpusSource.DoesNotExist:
+			return Response(status=status.HTTP_404_NOT_FOUND)
+
+class ArkIdxListElementMetaData(APIView):
+	
+	serializer_class = ArkIdxElementMetaDataSerializer
+	
+	@extend_schema(operation_id="ListElementMetaData",
+		parameters=[
+					OpenApiParameter(name='load_parents', description='Loading parents', required=False, type=str),
+					]
+		)
+	
+	def get(self, request, id):
+		try:
+			opus = Opus.objects.get(ref = self.kwargs['id'])
+			
+			return Response([{"name": "neuma_ref", "value": opus.ref}])
 		except Opus.DoesNotExist:
 			return Response(status=status.HTTP_404_NOT_FOUND)
 		except OpusSource.DoesNotExist:
