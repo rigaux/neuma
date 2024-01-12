@@ -45,11 +45,16 @@ class ArkIdxElementSerializer(serializers.Serializer):
 		# Here, 'instance' is an Opus
 		
 		# An element that corresponds to an Opus is created without image
+		metadata  = []
+		metadata.append({"name": "opus_ref", "value": instance.ref})
+		if instance.mei:
+			metadata.append ({"name": "mei_url", "value": instance.mei.url}),
 
 		return create_arkidx_element_dict(SCORE_TYPE,
 										 instance.ref, 
 										instance.title,
-										  instance.corpus.ref, True, None)
+										  instance.corpus.ref, 
+										  metadata, True, None)
 
 class ArkIdxElementChildSerializer(serializers.Serializer):
 	"""
@@ -73,7 +78,8 @@ class ArkIdxElementMetaDataSerializer(serializers.Serializer):
 ## Utility functions
 ####
 	
-def create_arkidx_element_dict(elt_type, id_element, name, corpus, has_children, zone):
+def create_arkidx_element_dict(elt_type, id_element, name, corpus, metadata=[],
+							has_children=False, zone=None):
 	"""
 	  Create a serializable dict compliant to the ArkIndex format
 	"""
@@ -83,6 +89,7 @@ def create_arkidx_element_dict(elt_type, id_element, name, corpus, has_children,
 					  "thumbnail_url": "",
 					  "metadata": [],
 					  "classes": [],
+					  "metadata": metadata,
 					  "has_children": has_children,
 					  "confidence": 1,
 					  "zone": zone

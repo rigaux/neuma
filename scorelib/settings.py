@@ -2,6 +2,7 @@
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 import os
+from numpy import True_
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -11,6 +12,7 @@ MEDIA_URL = '/media/'
 
 # Allows to include remote JS files
 SECURE_CROSS_ORIGIN_OPENER_POLICY = None
+
 
 # For temp. files
 TMP_DIR = os.path.join(os.path.dirname(BASE_DIR), 'media','tmp')
@@ -55,12 +57,15 @@ INSTALLED_APPS = (
     "mptt",
     'django_q',
    'drf_spectacular',
+   'corsheaders',
 )
 
 SESSION_SERIALIZER='django.contrib.sessions.serializers.PickleSerializer'
 SESSION_SAVE_EVERY_REQUEST = True
 
 MIDDLEWARE = (
+	'corsheaders.middleware.CorsMiddleware',
+    'django.middleware.common.CommonMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -70,6 +75,10 @@ MIDDLEWARE = (
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'django.middleware.security.SecurityMiddleware',
 )
+
+
+CORS_ALLOW_ALL_ORIGINS = True
+SENDFILE_BACKEND='sendfile.backends.simple'
 
 ROOT_URLCONF = 'scorelib.urls'
 

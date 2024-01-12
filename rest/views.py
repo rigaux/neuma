@@ -19,7 +19,7 @@ from . import serializers
 
 from django.utils.dateformat import DateFormat
 
-from django.http import HttpResponse
+from django.http import HttpResponse, FileResponse
 from django.views.decorators.csrf import csrf_exempt
 
 from rest_framework import viewsets
@@ -44,6 +44,8 @@ from rest_framework.schemas import AutoSchema, ManualSchema
 import mido
 from django.core.files.storage import default_storage
 from django.core.files.base import ContentFile
+from sendfile import sendfile
+
 from lxml import etree
 
 # Modèles
@@ -1173,6 +1175,7 @@ class ArkIdxRetrieveCorpus(APIView):
 			OpenApiParameter(name='with_classes', description='Filter by classes', required=False, type=bool),
 			]
 		)
+
 class ArkIdxListElements(generics.ListAPIView):
 	
 	serializer_class = ArkIdxElementSerializer
@@ -1203,10 +1206,12 @@ class ArkIdxListElementChildren(APIView):
 			i = 1
 			for img in source_dict.images:
 				zone = {"image": img.to_dict(),	"polygon": None}
+				metadata = [{"name": "page", "value": i}]
 				imgs.append( create_arkidx_element_dict(serializers.PAGE_TYPE, 
 													opus.local_ref() + "-page" + str(i), 
 											    opus.title + " - page " + str(i),
 										  	    source.opus.ref, 
+										  	    metadata,
 										  	    False, zone))
 				i = i+1
 			return Response(imgs)
@@ -1226,10 +1231,40 @@ class ArkIdxListElementMetaData(APIView):
 		)
 	
 	def get(self, request, id):
+		abs_url = request.build_absolute_uri("/")[:-1]
 		try:
 			opus = Opus.objects.get(ref = self.kwargs['id'])
-			
-			return Response([{"name": "neuma_ref", "value": opus.ref}])
+			rval  = []
+			rval.append({"name": "opus_ref", "value": opus.ref})
+			if opus.mei:
+				rval.append ({"name": "mei_url", "value": abs_url + opus.mei.url}),
+			resp = Response (rval)
+			return resp		
+		except Opus.DoesNotExist:
+			return Response(status=status.HTTP_404_NOT_FOUND)
+		except OpusSource.DoesNotExist:
+			return Response(status=status.HTTP_404_NOT_FOUND)
+
+
+class ArkIdxGetElementFile (APIView):
+	
+	@extend_schema(operation_id="GetElementFile")
+	
+	def get(self, request, id):
+		abs_url = request.build_absolute_uri("/")[:-1]
+		try:
+			opus = Opus.objects.get(ref = self.kwargs['id'])
+			with open(opus.mei.path) as f:
+				content = f.read()
+			resp = FileResponse(content) # sendfile(request, opus.mei.path)
+			resp['Content-type'] = 'application/xml'
+			resp['Access-Control-Allow-Origin'] = '*'
+			resp['Access-Control-Allow-Credentials'] = "true"
+			resp['Access-Control-Allow-Methods'] = 'GET, OPTIONS'
+			resp['Access-Control-Allow-Headers'] = 'Access-Control-Allow-Headers, Origin, Accept, ' \
+                                               'X-Requested-With, Content-Type, Access-Control-Request-Method,' \
+                                               ' Access-Control-Request-Headers, credentials'	
+			return resp
 		except Opus.DoesNotExist:
 			return Response(status=status.HTTP_404_NOT_FOUND)
 		except OpusSource.DoesNotExist:
