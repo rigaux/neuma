@@ -44,7 +44,6 @@ from rest_framework.schemas import AutoSchema, ManualSchema
 import mido
 from django.core.files.storage import default_storage
 from django.core.files.base import ContentFile
-from sendfile import sendfile
 
 from lxml import etree
 
@@ -649,6 +648,31 @@ def handle_source_file_request(request, full_neuma_ref, source_ref):
 		if source_ref==opusmeta_mod.OpusSource.DMOS_REF:
 			opus.parse_dmos()
 	return JSONResponse({"status": "ok", "message": "Source file uploaded"})
+
+@csrf_exempt
+@api_view(["GET"])
+@parser_classes([MultiPartParser])
+def handle_source_manifest_request(request, full_neuma_ref, source_ref):
+	"""
+	  Get the manifest (multimedia file description) of a source
+	"""
+
+	neuma_object, object_type = get_object_from_neuma_ref(full_neuma_ref)
+	if type(neuma_object) is Opus:
+		opus = neuma_object
+	else:
+		return JSONResponse({"status": "ko", "message": f"Unknown opus: {full_neuma_ref}"})
+		#return Response(status=status.HTTP_404_NOT_FOUND)
+	try:
+		# The manifest should be with the gallica source
+		source = OpusSource.objects.get(opus=opus,ref=opusmeta_mod.OpusSource.DMOS_REF)
+		if source.manifest:
+			with open(source.manifest.path, "r") as f1:
+				return JSONResponse (f1.read())
+		else:
+			return JSONResponse({"status": "ko", "message": f"No manifest for  source {source_ref}"})
+	except OpusSource.DoesNotExist:
+		return JSONResponse({"status": "ko", "message": f"Invalid source reference: {source_ref} (expected 'dmos')"})
 
 ############
 ###

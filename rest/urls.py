@@ -30,9 +30,12 @@ urlpatterns = [
     ################
     # POST a source file to a source
     re_path(r'collections/(?P<full_neuma_ref>(.*))/_sources/(?P<source_ref>[-\w]+)/_file/$',views.handle_source_file_request, name='handle_source_file_request'),
+	# GET the manifest of a source
+	re_path(r'collections/(?P<full_neuma_ref>(.*))/_sources/(?P<source_ref>[-\w]+)/_manifest/$',views.handle_source_manifest_request, name='handle_source_manifest_request'),
     # GET a source description, or POST an update on a source
     re_path(r'collections/(?P<full_neuma_ref>(.*))/_sources/(?P<source_ref>[-\w]+)/$',views.handle_source_request, name='handle_source_request'),
-    # PUT a new source or GET the list of sources of an Opus
+	#path('collections/<str:full_neuma_ref>/_sources/<str:source_ref>/', views.handle_source_request, name='handle_source_request'),
+    # PUT a new source or GET the list of sources of an Opuss
     re_path('collections/(?P<full_neuma_ref>(.*))/_sources/',views.handle_sources_request, name='handle_sources_request'),
     ################
     # ANNOTATIONS

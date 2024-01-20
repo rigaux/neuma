@@ -10,6 +10,8 @@ import jsonschema
 
 from fractions import Fraction
 
+import lib.collabscore.editions as editions_mod
+
 import lib.music.Score as score_model
 import lib.music.Voice as voice_model
 import lib.music.events as score_events
@@ -19,8 +21,7 @@ import lib.music.constants as constants_mod
 import lib.music.source as source_mod
 
 from .constants import *
-from lib.music.source import ScoreImgManifest
-from numpy import False_, True_
+from lib.music.source import Manifest
 
 # Get an instance of a logger
 # See https://realpython.com/python-logging/
@@ -193,63 +194,78 @@ class OmrScore:
 		self.creator = annot_mod.Creator ("collabscore", 
 										annot_mod.Creator.SOFTWARE_TYPE, 
 										"collabscore")
+		# Edit operations applied to the score 
+		self.editions = []
 		
-		# Keep the structure of the score
-		self.manifest = source_mod.ScoreImgManifest(self.id, self.uri)
-		
-		current_page_no = 0
-		current_system_no = 0
-		current_measure_no = 0
-		
+		# Decode the DMOS input as Python objects
 		self.pages = []
-		# Analyze pages
-		if "pages" in json_data:
-			for json_page in json_data["pages"]:
+		for json_page in self.json_data["pages"]:
+			page = Page(json_page)							
+			self.pages.append(page)
+
+		# Produce or keep the structure of the score
+		if manifest is not None:
+			# Use the supplied manifest
+			self.manifest = manifest
+		else:
+			current_page_no = 0
+			current_system_no = 0
+			current_measure_no = 0
+			self.manifest = Manifest(json_data["id"], json_data["score_image_url"])
+			for page in self.pages:
 				current_page_no += 1
-				page = Page(json_page)
-				self.pages.append(page)
-							
 				# Create the manifest from the source
-				if manifest is None:
-					src_page = source_mod.ScoreImgPage(page.page_url, current_page_no,self.manifest)
-					for system in page.systems:
-						current_system_no += 1
-						src_system = source_mod.ScoreImgSystem(current_system_no, src_page)
-						src_page.add_system(src_system)
+				src_page = source_mod.MnfPage(page.page_url, current_page_no, self.manifest)
+				for system in page.systems:
+					current_system_no += 1
+					src_system = source_mod.MnfSystem(current_system_no, src_page)
+					src_page.add_system(src_system)
 					
-						for header in system.headers:
-							src_staff = source_mod.ScoreImgStaff(header.no_staff, src_system)
-							src_system.add_staff(src_staff)
-							# Without further information, we assume one staff = one part
-							src_part = source_mod.ScoreImgPart(header.id_part, header.id_part, header.id_part)
-							self.manifest.add_part(src_part)
-							src_staff.add_part(header.id_part)
-					self.manifest.add_page(src_page)
-				else:
-					# Use the supplied manifest
-					self.manifest = manifest
-			
+					for header in system.headers:
+						src_staff = source_mod.MnfStaff(header.no_staff, src_system)
+						src_system.add_staff(src_staff)
+						# Without further information, we assume one staff = one part
+						src_part = source_mod.MnfPart(header.id_part, header.id_part, header.id_part) 
+						self.manifest.add_part(src_part)
+						src_staff.add_part(header.id_part)
+				self.manifest.add_page(src_page)			
+
 		self.config = ParserConfig(config)
 		self.config.print()
 
+	def add_edition (self, edit):
+		self.editions.append (edit)
+		
+	def apply_editions (self):
+		for op in self.editions:
+			op.apply_to (self)
+		# Done, we clear the operations to avoid 
+		self.editions = []
+		
 	def get_score(self):
 		'''
 			Builds a score (instance of our score model) from the Omerized document
 		'''
 		
+		# First we modify the manifest as required
+		self.apply_editions()
+		
 		# Create an OMR score (with layout)
 		score = score_model.Score(use_layout=False)
 		
+		# 
 		# The manifest tells us the parts of the score: we create them
 		for src_part in self.manifest.get_parts():
 			# Parts are identified by the part id + staff id. In general
 			# there is only on staff per part
+			print ("Processing part " + src_part.id)
 			if not self.manifest.is_a_part_group(src_part.id):
 				id_part_staff = score_model.Part.make_part_id(src_part.id, "1")
 				part = score_model.Part(id_part=id_part_staff, name=src_part.name, 
 												abbreviation=src_part.abbreviation)
 				score.add_part(part)			
 				logger.info (f"Add a single-staff part {id_part_staff}")
+				print (f"Add a single-staff part {id_part_staff}")
 			else:
 				# It is a part group. Create one PartStaff for each staff of the part 
 				staff_group = []
@@ -279,11 +295,12 @@ class OmrScore:
 		current_measure_no = 0
 		current_position = 0
 		
-		for page in self.pages:
+		for json_page in self.json_data["pages"]:
 			current_page_no += 1
 			if (current_page_no < self.config.page_min) or (
 					    current_page_no > self.config.page_max):
 				continue
+			page = Page(json_page)							
 
 			logger.info (f"")
 			logger.info (f'Process page {current_page_no}')
@@ -340,7 +357,7 @@ class OmrScore:
 							part.add_staff (staff)			
 					else:
 						# Should not happen: parts have been created once for all
-						logger.error (f"Part {id_part} should have been already created")
+						logger.error (f"Part {score_part_id} should have been already created")
 					
 				# Now, for the current system, we know the parts and the staves for 
 				# each part, initialized with their time signatures
@@ -1025,7 +1042,7 @@ class CScoreParserError(Exception):
 
 	def __str__(self):
 		if self.message:
-			return 'CollabScoreParserError, {0} '.format(self.message)
+			return 'CollabScore error, {0} '.format(self.message)
 		else:
-			return 'CollabScoreParserError has been raised'
+			return 'CollabScore error has been raised'
 

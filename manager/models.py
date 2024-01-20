@@ -29,6 +29,7 @@ from lib.music.jsonld import JsonLD
 # Score model
 import lib.music.annotation as annot_mod
 import lib.music.source as source_mod
+import lib.music.opusmeta as opusmeta_mod
 
 # DMOS parser
 from lib.collabscore.parser import CollabScoreParser, OmrScore
@@ -1139,7 +1140,7 @@ class Opus(models.Model):
 		dmos_data = None
 		dmos_source =None
 		for source in self.opussource_set.all ():
-			if source.ref == OpusSource.DMOS_REF:
+			if source.ref == opusmeta_mod.OpusSource.DMOS_REF:
 				dmos_source = source
 				if dmos_source.source_file:
 					dmos_data = json.loads(dmos_source.source_file.read())
@@ -1192,7 +1193,7 @@ class Opus(models.Model):
 
 		# Store the manifest 
 		for source in self.opussource_set.all ():
-			if source.ref == OpusSource.DMOS_REF:
+			if source.ref == opusmeta_mod.OpusSource.DMOS_REF:
 				print ("Save the manifest")
 				source.manifest = ContentFile(json.dumps(omr_score.manifest.to_json()), name="manifest.json")
 				source.save()
@@ -1392,7 +1393,7 @@ class OpusSource (models.Model):
 		"""
 		  Create an object that can be serialized for JSON exports
 		"""
-		source_dict = opusmeta_mod.OpusSource(
+		source_dict = source_mod.OpusSource(
 			self.ref, self.source_type.code, self.source_type.mime_type, 
 			self.url)
 		source_dict.description = self.description
