@@ -3,6 +3,7 @@ import json
 import lib.music.Score as score_mod
 import lib.music.notation as notation_mod
 import lib.music.iiifutils as iiif_mod
+from numpy import True_
 
 '''
  A class used to represent a source (multimedia document) associated to an Opus
@@ -301,6 +302,13 @@ class MnfStaff:
 		# for music21 StaffGroups structures
 		self.local_part_id = ""
 		
+	def contains_part(self, id_part):
+		for part in self.parts:
+			if part.id == id_part:
+				return True
+			else:
+				return False
+			
 	def add_part(self, id_part):
 		# For the time being we allow only one part per staff
 		
@@ -314,6 +322,11 @@ class MnfStaff:
 		
 		# Warning: will not work in case we have several parts
 		self.local_part_id = score_mod.Part.make_part_id(id_part, no_staff_part)
+
+	def clear_and_replace_part(self, id_part):
+		# Clear the parts, add a new one
+		self.parts = []
+		self.add_part (id_part)
 
 	def replace_part(self, source, target):
 		# Replace part 'source' with part 'target'

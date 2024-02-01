@@ -209,10 +209,9 @@ class OmrScore:
 			self.manifest = manifest
 		else:
 			current_page_no = 0
-			current_system_no = 0
-			current_measure_no = 0
 			self.manifest = Manifest(json_data["id"], json_data["score_image_url"])
 			for page in self.pages:
+				current_system_no = 0
 				current_page_no += 1
 				# Create the manifest from the source
 				src_page = source_mod.MnfPage(page.page_url, current_page_no, self.manifest)
