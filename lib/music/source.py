@@ -24,7 +24,9 @@ class OpusSource:
 		self.mime_type = mime_type
 		self.url  = url
 		self.description = ""
+		self.images = []
 
+	def get_iiif_manifest(self):
 		# IIIF extraction: only for sources of type IIIF_REF
 		if self.ref == self.IIIF_REF:
 			iiif_proxy = iiif_mod.Proxy(iiif_mod.GALLICA_BASEURL)
@@ -39,7 +41,6 @@ class OpusSource:
 			except Exception as ex:
 				score_mod.logger.info(str(ex))
 		
-		
 	def to_json (self):
 		source_dict =  {
 			"ref": self.ref, 
@@ -48,7 +49,7 @@ class OpusSource:
 			"mime_type": self.mime_type, 
 			"url": self.url}
 		
-		if self.ref == self.IIIF_REF:
+		if self.ref == self.IIIF_REF and len(self.images) > 0:
 			source_dict["images"] = []
 			for img in self.images:
 				source_dict["images"].append(img.to_dict())

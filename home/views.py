@@ -32,16 +32,10 @@ from neumasearch.Sequence import Sequence
 from neumautils.views import NeumaView
 import xml.etree.ElementTree as ET
 
-
-from .forms import *
-
-
 # Create your views here.
 # To communicate with ElasticSearch
 # Get an instance of a logger
 logger = logging.getLogger(__name__)
-
-
 
 def wildwebdata(request):
 	""" Serves the wildwebmidi.data sample from any .data URL"""

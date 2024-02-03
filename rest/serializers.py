@@ -1,19 +1,62 @@
 from rest_framework import serializers
 
 
+import lib.music.opusmeta as opusmeta_mod
+
+# Modèles
+from manager.models import (
+	Corpus,
+	Opus,
+	AnalyticModel,
+	AnalyticConcept,
+	Annotation,
+	Upload,
+	OpusSource,
+	SourceType
+)
+
 # Types sent from the ArkIndex API
 SCORE_TYPE = "Score"
 PAGE_TYPE = "ScorePage"
 
+"""
+  Serializers for collection objects
+"""
+class CorpusSerializer(serializers.ModelSerializer):
+	"""
+		Serialization of Corpus objects 
+	"""
+	class Meta:
+		model = Corpus
+		fields = ['ref', 'title', 'short_title', 
+				  'description', 'short_description',
+				  'parent', 'composer', 'licence',
+				  'copyright']
+	
+class OpusSerializer(serializers.ModelSerializer):
+	"""
+		Serialization of Opus objects 
+	"""
+	class Meta:
+		model = Opus
+		fields = ['ref', 'title', 'composer']
+
+	def to_representation(self, instance):
+		# Here, 'instance' is an Opus
+		opusmeta = instance.to_serializable("abs_url")
+		return opusmeta.to_json()
 
 """
-  Serializers for ArkIndex API
-"""
-class ArkIdxCorpusSerializer(serializers.Serializer):
-	"""
-		ArkIndex API -- Serialization of Corpus objects 
-	"""
-	
+   Ajouter: features, sources et files
+		return {"ref": self.ref,
+				"title": self.title,
+				"composer": self.composer,
+				"features": features,
+				"sources": sources,
+				"files": files
+				}
+"""			 
+class ArcIdxCorpusSerializer(serializers.Serializer):
 	id = serializers.CharField(source="ref")
 	name = serializers.CharField(source="title")
 	description = serializers.CharField()

@@ -4,19 +4,21 @@
 <h1 class="title">{% trans "Talking to NEUMA: our REST Services Interface" %}</h1>
 
 <div class="story">
-{% blocktrans %} 
+
 <p>
 Neuma proposes a RESTful interface to communicate with the digital library. All documents
 exchanged with Neuma are JSON-encoded. 
 </p>
 <ul>
   <li>All services are rooted at <a href="/rest/" target="_blank">{{NEUMA_URL}}</a></li>
-<li>Follow <a href="schema/swagger-ui/">this link</i> to access to the
-Swagger interface of the services</a></li>
-<li>  <a href="schema/?format=json">JSOn OpenAPI Schema</i>
-<li>  <a href="schema/">YAML OpenAPI Schema</i>
+<li><a href="{% url 'openapi' %}?format=json">
+Link to the JSON OpenAPI specification</a></li>
+<li><a href="{% url 'openapi' %}">
+Link to the YAML OpenAPI specification</a></li>
+<li>  <a href="{% url 'swagger-ui' %}">Swagger User Interface</i>
+<li>  <a href="{% url 'redoc' %}">Redoc User Interface</i>
 </ul>
-{% endblocktrans %}</div>
+</div>
 
 <h1>{% trans "Principles" %}</h1>
 

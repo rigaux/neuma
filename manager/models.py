@@ -1169,13 +1169,25 @@ class Opus(models.Model):
 			self.musicxml = File(f,name="score.xml")
 			self.save()
 		
-		# Generate and store the MEI file
-		score.write_as_mei ("/tmp/score_mei.xml")
-		with open("/tmp/score_mei.xml") as f:
+		# Generate and store the MEI file as a source and main file
+		# Create the file
+		mei_file = "/tmp/score_mei.xml"
+		score.write_as_mei (mei_file)
+		try:
+			source = OpusSource.objects.get(opus=self,ref="mei")
+		except OpusSource.DoesNotExist:
+			source_type = SourceType.objects.get(code=SourceType.STYPE_MIDI)
+			source = OpusSource (opus=self,ref="mei",source_type=source_type)
+		source.description=f"MEI file generated on {date.today()}"
+		source.save()
+		with open(mei_file) as f:
 			print ("Replace MEI file")
 			self.mei = File(f,name="mei.xml")
 			self.save()
-		
+			source.source_file.save("score.midi", File(f))
+			source.url = self.mei.url
+			source.save()
+			
 		# Generate the MIDI file
 		print ("Produce MIDI file")
 		midi_file = "/tmp/score.midi"

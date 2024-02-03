@@ -33,11 +33,11 @@ from rest_framework import generics
 
 from rest_framework.response import Response
 from rest_framework.exceptions import ParseError
-
+from rest_framework.reverse import reverse
 from rest_framework.decorators import api_view, permission_classes, parser_classes
 from rest_framework.authentication import SessionAuthentication, BasicAuthentication
 from rest_framework import permissions
-
+from rest_framework.permissions import AllowAny
 from rest_framework import renderers
 from rest_framework.schemas import AutoSchema, ManualSchema
 
@@ -60,26 +60,21 @@ from manager.models import (
 )
 
 from .serializers import (
-	ArkIdxCorpusSerializer,
+	CorpusSerializer,
+	OpusSerializer,
 	ArkIdxElementSerializer,
 	ArkIdxElementChildSerializer,
 	ArkIdxElementMetaDataSerializer,
 	create_arkidx_element_dict
 	)
 
-from lib.workflow.Workflow import Workflow, workflow_import_zip
-from quality.lib.NoteTree_v2 import MonophonicScoreTrees
-
-
+# Music related functionalities
 from music21 import converter, mei
 
 import lib.music.Score as score_model
 import lib.music.annotation as annot_mod
 import lib.music.constants as constants_mod
 import lib.music.opusmeta as opusmeta_mod
-
-from lib.music.Score import *
-from .forms import *
 from django.conf.global_settings import LOGGING
 
 from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiExample
@@ -98,25 +93,9 @@ OPUS_RESOURCE = "Opus"
 CORPUS_RESOURCE = "Corpus"
 INTERNAL_REF_RESOURCE = "INTERNAL"  # For XML element inside an opus / MEI
 
-
-@csrf_exempt
-@extend_schema(operation_id="welcome")
-@api_view(["GET"])
-def welcome(request):
-	"""
-	Welcome message to the services area
-	"""
-	return JSONResponse({"Message": "Welcome to Neuma web services root URL"})
-
-@csrf_exempt
-@api_view(["GET"])
-def welcome_collections(request):
-	"""
-	Welcome message to the collections services area
-	"""
-	return JSONResponse({"Message": "Welcome to Neuma web services on collections"})
-
-
+'''
+   Utility functions
+'''
 
 class JSONResponse(HttpResponse):
 	"""
@@ -154,82 +133,113 @@ def get_object_from_neuma_ref(full_neuma_ref):
 				# Unknown object
 				return None, UNKNOWN_RESOURCE
 
+'''
+             Services implementation
+'''
 
-@csrf_exempt
+@extend_schema(operation_id="Welcome to Neuma services")
 @api_view(["GET"])
-def handle_neuma_ref_request(request, full_neuma_ref):
+@permission_classes((AllowAny, ))
+def welcome(request):
 	"""
-	Receives a path to a corpus or an Opus, returns the corpus or opsu description
+	Welcome message to the services area
 	
-	The full_neuma_ref parameter is a path relative to the root corpus of the Neuma collections hierarchy. 
-	Try for instance 'composers', then 'composers/couperin'. As a general rule, if the id
-	of a corpus is c1:c2:cn, the reference to this corpus for REST services is c1/c2/cn.
-	
-	Note that you can obtain the list of corpuses by recursively calling the '_corpora'
-	services for each corpus.
-	
-	To reference an opus , simply add the id of the opus to the corpus reference.
+	return Response({
+        'collections': reverse('handle_tl_corpora_request', request=request, format=format)
+    })
 	"""
+	return JSONResponse({"Message": "Welcome to Neuma web services root URL"})
 
-	neuma_object, object_type = get_object_from_neuma_ref(full_neuma_ref)
-	if object_type == UNKNOWN_RESOURCE:
-		return Response(status=status.HTTP_404_NOT_FOUND)
+@extend_schema(operation_id="Welcome to collections management services area")
+@api_view(["GET"])
+@permission_classes((AllowAny, ))
+def welcome_collections(request):
+	"""
+	Welcome message to the collections services area
+	"""
+	return JSONResponse({"Message": "Welcome to Neuma web services on collections"})
 
-	if request.method == "GET":
-		if object_type == OPUS_RESOURCE:
-			return JSONResponse(neuma_object.to_json(request))
-			#return JSONResponse(neuma_object.to_jsonld())
-		elif object_type == CORPUS_RESOURCE:
-			return JSONResponse(corpus_to_rest(neuma_object))
-		elif object_type == INTERNAL_REF_RESOURCE:
-			opus = neuma_object
-			last_slash = full_neuma_ref.rfind("/") + 1
-			element_id = full_neuma_ref[last_slash:]
+@permission_classes((AllowAny, ))
+class Element (APIView):
+		
+	@extend_schema(operation_id="Element",
+		parameters=[
+			OpenApiParameter(name='with_sources', description='Include list of sources', required=False, type=str),
+			]
+		)
+	
+	def get(self, request, full_neuma_ref):
+		"""
+		Receive a path to a corpus or an Opus, returns the corpus or opsu description
+	
+		The full_neuma_ref parameter is a path relative to the root corpus of the Neuma collections hierarchy. 
+		Try for instance 'composers', then 'composers/couperin'. As a general rule, if the id
+		of a corpus is c1:c2:cn, the reference to this corpus for REST services is c1/c2/cn.
+	
+		Note that you can obtain the list of corpuses by recursively calling the '_corpora'
+		services for each corpus.
+	
+		To reference an opus , simply add the id of the opus to the corpus reference.
+		"""
 
-			# Check if element id matches a filename format
-			filename, file_extension = os.path.splitext(element_id)
-			print("Filename " + element_id + " = " + filename + file_extension)
-			if file_extension == ".xml":
-				if filename == "mei" and opus.mei:
-					meiString = ""
-					with open(opus.mei.path, "r") as meifile:
-						meiString = meifile.read()
-					return HttpResponse(meiString, content_type="application/xml")
+		neuma_object, object_type = get_object_from_neuma_ref(full_neuma_ref)
+		if object_type == UNKNOWN_RESOURCE:
+			return Response(status=status.HTTP_404_NOT_FOUND)
+
+		if request.method == "GET":
+			if object_type == OPUS_RESOURCE:
+				serializer = OpusSerializer(instance=neuma_object)
+				return Response(serializer.data)
+			elif object_type == CORPUS_RESOURCE:
+				serializer = CorpusSerializer(instance=neuma_object)
+				return Response(serializer.data)
+			elif object_type == INTERNAL_REF_RESOURCE:
+				opus = neuma_object
+				last_slash = full_neuma_ref.rfind("/") + 1
+				element_id = full_neuma_ref[last_slash:]
+
+				# Check if element id matches a filename format
+				filename, file_extension = os.path.splitext(element_id)
+				if file_extension == ".xml":
+					if filename == "mei" and opus.mei:
+						meiString = ""
+						with open(opus.mei.path, "r") as meifile:
+							meiString = meifile.read()
+						return HttpResponse(meiString, content_type="application/xml")
+					else:
+						return Response(status=status.HTTP_404_NOT_FOUND)
 				else:
-					return Response(status=status.HTTP_404_NOT_FOUND)
-			else:
-				print(
-					"REST call for internal element request. Opus:"
-					+ opus.ref
-					+ " Element: "
-					+ element_id
-				)
-				obj = {"id": element_id, "annotations": []}
-
-				# Try to obtain the MEI document, which contains IDs
-				if opus.mei:
-					try:
-						tree = etree.parse(opus.mei.path)
-						xpath_expr = "//*[@xml:id='" + element_id + "']"
-						# print ("Search for " + xpath_expr)
-						element = tree.xpath(xpath_expr)
-					except Exception as ex:
-						logging.warning(
-							"Error during parsing of file "
-							+ opus.mei.path
-							+ ": "
-							+ str(ex)
+					print(
+						"REST call for internal element request. Opus:"
+						+ opus.ref
+						+ " Element: "
+						+ element_id
 						)
+					obj = {"id": element_id, "annotations": []}
 
-					db_annotations = Annotation.objects.filter(
-						opus=opus, ref=element_id
-					)
-					for annotation in db_annotations:
-						obj["annotations"].append(annotation_to_rest(annotation))
+					# Try to obtain the MEI document, which contains IDs
+					if opus.mei:
+						try:
+							tree = etree.parse(opus.mei.path)
+							xpath_expr = "//*[@xml:id='" + element_id + "']"
+							# print ("Search for " + xpath_expr)
+							element = tree.xpath(xpath_expr)
+						except Exception as ex:
+							logging.warning(
+								"Error during parsing of file "
+								+ opus.mei.path
+								+ ": "
+								+ str(ex)
+								)
+						db_annotations = Annotation.objects.filter(
+							opus=opus, ref=element_id
+							)
+						for annotation in db_annotations:
+							obj["annotations"].append(annotation_to_rest(annotation))
 
 					return JSONResponse(obj)
 
-	return Response(status=status.HTTP_400_BAD_REQUEST)
+				return Response(status=status.HTTP_400_BAD_REQUEST)
 
 
 def get_concepts_level(db_model, parent):
@@ -357,148 +367,39 @@ def handle_import_request(request, full_neuma_ref, upload_id):
 ###
 ############################
 
-
-class TopLevelCorpusList(APIView):
+@extend_schema(operation_id="TopLevelCorpusList")
+class TopLevelCorpusList(generics.ListAPIView):
 	"""
 	List top level corpora
 	"""
-
-	def get(self, request, format=None):
-		"""
-		  Return the list of top-level corpora
-		"""
-
-		try:
-			tl_corpora = Corpus.objects.filter(
+	queryset = Corpus.objects.filter(
 				parent__ref=settings.NEUMA_ROOT_CORPUS_REF
 			)
-		except Exception as ex:
-			return JSONResponse({"error": str(ex)})
-
-		corpora = []
-		for child in tl_corpora:
-			corpora.append(corpus_to_rest(child))
-
-		return JSONResponse(corpora)
+	serializer_class = CorpusSerializer
 
 @extend_schema(operation_id="CorpusList")
-class CorpusList(APIView):
+class CorpusList(generics.ListAPIView):
 	"""
-	List all corpus
+	Get a of list of corpus given their parent
 	"""
+	serializer_class = CorpusSerializer
 
-	def get(self, request, full_neuma_ref=settings.NEUMA_ROOT_CORPUS_REF, format=None):
-		"""
-		  Return the list of sub-corpus 
-		"""
+	def get_queryset(self):
+		parent_corpus = self.kwargs['full_neuma_ref']
+		queryset = Corpus.objects.filter(parent__ref=parent_corpus)
+		return queryset
 
-		neuma_object, object_type = get_object_from_neuma_ref(full_neuma_ref)
-		if type(neuma_object) is Corpus:
-			corpus = neuma_object
-		else:
-			return Response(status=status.HTTP_404_NOT_FOUND)
-
-		try:
-			children = Corpus.objects.filter(parent=corpus.id)
-		except Exception as ex:
-			return JSONResponse({"error": str(ex)})
-
-		corpora = []
-		for child in children:
-			corpora.append(corpus_to_rest(child))
-
-		return JSONResponse(corpora)
-
-
-@csrf_exempt
-@api_view(["GET"])
-def handle_tl_corpora_request(request):
+@extend_schema(operation_id="OpusList")
+class OpusList(generics.ListAPIView):
 	"""
-	  Return the list of top-level corpora
+	Get a of list of opus given their corpus
 	"""
+	serializer_class = OpusSerializer
 
-	if request.method == "GET":
-		try:
-			tl_corpora = Corpus.objects.filter(parent__ref=NEUMA_ROOT_CORPUS_REF)
-		except Exception as ex:
-			return JSONResponse({"error": str(ex)})
-
-		corpora = []
-		for child in tl_corpora:
-			corpora.append(corpus_to_rest(child))
-
-		return JSONResponse(corpora)
-
-
-@csrf_exempt
-@api_view(["GET"])
-def handle_corpora_request(request, full_neuma_ref=settings.NEUMA_ROOT_CORPUS_REF):
-	"""
-	  Return the list of sub-corpus 
-	"""
-
-	neuma_object, object_type = get_object_from_neuma_ref(full_neuma_ref)
-	if type(neuma_object) is Corpus:
-		corpus = neuma_object
-	else:
-		return Response(status=status.HTTP_404_NOT_FOUND)
-
-	if request.method == "GET":
-		try:
-			children = Corpus.objects.filter(parent=corpus.id)
-		except Exception as ex:
-			return JSONResponse({"error": str(ex)})
-
-		corpora = []
-		for child in children:
-			corpora.append(corpus_to_rest(child))
-
-		return JSONResponse(corpora)
-
-
-def corpus_to_rest(corpus):
-	"""
-	  Create the REST answer that describes a corpus
-	"""
-
-	answer = {
-		"id": corpus.ref,
-		"title": corpus.title,
-		"shortTitle": corpus.short_title,
-		"shortDescription": corpus.short_description,
-	}
-	if corpus.parent:
-		answer["parent"] = corpus.parent.ref
-		
-	return corpus.to_json()
-	#return answer
-
-
-@csrf_exempt
-@api_view(["GET"])
-def handle_opera_request(request, full_neuma_ref):
-	"""
-	  Return the list of opera
-	"""
-
-	neuma_object, object_type = get_object_from_neuma_ref(full_neuma_ref)
-	if type(neuma_object) is Corpus:
-		corpus = neuma_object
-	else:
-		return Response(status=status.HTTP_404_NOT_FOUND)
-
-	if request.method == "GET":
-		try:
-			opera = Opus.objects.filter(corpus=corpus)
-		except Exception as ex:
-			return JSONResponse({"error": str(ex)})
-
-		answer = []
-		for opus in opera:
-			answer.append(opus.to_json(request))
-
-		return JSONResponse(answer)
-
+	def get_queryset(self):
+		corpus_ref = self.kwargs['full_neuma_ref']
+		queryset = Opus.objects.filter(corpus__ref=corpus_ref)
+		return queryset
 
 ############
 ###
@@ -1170,14 +1071,15 @@ def receive_midi_messages(request):
 def test_midi_messages(request):
 	return JSONResponse({"Response": "Working"}, status=status.HTTP_200_OK)
 
-"""
-ArkIndex API implementation
-"""
+########################################################
+#
+#  Revised API implementation, with classes and serializers
+#
+#########################################################
 
-
-class ArkIdxRetrieveCorpus(APIView):
+class RetrieveCorpus(APIView):
 	
-	serializer_class = ArkIdxCorpusSerializer
+	serializer_class = CorpusSerializer
 	
 	@extend_schema(operation_id="RetrieveCorpus")
 	def get(self, request, id):

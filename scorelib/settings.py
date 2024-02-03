@@ -133,32 +133,6 @@ DATABASES = {
         'PORT': '',
      }
 }
-'''
-Raphael's commit#76818
-
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'postgres',
-        'USER': 'postgres',
-        'HOST': 'db',
-        'PORT': 5432,
-    }
-}
-'''
-
-
-#  ORM broker connection for Django-q
-
-Q_CLUSTER = {
-    'name': 'DjangORM',
-    'workers': 4,
-    'timeout': 90,
-    'retry': 120,
-    'queue_limit': 50,
-    'bulk': 10,
-    'orm': 'default' # defaukt DB connection
-}
 
 # Internationalization
 # https://docs.djangoproject.com/en/1.8/topics/i18n/
@@ -252,10 +226,16 @@ NB_NEIGHBORS = 10
 #
 # REST documentation
 #
-REST_FRAMEWORK = {    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema', 
-				  'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.LimitOffsetPagination',
-    'PAGE_SIZE': 100
-    }
+REST_FRAMEWORK = {    
+	'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema', 
+	'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.LimitOffsetPagination',
+    'PAGE_SIZE': 100,
+    # Use Django's standard `django.contrib.auth` permissions,
+	# or allow read-only access for unauthenticated users.
+	'DEFAULT_PERMISSION_CLASSES': [
+		'rest_framework.permissions.DjangoModelPermissionsOrAnonReadOnly'
+	]
+}
 
 SPECTACULAR_SETTINGS = {
     'TITLE': 'Neuma REST API',
