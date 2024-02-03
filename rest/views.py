@@ -47,6 +47,10 @@ from django.core.files.base import ContentFile
 
 from lxml import etree
 
+# DMOS parser for validation
+from lib.collabscore.parser import CollabScoreParser, OmrScore
+
+
 # Modèles
 from manager.models import (
 	Corpus,

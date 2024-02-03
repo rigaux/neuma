@@ -33,9 +33,8 @@ import lib.music.opusmeta as opusmeta_mod
 
 # DMOS parser
 from lib.collabscore.parser import CollabScoreParser, OmrScore
+from lib.collabscore.editions import Edition
 
-# For serialization of Opus 
-import lib.music.opusmeta as opusmeta_mod
 
 # For tree models
 from mptt.models import MPTTModel, TreeForeignKey
@@ -1139,18 +1138,15 @@ class Opus(models.Model):
 
 		dmos_data = None
 		dmos_source =None
+		editions = []
 		for source in self.opussource_set.all ():
-			if source.ref == opusmeta_mod.OpusSource.DMOS_REF:
+			if source.ref == source_mod.OpusSource.DMOS_REF:
 				dmos_source = source
 				if dmos_source.source_file:
 					dmos_data = json.loads(dmos_source.source_file.read())
-				if dmos_source.manifest:
-					print ("Found a manifest")
-					json_manifest = json.loads(dmos_source.manifest.read())
-					manifest = source_mod.ScoreImgManifest.from_json(json_manifest)
-				else:
-					print ("No manifest")
-					manifest = None
+				for json_edition in dmos_source.operations:
+					editions.append (Edition.from_json(json_edition))
+
 		if dmos_data == None:
 			return "Unable to find the DMOS file ??"
 		try:
@@ -1159,7 +1155,7 @@ class Opus(models.Model):
 			return "DMOS file validation error : " + str(ex)
 		
 		# Parse DMOS data
-		omr_score = OmrScore (self.get_url(), dmos_data, {}, manifest)
+		omr_score = OmrScore (self.get_url(), dmos_data, {}, editions)
 		score = omr_score.get_score()
 	
 		# Store the MusicXML file in the opus
@@ -1205,7 +1201,7 @@ class Opus(models.Model):
 
 		# Store the manifest 
 		for source in self.opussource_set.all ():
-			if source.ref == opusmeta_mod.OpusSource.DMOS_REF:
+			if source.ref == source_mod.OpusSource.DMOS_REF:
 				print ("Save the manifest")
 				source.manifest = ContentFile(json.dumps(omr_score.manifest.to_json()), name="manifest.json")
 				source.save()
@@ -1385,6 +1381,8 @@ class OpusSource (models.Model):
 	description =   models.TextField()
 	source_type = models.ForeignKey(SourceType,on_delete=models.PROTECT)
 	url = models.CharField(max_length=255,blank=True,null=True)
+	# A set of operations applied to the source file. Example: post-OMR processing
+	operations = models.JSONField(blank=True,default=[])
 	creation_timestamp = models.DateTimeField('Created', auto_now_add=True)
 	update_timestamp = models.DateTimeField('Updated', auto_now=True)
 

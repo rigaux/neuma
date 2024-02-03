@@ -180,7 +180,7 @@ class OmrScore:
 	"""
 	  A structured representation of the score supplied by the OMR tool
 	"""
-	def __init__(self, uri, json_data, config={}, manifest=None):
+	def __init__(self, uri, json_data, config={}, editions=[]):
 		"""
 			Input: a validated JSON object. The method builds
 			a representation based on the Python classes
@@ -196,60 +196,50 @@ class OmrScore:
 										"collabscore")
 		# Edit operations applied to the score 
 		self.editions = []
-		
+		for op in editions:
+			self.editions.append (op)
+
 		# Decode the DMOS input as Python objects
 		self.pages = []
 		for json_page in self.json_data["pages"]:
 			page = Page(json_page)							
 			self.pages.append(page)
 
-		# Produce or keep the structure of the score
-		if manifest is not None:
-			# Use the supplied manifest
-			self.manifest = manifest
-		else:
-			current_page_no = 0
+		# Produce the manifest of the score
+
+		current_page_no = 0
+		self.manifest = Manifest(json_data["id"], json_data["score_image_url"])
+		for page in self.pages:
 			current_system_no = 0
-			current_measure_no = 0
-			self.manifest = Manifest(json_data["id"], json_data["score_image_url"])
-			for page in self.pages:
-				current_page_no += 1
-				# Create the manifest from the source
-				src_page = source_mod.MnfPage(page.page_url, current_page_no, self.manifest)
-				for system in page.systems:
-					current_system_no += 1
-					src_system = source_mod.MnfSystem(current_system_no, src_page)
-					src_page.add_system(src_system)
-					
-					for header in system.headers:
-						src_staff = source_mod.MnfStaff(header.no_staff, src_system)
-						src_system.add_staff(src_staff)
-						# Without further information, we assume one staff = one part
-						src_part = source_mod.MnfPart(header.id_part, header.id_part, header.id_part) 
-						self.manifest.add_part(src_part)
-						src_staff.add_part(header.id_part)
-				self.manifest.add_page(src_page)			
-
-		self.config = ParserConfig(config)
-		self.config.print()
-
-	def add_edition (self, edit):
-		self.editions.append (edit)
+			current_page_no += 1
+			# Create the manifest from the source
+			src_page = source_mod.MnfPage(page.page_url, current_page_no, self.manifest)
+			for system in page.systems:
+				current_system_no += 1
+				src_system = source_mod.MnfSystem(current_system_no, src_page,
+												system.region.to_json())
+				src_page.add_system(src_system)
+				
+				for header in system.headers:
+					src_staff = source_mod.MnfStaff(header.no_staff, src_system)
+					src_system.add_staff(src_staff)
+					# Without further information, we assume one staff = one part
+					src_part = source_mod.MnfPart(header.id_part, header.id_part, header.id_part) 
+					self.manifest.add_part(src_part)
+					src_staff.add_part(header.id_part)
+			self.manifest.add_page(src_page)
 		
-	def apply_editions (self):
-		for op in self.editions:
-			op.apply_to (self)
-		# Done, we clear the operations to avoid 
-		self.editions = []
+		# Apply editions related to the manifest
+		for edition in self.editions:
+			edition.apply_to(self)
+		
+		self.config = ParserConfig(config)
+		self.config.print()		
 		
 	def get_score(self):
 		'''
 			Builds a score (instance of our score model) from the Omerized document
-		'''
-		
-		# First we modify the manifest as required
-		self.apply_editions()
-		
+		'''		
 		# Create an OMR score (with layout)
 		score = score_model.Score(use_layout=False)
 		
@@ -291,12 +281,12 @@ class OmrScore:
 
 		# Main scan: we fill the parts with measures
 		current_page_no = 0
-		current_system_no = 0
 		current_measure_no = 0
 		current_position = 0
 		
 		for json_page in self.json_data["pages"]:
 			current_page_no += 1
+			current_system_no = 0
 			if (current_page_no < self.config.page_min) or (
 					    current_page_no > self.config.page_max):
 				continue
@@ -656,6 +646,9 @@ class Point:
 	def __str__(self):
 		return f'(Point({self.x},{self.y})'
 
+	def to_json(self):
+		return [self.x, self.y]
+	
 class Segment:
 	"""
 		A segment  described by its two endpoints
@@ -684,6 +677,12 @@ class Region:
 			str_repr += str(point)
 
 		return f'({str_repr})'
+	
+	def to_json(self):
+		res = []
+		for pt in self.contour:
+			res.append(pt.to_json())
+		return res
 	
 	def string_xyhw(self):
 		return f'{self}'

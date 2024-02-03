@@ -223,11 +223,12 @@ class MnfSystem:
 		A system in a page, containing staves
 	'''
 	
-	def __init__(self, number, page) :
+	def __init__(self, number, page, region=None) :
 		self.page = page
 		self.number = number
 		self.staves  = []
 		self.groups = {}
+		self.region = MnfRegion(region)
 
 	def add_staff(self, staff):
 		self.staves.append(staff)
@@ -242,7 +243,7 @@ class MnfSystem:
 
 	@staticmethod
 	def from_json (json_mnf, page):
-		system = MnfSystem(json_mnf["number"], page)
+		system = MnfSystem(json_mnf["number"], page, json_mnf["region"])
 		for json_staff in json_mnf["staves"]:
 			staff = MnfStaff.from_json(json_staff, system)
 			system.add_staff(staff)
@@ -255,7 +256,9 @@ class MnfSystem:
 		staves_json = []
 		for staff in self.staves:
 			staves_json.append(staff.to_json())
-		return {"number": self.number, "staves": staves_json}
+		return {"number": self.number, 
+				"staves": staves_json,
+				"region": self.region.to_json()}
 
 	def create_groups(self):
 		# identify parts that spread over several staves (ie keyboards)
@@ -302,6 +305,13 @@ class MnfStaff:
 		# for music21 StaffGroups structures
 		self.local_part_id = ""
 		
+	def contains_part(self, id_part):
+		for part in self.parts:
+			if part.id == id_part:
+				return True
+			else:
+				return False
+			
 	def add_part(self, id_part):
 		# For the time being we allow only one part per staff
 		
@@ -315,6 +325,11 @@ class MnfStaff:
 		
 		# Warning: will not work in case we have several parts
 		self.local_part_id = score_mod.Part.make_part_id(id_part, no_staff_part)
+
+	def clear_and_replace_part(self, id_part):
+		# Clear the parts, add a new one
+		self.parts = []
+		self.add_part (id_part)
 
 	def replace_part(self, source, target):
 		# Replace part 'source' with part 'target'
@@ -367,4 +382,55 @@ class MnfTimeSig:
 	@staticmethod
 	def from_json (json_ts):
 		return MnfTimeSig(json_ts["count"], json_ts["unit"])
+
+class MnfPoint:
+	"""
+		A geometric point
+	"""
+	
+	def __init__(self, point):
+		self.x = point[0]
+		self.y = point[1]
+
+	@staticmethod
+	def from_json (json_point):
+		return MnfPoint(json_point)
+
+	def to_json(self):
+		return [self.x, self.y]
+	
+	def __str__(self):
+		return f'(Point({self.x},{self.y})'
+
+class MnfRegion:
+	"""
+		A polygon described by its contour
+	"""
+	
+	def __init__(self, region=None):
+		self.contour = []
+		if region is not None:
+			for point in region:
+				self.contour.append(MnfPoint(point))
+
+	def __str__(self):
+		str_repr =""
+		for point in self.contour:
+			str_repr += str(point)
+
+		return f'({str_repr})'
+	
+	def to_json(self):
+		res = []
+		for pt in self.contour:
+			res.append (pt.to_json())
+		return res
+	
+	@staticmethod
+	def from_json (json_region):
+		region = []
+		for json_point in json_region:
+			region.append(MnfPoint(json_point))
+		return MnfRegion(region)
+
 
