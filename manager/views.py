@@ -1,8 +1,6 @@
 from django.shortcuts import render
 from django.conf import settings
 
-# To communicate with Neuma
-from neuma.rest import Client
 # To communicate with ElasticSearch
 from neumasearch.IndexWrapper import IndexWrapper
 

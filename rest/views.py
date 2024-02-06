@@ -66,6 +66,7 @@ from manager.models import (
 from .serializers import (
 	CorpusSerializer,
 	OpusSerializer,
+	SourceSerializer,
 	ArkIdxElementSerializer,
 	ArkIdxElementChildSerializer,
 	ArkIdxElementMetaDataSerializer,
@@ -156,14 +157,15 @@ def welcome(request):
 	"""
 	return JSONResponse({"Message": "Welcome to Neuma web services root URL"})
 
-@extend_schema(operation_id="Welcome to collections management services area")
+@extend_schema(operation_id="Welcome")
 @api_view(["GET"])
 @permission_classes((AllowAny, ))
 def welcome_collections(request):
 	"""
 	Welcome message to the collections services area
 	"""
-	return JSONResponse({"Message": "Welcome to Neuma web services on collections"})
+	return JSONResponse({"message": "Welcome to Neuma web services on collections"})
+
 
 @permission_classes((AllowAny, ))
 class Element (APIView):
@@ -445,27 +447,17 @@ def handle_files_request(request, full_neuma_ref):
 ###
 ############
 
-@csrf_exempt
-@api_view(["GET","PUT"])
-def handle_sources_request(request, full_neuma_ref):
-	"""
-	  Manage requests on sources
-	"""
+@extend_schema(operation_id="OpusList")
+class SourceList(generics.ListAPIView):
 
-	neuma_object, object_type = get_object_from_neuma_ref(full_neuma_ref)
-	if type(neuma_object) is Opus:
-		opus = neuma_object
-	else:
-		return Response(status=status.HTTP_404_NOT_FOUND)
+	serializer_class = SourceSerializer
 
-	if request.method == "GET":
-		sources = []
-		for source in opus.opussource_set.all ():
-			sources.append(source.to_json(request))
-		answer = {"ref": opus.local_ref(), 
-				 "sources": sources}
-		return JSONResponse(answer)
-	if request.method == "PUT":
+	def get_queryset(self):
+		opus_ref = self.kwargs['full_neuma_ref']
+		queryset = OpusSource.objects.filter(opus__ref=opus_ref)
+		return queryset
+	
+	def put(self):
 		print("REST CALL to create a new source. Data :" + str(request.data))
 		try:
 			source_type = SourceType.objects.get(code=request.data.get("source_type", ""))
@@ -483,26 +475,28 @@ def handle_sources_request(request, full_neuma_ref):
 			db_source.save()
 		return JSONResponse("New source created")
 
-@csrf_exempt
-@api_view(["GET","POST"])
-def handle_source_request(request, full_neuma_ref, source_ref):
-	"""
-	  Manage requests on ONE source
-	"""
-	neuma_object, object_type = get_object_from_neuma_ref(full_neuma_ref)
-	if type(neuma_object) is Opus:
-		opus = neuma_object
-	else:
-		return Response(status=status.HTTP_404_NOT_FOUND)
+@extend_schema(operation_id="Source")
+class Source(APIView):
+	serializer_class = SourceSerializer
+	
+	def get_queryset(self):
+		opus_ref = self.kwargs['full_neuma_ref']
+		source_ref = self.kwargs['source_ref']
+		queryset = OpusSource.objects.filter(opus__ref=opus_ref, ref=source_ref)
+		return queryset
 
-	try:
-		source = OpusSource.objects.get(opus=opus,ref=source_ref)
-	except OpusSource.DoesNotExist:
-		return Response(status=status.HTTP_404_NOT_FOUND)
+	def get_object(self, full_neuma_ref, source_ref):
+		try:
+			return OpusSource.objects.get(opus__ref=full_neuma_ref, ref=source_ref)
+		except OpusSource.DoesNotExist:
+			raise Http404
 
-	if request.method == "GET":
-		return JSONResponse(source.to_json(request))
-	if request.method == "POST":
+	def get(self, request, full_neuma_ref, source_ref, format=None):
+		source = self.get_object(full_neuma_ref, source_ref)
+		serializer = SourceSerializer(source)
+		return Response(serializer.data)
+
+	def put(self):
 		try:
 			source_type = SourceType.objects.get(code=request.data.get("source_type", ""))
 			description = request.data.get("description", "")
@@ -561,30 +555,30 @@ def handle_source_file_request(request, full_neuma_ref, source_ref):
 			opus.parse_dmos()
 	return JSONResponse({"status": "ok", "message": "Source file uploaded"})
 
-@csrf_exempt
-@api_view(["GET"])
-@parser_classes([MultiPartParser])
-def handle_source_manifest_request(request, full_neuma_ref, source_ref):
-	"""
-	  Get the manifest (multimedia file description) of a source
-	"""
 
-	neuma_object, object_type = get_object_from_neuma_ref(full_neuma_ref)
-	if type(neuma_object) is Opus:
-		opus = neuma_object
-	else:
-		return JSONResponse({"status": "ko", "message": f"Unknown opus: {full_neuma_ref}"})
-		#return Response(status=status.HTTP_404_NOT_FOUND)
-	try:
-		# The manifest should be with the gallica source
-		source = OpusSource.objects.get(opus=opus,ref=opusmeta_mod.OpusSource.IIIF_REF)
+@extend_schema(operation_id="Manifest")
+class Manifest(APIView):
+	serializer_class = SourceSerializer
+	
+	def get_queryset(self):
+		opus_ref = self.kwargs['full_neuma_ref']
+		source_ref = self.kwargs['source_ref']
+		queryset = OpusSource.objects.filter(opus__ref=opus_ref, ref=source_ref)
+		return queryset
+
+	def get_object(self, full_neuma_ref, source_ref):
+		try:
+			return OpusSource.objects.get(opus__ref=full_neuma_ref, ref=source_ref)
+		except OpusSource.DoesNotExist:
+			raise Http404
+
+	def get(self, request, full_neuma_ref, source_ref, format=None):
+		source = self.get_object(full_neuma_ref, source_ref)
 		if source.manifest:
 			with open(source.manifest.path, "r") as f1:
-				return JSONResponse (f1.read())
+				return JSONResponse (json.loads(f1.read()))
 		else:
 			return JSONResponse({"status": "ko", "message": f"No manifest for  source {source_ref}"})
-	except OpusSource.DoesNotExist:
-		return JSONResponse({"status": "ko", "message": f"Invalid source reference: {source_ref} (expected 'dmos')"})
 
 ############
 ###
@@ -1053,35 +1047,6 @@ def compute_score_distance(request):
 			{"error": "Unable to retreive the cost and comparison annotations"},
 			status=status.HTTP_404_NOT_FOUND,
 		)
-
-####
-# OTF TRANSCRIPTION
-###################
-@csrf_exempt
-@api_view(["POST"])
-def receive_midi_messages(request):
-	data = json.loads(request.body)
-	flags=[]
-	keys=[]
-	velocities=[]
-	timestamps=[]
-	#check if the body is correctly formatted
-	try:
-		for event in data:
-			flags.append(event["flag"])
-			keys.append(event["key"])
-			velocities.append(event["velocity"])
-			timestamps.append(event["timestamp"])
-	except:
-		JSONResponse({"error": "Incorrect midi message format"}, status=status.HTTP_400_BAD_REQUEST)
-	
-	return JSONResponse({"flag": flags, "key": keys, "velocity": velocities, "timestamp": timestamps}, status=status.HTTP_200_OK)
-
-@csrf_exempt
-@api_view(["GET"])
-def test_midi_messages(request):
-	return JSONResponse({"Response": "Working"}, status=status.HTTP_200_OK)
-
 ########################################################
 #
 #  Revised API implementation, with classes and serializers
@@ -1099,7 +1064,7 @@ class RetrieveCorpus(APIView):
 		"""
 		try:
 			corpus = Corpus.objects.get(ref=id)
-			serializer = ArkIdxCorpusSerializer(corpus)
+			serializer = CorpusSerializer(corpus)
 			#serializer.is_valid(raise_exception=True)
 			return JSONResponse(serializer.data)
 		except Corpus.DoesNotExist:

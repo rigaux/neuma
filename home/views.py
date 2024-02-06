@@ -24,7 +24,7 @@ import requests
 import lxml.etree as etree
 from manager.models import Corpus, Opus, Upload, Bookmark, SimMeasure, Licence, Annotation, AnalyticModel, AnalyticConcept, OpusDiff
 from music import *
-from neuma.rest import Client
+
 from neumasearch.IndexWrapper import IndexWrapper
 from neumasearch.MusicSummary import  MusicSummary
 from neumasearch.SearchContext import SearchContext

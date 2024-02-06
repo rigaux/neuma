@@ -45,7 +45,6 @@ class OpusSerializer(serializers.ModelSerializer):
 		# Here, 'instance' is an Opus
 		opusmeta = instance.to_serializable("abs_url")
 		return opusmeta.to_json()
-
 """
    Ajouter: features, sources et files
 		return {"ref": self.ref,
@@ -55,7 +54,23 @@ class OpusSerializer(serializers.ModelSerializer):
 				"sources": sources,
 				"files": files
 				}
-"""			 
+"""	
+
+class SourceSerializer(serializers.ModelSerializer):
+	"""
+		Serialization of source objects 
+	"""
+	class Meta:
+		model = OpusSource
+		fields = ['ref', 'source_type', 'url', 'description']
+		lookup_field = "ref"
+
+	def to_representation(self, instance):
+		# Here, 'instance' is an Opus
+		source_dict = instance.to_serializable("abs_url")
+		return source_dict.to_json()
+
+		 
 class ArcIdxCorpusSerializer(serializers.Serializer):
 	id = serializers.CharField(source="ref")
 	name = serializers.CharField(source="title")
