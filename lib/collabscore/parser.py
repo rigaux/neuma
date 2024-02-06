@@ -229,7 +229,8 @@ class OmrScore:
 					src_staff.add_part(header.id_part)
 			self.manifest.add_page(src_page)
 		
-		# Try to find the first page of music
+		# Clean pages URL and find the first page of music
+		self.manifest.clean_pages_url()
 		self.manifest.get_first_music_page()
 		
 		# Apply editions related to the manifest

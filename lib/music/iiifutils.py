@@ -62,10 +62,25 @@ class Proxy:
 		# Attempt to get the page reference from the URL
 		split_url = urlparse(iiif_url)
 		if len(PurePath(split_url.path).parts) > 5:
-			page_id = PurePath(split_url.path).parts[5]
+			page_ref = PurePath(split_url.path).parts[5]
 		else: 
-			page_id = PurePath(split_url.path).stem
-		return page_id
+			page_ref = PurePath(split_url.path).stem
+		return page_ref
+
+	@staticmethod
+	def find_page_id(iiif_url):
+		# Attempt to get the IIIF page reference from the URL,
+		# by eliminating IIIF  extraction instructions
+		split_url = urlparse(iiif_url)
+		if len(PurePath(split_url.path).parts) > 5:
+			# Get rid of all arguments beyond 5
+			clean_url = split_url.scheme + "://" + split_url.hostname
+			for i in [0, 1, 2, 3, 4, 5]:
+				clean_url = clean_url +  '/' + PurePath(split_url.path).parts[i]  
+			return clean_url
+		else: 
+			# The URL is already the correct ID
+			return iiif_url 
 
 class Document:
 	

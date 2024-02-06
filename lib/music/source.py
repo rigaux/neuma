@@ -109,6 +109,13 @@ class Manifest:
 			break
 		self.nb_empty_pages = self.first_music_page - 1
 
+	def clean_pages_url(self):	
+		"""
+		  Normalize the IIIF URLs
+		"""
+		for page in self.pages:
+			page.url = iiif_mod.Proxy.find_page_id(page.url)
+
 	def add_part(self, part):
 		self.parts[part.id] = part
 
