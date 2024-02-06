@@ -1121,6 +1121,28 @@ class Opus(models.Model):
 		opusmeta = self.to_serializable(my_url)
 		return opusmeta.to_jsonld()
 	
+	def create_source_with_file(self, source_ref, source_type_code,
+							url, description, file_path=None, 
+							file_name=None, file_mode="r"):
+		try:
+			source = OpusSource.objects.get(opus=self,ref=source_ref)
+		except OpusSource.DoesNotExist:
+			source_type = SourceType.objects.get(code=source_type_code)
+			source = OpusSource (opus=self,ref=source_ref,
+								url = url,
+								source_type=source_type,
+								description=description)
+		source.save()
+		
+		if file_path is not None:
+			with open(file_path,file_mode) as f:
+				print (f"Replace  file for source {source_ref}")
+				source.source_file.save(file_name, File(f))
+				source.url = source.source_file.url
+				source.save()
+				
+		return source
+		
 	def parse_dmos(self):
 		dmos_dir = os.path.join("file://" + settings.BASE_DIR, 'static/json/', 'dmos')
 
@@ -1140,12 +1162,16 @@ class Opus(models.Model):
 		dmos_source =None
 		editions = []
 		for source in self.opussource_set.all ():
-			if source.ref == source_mod.OpusSource.DMOS_REF:
+			if source.ref == source_mod.OpusSource.IIIF_REF:
 				dmos_source = source
 				if dmos_source.source_file:
 					dmos_data = json.loads(dmos_source.source_file.read())
 				for json_edition in dmos_source.operations:
+					print ("Apply operation " + str(json_edition))
 					editions.append (Edition.from_json(json_edition))
+			if source.ref == source_mod.OpusSource.DMOS_REF:
+				# Clean this old source
+				source.delete()
 
 		if dmos_data == None:
 			return "Unable to find the DMOS file ??"
@@ -1160,54 +1186,46 @@ class Opus(models.Model):
 	
 		# Store the MusicXML file in the opus
 		print ("Replace XML file")
-		score.write_as_musicxml ("/tmp/score.xml")
-		with open("/tmp/score.xml") as f:
+		mxml_file = "/tmp/score.xml"
+		score.write_as_musicxml (mxml_file)
+		with open(mxml_file) as f:
 			self.musicxml = File(f,name="score.xml")
 			self.save()
+		self.create_source_with_file(source_mod.OpusSource.MUSICXML_REF, 
+									SourceType.STYPE_MXML,
+							"", f"MusicXML file generated on {date.today()}", 
+							mxml_file, "score.xml")
 		
 		# Generate and store the MEI file as a source and main file
 		# Create the file
 		mei_file = "/tmp/score_mei.xml"
 		score.write_as_mei (mei_file)
-		try:
-			source = OpusSource.objects.get(opus=self,ref="mei")
-		except OpusSource.DoesNotExist:
-			source_type = SourceType.objects.get(code=SourceType.STYPE_MIDI)
-			source = OpusSource (opus=self,ref="mei",source_type=source_type)
-		source.description=f"MEI file generated on {date.today()}"
-		source.save()
 		with open(mei_file) as f:
 			print ("Replace MEI file")
 			self.mei = File(f,name="mei.xml")
-			self.save()
-			source.source_file.save("score.midi", File(f))
-			source.url = self.mei.url
-			source.save()
+			self.save()	
+		mei_source = self.create_source_with_file("mei", SourceType.STYPE_MEI,
+							"", f"MEI file generated on {date.today()}", 
+							mei_file, "score.mei")
 			
 		# Generate the MIDI file
 		print ("Produce MIDI file")
 		midi_file = "/tmp/score.midi"
 		score.write_as_midi (midi_file)
-		try:
-			source = OpusSource.objects.get(opus=self,ref="midi")
-		except OpusSource.DoesNotExist:
-			source_type = SourceType.objects.get(code=SourceType.STYPE_MIDI)
-			source = OpusSource (opus=self,ref="midi",source_type=source_type,
-				url ="")
-		source.description=f"MIDI file generated on {date.today()}"
-		source.save()
-		with open(midi_file, "rb") as f:
-			source.source_file.save("score.midi", File(f))
-
+		self.create_source_with_file(source_mod.OpusSource.MIDI_REF, 
+									SourceType.STYPE_MIDI,
+							"", f"MIDI file generated on {date.today()}", 
+							midi_file, "score.midi", "rb")
+		
 		# Store the manifest 
 		for source in self.opussource_set.all ():
-			if source.ref == source_mod.OpusSource.DMOS_REF:
+			if source.ref == source_mod.OpusSource.IIIF_REF:
 				print ("Save the manifest")
 				source.manifest = ContentFile(json.dumps(omr_score.manifest.to_json()), name="manifest.json")
 				source.save()
 		
 		# Now we know the full url of the MEI document
-		score.uri = self.mei.url
+		score.uri = mei_source.source_file.url
 		user_annot = User.objects.get(username=settings.COMPUTER_USER_NAME)
 		# <clean existing annotations
 		for dba in Annotation.objects.filter(opus=self):
@@ -1390,7 +1408,7 @@ class OpusSource (models.Model):
 		'''Set the path where source files must be stored'''
 		source_ref = self.opus.ref.replace(settings.NEUMA_ID_SEPARATOR, "-")
 		return 'sources/' + source_ref + '/' + filename
-	source_file = models.FileField(upload_to=upload_path,null=True,storage=OverwriteStorage())
+	source_file = models.FileField(upload_to=upload_path,blank=True,null=True,storage=OverwriteStorage())
 	manifest = models.FileField(upload_to=upload_path,blank=True,null=True,storage=OverwriteStorage())
 
 	class Meta:

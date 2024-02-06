@@ -4,10 +4,10 @@ import logging
 import json
 import requests
 
-# Get an instance of a logger
-# See https://realpython.com/python-logging/
+from urllib.parse import urljoin, urlparse
+from pathlib import Path, PurePath
 
-#logging.basicConfig(level=logging.INFO)
+# Get an instance of a logger
 
 logger = logging.getLogger(__name__)
 
@@ -56,6 +56,16 @@ class Proxy:
 			return split_url[1]
 		else:
 			raise score_mod.CScoreModelError (f"Invalid Gallica IIIF reference: {iiif_url}")
+		
+	@staticmethod
+	def find_page_ref(iiif_url):
+		# Attempt to get the page reference from the URL
+		split_url = urlparse(iiif_url)
+		if len(PurePath(split_url.path).parts) > 5:
+			page_id = PurePath(split_url.path).parts[5]
+		else: 
+			page_id = PurePath(split_url.path).stem
+		return page_id
 
 class Document:
 	

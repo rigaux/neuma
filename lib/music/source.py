@@ -16,8 +16,10 @@ class OpusSource:
 	# Codes for normalized references
 	DMOS_REF = "dmos"
 	MEI_REF = "ref_mei"
-	IIIF_REF = "gallica"
-	
+	IIIF_REF = "iiif"
+	MIDI_REF = "midi"
+	MUSICXML_REF = "musicxml"
+		
 	def __init__(self, ref, source_type, mime_type, url):
 		self.ref = ref
 		self.source_type = source_type
@@ -71,7 +73,7 @@ class Manifest:
 		are mapped to parts of the score
 	'''
 	
-	def __init__(self, id_source, url) :
+	def __init__(self, id_source, url, first_p_music=1) :
 		self.id = id_source
 		self.url = url
 		# List of pages
@@ -80,6 +82,9 @@ class Manifest:
 		self.parts = {}
 		# Groups = parts with more than on staff
 		self.groups = {}
+		# Music can be found after x pages
+		self.first_music_page = first_p_music
+		self.nb_empty_pages = self.first_music_page - 1
 		
 	def add_page(self, page):
 		self.pages.append(page)
@@ -91,7 +96,19 @@ class Manifest:
 		
 		# Oups should never happpen
 		raise score_mod.CScoreModelError (f"Searching a non existing page : {nb}" )
-	
+
+	def get_first_music_page(self):	
+		"""
+		   Determine the first page of the source
+		   where some music content has been parsed
+		"""
+		for page in self.pages:
+			print (f"Page URL {page.url}")
+			page_ref = iiif_mod.Proxy.find_page_ref(page.url)
+			self.first_music_page = int(page_ref[1:])
+			break
+		self.nb_empty_pages = self.first_music_page - 1
+
 	def add_part(self, part):
 		self.parts[part.id] = part
 
@@ -105,7 +122,8 @@ class Manifest:
 
 	@staticmethod
 	def from_json (json_mnf):
-		manifest = Manifest( json_mnf["id"], json_mnf["url"])
+		manifest = Manifest( json_mnf["id"], json_mnf["url"], 
+							json_mnf["first_music_page"])
 
 		# First decode the parts
 		for json_part in json_mnf["parts"]:
@@ -129,7 +147,8 @@ class Manifest:
 		parts_json = []
 		for part in self.get_parts():
 			parts_json.append(part.to_json())
-		return {"id": self.id, "url": self.url,
+		return {"id": self.id, "url": self.url, 
+			     "first_music_page":self.first_music_page,
 			     "pages": pages_json, "parts": parts_json}
 
 	def create_groups(self):

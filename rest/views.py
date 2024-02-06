@@ -79,6 +79,8 @@ import lib.music.Score as score_model
 import lib.music.annotation as annot_mod
 import lib.music.constants as constants_mod
 import lib.music.opusmeta as opusmeta_mod
+import lib.music.source as source_mod
+
 from django.conf.global_settings import LOGGING
 
 from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiExample
@@ -520,11 +522,16 @@ def handle_source_request(request, full_neuma_ref, source_ref):
 @csrf_exempt
 @api_view(["POST"])
 @parser_classes([MultiPartParser])
+@permission_classes((AllowAny, ))
 def handle_source_file_request(request, full_neuma_ref, source_ref):
 	"""
 	  Replace a file in the source
 	"""
 
+	# LIttle trick for backward compatibility
+	if source_ref == source_mod.OpusSource.DMOS_REF:
+		source_ref = source_mod.OpusSource.IIIF_REF
+		
 	neuma_object, object_type = get_object_from_neuma_ref(full_neuma_ref)
 	if type(neuma_object) is Opus:
 		opus = neuma_object
@@ -535,22 +542,22 @@ def handle_source_file_request(request, full_neuma_ref, source_ref):
 	try:
 		source = OpusSource.objects.get(opus=opus,ref=source_ref)
 	except OpusSource.DoesNotExist:
-		#print (f"Source {source_ref} does not exists in opus {opus.ref}")		
 		# Special case for DMOS source: we create a default one
-		if source_ref == opusmeta_mod.OpusSource.DMOS_REF:
+		# No need to do that: we store the DMOS file with the IIIF source
+		'''if source_ref == opusmeta_mod.OpusSource.IIIF_REF:
 			source_type = SourceType.objects.get(code=SourceType.STYPE_DMOS)
 			source = OpusSource (opus=opus,ref=source_ref,source_type=source_type,
 				description=f"Created via REST call on {datetime.date.today()}",url ="")
 			source.save()
 		else:
-			return JSONResponse({"status": "ko", "message": f"Invalid source reference: {source_ref} (expected 'dmos')"})
-			#return Response(status=status.HTTP_404_NOT_FOUND)
+		'''
+		return JSONResponse({"status": "ko", "message": f"Invalid source reference: {source_ref} (expected 'dmos')"})
 
 	for filename, filecontent in request.FILES.items():
 		source.source_file.save(filename, filecontent)
 		
 		# Special case DMOS: parse the file and create XML files
-		if source_ref==opusmeta_mod.OpusSource.DMOS_REF:
+		if source_ref==source_mod.OpusSource.IIIF_REF:
 			opus.parse_dmos()
 	return JSONResponse({"status": "ok", "message": "Source file uploaded"})
 
@@ -570,7 +577,7 @@ def handle_source_manifest_request(request, full_neuma_ref, source_ref):
 		#return Response(status=status.HTTP_404_NOT_FOUND)
 	try:
 		# The manifest should be with the gallica source
-		source = OpusSource.objects.get(opus=opus,ref=opusmeta_mod.OpusSource.DMOS_REF)
+		source = OpusSource.objects.get(opus=opus,ref=opusmeta_mod.OpusSource.IIIF_REF)
 		if source.manifest:
 			with open(source.manifest.path, "r") as f1:
 				return JSONResponse (f1.read())

@@ -32,6 +32,8 @@ from neumasearch.Sequence import Sequence
 from neumautils.views import NeumaView
 import xml.etree.ElementTree as ET
 
+from .forms import *
+
 # Create your views here.
 # To communicate with ElasticSearch
 # Get an instance of a logger
@@ -427,29 +429,6 @@ class OpusView(NeumaView):
 			context["explain"] = True
 		else:
 			context["explain"] = False
-
-		if 'load_dmos' in self.request.GET:
-			context["dmos_score"] =  opus.parse_dmos()
-			# Now we  store the annotations supplied by DMOS the MEI document
-			score.uri = self.request.build_absolute_uri("/")[:-1]  + opus.mei.url
-			# Clear annotations
-			for dba in Annotation.objects.filter(opus=opus):
-				if dba.target is not None:
-					dba.target.delete()
-				if dba.body is not None:
-					dba.body.delete()
-				dba.delete()
-			# Store new annotations
-			for annotation in context["dmos_score"] .annotations:
-				#print (annotation)
-				annotation.target.resource.source = score.uri
-				db_annot = Annotation.create_from_web_annotation(self.request.user, 
-															opus, 
-															annotation)
-				db_annot.target.save()
-				if db_annot.body is not None:
-					db_annot.body.save()
-				db_annot.save()
 
 		return context
 

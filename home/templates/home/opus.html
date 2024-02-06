@@ -292,9 +292,6 @@ function displaySource(src, type, target) {
 
      <table border="0" width="100%">
        <tr>
-        <th>
-          Main MEI file
-        </th>
      {% for source in opus.opussource_set.all %}
          <th>
           <b>{{source.ref}}</b> ({{source.source_type.mime_type}}). 
@@ -309,10 +306,6 @@ function displaySource(src, type, target) {
       {% endfor %}
       </tr>
        <tr>
-       <td nowrap=1> 
-       <a onclick="displaySource('{{opus.mei.url}}', 'mei', 'source1')" href="#">Show left</a> |
-       <a onclick="displaySource('{{opus.mei.url}}', 'mei', 'source2')" href="#">Show right</a>
-    </td>
       {% for source in opus.opussource_set.all %}
         <td>
          {% if source.source_file %}      
