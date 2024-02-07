@@ -1081,10 +1081,10 @@ class Opus(models.Model):
 		" Produce a serialisable object from the Opus data"
 				
 		if self.composer_ld is not None:
-			opusmeta = opusmeta_mod.OpusMeta(self.local_ref(), self.title, 
+			opusmeta = opusmeta_mod.OpusMeta(self.ref, self.title, 
 											self.composer_ld.dbpedia_uri)
 		else:
-			opusmeta = opusmeta_mod.OpusMeta(self.local_ref(), self.title, 
+			opusmeta = opusmeta_mod.OpusMeta(self.ref, self.title, 
 											self.composer)
 			
 		# Adding sources
@@ -1124,21 +1124,23 @@ class Opus(models.Model):
 	def create_source_with_file(self, source_ref, source_type_code,
 							url, description, file_path=None, 
 							file_name=None, file_mode="r"):
+		
 		try:
 			source = OpusSource.objects.get(opus=self,ref=source_ref)
 		except OpusSource.DoesNotExist:
-			source_type = SourceType.objects.get(code=source_type_code)
 			source = OpusSource (opus=self,ref=source_ref,
 								url = url,
 								source_type=source_type,
 								description=description)
+		source.url = url 
+		source.source_type = SourceType.objects.get(code=source_type_code)
+		source.description = description
 		source.save()
 		
 		if file_path is not None:
 			with open(file_path,file_mode) as f:
 				print (f"Replace  file for source {source_ref}")
 				source.source_file.save(file_name, File(f))
-				source.url = source.source_file.url
 				source.save()
 				
 		return source
@@ -1167,7 +1169,6 @@ class Opus(models.Model):
 				if dmos_source.source_file:
 					dmos_data = json.loads(dmos_source.source_file.read())
 				for json_edition in dmos_source.operations:
-					print ("Apply operation " + str(json_edition))
 					editions.append (Edition.from_json(json_edition))
 			if source.ref == source_mod.OpusSource.DMOS_REF:
 				# Clean this old source
@@ -1426,7 +1427,9 @@ class OpusSource (models.Model):
 			self.url)
 		source_dict.description = self.description
 		if self.source_file:
-			source_dict.url = abs_url + self.source_file.url
+			source_dict.file_path =  self.source_file.url
+		if self.manifest:
+			source_dict.has_manifest =  True
 			
 		return source_dict
 

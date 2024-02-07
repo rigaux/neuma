@@ -30,6 +30,7 @@ from rest_framework.decorators import api_view
 from rest_framework.views import APIView
 from rest_framework import mixins
 from rest_framework import generics
+from django.http import Http404
 
 from rest_framework.response import Response
 from rest_framework.exceptions import ParseError
@@ -447,7 +448,7 @@ def handle_files_request(request, full_neuma_ref):
 ###
 ############
 
-@extend_schema(operation_id="OpusList")
+@extend_schema(operation_id="SourceList")
 class SourceList(generics.ListAPIView):
 
 	serializer_class = SourceSerializer
@@ -555,7 +556,6 @@ def handle_source_file_request(request, full_neuma_ref, source_ref):
 			opus.parse_dmos()
 	return JSONResponse({"status": "ok", "message": "Source file uploaded"})
 
-
 @extend_schema(operation_id="Manifest")
 class Manifest(APIView):
 	serializer_class = SourceSerializer
@@ -578,53 +578,15 @@ class Manifest(APIView):
 			with open(source.manifest.path, "r") as f1:
 				return JSONResponse (json.loads(f1.read()))
 		else:
-			return JSONResponse({"status": "ko", "message": f"No manifest for  source {source_ref}"})
+			return Response(status=status.HTTP_404_NOT_FOUND)
+
+			#return JSONResponse({"status": "ko", "message": f"No manifest for  source {source_ref}"})
 
 ############
 ###
 ### Annotation services
 ###
 ############
-
-
-@csrf_exempt
-@api_view(["POST"])
-# Only authenticqted user cqn reauest q computqtion
-# @permission_classes((IsAuthenticated(), ))
-def compute_annotations(request, full_neuma_ref, model_code):
-	"""
-	Compute annotations for a model and an Opus
-	"""
-
-	neuma_object, object_type = get_object_from_neuma_ref(full_neuma_ref)
-	if type(neuma_object) is Opus:
-		opus = neuma_object
-	else:
-		return Response(status=status.HTTP_404_NOT_FOUND)
-
-	if request.method == "POST":
-		print(
-			"REST call for computing annotations. Opus: "
-			+ opus.ref
-			+ " Model: "
-			+ model_code
-		)
-
-		try:
-			db_model = AnalyticModel.objects.get(code=model_code)
-		except AnalyticModel.DoesNotExist:
-			print("error: Unknown analytic model: " + model_code)
-			return JSONResponse({"error": "Unknown analytic model: " + model_code})
-
-		# OK, compute
-		if model_code == AMODEL_COUNTERPOINT:
-			Workflow.cpt_opus_dissonances(opus)
-		elif model_code == AMODEL_QUALITY:
-			Workflow.quality_check(opus)
-		else:
-			print("error: Unknown analytic model: " + model_code)
-
-		return JSONResponse({"ok": "Annotations computed"})
 
 
 @csrf_exempt

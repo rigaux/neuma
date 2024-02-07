@@ -13,7 +13,7 @@ import requests
 import yaml
 
 from auth import TokenSessionAuthentication
-from exceptions import NotFoundException
+from exceptions import NotFound
 from pagination import ResponsePaginator
 from transports import ArkindexHTTPTransport
 
@@ -179,8 +179,7 @@ class NeumaClient(apistar.Client):
 		self.configure(
 			token=token,
 			auth_scheme=auth_scheme,
-			base_url = base_url,
-			services_url= urljoin(base_url, SERVICES_PATH),
+			base_url= urljoin(base_url, SERVICES_PATH),
 			csrf_cookie=csrf_cookie,
 			sleep=sleep,
 		)
@@ -199,7 +198,6 @@ class NeumaClient(apistar.Client):
 		token=None,
 		auth_scheme="Token",
 		base_url=None,
-		services_url=None,
 		csrf_cookie=None,
 		sleep=None,
 	):
@@ -214,9 +212,7 @@ class NeumaClient(apistar.Client):
 		   This should use ``Token`` to authenticate as a regular user and ``Ponos`` to authenticate as a Ponos task.
 		   If omitted, this defaults to ``Token``.
 		:type auth_scheme: str or None
-		:param base_url: The Neuma URL
-		:type base_url: str or None
-		:param services_url: A custom base URL for the client. If omitted, defaults to the Neuma main server.
+		:param base_url: A custom base URL for the client. If omitted, defaults to the Neuma main server.
 		:type base_url: str or None
 		:param csrf_cookie: Use a custom CSRF cookie name. Falls back to ``arkindex.csrf``.
 		:type csrf_cookie: str or None
@@ -236,10 +232,7 @@ class NeumaClient(apistar.Client):
 		self.sleep_duration = sleep
 
 		if base_url:
-			self.base_url = base_url
-
-		if services_url:
-			self.document.url = services_url
+			self.document.url = base_url
 
 		# Add the Referer header to allow Django CSRF to function
 		self.transport.headers.setdefault("Referer", self.document.url)

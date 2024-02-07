@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-class SchemaError(Exception):
+class NotFoundException(Exception):
     """
-    Any error occurring during the acquisition and processing of the OpenAPI schema.
+    Any error occurring whenever an object is not found
     """
