@@ -75,8 +75,8 @@ class Proxy:
 		if len(PurePath(split_url.path).parts) > 5:
 			# Get rid of all arguments beyond 5
 			clean_url = split_url.scheme + "://" + split_url.hostname
-			for i in [0, 1, 2, 3, 4, 5]:
-				clean_url = clean_url +  '/' + PurePath(split_url.path).parts[i]  
+			for i in [1, 2, 3, 4, 5]:
+				clean_url = clean_url +  '/' +  PurePath(split_url.path).parts[i]  
 			return clean_url
 		else: 
 			# The URL is already the correct ID
@@ -100,7 +100,14 @@ class Document:
 		if i_canvas < 0 or i_canvas >= self.nb_canvases:
 			logger.error (f"Attempt to access a canvas beyond range: {i_canvas} ")
 		return Canvas (self.manifest["sequences"][0]["canvases"][i_canvas])
-		
+
+	def get_images(self):
+		images = []		
+		for i in range(self.nb_canvases):
+			canvas = self.get_canvas(i)
+			images.append(canvas.get_image(0))
+		return images
+
 class Canvas:
 	
 	def __init__(self, canvas_dict):

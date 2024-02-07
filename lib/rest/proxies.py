@@ -159,6 +159,12 @@ class Source:
 	def page_url (self, i_page):
 		page = self.get_page(i_page)
 		return page["url"]
+	def page_width (self, i_page):
+		page = self.get_page(i_page)
+		return page["width"]
+	def page_height (self, i_page):
+		page = self.get_page(i_page)
+		return page["height"]
 	
 	def get_system (self, i_page, i_system):
 		page = self.get_page(i_page)

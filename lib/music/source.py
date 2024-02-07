@@ -101,6 +101,15 @@ class Manifest:
 		# Oups should never happpen
 		raise score_mod.CScoreModelError (f"Searching a non existing page : {nb}" )
 
+	def add_image_info(self, images):
+		# Enrich the manifest with info coming from IIIF
+		for page in self.pages:
+			print (f"Searching for page {page.url}")
+			for img in images:
+				if page.url == img.url:
+					page.width = img.width
+					page.height = img.height
+					
 	def get_first_music_page(self):	
 		"""
 		   Determine the first page of the source
@@ -206,9 +215,11 @@ class MnfPage:
 		A page of the score, containing systems
 	'''
 	
-	def __init__(self, url, nb, manifest):
+	def __init__(self, url, nb, width, height, manifest):
 		self.manifest = manifest
 		self.url  = url
+		self.width = width
+		self.height = height
 		self.number = nb
 		self.systems  = []
 		self.groups = {}
@@ -226,7 +237,8 @@ class MnfPage:
 	
 	@staticmethod
 	def from_json (json_mnf, manifest):
-		page = MnfPage(json_mnf["url"], json_mnf["number"], manifest)
+		page = MnfPage(json_mnf["url"], json_mnf["number"], 
+					     json_mnf["width"], json_mnf["height"], manifest)
 		for json_system in json_mnf["systems"]:
 			system = MnfSystem.from_json(json_system, page)
 			page.add_system(system)
@@ -238,7 +250,9 @@ class MnfPage:
 		systems_json = []
 		for system in self.systems:
 			systems_json.append(system.to_json())
-		return {"url": self.url, "number": self.number, "systems": systems_json}
+		return {"url": self.url, "number": self.number, 
+			   "width": self.width, "height": self.height, 
+			   "systems": systems_json}
 
 	def create_groups(self):
 		# Collect groups found in systems.

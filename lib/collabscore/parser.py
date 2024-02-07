@@ -213,7 +213,8 @@ class OmrScore:
 			current_system_no = 0
 			current_page_no += 1
 			# Create the manifest from the source
-			src_page = source_mod.MnfPage(page.page_url, current_page_no, self.manifest)
+			src_page = source_mod.MnfPage(page.page_url, current_page_no, 0, 0,
+										self.manifest)
 			for system in page.systems:
 				current_system_no += 1
 				src_system = source_mod.MnfSystem(current_system_no, src_page,

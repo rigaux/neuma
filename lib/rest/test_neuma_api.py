@@ -46,7 +46,7 @@ def main(argv=None):
 			print (f"\t\tSource IIIF : {iiif}. Nb pages: {iiif.nb_pages()}")
 			for i in range (iiif.nb_pages()):
 				page = iiif.get_page(i)
-				print (f"\t\t\tPage {i+1}. URL: {iiif.page_url(i)} Nb systems: {iiif.nb_systems(i)}")
+				print (f"\t\t\tPage {i+1}. URL: {page['url']} ({page['width']}) Nb systems: {iiif.nb_systems(i)}")
 				for j in range (iiif.nb_systems(i)):
 					print (f"\t\t\t\tSystem {j+1} : Nb staves: {iiif.nb_staves(i,j)}")
 					print (f"\t\t\t\tSystem {j+1} : Region: {iiif.system_region(i,j)}")

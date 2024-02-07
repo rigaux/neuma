@@ -30,6 +30,7 @@ from lib.music.jsonld import JsonLD
 import lib.music.annotation as annot_mod
 import lib.music.source as source_mod
 import lib.music.opusmeta as opusmeta_mod
+import lib.music.iiifutils as iiif_mod
 
 # DMOS parser
 from lib.collabscore.parser import CollabScoreParser, OmrScore
@@ -1170,6 +1171,7 @@ class Opus(models.Model):
 					dmos_data = json.loads(dmos_source.source_file.read())
 				for json_edition in dmos_source.operations:
 					editions.append (Edition.from_json(json_edition))
+
 			if source.ref == source_mod.OpusSource.DMOS_REF:
 				# Clean this old source
 				source.delete()
@@ -1186,7 +1188,7 @@ class Opus(models.Model):
 		score = omr_score.get_score()
 	
 		# Store the MusicXML file in the opus
-		print ("Replace XML file")
+		'''print ("Replace XML file")
 		mxml_file = "/tmp/score.xml"
 		score.write_as_musicxml (mxml_file)
 		with open(mxml_file) as f:
@@ -1196,7 +1198,7 @@ class Opus(models.Model):
 									SourceType.STYPE_MXML,
 							"", f"MusicXML file generated on {date.today()}", 
 							mxml_file, "score.xml")
-		
+		'''
 		# Generate and store the MEI file as a source and main file
 		# Create the file
 		mei_file = "/tmp/score_mei.xml"
@@ -1208,7 +1210,7 @@ class Opus(models.Model):
 		mei_source = self.create_source_with_file("mei", SourceType.STYPE_MEI,
 							"", f"MEI file generated on {date.today()}", 
 							mei_file, "score.mei")
-			
+		'''
 		# Generate the MIDI file
 		print ("Produce MIDI file")
 		midi_file = "/tmp/score.midi"
@@ -1217,7 +1219,20 @@ class Opus(models.Model):
 									SourceType.STYPE_MIDI,
 							"", f"MIDI file generated on {date.today()}", 
 							midi_file, "score.midi", "rb")
-		
+		'''
+		# Get the IIIF manifest for image infos
+		iiif_proxy = iiif_mod.Proxy(iiif_mod.GALLICA_BASEURL)
+		docid = iiif_mod.Proxy.decompose_gallica_ref(dmos_source.url)
+		try:
+			iiif_doc = iiif_proxy.get_document(docid)
+			print (f"Got the IIIF manifest. Nb canvases {iiif_doc.nb_canvases}")
+			images = iiif_doc.get_images()
+			for img in images:
+				print (f"Image {img.url}. Width {img.width}")
+			omr_score.manifest.add_image_info (images) 
+		except Exception as ex:
+			logger.error(str(ex))
+
 		# Store the manifest 
 		for source in self.opussource_set.all ():
 			if source.ref == source_mod.OpusSource.IIIF_REF:
