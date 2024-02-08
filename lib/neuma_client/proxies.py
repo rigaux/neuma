@@ -2,14 +2,10 @@
 	A set of classes that provide proxy to Neuma object 
 	through REST calls
 """
-#import json
-import requests
 
-from exceptions import NotFoundException
+from neuma_client.exceptions import NotFoundException
 
-from client import NeumaClient, logger
-from numpy import False_
-
+from neuma_client.client import NeumaClient, logger
 
 class Collections:
 	"""
@@ -142,6 +138,15 @@ class Source:
 											source_ref=self.ref)
 			self.manifest_in_cache = True
 		return self.manifest
+
+	def first_music_page(self):
+		if  self.manifest_in_cache == False:
+			self.get_manifest()
+			
+		if "first_music_page" in self.manifest.keys():
+			return self.manifest["first_music_page"]
+		else:
+			return 1
 
 	def nb_pages(self):
 		if  self.manifest_in_cache == False:

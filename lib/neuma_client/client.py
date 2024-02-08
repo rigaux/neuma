@@ -12,10 +12,10 @@ import apistar
 import requests
 import yaml
 
-from auth import TokenSessionAuthentication
-from exceptions import NotFoundException
-from pagination import ResponsePaginator
-from transports import ArkindexHTTPTransport
+#from auth import TokenSessionAuthentication
+from neuma_client.exceptions import NotFoundException
+#from pagination import ResponsePaginator
+#from transports import ArkindexHTTPTransport
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -191,9 +191,6 @@ class NeumaClient(apistar.Client):
 			self.document.url if hasattr(self, "document") else "",
 		)
 
-	def init_transport(self, *args, **kwargs):
-		return ArkindexHTTPTransport(*args, **kwargs)
-
 	def configure(
 		self,
 		token=None,
@@ -223,14 +220,16 @@ class NeumaClient(apistar.Client):
 		:param float sleep: Number of seconds to wait before sending each API request,
 		   as a simple means of throttling.
 		"""
+		
+		'''
 		if not csrf_cookie:
 			csrf_cookie = "neuma.csrf"
-		self.transport.session.auth = TokenSessionAuthentication(
+			self.transport.session.auth = TokenSessionAuthentication(
 			token,
 			csrf_cookie_name=csrf_cookie,
 			scheme=auth_scheme,
 		)
-
+		''' 
 		if not sleep or not isinstance(sleep, float) or sleep < 0:
 			self.sleep_duration = 0
 		self.sleep_duration = sleep

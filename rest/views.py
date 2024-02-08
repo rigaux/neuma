@@ -1110,6 +1110,7 @@ class ArkIdxListElementMetaData(APIView):
 			return Response(status=status.HTTP_404_NOT_FOUND)
 
 
+@permission_classes((AllowAny, ))
 class ArkIdxGetElementFile (APIView):
 	
 	@extend_schema(operation_id="GetElementFile")
