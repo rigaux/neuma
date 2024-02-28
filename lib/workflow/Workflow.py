@@ -38,7 +38,6 @@ import music21 as m21
 
 import logging
 
-from django_q.tasks import *
 from scorelib.analytic_concepts import *
 
 from quality.lib.Processor import QualityProcessor

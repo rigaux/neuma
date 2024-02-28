@@ -921,10 +921,10 @@ class Opus(models.Model):
 		# Saving before adding related objects
 		self.save()
 
-		if ("meta_fields" in dict_opus.keys()):
-			if (dict_opus["meta_fields"] != None):
-				for m in dict_opus["meta_fields"]:
-					self.add_meta (m["meta_key"], m["meta_value"])
+		if ("features" in dict_opus.keys()):
+			if (dict_opus["features"] != None):
+				for m in dict_opus["features"]:
+					self.add_meta (m["feature_key"], m["feature_value"])
 		if ("sources" in dict_opus.keys() 
 		         and type(dict_opus["sources"]) in {list} ):
 			if (dict_opus["sources"] != None):
@@ -1082,10 +1082,11 @@ class Opus(models.Model):
 		" Produce a serialisable object from the Opus data"
 				
 		if self.composer_ld is not None:
-			opusmeta = opusmeta_mod.OpusMeta(self.ref, self.title, 
+			opusmeta = opusmeta_mod.OpusMeta(self.corpus.ref, self.local_ref(), 
+											self.title, 
 											self.composer_ld.dbpedia_uri)
 		else:
-			opusmeta = opusmeta_mod.OpusMeta(self.ref, self.title, 
+			opusmeta = opusmeta_mod.OpusMeta(self.corpus.ref, self.local_ref(), self.title, 
 											self.composer)
 			
 		# Adding sources
@@ -1123,19 +1124,19 @@ class Opus(models.Model):
 		return opusmeta.to_jsonld()
 	
 	def create_source_with_file(self, source_ref, source_type_code,
-							url, description, file_path=None, 
+							url, file_path=None, 
 							file_name=None, file_mode="r"):
 		
 		try:
 			source = OpusSource.objects.get(opus=self,ref=source_ref)
+			description = f"{source_type_code} file updated on {date.today()}", 
 		except OpusSource.DoesNotExist:
+			description = f"{source_type_code} file created on {date.today()}", 
 			source = OpusSource (opus=self,ref=source_ref,
-								url = url,
-								source_type=source_type,
-								description=description)
+								url = url)
 		source.url = url 
-		source.source_type = SourceType.objects.get(code=source_type_code)
 		source.description = description
+		source.source_type = SourceType.objects.get(code=source_type_code)
 		source.save()
 		
 		if file_path is not None:
@@ -1172,9 +1173,9 @@ class Opus(models.Model):
 				for json_edition in dmos_source.operations:
 					editions.append (Edition.from_json(json_edition))
 
-			if source.ref == source_mod.OpusSource.DMOS_REF:
+			#if source.ref == source_mod.OpusSource.DMOS_REF:
 				# Clean this old source
-				source.delete()
+			#	source.delete()
 
 		if dmos_data == None:
 			return "Unable to find the DMOS file ??"
@@ -1188,7 +1189,7 @@ class Opus(models.Model):
 		score = omr_score.get_score()
 	
 		# Store the MusicXML file in the opus
-		'''print ("Replace XML file")
+		print ("Replace XML file")
 		mxml_file = "/tmp/score.xml"
 		score.write_as_musicxml (mxml_file)
 		with open(mxml_file) as f:
@@ -1196,9 +1197,8 @@ class Opus(models.Model):
 			self.save()
 		self.create_source_with_file(source_mod.OpusSource.MUSICXML_REF, 
 									SourceType.STYPE_MXML,
-							"", f"MusicXML file generated on {date.today()}", 
-							mxml_file, "score.xml")
-		'''
+							"", mxml_file, "score.xml")
+		
 		# Generate and store the MEI file as a source and main file
 		# Create the file
 		mei_file = "/tmp/score_mei.xml"
@@ -1208,18 +1208,16 @@ class Opus(models.Model):
 			self.mei = File(f,name="mei.xml")
 			self.save()	
 		mei_source = self.create_source_with_file("mei", SourceType.STYPE_MEI,
-							"", f"MEI file generated on {date.today()}", 
-							mei_file, "score.mei")
-		'''
+							"", mei_file, "score.mei")
+		
 		# Generate the MIDI file
 		print ("Produce MIDI file")
 		midi_file = "/tmp/score.midi"
 		score.write_as_midi (midi_file)
 		self.create_source_with_file(source_mod.OpusSource.MIDI_REF, 
 									SourceType.STYPE_MIDI,
-							"", f"MIDI file generated on {date.today()}", 
-							midi_file, "score.midi", "rb")
-		'''
+							"", midi_file, "score.midi", "rb")
+		
 		# Get the IIIF manifest for image infos
 		iiif_proxy = iiif_mod.Proxy(iiif_mod.GALLICA_BASEURL)
 		docid = iiif_mod.Proxy.decompose_gallica_ref(dmos_source.url)
@@ -1284,15 +1282,19 @@ class OpusMeta(models.Model):
 	
 	# 
 	# List of allowed meta keys, 
+	MK_COLLECTION = "collection"
 	MK_OFFICE = "office"
 	MK_FETE = "fete"
 	MK_MODE = "mode"
 	MK_GENRE = "genre"
+	MK_YEAR = "year"
 	MK_SOLENNITE = "solennite"
 	MK_TEXTE = "texte"
 	MK_COMPOSER = "composer"
+	MK_LYRICIST = "lyricist"
 	MK_KEY_TONIC = "key_tonic_name"
 	MK_KEY_MODE = "key_mode"
+	MK_METER = "meter"	
 	MK_NUM_OF_PARTS = "num_of_parts"
 	MK_NUM_OF_MEASURES = "num_of_measures"
 	MK_NUM_OF_NOTES = "num_of_notes"
@@ -1308,6 +1310,7 @@ class OpusMeta(models.Model):
 	
 	# Descriptive infos for meta pairs
 	META_KEYS = {
+		MK_COLLECTION: {"displayed_label": "Collection"},
 		MK_OFFICE: {"displayed_label": "Office"},
 		MK_FETE: {"displayed_label": "Fête"},
 		MK_MODE: {"displayed_label": "Mode"},
@@ -1315,8 +1318,11 @@ class OpusMeta(models.Model):
 		MK_SOLENNITE: {"displayed_label": "Degré de solennité"},
 		MK_TEXTE: {"displayed_label": "Texte"},
 		MK_COMPOSER: {"displayed_label": "Composer"},
+		MK_LYRICIST: {"displayed_label": "Composer"},
 		MK_KEY_TONIC: {"displayed_label": "Key Tonic Name"},
 		MK_KEY_MODE: {"displayed_label":"Key Mode"},
+		MK_METER: {"displayed_label":"Meter"},
+		MK_YEAR: {"displayed_label":"Year"},
 		MK_NUM_OF_PARTS: {"displayed_label": "Number of parts"},
 		MK_NUM_OF_MEASURES: {"displayed_label": "Number of measures"},
 		MK_NUM_OF_NOTES: {"displayed_label": "Number of notes"},

@@ -1,8 +1,5 @@
 from rest_framework import serializers
 
-
-import lib.music.opusmeta as opusmeta_mod
-
 # Modèles
 from manager.models import (
 	Corpus,
@@ -18,6 +15,14 @@ from manager.models import (
 # Types sent from the ArkIndex API
 SCORE_TYPE = "Score"
 PAGE_TYPE = "ScorePage"
+
+
+"""
+  For simple services that return a message
+"""		 
+class MessageSerializer(serializers.Serializer):
+	status = serializers.CharField(default="ok")
+	message = serializers.CharField()
 
 """
   Serializers for collection objects
@@ -62,10 +67,10 @@ class SourceSerializer(serializers.ModelSerializer):
 	"""
 	class Meta:
 		model = OpusSource
-		fields = ['ref', 'source_type', 'url', 'description']
+		fields = ['ref', 'source_type', 'url', 'description', 'source_file', 'manifest']
 		lookup_field = "ref"
 
-	def to_representation(self, instance):
+	def torepresentation(self, instance):
 		# Here, 'instance' is an Opus
 		source_dict = instance.to_serializable("abs_url")
 		return source_dict.to_json()

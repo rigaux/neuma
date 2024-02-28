@@ -65,6 +65,7 @@ from manager.models import (
 )
 
 from .serializers import (
+	MessageSerializer,
 	CorpusSerializer,
 	OpusSerializer,
 	SourceSerializer,
@@ -145,20 +146,18 @@ def get_object_from_neuma_ref(full_neuma_ref):
              Services implementation
 '''
 
-@extend_schema(operation_id="Welcome to Neuma services")
+@extend_schema(operation_id="NeumaApi_v3",
+			 description="Welcome message to the Neuma REST API",
+			 responses=MessageSerializer)
+
 @api_view(["GET"])
 @permission_classes((AllowAny, ))
 def welcome(request):
-	"""
-	Welcome message to the services area
-	
-	return Response({
-        'collections': reverse('handle_tl_corpora_request', request=request, format=format)
-    })
-	"""
 	return JSONResponse({"Message": "Welcome to Neuma web services root URL"})
 
-@extend_schema(operation_id="Welcome")
+@extend_schema(operation_id="CollectionsApi",
+			 description="Welcome Neuma collections services",
+			 responses=MessageSerializer)
 @api_view(["GET"])
 @permission_classes((AllowAny, ))
 def welcome_collections(request):
@@ -173,13 +172,16 @@ class Element (APIView):
 		
 	@extend_schema(operation_id="Element",
 		parameters=[
-			OpenApiParameter(name='with_sources', description='Include list of sources', required=False, type=str),
+			OpenApiParameter(name='with_sources', 
+							description='Include list of sources', 
+							required=False, 
+							type=str),
 			]
 		)
 	
 	def get(self, request, full_neuma_ref):
 		"""
-		Receive a path to a corpus or an Opus, returns the corpus or opsu description
+		Receive a path to a corpus or an Opus, returns the corpus or opus description
 	
 		The full_neuma_ref parameter is a path relative to the root corpus of the Neuma collections hierarchy. 
 		Try for instance 'composers', then 'composers/couperin'. As a general rule, if the id
@@ -336,14 +338,11 @@ def encode_concepts_in_latex(concepts, level):
 	return latex
 
 
-@csrf_exempt
-@api_view(["POST"])
-# Only admin user can import an upload
-# @permission_classes((IsAdminUser, ))
+#Not used for the time being
 def handle_import_request(request, full_neuma_ref, upload_id):
-	"""
-	  Request related to a corpus import file
-	"""
+
+	#Request related to a corpus import file
+	
 
 	corpus, object_type = get_object_from_neuma_ref(full_neuma_ref)
 	if object_type != CORPUS_RESOURCE:
@@ -368,7 +367,6 @@ def handle_import_request(request, full_neuma_ref, upload_id):
 		return JSONResponse(
 			{"imported_file": upload.description, "imported_opera": answer_list}
 		)
-
 
 #############################
 ###
@@ -412,38 +410,6 @@ class OpusList(generics.ListAPIView):
 
 ############
 ###
-### Opus services
-###
-############
-
-
-@csrf_exempt
-@api_view(["GET"])
-def handle_files_request(request, full_neuma_ref):
-	"""
-	  Return an opus description and the list of files
-	"""
-
-	print("Handle files with " + full_neuma_ref)
-	neuma_object, object_type = get_object_from_neuma_ref(full_neuma_ref)
-	if type(neuma_object) is Opus:
-		opus = neuma_object
-	else:
-		return Response(status=status.HTTP_404_NOT_FOUND)
-
-	if request.method == "GET":
-
-		my_url = request.build_absolute_uri("/")[:-1]
-		answer = opus.to_json(request)
-		answer["files"] = {}
-		for fname, fattr in Opus.FILE_NAMES.items():
-			file = getattr(opus, fattr)
-			if file:
-				answer["files"][fname] = {"url": my_url + file.url}
-		return JSONResponse(answer)
-
-############
-###
 ### Source services
 ###
 ############
@@ -458,25 +424,32 @@ class SourceList(generics.ListAPIView):
 		queryset = OpusSource.objects.filter(opus__ref=opus_ref)
 		return queryset
 	
-	def put(self):
-		print("REST CALL to create a new source. Data :" + str(request.data))
+	@extend_schema(operation_id="SourceCreate")
+	def put(self, request, full_neuma_ref):
 		try:
+			opus, object_type = get_object_from_neuma_ref(full_neuma_ref)
+
 			source_type = SourceType.objects.get(code=request.data.get("source_type", ""))
 			source_ref  = request.data.get("ref", "")
 			description = request.data.get("description", "")
 			source_url = request.data.get("url", "")
-		except SourceType.DoesNotExist:
-			return JSONResponse("Source type " + request.data.get("source_type", "") + " does not exists")
+		except Opus.DoesNotExist:			
+			serializer = MessageSerializer({"message": f"Opus {full_neuma_ref} does not exist "})
+			return JSONResponse(serializer.data)
+		except SourceType.DoesNotExist:			
+			serializer = MessageSerializer({"message": "Source type " + request.data.get("source_type", "") + " does not exists"})
+			return JSONResponse(serializer.data)		
 		try:
 			source = OpusSource.objects.get(opus=opus,ref=source_ref)
-			return JSONResponse("Source " + source_ref + " already exists in opus " + opus.ref)
+			serializer = MessageSerializer({"message": f"Source {source_ref}  already exists in opus {opus.ref}"})
+			return JSONResponse(serializer.data)
 		except OpusSource.DoesNotExist:
 			db_source = OpusSource (opus=opus,ref=source_ref,source_type=source_type,
 				description=description,url =source_url)
 			db_source.save()
-		return JSONResponse("New source created")
+			serializer = MessageSerializer({"message": "Source created"})
+			return JSONResponse("New source created")
 
-@extend_schema(operation_id="Source")
 class Source(APIView):
 	serializer_class = SourceSerializer
 	
@@ -492,72 +465,52 @@ class Source(APIView):
 		except OpusSource.DoesNotExist:
 			raise Http404
 
+	@extend_schema(operation_id="Source")
 	def get(self, request, full_neuma_ref, source_ref, format=None):
 		source = self.get_object(full_neuma_ref, source_ref)
 		serializer = SourceSerializer(source)
-		return Response(serializer.data)
+		return JSONResponse(serializer.data)
 
-	def put(self):
+	@extend_schema(operation_id="SourceUpdate")
+	def post(self, request, full_neuma_ref, source_ref):
 		try:
+			opus, object_type = get_object_from_neuma_ref(full_neuma_ref)
 			source_type = SourceType.objects.get(code=request.data.get("source_type", ""))
 			description = request.data.get("description", "")
 			source_url = request.data.get("url", "")
+		except Opus.DoesNotExist:			
+			serializer = MessageSerializer({"message": f"Opus {full_neuma_ref} does not exist "})
+			return JSONResponse(serializer.data)
 		except SourceType.DoesNotExist:
-			return JSONResponse("Source type " + request.data.get("source_type", "") + " does not exists")
+			serializer = MessageSerializer({"message": "Source type " + request.data.get("source_type", "") + " does not exists"})
+			return JSONResponse(serializer.data)		
 		try:
 			source = OpusSource.objects.get(opus=opus,ref=source_ref)
 			source.source_type = source_type
 			source.description = description
 			source.url = source_url
 			source.save()
-			return JSONResponse("Source updated with description " + source.description)
+			serializer = MessageSerializer({"message": f"Source updated with description {source.description}"})
+			return JSONResponse(serializer.data)	
 		except OpusSource.DoesNotExist:
 			return Response(status=status.HTTP_404_NOT_FOUND)
 
-@csrf_exempt
-@api_view(["POST"])
-@parser_classes([MultiPartParser])
-@permission_classes((AllowAny, ))
-def handle_source_file_request(request, full_neuma_ref, source_ref):
 	"""
-	  Replace a file in the source
+	Too dangerous
+	@extend_schema(operation_id="Source")
+	def delete(self, request, full_neuma_ref, source_ref, format=None):
+		source = self.get_object(full_neuma_ref, source_ref)
+		serializer = SourceSerializer(source)
+		return JSONResponse(serializer.data)
 	"""
 
-	# LIttle trick for backward compatibility
-	if source_ref == source_mod.OpusSource.DMOS_REF:
-		source_ref = source_mod.OpusSource.IIIF_REF
-		
-	neuma_object, object_type = get_object_from_neuma_ref(full_neuma_ref)
-	if type(neuma_object) is Opus:
-		opus = neuma_object
-	else:
-		return JSONResponse({"status": "ko", "message": f"Unknown opus: {full_neuma_ref}"})
-		#return Response(status=status.HTTP_404_NOT_FOUND)
-
-	try:
-		source = OpusSource.objects.get(opus=opus,ref=source_ref)
-	except OpusSource.DoesNotExist:
-		# Special case for DMOS source: we create a default one
-		# No need to do that: we store the DMOS file with the IIIF source
-		'''if source_ref == opusmeta_mod.OpusSource.IIIF_REF:
-			source_type = SourceType.objects.get(code=SourceType.STYPE_DMOS)
-			source = OpusSource (opus=opus,ref=source_ref,source_type=source_type,
-				description=f"Created via REST call on {datetime.date.today()}",url ="")
-			source.save()
-		else:
-		'''
-		return JSONResponse({"status": "ko", "message": f"Invalid source reference: {source_ref} (expected 'dmos')"})
-
-	for filename, filecontent in request.FILES.items():
-		source.source_file.save(filename, filecontent)
-		
-		# Special case DMOS: parse the file and create XML files
-		if source_ref==source_mod.OpusSource.IIIF_REF:
-			opus.parse_dmos()
-	return JSONResponse({"status": "ok", "message": "Source file uploaded"})
-
-@extend_schema(operation_id="Manifest")
-class Manifest(APIView):
+@extend_schema(operation_id="SourceManifest")
+class SourceManifest(APIView):
+	
+	"""
+	 Return the JSON manifest of a source
+	 
+	"""
 	serializer_class = SourceSerializer
 	
 	def get_queryset(self):
@@ -581,6 +534,65 @@ class Manifest(APIView):
 			return Response(status=status.HTTP_404_NOT_FOUND)
 
 			#return JSONResponse({"status": "ko", "message": f"No manifest for  source {source_ref}"})
+
+class SourceFile (APIView):
+	"""
+	 Return the file  of a source
+	 
+	"""
+	
+	def get_queryset(self):
+		opus_ref = self.kwargs['full_neuma_ref']
+		source_ref = self.kwargs['source_ref']
+		queryset = OpusSource.objects.filter(opus__ref=opus_ref, ref=source_ref)
+		return queryset
+
+	def get_object(self, full_neuma_ref, source_ref):
+		try:
+			return OpusSource.objects.get(opus__ref=full_neuma_ref, ref=source_ref)
+		except OpusSource.DoesNotExist:
+			raise Http404
+
+	@extend_schema(operation_id="SourceFileGet")
+	def get(self, request, full_neuma_ref, source_ref):
+		source = self.get_object(full_neuma_ref, source_ref)
+		if source.source_file:
+			with open(source.source_file.path, "r") as f:
+				file_name = os.path.basename(source.source_file.path).split('/')[-1]
+				content = f.read()
+				resp = FileResponse(content) 
+				resp['Content-type'] = "binary/octet-stream"  # source.source_type.mime_type
+				resp["Content-Disposition"] = f"attachment; filename={file_name}"
+				resp['Access-Control-Allow-Origin'] = '*'
+				resp['Access-Control-Allow-Credentials'] = "true"
+				resp['Access-Control-Allow-Methods'] = 'GET, OPTIONS'
+				resp['Access-Control-Allow-Headers'] = 'Access-Control-Allow-Headers, Origin, Accept, ' \
+                                               'X-Requested-With, Content-Type, Access-Control-Request-Method,' \
+                                               ' Access-Control-Request-Headers, credentials'	
+			return resp
+		else:
+			return Response(status=status.HTTP_404_NOT_FOUND)
+
+
+	@extend_schema(operation_id="SourceFilePost",	
+				 responses= MessageSerializer)
+	@parser_classes([MultiPartParser])
+	def post(self, request, full_neuma_ref, source_ref):
+		# Little trick for backward compatibility
+		if source_ref == source_mod.OpusSource.DMOS_REF:
+			source_ref = source_mod.OpusSource.IIIF_REF
+
+		source = self.get_object(full_neuma_ref, source_ref)
+
+		for filename, filecontent in request.FILES.items():
+			source.source_file.save(filename, filecontent)
+		
+		# Special case DMOS: parse the file and create XML files
+		if source_ref==source_mod.OpusSource.IIIF_REF:
+			opus.parse_dmos()
+
+		serializer = MessageSerializer({"message": "Source file uploaded"})
+		return JSONResponse(serializer.data)	
 
 ############
 ###
@@ -887,8 +899,7 @@ def save_external_opus(url_score):
 	print("Opus created. Ref =" + opus.ref)
 	return opus_ref
 
-@csrf_exempt
-@api_view(["POST"])
+
 def compute_midi_distance(request):
 	""" Compute the distance and the list of differences between two MIDI 
 		The body must be a form-data with the fields: 
@@ -948,8 +959,6 @@ def compute_midi_distance(request):
 		)
 
 
-@csrf_exempt
-@api_view(["POST"])
 def compute_score_distance(request):
 	""" Compute the distance and the list of differences between two scores 
 		The body must be a form-data with the fields: 
@@ -1114,7 +1123,6 @@ class ArkIdxListElementMetaData(APIView):
 class ArkIdxGetElementFile (APIView):
 	
 	@extend_schema(operation_id="GetElementFile")
-	
 	def get(self, request, id):
 		abs_url = request.build_absolute_uri("/")[:-1]
 		try:

@@ -92,15 +92,17 @@ if request.session.search_context.pattern != ""
 	<dt>{% trans "Composer" %}</dt>
 	<dd>{{opus.composer}}&nbsp;</dd>
 	{% endif %} 
-	{% if opus.lyricist != None %}
-	<dt>{% trans "Lyricist" %}</dt>
-	<dd>{{opus.lyricist}}&nbsp;</dd>
-	{% endif %}
     {% if opus.external_link != None %}
     <dt>{% trans "External link" %}</dt>
     <dd><a href="{{opus.external_link}}" target="_blank">{{opus.external_link}}</a>&nbsp;</dd>
     {% endif %} 
 
+     {% for meta in meta_values %}
+      <dt>
+         {{meta.displayed_label}}</dt><dd>{{meta.meta_value}}</dd>
+      {% endfor %} 
+      
+      
 	<dt>{% trans "Files"%}</dt>
 	<dd>
 		{% if opus.pdf %} 
@@ -311,7 +313,8 @@ function displaySource(src, type, target) {
          {% if source.source_file %}      
            <a onclick="displaySource('{{source.source_file.url}}', 'mei', 'source1')" href="#">Show left</a> |
            <a onclick="displaySource('{{source.source_file.url}}', 'mei', 'source2')" href="#">Show right</a>
-         {% else %}
+         {% endif %}
+         {% if source.url %}      
            <a href="{% url 'home:IIIF' source.url %} " target="_blank" href="#">Show</a> |
          {% endif %} 
         {% if "change_corpus" in user_corpus_perms %}

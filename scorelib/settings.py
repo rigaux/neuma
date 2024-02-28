@@ -55,7 +55,6 @@ INSTALLED_APPS = (
     "rest",
     "rest_framework",
     "mptt",
-    'django_q',
    'drf_spectacular',
    'corsheaders',
 )

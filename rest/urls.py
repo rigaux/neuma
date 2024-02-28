@@ -25,13 +25,15 @@ urlpatterns = [
     # SOURCES
     ################
     # POST a source file to a source
-    re_path(r'collections/(?P<full_neuma_ref>(.*))/_sources/(?P<source_ref>[-\w]+)/_file/$',views.handle_source_file_request, name='handle_source_file_request'),
+    #re_path(r'collections/(?P<full_neuma_ref>(.*))/_sources/(?P<source_ref>[-\w]+)/_file/$',views.handle_source_file_request, name='handle_source_file_request'),
+	# GET or POST a file of a source
+	re_path(r'collections/(?P<full_neuma_ref>(.*))/_sources/(?P<source_ref>[-\w]+)/_file/$',views.SourceFile.as_view(), name='handle_source_manifest_request'),
 	# GET the manifest of a source
-	re_path(r'collections/(?P<full_neuma_ref>(.*))/_sources/(?P<source_ref>[-\w]+)/_manifest/$',views.Manifest.as_view(), name='handle_source_manifest_request'),
+	re_path(r'collections/(?P<full_neuma_ref>(.*))/_sources/(?P<source_ref>[-\w]+)/_manifest/$',views.SourceManifest.as_view(), name='handle_source_manifest_request'),
     # GET a source description, or POST an update on a source
     re_path(r'collections/(?P<full_neuma_ref>(.*))/_sources/(?P<source_ref>[-\w]+)/$',views.Source.as_view(), name='handle_source_request'),
     # PUT a new source or GET the list of sources of an Opuss
-    re_path('collections/(?P<full_neuma_ref>(.*))/_sources/',views.SourceList.as_view(), name='handle_sources_request'),
+    re_path('collections/(?P<full_neuma_ref>(.*))/_sources/',views.SourceList.as_view(), name='handle_sources_list_request'),
     ################
     # ANNOTATIONS
     ################
@@ -54,8 +56,7 @@ urlpatterns = [
     path('collections/_corpora/', views.TopLevelCorpusList.as_view(), name='handle_tl_corpora_request'),
     path('collections/<str:full_neuma_ref>/_corpora/', views.CorpusList.as_view(), name='handle_corpora_request'),
     path(r'collections/<str:full_neuma_ref>/_opera/', views.OpusList.as_view(), name='handle_opera_request'),
-    re_path(r'collections/(?P<full_neuma_ref>(.*))/_files/$',views.handle_files_request, name='handle_files_request'),
-   re_path(r'collections/(?P<full_neuma_ref>(.*))/_uploads/(?P<upload_id>(.*))/_import/$',views.handle_import_request, name='handle_import_request'),
+    #re_path(r'collections/(?P<full_neuma_ref>(.*))/_uploads/(?P<upload_id>(.*))/_import/$',views.handle_import_request, name='handle_import_request'),
      # Generic request to a corpus or an opus 
     path ('collections/<str:full_neuma_ref>/', views.Element.as_view(), name='handle_neuma_ref_request'),
 
