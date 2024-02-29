@@ -1,7 +1,7 @@
 #
 # Access to ElasticSearch
 #
-ELASTIC_SEARCH = {"host": "localhost", "port": 11420, "index": "scorelib"}
+ELASTIC_SEARCH = {"host": "localhost", "port": 9200, "index": "scorelib"}
 
 DATABASES = {
     'default': {
