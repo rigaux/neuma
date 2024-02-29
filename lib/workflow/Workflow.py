@@ -40,8 +40,6 @@ import logging
 
 from scorelib.analytic_concepts import *
 
-from quality.lib.Processor import QualityProcessor
-
 class Workflow:
 	"""
 		Operators triggered when a score is inserted / updated
@@ -713,16 +711,6 @@ class Workflow:
 		
 		#task_id = async("workflow_import_zip", upload)
 		
-	@staticmethod
-	def quality_check(opus):
-
-		# try:
-		QualityProcessor.applyToOpus(opus)
-
-	# except Exception as e:
-	#	print("Following error encountered on Opus "+str(opus))
-	#	print("	> "+str(e))
-
 def createJsonDescriptors(opus):
 		"""returns the Json representation of an opus"""
 		opusdict = {}
