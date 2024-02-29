@@ -934,7 +934,7 @@ class Opus(models.Model):
 		# Cas ou la source contient une réf Gallica
 		if ("sources" in dict_opus.keys() 
 		         and isinstance(dict_opus["sources"], str)):
-			source_dict = {"ref": "gallica", 
+			source_dict = {"ref": "iiif", 
 						"source_type": "JPEG",
 						"description": "Lien Gallica",
 						"url": dict_opus["sources"]}

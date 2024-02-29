@@ -37,6 +37,5 @@ urlpatterns = [
 
     re_path(r'^manager/', include('manager.urls', namespace="manager")),
     re_path(r'^home/', include('home.urls', namespace="home")),
-    re_path(r'^quality/', include('quality.urls', namespace="quality")),
     re_path(r'^rest/', include('rest.urls', namespace="rest")),
    ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

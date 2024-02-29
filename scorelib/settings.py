@@ -51,7 +51,6 @@ INSTALLED_APPS = (
     # 'debug_toolbar',
     "home",
     "manager",
-    "quality",
     "rest",
     "rest_framework",
     "mptt",

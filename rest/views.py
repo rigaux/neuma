@@ -589,6 +589,7 @@ class SourceFile (APIView):
 		
 		# Special case DMOS: parse the file and create XML files
 		if source_ref==source_mod.OpusSource.IIIF_REF:
+			opus = Opus.objects.get(ref=full_neuma_ref)
 			opus.parse_dmos()
 
 		serializer = MessageSerializer({"message": "Source file uploaded"})
