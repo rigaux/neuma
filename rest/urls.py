@@ -7,7 +7,6 @@ from rest_framework.urlpatterns import format_suffix_patterns
 
 app_name="rest"
 
-
 urlpatterns = [
     # Welcome message
      path('', views.welcome, name='welcome'),
@@ -39,17 +38,17 @@ urlpatterns = [
     # ANNOTATIONS
     ################
     # Get stats on annotations for an object
-    re_path (r'^collections/(?P<full_neuma_ref>(.*))/_annotations/_stats/$', views.handle_stats_annotations_request, name='handle_annotations_stats'),
+    path ('collections/<str:full_neuma_ref>/_annotations/_stats/', views.AnnotationStats.as_view(), name='opus_annotations_stats'),
+	 # Get stats for an object and a model
+	path ('collections/<str:full_neuma_ref>/_annotations/<str:model_code>/_stats/', views.AnnotationStats.as_view(), name='model_annotations_stats'),
     # Get/Update a specific annotation 
-    re_path (r'^collections/(?P<full_neuma_ref>(.*))/_annotations/(?P<annotation_id>[-\w]+)/$', views.handle_annotation_request, name='handle_annotation_request'),
+    path ('collections/<str:full_neuma_ref>/_annotations/<str:annotation_id>/', views.AnnotationDetail.as_view(), name='handle_annotation_detail'),
     # Put a new annotation 
-    re_path (r'^collections/(?P<full_neuma_ref>(.*))/_annotations/$', views.put_annotation_request, name='put_annotation_request'),
-     # Get stats for an object and a model
-    re_path (r'^collections/(?P<full_neuma_ref>(.*))/_annotations/(?P<model_code>[-\w]+)/_stats/$', views.handle_stats_annotations_request, name='handle_annotations_model_stats'),
+    path ('collections/<str:full_neuma_ref>/_annotations/', views.AnnotationDetail.as_view(), name='put_annotation_request'),
      # Get or delete the list of annotations for an object and a model
-    re_path (r'^collections/(?P<full_neuma_ref>(.*))/_annotations/(?P<model_code>[-\w]+)/_all/$', views.handle_annotations_request, name='handle_annotations_model_request'),
+    path ('collections/<str:full_neuma_ref>/_annotations/<str:model_code>/_all/', views.AnnotationList.as_view(), name='handle_annotations_model_list'),
     # Get or delete the list of annotations for an object, a model and a concept
-    re_path (r'^collections/(?P<full_neuma_ref>(.*))/_annotations/(?P<model_code>[-\w]+)/(?P<concept_code>.+)/_all/$', views.handle_annotations_request, name='handle_annotations_concept_request'),
+    path ('collections/<str:full_neuma_ref>/_annotations/<str:model_code>/<str:concept_code>/_all/',  views.AnnotationList.as_view(), name='handle_annotations_concept_list'),
     ################
     # OPUS / CORPUS
     ################    

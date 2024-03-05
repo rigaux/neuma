@@ -52,9 +52,44 @@ class ConceptSerializer(serializers.Serializer):
 			  "description": instance.description,
 			  "children": get_concepts_level(instance.model, instance)}
 
-"""
-  Serializers for collection objects
-"""
+#########################################
+#
+#	Serializers for annotations
+#
+#########################################
+class ConceptStatsSerializer(serializers.Serializer):
+	code = serializers.CharField()
+	count = serializers.IntegerField()
+	
+class ModelStatsSerializer(serializers.Serializer):
+	model = serializers.CharField(default="all")
+	count = serializers.IntegerField()
+	details = ConceptStatsSerializer(required=False, many=True)
+
+class AnnotationStatsSerializer(serializers.Serializer):
+	model = serializers.CharField(default="all")
+	count = serializers.IntegerField()
+	details = ModelStatsSerializer(many=True)
+	#details = serializers.CharField(default="all")
+
+class AnnotationSerializer(serializers.ModelSerializer):
+	"""
+		Serialization of annotations objects 
+	"""
+	class Meta:
+		model = Annotation
+		fields = ['ref']
+
+	def to_representation(self, instance):
+		# Here, 'instance' is an annotation	
+		return annotation_to_rest(instance)
+	
+#########################################
+#
+#  Serializers for collection objects
+#
+#########################################
+
 class CorpusSerializer(serializers.ModelSerializer):
 	"""
 		Serialization of Corpus objects 
@@ -187,6 +222,15 @@ def get_concepts_level(db_model, parent):
 			}
 		)
 	return concepts
+
+
+def annotation_to_rest(annotation):
+	"""
+	  Create the REST answer that describes an annotation
+	"""
+
+	webannot = annotation.produce_web_annotation()
+	return webannot.get_json_obj()
 
 def create_arkidx_element_dict(elt_type, id_element, name, corpus, metadata=[],
 							has_children=False, zone=None):

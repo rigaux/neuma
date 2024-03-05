@@ -71,6 +71,9 @@ from .serializers import (
 	CorpusSerializer,
 	OpusSerializer,
 	SourceSerializer,
+	AnnotationStatsSerializer,
+	AnnotationSerializer,
+	ModelStatsSerializer,
 	ArkIdxElementSerializer,
 	ArkIdxElementChildSerializer,
 	ArkIdxElementMetaDataSerializer,
@@ -552,81 +555,83 @@ class SourceFile (APIView):
 ###
 ############
 
-
-@csrf_exempt
-@api_view(["GET"])
-@permission_classes((permissions.IsAuthenticatedOrReadOnly, ))
-def handle_stats_annotations_request(
-	request, full_neuma_ref, model_code='_stats', concept_code="_stats"
-):
+class AnnotationStats (APIView):
 	"""
-	Return a list of annotations for a given annotation model
+	 Returns statistics on the annotations of an Opus
+	 
 	"""
+	serializer_class = AnnotationStatsSerializer	
+	permission_classes = [AllowAny]
+	
+	@extend_schema(operation_id="AnnotationStats")
+	def get(self, request, full_neuma_ref, model_code='_stats', concept_code="_stats"):
+	
+		neuma_object, object_type = get_object_from_neuma_ref(full_neuma_ref)
+		if type(neuma_object) is Opus:
+			opus = neuma_object
+		else:
+			serializer = MessageSerializer(status="ko", 
+										    message = f"Unknown opus {full_neuma_ref}")
+			return JSONResponse(serializer.data)
 
-	if request.method == "GET":
+		if model_code == "_stats":
+			# Return stats of the annotations grouped by model
+			total_annot = Annotation.objects.filter(opus=opus).count()
+			model_count = Annotation.objects.filter(opus=opus).values(
+				model_code=F('analytic_concept__model__code')).annotate(count= Count('*'))
+			details = []	
+			for mcount in model_count:
+				details.append ({'model': mcount["model_code"],"count": mcount["count"]})
+			serializer = AnnotationStatsSerializer({"model":"all",
+												"count":total_annot,
+												"details": details})
+			return JSONResponse(serializer.data)
+		else:
+			# The model is explicitly given
+			try:
+				db_model = AnalyticModel.objects.get(code=model_code)
+				# Return stats of the model annotations grouped by concept
+				total_annot = Annotation.objects.filter(opus=opus).count()
+				concept_count = Annotation.objects.filter(opus=opus).filter(analytic_concept__model=db_model).values(
+						concept_code=F('analytic_concept__code')).annotate(count= Count('*'))				
+				details = []	
+				for ccount in concept_count:
+					details.append ({'code': ccount["concept_code"],"count": ccount["count"]})
+				serializer = ModelStatsSerializer({"model": model_code,
+												   "count":total_annot,
+												  "details": details})
+				return JSONResponse(serializer.data)
+			except AnalyticModel.DoesNotExist:
+				serializer = MessageSerializer({"status": "ko", 
+										    "message" : f"Unknown analytic model: {model_code}"})
+				return JSONResponse(serializer.data)
 
-		logger.info(
-			"REST call for annotations request. Opus:"
-			+ full_neuma_ref
-			+ " Model: "
-			+ model_code
-		)
+
+@extend_schema(operation_id="AnnotationList")
+class AnnotationList(generics.ListAPIView):
+
+	serializer_class = AnnotationSerializer
+
+	def get_queryset(self):
+		return Annotation.objects.all()
+		
+	def get (self, request, full_neuma_ref, model_code='_stats', concept_code="_all"):
 
 		neuma_object, object_type = get_object_from_neuma_ref(full_neuma_ref)
 		if type(neuma_object) is Opus:
 			opus = neuma_object
 		else:
-			return Response(status=status.HTTP_404_NOT_FOUND)
+			serializer = MessageSerializer({"status": "ko", 
+								    "message": f"Unknown opus {full_neuma_ref}"})
+			return JSONResponse(serializer.data)
 
-		if not(model_code == "_stats"):
-			# The model is explicitly given
-			try:
-				db_model = AnalyticModel.objects.get(code=model_code)
-			except AnalyticModel.DoesNotExist:
-				return JSONResponse({"error": f"Unknown analytic model: {model_code}"})
-
-		if model_code=="_stats" and concept_code=="_stats":
-			# Return stats of the annotations grouped by model
-			total_annot = Annotation.objects.filter(opus=opus).count()
-			model_count = Annotation.objects.filter(opus=opus).values(
-						model_code=F('analytic_concept__model__code')).annotate(count= Count('*'))
-			 				
-			return JSONResponse({"total_annotations": total_annot, "count_per_model": model_count})
-		elif concept_code=="_stats":
-			# Return stats of the model annotations grouped by concept
-			total_annot = Annotation.objects.filter(opus=opus).count()
-			model_count = Annotation.objects.filter(opus=opus).filter(analytic_concept__model=db_model).values(
-						concept_code=F('analytic_concept__code')).annotate(count= Count('*'))
-			 				
-			return JSONResponse({"annotation_model": db_model.code,
-								   "total_annotations": total_annot, "count_per_concept": model_count})
-
-
-@csrf_exempt
-@api_view(["GET", "DELETE"])
-@permission_classes((permissions.IsAuthenticatedOrReadOnly, ))
-def handle_annotations_request(
-	request, full_neuma_ref, model_code, concept_code="_all"
-):
-	"""
-	Return or DELETE a list of annotations for a given annotation model
-	"""
-
-	neuma_object, object_type = get_object_from_neuma_ref(full_neuma_ref)
-	if type(neuma_object) is Opus:
-			opus = neuma_object
-	else:
-		return Response(status=status.HTTP_404_NOT_FOUND)
-	# The model is explicitly given
-	try:
-		db_model = AnalyticModel.objects.get(code=model_code)
-	except AnalyticModel.DoesNotExist:
-		return JSONResponse({"error": f"Unknown analytic model: {model_code}"})
-
-	if request.method == "GET":
-		logger.info(
-			f"REST call for reading all annotations of {opus.ref} in annotation model {db_model.code}"
-		)
+		# The model is explicitly given
+		try:
+			db_model = AnalyticModel.objects.get(code=model_code)
+		except AnalyticModel.DoesNotExist:
+			serializer = MessageSerializer({"status": "ko", 
+										    "message" : f"Unknown analytic model: {model_code}"})
+			return JSONResponse(serializer.data)
 
 		# Search for annotations
 		if concept_code != "_all":
@@ -634,11 +639,11 @@ def handle_annotations_request(
 				db_annotations = Annotation.objects.filter(
 					opus=opus, analytic_concept__code=concept_code
 				)
-				logger.info("Get annotations for concept " + concept_code)
 			except AnalyticConcept.DoesNotExist:
-				return JSONResponse({"error": f"Unknown concept {concept_code}"})
+				serializer = MessageSerializer({"status": "ko", 
+										    "message" : f"Unknown concept {concept_code}"})
+				return JSONResponse(serializer.data)
 		else:
-			logger.info("Get  annotations for all concepts of model " + model_code)
 			db_annotations = Annotation.objects.filter(
 				opus=opus, analytic_concept__model=db_model
 			)
@@ -650,84 +655,65 @@ def handle_annotations_request(
 			annotations[annotation.ref].append(annotation_to_rest(annotation))
 
 		return JSONResponse(annotations)
-	if request.method == "DELETE":
+
+	def delete(self, request, full_neuma_ref, model_code='_stats', concept_code="_all"):
+		# The model is explicitly given
+		try:
+			db_model = AnalyticModel.objects.get(code=model_code)
+		except AnalyticModel.DoesNotExist:
+			serializer = MessageSerializer({"status": "ko", 
+										    "message" : f"Unknown analytic model: {model_code}"})
+			return JSONResponse(serializer.data)
+
 		Annotation.objects.filter(
-				opus=opus, analytic_concept__model=db_model
+				opus__ref=full_neuma_ref, analytic_concept__model=db_model
 			).delete()
-
-		logger.info(
-			f"REST call for deleting all annotations of {opus.ref} in annotation model {model_code}"
-		)
-		return JSONResponse({"message": f"All annotations of {opus.ref} for annotation model {model_code} have been deleted"})
-
-@csrf_exempt
-@api_view(["GET", "POST", "DELETE"])
-@permission_classes((permissions.IsAuthenticatedOrReadOnly, ))
-def handle_annotation_request(request, full_neuma_ref, annotation_id=-1):
-	"""
-	  Actions on an annotation 
-	"""
+		return JSONResponse({"message": f"All annotations of {full_neuma_ref} for annotation model {model_code} have been deleted"})
 	
-	# Get the annotated object
-	neuma_object, object_type = get_object_from_neuma_ref(full_neuma_ref)
-	if object_type == OPUS_RESOURCE:
-		opus = neuma_object
-	else:
-		return Response(status=status.HTTP_404_NOT_FOUND)
 
-	# Get the annotation 
-	try:
-		db_annotation = Annotation.objects.get(id=annotation_id)
-	except Annotation.DoesNotExist:
-		return Response(status=status.HTTP_404_NOT_FOUND)
+class AnnotationDetail(APIView):
+	serializer_class = AnnotationSerializer
+	
+	def get_queryset(self):
+		return Annotation.objects.all()
 
-	if request.method == "GET":
+	def get_object(self,  annotation_id):
+		# Get the annotation 
+		try:
+			return Annotation.objects.get(id=annotation_id)
+		except Annotation.DoesNotExist:
+			return Response(status=status.HTTP_404_NOT_FOUND)
+
+	@extend_schema(operation_id="AnnotationDetail")
+	def get(self, request, full_neuma_ref, annotation_id):
+		db_annotation = self.get_object(annotation_id)
 		return JSONResponse(annotation_to_rest(db_annotation))
-	if request.method == "DELETE":
-		db_annotation.delete()
-		return JSONResponse({"message": f"Annotation {annotation_id} has been deleted for opus {opus.ref}"})
 
+	@extend_schema(operation_id="AnnotationCreate")
+	def put(self, request, full_neuma_ref):
+		# Get the annotated object
+		neuma_object, object_type = get_object_from_neuma_ref(full_neuma_ref)
+		if object_type == OPUS_RESOURCE:
+			opus = neuma_object
+		else:
+			return Response(status=status.HTTP_404_NOT_FOUND)
 
-@csrf_exempt
-@api_view(["PUT"])
-@permission_classes((permissions.IsAuthenticatedOrReadOnly, ))
-def put_annotation_request(request, full_neuma_ref):
-	"""
-	  Create a new annotation 
-	"""
-	
-	# Get the annotated object
-	neuma_object, object_type = get_object_from_neuma_ref(full_neuma_ref)
-	if object_type == OPUS_RESOURCE:
-		opus = neuma_object
-	else:
-		return Response(status=status.HTTP_404_NOT_FOUND)
+		# Instantiate a validator 
+		try:
+			# The main schema file
+			schema_path = os.path.join (settings.BASE_DIR, "static", "json", "annotations", "schema")
+			schema_file = 'file://' + os.path.join (schema_path, 'annotation_schema.json')
+			# Where  json refs must be solved
+			base_uri='file://' + schema_path + os.sep
+			validator = CollabScoreParser(schema_file, base_uri)
+		except jsonschema.SchemaError as ex:
+			return JSONResponse({"error": "Schema parsing error: " + str (ex)})
+		except Exception as ex:
+			return JSONResponse({"error": "Unexpected error during schema parsing: " + str (ex)})
 
-	# We need a user
-	if not request.user.is_authenticated:
-		return JSONResponse(
-				"User is not authenticated. This call should not happen"
-			)
-
-	# Instantiate a validator 
-	try:
-		# The main schema file
-		schema_path = os.path.join (settings.BASE_DIR, "static", "json", "annotations", "schema")
-		schema_file = 'file://' + os.path.join (schema_path, 'annotation_schema.json')
-		# Where  json refs must be solved
-		base_uri='file://' + schema_path + os.sep
-		validator = CollabScoreParser(schema_file, base_uri)
-	except jsonschema.SchemaError as ex:
-		return JSONResponse({"error": "Schema parsing error: " + str (ex)})
-	except Exception as ex:
-		return JSONResponse({"error": "Unexpected error during schema parsing: " + str (ex)})
-
-	data = JSONParser().parse(request) 
-	logger.info ("Post data" + json.dumps(data))
-
-	if request.method == "PUT":
-		logger.info ("REST CALL to create a new annotation")
-		
+		# Parse the annotation
+		data = JSONParser().parse(request) 
+		logger.info ("Post data" + json.dumps(data))
 		# Validate
 		if not validator.validate_data (data):
 			return JSONResponse({"errors": validator.error_messages})
@@ -750,22 +736,6 @@ def put_annotation_request(request, full_neuma_ref):
 		db_annot.save()
 
 		return JSONResponse({"message": f"New annotation created on {opus.ref}", "annotation_id": db_annot.id})
-
-		return JSONResponse("Create a new annotation")
-
-		if request.user.is_authenticated():
-			if db_annotation.user.username == request.user.username:
-				logger.info("Annotation made by the same  user")
-				db_annotation.analytic_concept = db_concept
-				db_annotation.comment = comment
-				db_annotation.save()
-				return JSONResponse(annotation_to_rest(db_annotation))
-		else:
-			# Do something for anonymous users.
-			logger.warning("user is not authenticated")
-			return JSONResponse(
-				"User is not authenticated. This call should not happen"
-			)
 
 def annotation_to_rest(annotation):
 	"""
