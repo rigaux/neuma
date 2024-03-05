@@ -24,6 +24,34 @@ class MessageSerializer(serializers.Serializer):
 	status = serializers.CharField(default="ok")
 	message = serializers.CharField()
 
+
+"""
+  For analytic models and concepts
+"""		 
+class ModelSerializer(serializers.Serializer):
+	code = serializers.CharField()
+	name = serializers.CharField()
+	description = serializers.CharField()
+
+	def to_representation(self, instance):
+		# Here, 'instance' is an analytic mode
+		
+		return {"code": instance.code, "name": instance.name, 
+			  "description": instance.description,
+			  "concepts": get_concepts_level(instance, None)}
+		 
+class ConceptSerializer(serializers.Serializer):
+	code = serializers.CharField()
+	name = serializers.CharField()
+	description = serializers.CharField()
+
+	def to_representation(self, instance):
+		# Here, 'instance' is an analytic mode
+		
+		return {"code": instance.code, "name": instance.name, 
+			  "description": instance.description,
+			  "children": get_concepts_level(instance.model, instance)}
+
 """
   Serializers for collection objects
 """
@@ -141,6 +169,25 @@ class ArkIdxElementMetaDataSerializer(serializers.Serializer):
 ## Utility functions
 ####
 	
+def get_concepts_level(db_model, parent):
+	"""Recursiveley find the children concepts of the parent parameter"""
+	concepts = []
+	db_concepts = AnalyticConcept.objects.filter(model=db_model, parent=parent)
+	for concept in db_concepts:
+		# Recursive call
+		children = get_concepts_level(db_model, concept)
+		concepts.append(
+			{
+				"code": concept.code,
+				"name": concept.name,
+				"description": concept.description,
+				"display_options": concept.display_options,
+				"icon": concept.icon,
+				"children": children,
+			}
+		)
+	return concepts
+
 def create_arkidx_element_dict(elt_type, id_element, name, corpus, metadata=[],
 							has_children=False, zone=None):
 	"""

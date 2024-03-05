@@ -7,6 +7,8 @@ Appendix: deploying at Humanum
 Contact chez HumaNum:  Joël Marchand, joel.marchand@huma-num.fr
 et l'équipe des sysadmins: sysadmin@huma-num.fr.
 
+Une bonne documentation expliquant l'installation: https://realpython.com/django-nginx-gunicorn/#making-your-site-production-ready-with-https
+
 *******
 Serveur
 *******
@@ -161,35 +163,19 @@ sensibles. Créer un pont SSH sur notre machine virtuelle:
 
 On peut alors se connecter au serveur postgres sur le port ``localhost:63333``.
 
-*********
-Sequentia
-*********
 
-Accès: voir le fichier dédié.
-
-Ne pas oublier de relancer le serveur XSGI après un déploiement:
+Donc, pour se connecter.
 
 .. code-block:: bash
 
-    touch /sites/neumsequ/www/scorelib/scorelib/wsgi.py
+      psql -U user_scorelib -h localhost scorelib --password
 
-Pour relancer les serveurs Apache, il suffit donc de mettre le mot clef
+Quelques commandes utiles (se connecter sous root avec ``su -``)
 
-.. code-block:: bash
+.. code-block
 
-        restart
-
-dans les fichiers
-    -  ``httpd_web03``
-    -  ``httpd_web04``
-
-du dossier ``/sites/neumsequ/resource/order``, et d'attendre au plus 2 minutes.
-
-neumseq@cchumuser01.in2p3.fr
-
-
-Accès aux services, dont phpMyAdmin
-
-https://mygrid.huma-num.fr/board/link/
-
-Accès base: voir le fichier dédié.
+	  systemctl | grep postgres
+	  systemctl stop postgresql@14-main.service
+      systemctl start postgresql@14-main.service
+      systemctl enable postgresql@14-main.service
+      systemctl disable postgresql@14-main.service

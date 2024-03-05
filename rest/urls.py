@@ -18,8 +18,9 @@ urlpatterns = [
     ###############
     ## META DATA
     ###############
-    path('analysis/_models/<str:model_code>/_concepts/_all/', views.handle_concepts_request, name='handle_concepts_request'),
-    path('analysis/_models/<str:model_code>/_concepts/<str:concept_code>/_all/', views.handle_concepts_request, name='handle_concepts_request'),
+	path('analysis/_models/', views.ModelList.as_view(), name='handle_models_request'),
+	path('analysis/_models/<str:code>/', views.ModelDetail.as_view(), name='handle_model_request'),
+	path('analysis/_models/<str:model_code>/<str:concept_code>/', views.ConceptDetail.as_view(), name='handle_concept_request'),
     #re_path(r'^analysis/models/(?P<model_code>.+)/concepts/(?P<encoding>.+)/$', views.handle_concepts_request, name='handle_concepts'),
     ################
     # SOURCES

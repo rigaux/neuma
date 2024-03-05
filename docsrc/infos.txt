@@ -1,5 +1,7 @@
+
 .. _chap-infossensibles:
 
+Passage à l'échelle page 15
 
 ###########################
 Site de déploiement Humanum
@@ -22,7 +24,7 @@ Postgres
 
 Pour postgres, les droits d'accès
 
-  #. User: user_scorelib 
+  #. User: user_scorelib
   #. Mot de passe: jAcHethu7utE
   #. Base: scorelib
 
@@ -31,7 +33,14 @@ Donc, pour se connecter.
 .. code-block:: bash
 
       psql -U user_scorelib -h localhost scorelib --password
- 
+
+Quelques commandes utiles (se connecter sous root avec ``su -``)
+
+.. code-block
+
+	  systemctl | grep postgres
+		systemctl stop postgresql@14-main_failed.service
+		systemctl start postgresql@14-main.service
 
 *************
 ElasticSearch

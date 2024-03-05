@@ -66,6 +66,8 @@ from manager.models import (
 
 from .serializers import (
 	MessageSerializer,
+	ModelSerializer,
+	ConceptSerializer,
 	CorpusSerializer,
 	OpusSerializer,
 	SourceSerializer,
@@ -117,6 +119,100 @@ class JSONResponse(HttpResponse):
 		super(JSONResponse, self).__init__(content, **kwargs)
 
 
+'''
+             Services implementation
+'''
+
+@extend_schema(operation_id="NeumaApi_v3",
+			 description="Welcome message to the Neuma REST API",
+			 responses=MessageSerializer)
+@api_view(["GET"])
+@permission_classes((AllowAny, ))
+def welcome(request):
+	return JSONResponse({"Message": "Welcome to Neuma web services root URL"})
+
+@extend_schema(operation_id="CollectionsApi",
+			 description="Welcome Neuma collections services",
+			 responses=MessageSerializer)
+@api_view(["GET"])
+@permission_classes((AllowAny, ))
+def welcome_collections(request):
+	"""
+	Welcome message to the collections services area
+	"""
+	return JSONResponse({"message": "Welcome to Neuma web services on collections"})
+
+
+@extend_schema(operation_id="Modelsist")
+class ModelList(generics.ListAPIView):
+	"""
+	Get a of list of analytic models
+	"""
+	queryset = AnalyticModel.objects.all()
+	serializer_class = ModelSerializer
+
+
+@extend_schema(operation_id="ModelDetail")
+class ModelDetail(generics.RetrieveAPIView):
+	"""
+	Get a of list of analytic models
+	"""
+	serializer_class = ModelSerializer
+	queryset = AnalyticModel.objects.all()
+	lookup_field="code"
+
+@extend_schema(operation_id="ConceptDetail")
+class ConceptDetail(generics.RetrieveAPIView):
+	"""
+	Get a of list of corpus given their parent
+	"""
+	serializer_class = ConceptSerializer
+	queryset = AnalyticConcept.objects.all()
+
+	def get(self, request, model_code, concept_code):
+		try:
+			# Take the concept and all its descendants
+			concept =  AnalyticConcept.objects.get(model__code=model_code, code=concept_code)
+			return JSONResponse(ConceptSerializer(concept).data)
+		except AnalyticConcept.DoesNotExist:
+			return JSONResponse(MessageSerializer(status="ko", message= f"Unknown concept: {concept_code}").data)
+		
+		"""
+			#For latex encoding
+			latex = "\\begin{tabular}{p{3cm}|p{2.5cm}|p{2.5cm}|p{2.5cm}|p{4cm}}\n"
+			latex += "\\textbf{Concept (level 1)} & \\textbf{Concept (2)} & \\textbf{Concept (3)} & \\textbf{Concept (4)} & \\textbf{Description} \\\\ \\hline \n"
+			latex += encode_concepts_in_latex(concepts, 0)
+			latex += "\\hline \\end{tabular}\n"
+			return HttpResponse(latex)
+		"""
+
+def encode_concepts_in_latex(concepts, level):
+	latex = ""
+	skip = ""
+	inner_skip = ""
+	for i in range(level):
+		skip += " & "
+	for i in range(4 - level):
+		inner_skip += " & "
+
+	for concept in concepts:
+		latex += (
+			skip + concept["name"] + inner_skip + concept["description"] + " \\\\ \n"
+		)
+
+		latex += encode_concepts_in_latex(concept["children"], level + 1)
+
+	return latex
+
+
+
+#############################
+###
+### Corpus services
+###
+############################
+
+
 def get_object_from_neuma_ref(full_neuma_ref):
 	"""
 	Receives a path to a corpus or an Opus, check if it exists returns the object
@@ -141,31 +237,6 @@ def get_object_from_neuma_ref(full_neuma_ref):
 			except Opus.DoesNotExist:
 				# Unknown object
 				return None, UNKNOWN_RESOURCE
-
-'''
-             Services implementation
-'''
-
-@extend_schema(operation_id="NeumaApi_v3",
-			 description="Welcome message to the Neuma REST API",
-			 responses=MessageSerializer)
-
-@api_view(["GET"])
-@permission_classes((AllowAny, ))
-def welcome(request):
-	return JSONResponse({"Message": "Welcome to Neuma web services root URL"})
-
-@extend_schema(operation_id="CollectionsApi",
-			 description="Welcome Neuma collections services",
-			 responses=MessageSerializer)
-@api_view(["GET"])
-@permission_classes((AllowAny, ))
-def welcome_collections(request):
-	"""
-	Welcome message to the collections services area
-	"""
-	return JSONResponse({"message": "Welcome to Neuma web services on collections"})
-
 
 @permission_classes((AllowAny, ))
 class Element (APIView):
@@ -253,126 +324,6 @@ class Element (APIView):
 				return Response(status=status.HTTP_400_BAD_REQUEST)
 
 
-def get_concepts_level(db_model, parent):
-	"""Recursiveley find the children concepts of the parent parameter"""
-	concepts = []
-	db_concepts = AnalyticConcept.objects.filter(model=db_model, parent=parent)
-	for concept in db_concepts:
-		# Recursive call
-		children = get_concepts_level(db_model, concept)
-		concepts.append(
-			{
-				"code": concept.code,
-				"name": concept.name,
-				"description": concept.description,
-				"display_options": concept.display_options,
-				"icon": concept.icon,
-				"children": children,
-			}
-		)
-	return concepts
-
-
-@csrf_exempt
-@api_view(["GET", "POST"])
-def handle_concepts_request(request, model_code, concept_code="_all"):
-	"""
-	Interface with the analytic models and concepts
-	"""
-
-	if request.method == "GET":
-
-		try:
-			db_model = AnalyticModel.objects.get(code=model_code)
-		except AnalyticModel.DoesNotExist:
-			return JSONResponse({"error": "Unknown model: " + model_code})
-
-		# Get the list of concepts of a given model
-		print(
-			"REST call for concept request. Model code: "
-			+ model_code
-			+ " Concept code "
-		)
-		if concept_code != "_all":
-			try:
-				# Take the concept and all its descendants
-				db_concept = AnalyticConcept.objects.get(code=concept_code)
-				concepts = get_concepts_level(db_model, db_concept)
-			except AnalyticConcept.DoesNotExist:
-				return Response(status=status.HTTP_404_NOT_FOUND)
-		else:
-			concepts = get_concepts_level(db_model, None)
-
-		encoding = "json"  # See if we need another encoding later
-		if encoding == "json":
-			return JSONResponse(concepts)
-		else:
-			latex = "\\begin{tabular}{p{3cm}|p{2.5cm}|p{2.5cm}|p{2.5cm}|p{4cm}}\n"
-			latex += "\\textbf{Concept (level 1)} & \\textbf{Concept (2)} & \\textbf{Concept (3)} & \\textbf{Concept (4)} & \\textbf{Description} \\\\ \\hline \n"
-			latex += encode_concepts_in_latex(concepts, 0)
-			latex += "\\hline \\end{tabular}\n"
-			return HttpResponse(latex)
-
-	elif request.method == "POST":
-		obj = {"error": "Not yet implemented"}
-
-		return JSONResponse(obj)
-
-
-def encode_concepts_in_latex(concepts, level):
-	latex = ""
-	skip = ""
-	inner_skip = ""
-	for i in range(level):
-		skip += " & "
-	for i in range(4 - level):
-		inner_skip += " & "
-
-	for concept in concepts:
-		latex += (
-			skip + concept["name"] + inner_skip + concept["description"] + " \\\\ \n"
-		)
-
-		latex += encode_concepts_in_latex(concept["children"], level + 1)
-
-	return latex
-
-
-#Not used for the time being
-def handle_import_request(request, full_neuma_ref, upload_id):
-
-	#Request related to a corpus import file
-	
-
-	corpus, object_type = get_object_from_neuma_ref(full_neuma_ref)
-	if object_type != CORPUS_RESOURCE:
-		return Response(status=status.HTTP_404_NOT_FOUND)
-
-	if request.method == "POST":
-
-		try:
-			upload = Upload.objects.get(id=upload_id)
-		except Upload.DoesNotExist:
-			return JSONResponse({"error": "Unknown import file"})
-
-		list_imported = Workflow.import_zip(upload)
-		# task_id = async(workflow_import_zip, upload)
-
-		answer_list = []
-		if list_imported == None:
-			return JSONResponse(
-			{"error": "Empty list to import"})
-		for opus in list_imported:
-			answer_list.append(opus.to_json(request))
-		return JSONResponse(
-			{"imported_file": upload.description, "imported_opera": answer_list}
-		)
-
-#############################
-###
-### Corpus services
-###
-############################
 
 @extend_schema(operation_id="TopLevelCorpusList")
 class TopLevelCorpusList(generics.ListAPIView):
@@ -590,7 +541,7 @@ class SourceFile (APIView):
 		# Special case DMOS: parse the file and create XML files
 		if source_ref==source_mod.OpusSource.IIIF_REF:
 			opus = Opus.objects.get(ref=full_neuma_ref)
-			opus.parse_dmos()
+			#opus.parse_dmos()
 
 		serializer = MessageSerializer({"message": "Source file uploaded"})
 		return JSONResponse(serializer.data)	
@@ -849,176 +800,6 @@ def handle_user_request(request):
 		else:
 			return Response(status=status.HTTP_503_SERVICE_UNAVAILABLE)
 
-
-############
-###
-### Comparison services
-###
-############
-
-
-## Save temporary the opus on the NEUMA database and return the reference
-# INPUT: the URL of a score (MEI or MusicXML)
-# return the reference of the saved opus
-
-
-def save_external_opus(url_score):
-	"""
-	Save the score (MusicXML or MEI) linked in the URL to the neuma DB and return the reference
-	:param url_score: the URL of the score
-	:return: the reference of the score in the DB
-	"""
-	response = urllib.request.urlopen(url_score)
-	data = response.read()
-	# The score is stored in the external corpus
-	external = Corpus.objects.get(ref=settings.NEUMA_EXTERNAL_CORPUS_REF)
-	# The reference of the opus is a hash of the URL
-	hash_object = hashlib.sha256(data).hexdigest()
-	opus_ref = (
-		settings.NEUMA_EXTERNAL_CORPUS_REF
-		+ settings.NEUMA_ID_SEPARATOR
-		+ hash_object[:16]
-	)
-	doc = minidom.parseString(data)
-	root = doc.documentElement
-
-	if root.nodeName == "mei":
-		try:
-			opus = Opus.objects.get(ref=opus_ref)
-		except Opus.DoesNotExist as e:
-			opus = Opus()
-		opus.corpus = external
-		opus.ref = opus_ref  # Temporary
-		opus.mei.save("mei1.xml", ContentFile(data))
-	else:
-		# Hope this is a mMusicXML file
-		opus = Opus.createFromMusicXML(external, opus_ref, data)
-		# Produce the MEI file
-		Workflow.produce_opus_mei(opus)
-	opus.external_link = url_score
-	opus.save()
-	print("Opus created. Ref =" + opus.ref)
-	return opus_ref
-
-
-def compute_midi_distance(request):
-	""" Compute the distance and the list of differences between two MIDI 
-		The body must be a form-data with the fields: 
-			"midi1" a monophonic .mid file with one track
-			"midi2" a monophonic .mid file with one track
-			"consider_offsets" a boolean string value ("True" or "False") saying if we consider also note offsets or only onsets
-		return: the distance value and the list of differences to go from score1 to score2
-				or an error 
-	"""
-	# check if the body is correctly formatted
-	try:
-		consider_offsets = request.data["consider_offsets"] == "True"
-	except Exception as e:
-		return JSONResponse(
-			{
-				"error": "consider_offsets (True or False) must be specified in the body "
-			},
-			status=status.HTTP_406_NOT_ACCEPTABLE,
-		)
-
-	if not "midi1" in request.FILES and "midi2" in request.FILES:
-		return JSONResponse(
-			{"error": "No midi1 and midi2 present in the request"},
-			status=status.HTTP_400_BAD_REQUEST,
-		)
-
-	midifile1 = request.FILES["midi1"]
-	midifile2 = request.FILES["midi2"]
-	tmp_midi1_path = os.path.join(
-		settings.TMP_DIR, "tmp_midi1.mid"
-	)  # the path of the temporary midi files
-	tmp_midi2_path = os.path.join(settings.TMP_DIR, "tmp_midi2.mid")
-	if os.path.exists(tmp_midi1_path):  # first delete them if they already exist
-		os.remove(tmp_midi1_path)
-	if os.path.exists(tmp_midi2_path):  # first delete them if they already exist
-		os.remove(tmp_midi2_path)
-	default_storage.save(tmp_midi1_path, ContentFile(midifile1.read()))  # save it
-	default_storage.save(tmp_midi2_path, ContentFile(midifile2.read()))
-
-	print(tmp_midi1_path)
-	midi1 = mido.MidiFile(tmp_midi1_path)
-	midi2 = mido.MidiFile(tmp_midi2_path)
-
-	try:
-		cost, annotation_list = ComparisonProcessor.midi_comparison(
-			midi1, midi2, consider_rests=consider_offsets
-		)
-		return JSONResponse(
-			{"comparison_midi": cost, "annotation_list": annotation_list},
-			status=status.HTTP_200_OK,
-		)
-	except Exception as e:
-		print("Unable to retrieve the cost and annotations. Error: " + str(e))
-		return JSONResponse(
-			{"error": "Unable to retreive the cost and comparison annotations"},
-			status=status.HTTP_404_NOT_FOUND,
-		)
-
-
-def compute_score_distance(request):
-	""" Compute the distance and the list of differences between two scores 
-		The body must be a form-data with the fields: 
-			"score1" a score with one voice
-			"score2" a score with one voice
-	"""
-	if not "score1" in request.FILES and "score2" in request.FILES:
-		return JSONResponse(
-			{"error": "No score1 and score present in the request"},
-			status=status.HTTP_400_BAD_REQUEST,
-		)
-
-	# save localy the scores from the request
-	scorefile1 = request.FILES["score1"]
-	scorefile2 = request.FILES["score2"]
-	tmp_score1_path = os.path.join(
-		settings.TMP_DIR, "tmp_score1.xml"
-	)  # the path of the temporary score
-	tmp_score2_path = os.path.join(settings.TMP_DIR, "tmp_score2.xml")
-	if os.path.exists(tmp_score1_path):  # first delete them if they already exist
-		os.remove(tmp_score1_path)
-	if os.path.exists(tmp_score2_path):  # first delete them if they already exist
-		os.remove(tmp_score2_path)
-	default_storage.save(tmp_score1_path, ContentFile(scorefile1.read()))  # save it
-	default_storage.save(tmp_score2_path, ContentFile(scorefile2.read()))
-
-	mei_path1 = Workflow.produce_temp_mei(tmp_score1_path, 1)["path_to_temp_mei"]
-	mei_path2 = Workflow.produce_temp_mei(tmp_score2_path, 2)["path_to_temp_mei"]
-
-	# now open the mei file with music21
-	with open(mei_path1, "r") as f1:
-		mei_string1 = f1.read()
-	with open(mei_path2, "r") as f2:
-		mei_string2 = f2.read()
-	conv1 = mei.MeiToM21Converter(mei_string1)
-	score1 = conv1.run()
-	conv2 = mei.MeiToM21Converter(mei_string2)
-	score2 = conv2.run()
-
-	# compute distance score and annotations
-	try:
-		cost, annotation_list = ComparisonProcessor.score_comparison(score1, score2)
-		print(cost)
-		print(annotation_list)
-		return JSONResponse(
-			{
-				"scores_distance": cost,
-				"annotation_list": annotation_list,
-				"score1": mei_string1,
-				"score2": mei_string2,
-			},
-			status=status.HTTP_200_OK,
-		)
-	except Exception as e:
-		print("Unable to retrieve the cost and annotations. Error: " + str(e))
-		return JSONResponse(
-			{"error": "Unable to retreive the cost and comparison annotations"},
-			status=status.HTTP_404_NOT_FOUND,
-		)
 ########################################################
 #
 #  Revised API implementation, with classes and serializers
