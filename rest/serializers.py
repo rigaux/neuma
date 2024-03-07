@@ -67,7 +67,6 @@ class ModelStatsSerializer(serializers.Serializer):
 	details = ConceptStatsSerializer(required=False, many=True)
 
 class AnnotationStatsSerializer(serializers.Serializer):
-	model = serializers.CharField(default="all")
 	count = serializers.IntegerField()
 	details = ModelStatsSerializer(many=True)
 	#details = serializers.CharField(default="all")

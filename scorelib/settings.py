@@ -2,7 +2,6 @@
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 import os
-from numpy import True_
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -33,7 +32,7 @@ print ("Adding " + os.path.join(BASE_DIR, "lib") + " to Python path")
 SECRET_KEY = 'nd8p5+*vbbc1-wd1cy5oxj$+@!@5+t6ulhxu(182_4zj@p7i5h'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = True
 
 ALLOWED_HOSTS = ['neuma.huma-num.fr', 'localhost', '0.0.0.0']
 

@@ -40,15 +40,13 @@ urlpatterns = [
     # Get stats on annotations for an object
     path ('collections/<str:full_neuma_ref>/_annotations/_stats/', views.AnnotationStats.as_view(), name='opus_annotations_stats'),
 	 # Get stats for an object and a model
-	path ('collections/<str:full_neuma_ref>/_annotations/<str:model_code>/_stats/', views.AnnotationStats.as_view(), name='model_annotations_stats'),
+	path ('collections/<str:full_neuma_ref>/_annotations/<str:model_code>/_stats/', views.AnnotationModelStats.as_view(), name='model_annotations_stats'),
     # Get/Update a specific annotation 
     path ('collections/<str:full_neuma_ref>/_annotations/<str:annotation_id>/', views.AnnotationDetail.as_view(), name='handle_annotation_detail'),
     # Put a new annotation 
-    path ('collections/<str:full_neuma_ref>/_annotations/', views.AnnotationDetail.as_view(), name='put_annotation_request'),
-     # Get or delete the list of annotations for an object and a model
-    path ('collections/<str:full_neuma_ref>/_annotations/<str:model_code>/_all/', views.AnnotationList.as_view(), name='handle_annotations_model_list'),
+    path ('collections/<str:full_neuma_ref>/_annotations/', views.AnnotationCreate.as_view(), name='put_annotation_request'),
     # Get or delete the list of annotations for an object, a model and a concept
-    path ('collections/<str:full_neuma_ref>/_annotations/<str:model_code>/<str:concept_code>/_all/',  views.AnnotationList.as_view(), name='handle_annotations_concept_list'),
+    path ('collections/<str:full_neuma_ref>/_annotations/<str:model_code>/<str:concept_code>/',  views.AnnotationList.as_view(), name='handle_annotations_concept_list'),
     ################
     # OPUS / CORPUS
     ################    

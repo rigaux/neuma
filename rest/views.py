@@ -146,7 +146,6 @@ def welcome_collections(request):
 	return JSONResponse({"message": "Welcome to Neuma web services on collections"})
 
 
-@extend_schema(operation_id="Modelsist")
 class ModelList(generics.ListAPIView):
 	"""
 	Get a of list of analytic models
@@ -154,6 +153,10 @@ class ModelList(generics.ListAPIView):
 	queryset = AnalyticModel.objects.all()
 	serializer_class = ModelSerializer
 
+	@extend_schema(operation_id="Modelist")
+	def get(self, request):
+		serializer = ModelSerializer(AnalyticModel.objects.all(), many=True)
+		return Response(serializer.data)
 
 @extend_schema(operation_id="ModelDetail")
 class ModelDetail(generics.RetrieveAPIView):
@@ -564,6 +567,37 @@ class AnnotationStats (APIView):
 	permission_classes = [AllowAny]
 	
 	@extend_schema(operation_id="AnnotationStats")
+	def get(self, request, full_neuma_ref):
+	
+		neuma_object, object_type = get_object_from_neuma_ref(full_neuma_ref)
+		if type(neuma_object) is Opus:
+			opus = neuma_object
+		else:
+			serializer = MessageSerializer(status="ko", 
+										    message = f"Unknown opus {full_neuma_ref}")
+			return JSONResponse(serializer.data)
+
+		# Return stats of the annotations grouped by model
+		total_annot = Annotation.objects.filter(opus=opus).count()
+		model_count = Annotation.objects.filter(opus=opus).values(
+		model_code=F('analytic_concept__model__code')).annotate(count= Count('*'))
+		details = []	
+		for mcount in model_count:
+			details.append ({'model': mcount["model_code"],"count": mcount["count"]})
+		serializer = AnnotationStatsSerializer({"model":"all",
+											"count":total_annot,
+											"details": details})
+		return JSONResponse(serializer.data)
+
+class AnnotationModelStats (APIView):
+	"""
+	 Returns statistics on the annotations of an Opus
+	 
+	"""
+	serializer_class = ModelStatsSerializer	
+	permission_classes = [AllowAny]
+	
+	@extend_schema(operation_id="AnnotationModelStats")
 	def get(self, request, full_neuma_ref, model_code='_stats', concept_code="_stats"):
 	
 		neuma_object, object_type = get_object_from_neuma_ref(full_neuma_ref)
@@ -574,40 +608,25 @@ class AnnotationStats (APIView):
 										    message = f"Unknown opus {full_neuma_ref}")
 			return JSONResponse(serializer.data)
 
-		if model_code == "_stats":
-			# Return stats of the annotations grouped by model
+		# The model is explicitly given
+		try:
+			db_model = AnalyticModel.objects.get(code=model_code)
+			# Return stats of the model annotations grouped by concept
 			total_annot = Annotation.objects.filter(opus=opus).count()
-			model_count = Annotation.objects.filter(opus=opus).values(
-				model_code=F('analytic_concept__model__code')).annotate(count= Count('*'))
+			concept_count = Annotation.objects.filter(opus=opus).filter(analytic_concept__model=db_model).values(
+				concept_code=F('analytic_concept__code')).annotate(count= Count('*'))				
 			details = []	
-			for mcount in model_count:
-				details.append ({'model': mcount["model_code"],"count": mcount["count"]})
-			serializer = AnnotationStatsSerializer({"model":"all",
-												"count":total_annot,
-												"details": details})
+			for ccount in concept_count:
+				details.append ({'code': ccount["concept_code"],"count": ccount["count"]})
+			serializer = ModelStatsSerializer({"model": model_code,
+											   "count":total_annot,
+											  "details": details})
 			return JSONResponse(serializer.data)
-		else:
-			# The model is explicitly given
-			try:
-				db_model = AnalyticModel.objects.get(code=model_code)
-				# Return stats of the model annotations grouped by concept
-				total_annot = Annotation.objects.filter(opus=opus).count()
-				concept_count = Annotation.objects.filter(opus=opus).filter(analytic_concept__model=db_model).values(
-						concept_code=F('analytic_concept__code')).annotate(count= Count('*'))				
-				details = []	
-				for ccount in concept_count:
-					details.append ({'code': ccount["concept_code"],"count": ccount["count"]})
-				serializer = ModelStatsSerializer({"model": model_code,
-												   "count":total_annot,
-												  "details": details})
-				return JSONResponse(serializer.data)
-			except AnalyticModel.DoesNotExist:
-				serializer = MessageSerializer({"status": "ko", 
-										    "message" : f"Unknown analytic model: {model_code}"})
-				return JSONResponse(serializer.data)
+		except AnalyticModel.DoesNotExist:
+			serializer = MessageSerializer({"status": "ko", 
+									    "message" : f"Unknown analytic model: {model_code}"})
+			return JSONResponse(serializer.data)
 
-
-@extend_schema(operation_id="AnnotationList")
 class AnnotationList(generics.ListAPIView):
 
 	serializer_class = AnnotationSerializer
@@ -615,6 +634,7 @@ class AnnotationList(generics.ListAPIView):
 	def get_queryset(self):
 		return Annotation.objects.all()
 		
+	@extend_schema(operation_id="AnnotationList")
 	def get (self, request, full_neuma_ref, model_code='_stats', concept_code="_all"):
 
 		neuma_object, object_type = get_object_from_neuma_ref(full_neuma_ref)
@@ -656,6 +676,7 @@ class AnnotationList(generics.ListAPIView):
 
 		return JSONResponse(annotations)
 
+	@extend_schema(operation_id="AnnotationsClear")
 	def delete(self, request, full_neuma_ref, model_code='_stats', concept_code="_all"):
 		# The model is explicitly given
 		try:
@@ -669,7 +690,6 @@ class AnnotationList(generics.ListAPIView):
 				opus__ref=full_neuma_ref, analytic_concept__model=db_model
 			).delete()
 		return JSONResponse({"message": f"All annotations of {full_neuma_ref} for annotation model {model_code} have been deleted"})
-	
 
 class AnnotationDetail(APIView):
 	serializer_class = AnnotationSerializer
@@ -688,6 +708,13 @@ class AnnotationDetail(APIView):
 	def get(self, request, full_neuma_ref, annotation_id):
 		db_annotation = self.get_object(annotation_id)
 		return JSONResponse(annotation_to_rest(db_annotation))
+
+
+class AnnotationCreate(APIView):
+	serializer_class = AnnotationSerializer
+	
+	def get_queryset(self):
+		return Annotation.objects.all()
 
 	@extend_schema(operation_id="AnnotationCreate")
 	def put(self, request, full_neuma_ref):
@@ -734,8 +761,12 @@ class AnnotationDetail(APIView):
 		if db_annot.body is not None:
 			db_annot.body.save()
 		db_annot.save()
+		serializer = MessageSerializer({"status": "ok", 
+						"message" : f"New annotation {db_annot.id} created on {opus.ref}", "annotation_id": db_annot.id}
+								)
+		return JSONResponse(serializer.data)
 
-		return JSONResponse({"message": f"New annotation created on {opus.ref}", "annotation_id": db_annot.id})
+
 
 def annotation_to_rest(annotation):
 	"""
