@@ -1,35 +1,40 @@
-
+import os
+import environ
+import sys
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
-import os
+
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-
 # For uploaded files
 MEDIA_ROOT = os.path.join(os.path.dirname(BASE_DIR), 'media')
 MEDIA_URL = '/media/'
-
 # Allows to include remote JS files
 SECURE_CROSS_ORIGIN_OPENER_POLICY = None
-
-
 # For temp. files
 TMP_DIR = os.path.join(os.path.dirname(BASE_DIR), 'media','tmp')
-
 # For script files (bash, XSL, etc.)
 SCRIPTS_ROOT = os.path.join(os.path.dirname(BASE_DIR), 'scorelib','scripts')
 
 # Does not work?
 os.path.join(BASE_DIR, BASE_DIR + "/lib")
 
-import sys
 sys.path.append(os.path.join(BASE_DIR, "lib"))
 
-print ("Adding " + os.path.join(BASE_DIR, "lib") + " to Python path")
 
+env = environ.Env(
+    DEBUG=(bool, True),
+    REDIS_HOST=(str, "localhost"),
+    REDIS_PORT=(int, 6379),
+    INSTANCE_URL=(str, "http://localhost:8000"),
+)
+environ.Env.read_env()
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = 'nd8p5+*vbbc1-wd1cy5oxj$+@!@5+t6ulhxu(182_4zj@p7i5h'
+
+# 
+DEFAULT_FROM_EMAIL="philippe.rigaux@cnam.fr"
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -246,9 +251,19 @@ SPECTACULAR_SETTINGS = {
 QPARSE_BIN_DIR = "/Users/philippe/git/qparselib"
 CONFIG_FILE_PATH = "/Users/philippe/git/params.ini"
 #
-# Access to ElasticSearch
+# ElasticSearch
 #
 ELASTIC_SEARCH = {"host": "cchumweb05.in2p3.fr", "port": 11420, "index": "scorelib"}
+
+
+# Redis
+REDIS_HOST = env("REDIS_HOST")
+REDIS_PORT = int(env("REDIS_PORT"))
+
+# Celery
+CELERY_BROKER_URL = "redis://%s:%d/0" % (REDIS_HOST, REDIS_PORT)
+CELERY_RESULT_BACKEND = "redis://%s:%d" % (REDIS_HOST, REDIS_PORT)
+
 
 # List of similarity measures
 SIMILARITY_MEASURES = ["pitches","intervals","degrees","rhythms"]
