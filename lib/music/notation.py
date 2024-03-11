@@ -190,7 +190,7 @@ class Clef:
 			# Should not happen
 			score_mod.logger.error('Unable to decode DMOS code for clef: ' + dmos_code 
 						+ " " + str(dmos_height))
-			return Clef (TREBLE_CLEF)
+			return Clef (Clef.TREBLE_CLEF)
 
 
 	def decode_pitch (self, height):

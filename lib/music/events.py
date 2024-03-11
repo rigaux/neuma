@@ -108,7 +108,7 @@ class Articulation ():
 	STRONG_ACCENT="strong-accent"
 	CODA="coda"
 	SEGNO="segno"
-
+	MARCATO = "marcato"
 	
 	def __init__(self, placement, art_type) :
 		if art_type == Articulation.STACCATO:
@@ -119,6 +119,9 @@ class Articulation ():
 			self.m21_articulation = m21.articulations.Tenuto()
 		elif art_type == Articulation.STRONG_ACCENT:
 			self.m21_articulation = m21.articulations.StrongAccent()
+		elif art_type == Articulation.MARCATO:
+			# Does seem to exist as such in Music21... Using 'accent' instead
+			self.m21_articulation = m21.articulations.Accent()
 		else:
 			raise score_mod.CScoreModelError (f"Unknown articulation type: '{art_type}'")
 

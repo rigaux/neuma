@@ -3,9 +3,6 @@
 Constants used by DMOS
 
 '''
-from _ast import Expression
-
-
 
 """
  Symbols
@@ -37,10 +34,11 @@ REST_SYMBOLS_LIST = [SMB_WHOLE_REST,SMB_HALF_REST,SMB_QUARTER_REST,
 DURATION_SYMBOLS_LIST = NOTE_SYMBOLS_LIST + REST_SYMBOLS_LIST
 
 # Clefs
-
-SMB_F_CLEF = "F"
-SMB_G_CLEF = "G"
-SMB_C_CLEF = "C"
+#
+# Not used: we rely on Music21 instead
+#SMB_F_CLEF = "F"
+#SMB_G_CLEF = "G"
+#SMB_C_CLEF = "C"
 
 # Headss
 
