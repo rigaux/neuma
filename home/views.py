@@ -5,7 +5,7 @@ from pprint import pprint  # debug only
 import zipfile
 import verovio
 
-from Cython.Compiler.Buffer import context
+#from Cython.Compiler.Buffer import context
 from django.conf import settings
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import User

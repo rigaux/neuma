@@ -60,6 +60,7 @@ INSTALLED_APPS = (
     "mptt",
    'drf_spectacular',
    'corsheaders',
+    'django_celery_results',
 )
 
 SESSION_SERIALIZER='django.contrib.sessions.serializers.PickleSerializer'
@@ -262,8 +263,8 @@ REDIS_PORT = int(env("REDIS_PORT"))
 
 # Celery
 CELERY_BROKER_URL = "redis://%s:%d/0" % (REDIS_HOST, REDIS_PORT)
-CELERY_RESULT_BACKEND = "redis://%s:%d" % (REDIS_HOST, REDIS_PORT)
-
+CELERY_RESULT_BACKEND = 'django-db'
+CELERY_CACHE_BACKEND = 'django-cache'
 
 # List of similarity measures
 SIMILARITY_MEASURES = ["pitches","intervals","degrees","rhythms"]

@@ -4,8 +4,6 @@ from .constants import MELODIC_SEARCH, RHYTHMIC_SEARCH,DIATONIC_SEARCH
 import jsonpickle, json
 from operator import itemgetter
 from .Sequence import Sequence, Item
-from .Distance import *
-
 import music21 as m21
 
 # import the logging library

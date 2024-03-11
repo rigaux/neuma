@@ -1,4 +1,4 @@
-mport music21 as m21
+import music21 as m21
 
 import lib.music.events as score_events
 

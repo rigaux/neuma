@@ -5,8 +5,6 @@ import lib.collabscore.parser as parser_mod
   Edit operations applied to a score. Designed to be combined
   with an optical recognition step
 '''
-from numpy import False_, True_
-
 class Edition:
 	"""
 	  Edit operations

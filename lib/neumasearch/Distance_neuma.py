@@ -1,4 +1,3 @@
-import numpy as np
 import math
 from fractions import Fraction
 # import the logging library

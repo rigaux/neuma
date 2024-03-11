@@ -1,0 +1,24 @@
+{% extends 'layout.html' %}
+{% load i18n  %}
+
+{% block title %}
+  {% translate "Processes" %}
+{% endblock title %}
+
+{% block content %}
+  <h1>Details of task {{task.id}}</h1>
+
+
+
+<dl class="description">
+	<dt>Status</dt>	<dd>{{ task.status }}</dd>
+	<dt>Args</dt>	<dd>{{ task.task_args }}</dd>
+	<dt>Result</dt>	<dd>{{ task.result }}</dd>
+	<dt>Date creation</dt>	<dd>{{ task.date_created }}</dd>
+	<dt>Date done</dt>	<dd>{{ task.date_done }}</dd>
+	<dt>Trace</dt>	<dd>{{ task.traceback }}</dd>
+	<dt>Worker</dt>	<dd>{{ task.worker }}</dd>
+	
+</dl>
+
+{% endblock content %}

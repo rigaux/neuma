@@ -51,6 +51,8 @@ from lxml import etree
 # DMOS parser for validation
 from lib.collabscore.parser import CollabScoreParser, OmrScore
 
+# Asynchronous tasks
+from home.tasks import parse_dmos
 
 # Modèles
 from manager.models import (
@@ -547,7 +549,9 @@ class SourceFile (APIView):
 		# Special case DMOS: parse the file and create XML files
 		if source_ref==source_mod.OpusSource.IIIF_REF:
 			opus = Opus.objects.get(ref=full_neuma_ref)
-			#opus.parse_dmos()
+			
+			print ("Parsing DMOS in asynchronous mode")
+			parse_dmos.delay(opus.ref)
 
 		serializer = MessageSerializer({"message": "Source file uploaded"})
 		return JSONResponse(serializer.data)	

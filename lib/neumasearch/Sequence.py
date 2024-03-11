@@ -2,7 +2,6 @@ from .Item import Item
 import jsonpickle
 import string
 from fractions import Fraction
-from .Distance import *
 from .Distance_neuma import *
 
 from .constants import MELODIC_SEARCH,RHYTHMIC_SEARCH,EXACT_SEARCH,DIATONIC_SEARCH

@@ -1,0 +1,47 @@
+{% extends 'layout.html' %}
+{% load i18n  %}
+
+{% block title %}
+  {% translate "Processes" %}
+{% endblock title %}
+
+{% block content %}
+  <h1>Lists of tasks</h1>
+
+  <table>
+    <thead>
+      <tr width="100%">
+        <th>{% translate "ID" %}</th>
+        <th>{% translate "Status" %}</th>
+        <th>{% translate "Name" %}</th>
+        <th>{% translate "Args" %}</th>
+        <th>{% translate "Result" %}</th>
+         <th>{% translate "Created" %}</th>
+        <th>{% translate "Done" %}</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for task in tasks %}
+        <tr width="100%">
+          <td>{{ task.id }}</td>
+           <td>{{ task.status }} </td>
+          <td> {{ task.task_name }} </td>
+          <td> {{ task.task_args }}</td>
+          <td>{{ task.result }}</td>
+          <td>{{ task.date_created }}</td> 
+          <td>{{ task.date_done }}</td> 
+          <td>
+            <a href="{% url 'manager:task_detail' task_id=task.id %}">View details</a>
+          </td>
+        </tr>
+      {% empty %}
+        <tr>
+          <td colspan="7">
+            "No task available"
+          </td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{% endblock content %}

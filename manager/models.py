@@ -52,9 +52,9 @@ import uuid
 from hashlib import md5
 
 # Note : we no longer need sklearn nor scipy
-from lib.neumautils.stats import symetrical_chi_square
-from lib.neumautils.matrix_transform import matrix_transform
-from lib.neumautils.kmedoids import cluster
+#from lib.neumautils.stats import symetrical_chi_square
+#from lib.neumautils.matrix_transform import matrix_transform
+#from lib.neumautils.kmedoids import cluster
 
 
 # Get an instance of a logger
@@ -378,10 +378,10 @@ class Corpus(models.Model):
 		all_distances = list(q1) + list(set(q1) - set(q2))
 
 		# Mapping distances to matrix
-		distances , map_ids = matrix_transform(all_distances)
+		#distances , map_ids = matrix_transform(all_distances)
 
 		# Computing clusters / medoids
-		clusters , medoids = cluster(distances,int(nb_class))
+		#clusters , medoids = cluster(distances,int(nb_class))
 
 
 		

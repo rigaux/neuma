@@ -1,7 +1,8 @@
 from django.core.management.base import BaseCommand, CommandError
 from django.conf import settings
 
-from home.tasks import add, send_email
+from home.tasks import add, parse_dmos
+
 
 class Command(BaseCommand):
 	"""Import """
@@ -16,9 +17,15 @@ class Command(BaseCommand):
 		if options['task_name'] is None:
 			print ("You MUST provide the name of the task")
 			exit(1)
+		else:
+			task_name = options['task_name']
 			
-		add.delay (1,1)
+		if task_name == "add":
+			add.delay (1,1)
 		
+		if task_name=="parse_dmos":
+			parse_dmos.delay("all:collabscore:saintsaens-ref:C006_0")
+			
 		"""send_email.delay(subject="New message", 
 						message="The message", 
 						recipients=["philippe.rigaux@cnam.fr"],
