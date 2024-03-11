@@ -1,11 +1,8 @@
-import copy
-import music21 as m21
-
+mport music21 as m21
 
 import lib.music.events as score_events
 
 import lib.music.Score as score_mod
-from numpy import True_, False_
 
 '''
  Classes representing music notation elements

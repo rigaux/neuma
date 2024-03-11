@@ -10,6 +10,8 @@ RUN apk update && \
   # Neuma dependencies requirements
   apk add --virtual build gcc musl-dev && \
   apk add --virtual build g++ musl-dev && \
+  # Verovio
+  apk add verovio && \
   # PostgreSQL
   apk add postgresql-dev && \
   # Install Neuma Python dependencies

@@ -107,7 +107,6 @@ just have to run:
 ElasticSearch
 =============
 
-
 Install ElasticSearch, standard, from https://www.elastic.co/fr/products/elasticsearch. Run
 an Elasticsearch server somewhere. A simple choice for a dev environment is to install ElasticSearch
 locally, and run a single node from the command line
@@ -131,6 +130,26 @@ In principle, you should never have to worry about directly
 inspecting the index. If you want to do so,
 install the client such as Kibana or Cerebro (https://github.com/lmenezes/cerebro). Being
 able to send HTTP requests with ``curl`` might also prove to be useful 
+
+
+Redit
+=====
+
+Neuma uses Celery for running large tasks in the background. Celery
+itself uses Redit. Just install an instance, with Docker or
+any other utility.
+
+Celery
+======
+
+Finally we must run the Celery worker. In development environment,
+run as follows:
+
+.. code-block:: 
+
+	celery -A scorelib worker --loglevel=INFO
+
+
 
 
 Neuma setup
