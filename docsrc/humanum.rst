@@ -172,10 +172,135 @@ Donc, pour se connecter.
 
 Quelques commandes utiles (se connecter sous root avec ``su -``)
 
-.. code-block
+.. code-block:: bash
 
 	  systemctl | grep postgres
 	  systemctl stop postgresql@14-main.service
       systemctl start postgresql@14-main.service
       systemctl enable postgresql@14-main.service
       systemctl disable postgresql@14-main.service
+ 
+ *****     
+ REDIS
+ *****
+ 
+ Installé de manière standard sous Unbuntu. Le fichier de configuration
+ est `/etc/redis/redis.conf/etc/redis/redis.conf``. Commandes usuelles:
+ 
+ 
+ .. code-block:: bash
+ 
+     sudo systemctl restart redis.service
+	 sudo systemctl disable redis
+	 
+******
+CELERY
+******
+
+Il faut créer le fichier de conf et le fichier de services à la main.
+
+Cf https://www.willandskill.se/sv/articles/celery-4-with-django-on-ubuntu-18-04
+
+Le fichier de définition du service est dans 
+``/etc/systemd/system/celery.service``,
+
+.. code-block:: python
+
+	[Unit]
+	Description=Celery Service
+	After=network.target
+
+	[Service]
+	Type=forking
+	User=celery
+	Group=celery
+	EnvironmentFile=/etc/conf.d/celery
+	WorkingDirectory=/home/scorelibadmin/scorelib-django
+	ExecStart=/bin/sh -c '${CELERY_BIN} -A $CELERY_APP multi start $CELERYD_NODES \
+    	--pidfile=${CELERYD_PID_FILE} --logfile=${CELERYD_LOG_FILE} \
+    	--loglevel="${CELERYD_LOG_LEVEL}" $CELERYD_OPTS'
+	ExecStop=/bin/sh -c '${CELERY_BIN} multi stopwait $CELERYD_NODES \
+    	--pidfile=${CELERYD_PID_FILE} --logfile=${CELERYD_LOG_FILE} \
+    	--loglevel="${CELERYD_LOG_LEVEL}"'
+	ExecReload=/bin/sh -c '${CELERY_BIN} -A $CELERY_APP multi restart $CELERYD_NODES \
+    	--pidfile=${CELERYD_PID_FILE} --logfile=${CELERYD_LOG_FILE} \
+    	--loglevel="${CELERYD_LOG_LEVEL}" $CELERYD_OPTS'
+	Restart=always
+
+	[Install]
+	WantedBy=multi-user.target
+
+Tandis que le fichier de
+configuration est dans ``/etc/conf.d/celery``.
+
+.. code-block:: python
+
+	# Name of nodes to start
+	# here we have a single node
+	CELERYD_NODES="w1"
+	# or we could have three nodes:
+	#CELERYD_NODES="w1 w2 w3"
+
+	# Absolute or relative path to the 'celery' command:
+	#CELERY_BIN="/usr/bin/celery"
+	CELERY_BIN="/home/scorelibadmin/scorelib-django/env/bin/celery"
+
+	# App instance to use
+	CELERY_APP="scorelib"
+
+	# How to call manage.py
+	CELERYD_MULTI="multi"
+
+	# Extra command-line arguments to the worker
+	CELERYD_OPTS="--time-limit=300 --concurrency=8"
+
+	# - %n will be replaced with the first part of the nodename.
+	# - %I will be replaced with the current child process index
+	#   and is important when using the prefork pool to avoid race conditions.
+	CELERYD_PID_FILE="/var/run/celery/%n.pid"
+	CELERYD_LOG_FILE="/var/log/celery/%n%I.log"
+	CELERYD_LOG_LEVEL="INFO"
+
+	# you may wish to add these options for Celery Beat
+	CELERYBEAT_PID_FILE="/var/run/celery/beat.pid"
+	CELERYBEAT_LOG_FILE="/var/log/celery/beat.log"
+
+	# Flower configuration options
+	FLOWER_PORT=5555
+	FLOWER_LOG_PREFIX="/var/log/celery/flower.log"
+	FLOWER_LOG_LEVEL="INFO"
+	
+Pour Flower on crée un fichier flower.service avec le même 
+fichier de paramètres.
+
+.. code-bloc:: python
+	
+	[Unit]
+	Description=Flower Celery Service
+	After=network.target
+
+	[Service]
+	Type=forking
+	User=celery
+	Group=celery
+	EnvironmentFile=/etc/conf.d/celery
+	WorkingDirectory=/home/scorelibadmin/scorelib-django
+	ExecStart=/bin/sh -c '${CELERY_BIN} -A ${CELERY_APP} flower --port=${FLOWER_PORT} \
+  		--log-file-prefix=${FLOWER_LOG_PREFIX} --loglevel=${FLOWER_LOG_LEVEL}'
+	ExecStop=/bin/sh -c '${CELERY_BIN} multi stopwait $CELERYD_NODES \
+    	--pidfile=${CELERYD_PID_FILE} --logfile=${CELERYD_LOG_FILE} \
+    	--loglevel="${CELERYD_LOG_LEVEL}"'
+	ExecReload=/bin/sh -c '${CELERY_BIN} -A $CELERY_APP multi restart $CELERYD_NODES \
+    	--pidfile=${CELERYD_PID_FILE} --logfile=${CELERYD_LOG_FILE} \
+    	--loglevel="${CELERYD_LOG_LEVEL}" $CELERYD_OPTS'
+	Restart=always
+
+	[Install]
+	WantedBy=multi-user.target
+
+Je n’ai pas ajouté le ``—address`` donc flower est ouvert sur le port 5555
+On peut faire un relais:
+
+.. code-block:: bash
+
+	sudo ssh -L 5555:localhost:5555 scorelibadmin@neuma.huma-num.fr
