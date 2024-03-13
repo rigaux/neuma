@@ -36,8 +36,9 @@ class OpusMeta:
 		Serializable representation of an Opus
 	'''
 	
-	def __init__(self, corpus_ref, ref, title, composer):
-		self.ref = ref
+	def __init__(self, corpus_ref, local_ref, title, composer):
+		self.local_ref = local_ref
+		self.ref = corpus_ref + ":" + local_ref
 		self.corpus_ref = corpus_ref
 		self.title = title
 		self.composer = composer
@@ -64,6 +65,8 @@ class OpusMeta:
 		for f in self.files:
 			files.append(f.to_json())
 		return {"ref": self.ref,
+				"local_ref": self.local_ref,
+				"corpus_ref": self.corpus_ref,
 				"title": self.title,
 				"composer": self.composer,
 				"features": features,

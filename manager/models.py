@@ -1450,8 +1450,7 @@ class OpusSource (models.Model):
 		if self.source_file:
 			source_dict.file_path =  self.source_file.url
 		if self.manifest:
-			source_dict.has_manifest =  True
-			
+			source_dict.has_manifest =  True			
 		return source_dict
 
 	def to_json(self, request):

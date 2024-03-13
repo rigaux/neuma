@@ -24,7 +24,7 @@ def main(argv=None):
 	client = NeumaClient (None, auth_scheme="Token", base_url=args.base_url)
 	
 	# Test the welcome message
-	res = client.request ("Welcome")
+	res = client.request ("NeumaApi_v3")
 	print (f"Welcome service -- {res['message']}")
 		
 	res = client.request ("Element", full_neuma_ref= "all:collabscore:saintsaens-ref")
@@ -33,17 +33,20 @@ def main(argv=None):
 	"""
 	    Test with proxies
 	"""
+	corpus_ref = "all:collabscore:saintsaens-ref"
 	print ("\n\n")
 	print ("\t\t Test of proxies\n")
 	neuma_coll = Collections (client)
-	corpus = neuma_coll.get_corpus ("all:collabscore:saintsaens-ref")
+	corpus = neuma_coll.get_corpus (corpus_ref)
 	print (f"Got corpus {corpus.ref}")
 	opuses = corpus.get_opus_list()
 	for op in opuses:
-		print (f"\tOpus {op.title}")
+		print (f"\tOpus {op.ref} with title {op.title}")
 		iiif = op.get_source(Source.IIIF_REF)
-		if iiif.has_manifest:
-			print (f"\t\tSource IIIF : {iiif}. Nb pages: {iiif.nb_pages()}")
+		if iiif is None:
+			print (f"Unable to find source IIIF for opus {op.ref}")
+		elif iiif.has_manifest:
+			print (f"\t\tSource IIIF : {iiif.ref}. Nb pages: {iiif.nb_pages()}")
 			for i in range (iiif.nb_pages()):
 				page = iiif.get_page(i)
 				print (f"\t\t\tPage {i+1}. URL: {page['url']} ({page['width']}) Nb systems: {iiif.nb_systems(i)}")
@@ -51,7 +54,7 @@ def main(argv=None):
 					print (f"\t\t\t\tSystem {j+1} : Nb staves: {iiif.nb_staves(i,j)}")
 					print (f"\t\t\t\tSystem {j+1} : Region: {iiif.system_region(i,j)}")
 				
-		break
+		#break
 	
 if __name__ == "__main__":
 	main()

@@ -134,7 +134,7 @@ class JSONResponse(HttpResponse):
 @api_view(["GET"])
 @permission_classes((AllowAny, ))
 def welcome(request):
-	return JSONResponse({"Message": "Welcome to Neuma web services root URL"})
+	return JSONResponse({"message": "Welcome to Neuma web services root URL"})
 
 @extend_schema(operation_id="CollectionsApi",
 			 description="Welcome Neuma collections services",
@@ -145,7 +145,8 @@ def welcome_collections(request):
 	"""
 	Welcome message to the collections services area
 	"""
-	return JSONResponse({"message": "Welcome to Neuma web services on collections"})
+	mser = MessageSerializer({"message": "Welcome to Neuma web services on collections"})
+	return JSONResponse(mser.data)
 
 
 class ModelList(generics.ListAPIView):

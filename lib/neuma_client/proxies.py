@@ -133,7 +133,7 @@ class Source:
 			return None
 		
 		if  self.manifest_in_cache == False:
-			self.manifest  = self.client.request ("Manifest", 
+			self.manifest  = self.client.request ("SourceManifest", 
 											full_neuma_ref=self.opus.ref,
 											source_ref=self.ref)
 			self.manifest_in_cache = True
