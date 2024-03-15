@@ -97,7 +97,15 @@ class TimeSignature:
 		# m21 duration is the float obtained from the fraction
 		self.m21_time_signature = m21.meter.TimeSignature('{}/{}'.format(self.numer, self.denom))
 		self.m21_time_signature.id = f"tsign{TimeSignature.counter}" 
+		
 		TimeSignature.counter += 1
+
+	def symbolize(self):
+		# Display the TS as a symbole
+		if (self.numer==4 and self.denom==4):
+			self.m21_time_signature.symbol="common"
+		if (self.numer==2 and self.denom==4):
+			self.m21_time_signature.symbol="cut"
 
 	def copy (self):
 		# Make a copy of the current object

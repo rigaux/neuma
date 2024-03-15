@@ -31,6 +31,13 @@ class Voice:
 		# For decoding durations, the time signature is sometimes required
 		return
 	
+	def clean(self):
+		"""
+		   Clean a voice for inconsistent data
+		"""
+		print ("Cleaning the voice")
+		self.remove_invalid_ties()
+		
 	def set_current_time_signature(self, ts):
 		self.current_time_signature = ts
 	
@@ -59,8 +66,8 @@ class Voice:
 		if self.automatic_beaming == False and event.is_note():
 			# In order to disable auto beam, we add a pseudo-beam in the music21
 			# event. Ugly but ...
-			event.m21_event.beams.append(m21.beam.Beam(type='start', number=1))
-			event.m21_event.beams.append(m21.beam.Beam(type='stop', number=1))
+			event.m21_event.beams.append(m21.beam.Beam(type='start', number=99999))
+			event.m21_event.beams.append(m21.beam.Beam(type='stop', number=99999))
 			# No need to preserve the automatic beaming flag
 			self.automatic_beaming = True
 
@@ -87,7 +94,6 @@ class Voice:
 	
 	#def convert_to_sequence(self):
 	# Moved to MusicSummary for reducing dependencies
-	
 	
 	def has_lyrics(self):
 		for event in self.m21_stream.notesAndRests:
@@ -162,6 +168,58 @@ class Voice:
 		k = self.m21_stream.analyze('key')
 		return [k,k.correlationCoefficient,k.alternateInterpretations]
 
+	def remove_invalid_ties(self):
+		# Check that ties are correct
+		
+		# We first collect groups of tied notes
+		groups = []
+		current_group = None
+		for n in self.m21_stream.notes:
+			if n.tie is not None:
+				if n.tie.type=="start":
+					# Ok a group begins here
+					current_group = [n]
+					groups.append(current_group)
+				elif n.tie.type=="stop" or n.tie.type=="continue":
+					# No group ? We create one, although it will be invalid later
+					if current_group is None:
+						current_group = [n]
+						groups.append(current_group)
+					else:
+						current_group.append(n)
+			else:
+				# Ensure that the current group is emopty
+				current_group = None
+					
+		# Fine let's check the groups
+		for group in groups:	
+			valid_tie = True
+			# A tie is valid if it follows the pattern start - [continue] - stop
+			if not (group[0].tie.type == "start"):
+				valid_tie = False
+				print (f"The first note {group[0]} of a group has a non-start tie")
+			if not (group[-1].tie.type == "stop"):
+				valid_tie = False
+				print (f"The last note {group[0]} of a group has a non-stop tie")
+			for i in range(len(group)):
+				n = group[i]
+				if i >= 1 and i < (len(group)-1) and not (n.tie.type =="continue"):
+					valid_tie = False
+					print (f"A middle note {group[0]} of a group has a non-continue tie")
+			
+			# a tie is valid if all the note have the same pitch and octave
+			first_pitch = group[0].pitch
+			first_octave = group[0].octave
+			for n in group:
+				if not (first_pitch == n.pitch and first_octave==n.octave):
+					# We found a mistake
+					valid_tie = False
+					score_mod.logger.warning (f"Invalid tie: found a note {n.pitch} in a tie starting with {first_pitch}")
+			# Clean invalid group
+			if not valid_tie:
+				for n in group:
+					n.tie = None
+		
 	def get_pitches(self):
 		# Valid key adjustment for sorting pitches
 		def pitch_to_int(x):

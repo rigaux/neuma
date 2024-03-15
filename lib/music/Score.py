@@ -96,7 +96,8 @@ class Score:
 		
 		self.m21_score.metadata.title = title
 		self.m21_score.metadata.composer = composer
-		
+		self.m21_score.metadata.add('software', 'DMOS/Collabscore OMR')
+		self.m21_score.metadata.add('copyright', 'CollabScore project')
 		return
 	
 	def duration(self):

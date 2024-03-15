@@ -23,6 +23,7 @@ import lib.music.source as source_mod
 from .constants import *
 from lib.music.source import Manifest
 
+
 # Get an instance of a logger
 # See https://realpython.com/python-logging/
 
@@ -308,8 +309,11 @@ class OmrScore:
 			
 			for system in page.systems:
 				current_system_no += 1
-				if (current_system_no < self.config.system_min) or (
-					    current_system_no > self.config.system_max):
+				current_system_measure_no = 0
+				if (current_page_no == self.config.page_min 
+				      and current_system_no < self.config.system_min) or (
+					    current_page_no == self.config.page_max and 
+					       current_system_no > self.config.system_max):
 					continue
 
 				logger.info (f"")
@@ -364,8 +368,13 @@ class OmrScore:
 					current_position = score.duration().quarterLength
 					#print (f'Process measure {current_measure_no}, to be inserted at position {current_position}')
 					current_measure_no += 1
-					if (current_measure_no < self.config.measure_min) or (
-					    current_measure_no > self.config.measure_max):
+					current_system_measure_no += 1
+					if (current_page_no == self.config.page_min 
+				      	and current_system_no == self.config.system_min
+				      	and current_system_measure_no < self.config.measure_min) or (
+					    current_page_no == self.config.page_max 
+					    and current_system_no == self.config.system_max
+					    and current_system_measure_no > self.config.measure_max):
 						continue
 				
 					# Accidentals are reset at the beginning of measures
@@ -494,8 +503,10 @@ class OmrScore:
 							if current_beam != item.beam_id:
 								if current_beam != None:
 									# The previous event was the end of the beam
+									print (f"Stop beam {current_beam}")
 									previous_event.stop_beam(current_beam)
 								if item.beam_id != None:
+									print (f"Start beam {item.beam_id}")
 									event.start_beam(item.beam_id)
 								current_beam =  item.beam_id
 							previous_event = event
@@ -529,8 +540,14 @@ class OmrScore:
 								
 						# End of items for this measure. Close any pending beam
 						if current_beam != None:
+							print (f"Stop beam {current_beam}")
 							previous_event.stop_beam(current_beam)
 							current_beam =  None
+							
+						# Clean the voice of possible inconsistencies. For
+						# instance ties that to not make sense
+						voice_part.clean()
+						
 						# Add the voice to the measure of the relevant part
 						current_measure.add_voice (voice_part)
 						
@@ -995,8 +1012,11 @@ class TimeSignature:
 
 	def get_notation_object(self):
 		# Decode the DMOS infos
-		return score_notation.TimeSignature (self.time, self.unit)
-
+		ts = score_notation.TimeSignature (self.time, self.unit)
+		if self.element == "letter":
+			ts.symbolize()
+		return ts
+	
 class StaffHeader:
 	"""
 		Representation of a system header
