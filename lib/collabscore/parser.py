@@ -22,6 +22,7 @@ import lib.music.source as source_mod
 
 from .constants import *
 from lib.music.source import Manifest
+from numpy.testing.utils import measure
 
 
 # Get an instance of a logger
@@ -446,8 +447,8 @@ class OmrScore:
 								# Rare occurrence: no time signature on the
 								# initial measure: we hope it is stored in the staff
 								measure_for_part.add_time_signature (staff.current_time_signature)
-								# Sanity: we found at least one time signature change, it should
-								# apply to all staves
+							# Sanity: we found at least one time signature change, it should
+							# apply to all staves
 							if new_time_signature is not None:
 								ts = new_time_signature.copy()
 								staff.set_current_time_signature (ts)
@@ -503,10 +504,10 @@ class OmrScore:
 							if current_beam != item.beam_id:
 								if current_beam != None:
 									# The previous event was the end of the beam
-									print (f"Stop beam {current_beam}")
+									#print (f"Stop beam {current_beam}")
 									previous_event.stop_beam(current_beam)
 								if item.beam_id != None:
-									print (f"Start beam {item.beam_id}")
+									#print (f"Start beam {item.beam_id}")
 									event.start_beam(item.beam_id)
 								current_beam =  item.beam_id
 							previous_event = event
@@ -540,7 +541,7 @@ class OmrScore:
 								
 						# End of items for this measure. Close any pending beam
 						if current_beam != None:
-							print (f"Stop beam {current_beam}")
+							#print (f"Stop beam {current_beam}")
 							previous_event.stop_beam(current_beam)
 							current_beam =  None
 							
@@ -553,6 +554,10 @@ class OmrScore:
 						
 						# This is not longer the initial measure of the system
 						initial_measure = False		
+					
+					# Checking consistency of time signatures
+					score.check_time_signatures(current_measures)
+						
 		return score
 
 
@@ -666,7 +671,7 @@ class Point:
 		self.y = json_point[1]
 
 	def __str__(self):
-		return f'(Point({self.x},{self.y})'
+		return f'(P{self.x},{self.y})'
 
 	def to_json(self):
 		return [self.x, self.y]
@@ -694,11 +699,15 @@ class Region:
 			self.contour.append(Point(json_point))
 
 	def __str__(self):
+		
 		str_repr =""
 		for point in self.contour:
 			str_repr += str(point)
 
 		return f'({str_repr})'
+		
+		# Pour encoder plutôt en JSON
+		# return json.dumps(self.to_json())
 	
 	def to_json(self):
 		res = []

@@ -35,7 +35,7 @@ class Voice:
 		"""
 		   Clean a voice for inconsistent data
 		"""
-		print ("Cleaning the voice")
+		#print ("Cleaning the voice")
 		self.remove_invalid_ties()
 		
 	def set_current_time_signature(self, ts):

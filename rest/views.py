@@ -326,7 +326,7 @@ class Element (APIView):
 							opus=opus, ref=element_id
 							)
 						for annotation in db_annotations:
-							obj["annotations"].append(annotation_to_rest(annotation))
+							obj["annotations"].append(AnnotationSerializer(annotation).data)
 
 					return JSONResponse(obj)
 
@@ -677,7 +677,7 @@ class AnnotationList(generics.ListAPIView):
 		for annotation in db_annotations:
 			if not annotation.ref in annotations:
 				annotations[annotation.ref] = []
-			annotations[annotation.ref].append(annotation_to_rest(annotation))
+			annotations[annotation.ref].append(AnnotationSerializer(annotation).data)
 
 		return JSONResponse(annotations)
 
@@ -712,7 +712,7 @@ class AnnotationDetail(APIView):
 	@extend_schema(operation_id="AnnotationDetail")
 	def get(self, request, full_neuma_ref, annotation_id):
 		db_annotation = self.get_object(annotation_id)
-		return JSONResponse(annotation_to_rest(db_annotation))
+		return JSONResponse(AnnotationSerializer(db_annotation).data)
 
 
 class AnnotationCreate(APIView):

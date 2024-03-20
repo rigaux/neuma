@@ -443,8 +443,10 @@ class MnfPoint:
 	def to_json(self):
 		return [self.x, self.y]
 	
+	#def __str__(self):
+	#	return f'(Point({self.x},{self.y})'
 	def __str__(self):
-		return f'(Point({self.x},{self.y})'
+		return [self.x,self.y]
 
 class MnfRegion:
 	"""

@@ -111,6 +111,9 @@ class TimeSignature:
 		# Make a copy of the current object
 		return TimeSignature (self.numer, self.denom)
 	
+	def code(self):
+		return f"{self.numer} / {self.denom}"
+	
 	def __str__ (self):
 		return f"({self.numer} / {self.denom})"
 	

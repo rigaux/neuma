@@ -287,67 +287,49 @@ class Score:
 	def get_metadata(self):
 		return self.m21_score.metadata
 
-	def get_intervals(self):
-		return score.chordify()
+	#def get_intervals(self):
+	#	return score.chordify()
 	
 	def add_annotation(self, annotation):
 		self.annotations.append(annotation)
-
-'''
-class Page:
-	"""
-        For OMR only: a cpntainer for systems  
-         Does not work with music21....
-    """
-
-	def __init__(self, no_page) :
-		logger.info (f"Adding page {no_page}")
-		self.id = no_page
-
-		self.m21_page = m21.layout.Page(id=no_page)
-
-		# List of systems in the page
-		self.systems = []
-		self.current_system = None 
 		
-	def add_system (self, system):
-		self.systems.append (system)
-		self.current_system = system
-		self.m21_page.append(system.m21_system)
+	def check_time_signatures(self, current_measures, fix=True):
+		"""
+		  Check the consistency of the time signatures for all parts
+		"""
+		# Checking consistency of time signatures
+		count_ts = {}
+		# Count the occurrences of each TS
+		for measure in current_measures.values():
+			if measure.initial_ts is not None:
+				hash_measure = measure.initial_ts.code()
+				if hash_measure in count_ts.keys():
+					count_ts[hash_measure] += 1
+				else:
+					count_ts[hash_measure] = 1
+			else:
+				count_ts["none"] = 1
+		# There should be only one: take the most frequent
+		if len (count_ts.keys()) > 1:
+			max_count = 0
+			for hm in count_ts.keys():
+				if max_count < count_ts[hm]:
+					max_count = count_ts[hm]
+					main_ts = hm
 			
+			for measure in current_measures.values():
+				if measure.initial_ts.code() == main_ts:
+					ts_to_use = measure.initial_ts
+			print (f"The main TS is {ts_to_use}. We use it for all parts")
+				
+			if fix:
+				# Try to fix the issue
+				for measure in current_measures.values():
+					ts = ts_to_use.copy()
+					for staff in measure.part.staves:
+						staff.set_current_time_signature (ts)
+					measure.replace_time_signature (ts)
 
-	def add_part (self, part):
-		""" Add a part to the current system"""
-		self.current_system.add_part(part)	
-
-	def get_parts(self):
-			Get the list of parts in the current system
-		return self.current_system.get_parts()
-
-
-class System:
-
-        For OMR only: all the sub-components (parts, etc) are allocated to a single system 
-        Does not work with music21....
-
-
-	def __init__(self, no_system) :
-		logger.info (f"Adding system {no_system}")
-		self.id = no_system
-
-		self.m21_system = m21.layout.System(id=no_system)
-
-		# List of parts in the system
-		self.parts = []
-		
-	def add_part (self, part):
-		self.parts.append(part)	
-		self.m21_system.insert(0, part.m21_part)		
-
-	def get_parts(self):
-		return self.parts
-'''
-	
 class Part:
 	"""
 		Representation of a part as a hierarchy of parts / voices
@@ -492,6 +474,10 @@ class Measure:
 			self.initial_clefs[staff.id] = staff.current_clef
 			#print (f"Initial clef for measure {self.no} and staff {staff.id}: {staff.current_clef}")
 		
+		# Same thing for initial time signatures. Used for checking consistency
+		# Note: there is only one time signature, common to all staves 
+		self.initial_ts = None
+		
 	def get_initial_clef_for_staff(self, staff_id):
 		if not (staff_id in self.initial_clefs.keys()):
 			# Oups, no such staff 
@@ -515,7 +501,14 @@ class Measure:
 			print (f"Measure {self.no}, staff {staff_id}: initial clef {clef}")
 			
 	def add_time_signature(self, time_signature):
+		self.initial_ts = time_signature
 		self.m21_measure.insert(0,  time_signature.m21_time_signature)
+
+	def replace_time_signature(self, new_time_signature):
+		if 	self.initial_ts is not None:
+			self.m21_measure.remove(self.initial_ts.m21_time_signature)
+			self.add_time_signature(new_time_signature)
+		
 	def add_key_signature(self, key_signature):
 		self.m21_measure.insert(0,  key_signature.m21_key_signature)
 		

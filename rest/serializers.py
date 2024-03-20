@@ -227,8 +227,9 @@ def annotation_to_rest(annotation):
 	  Create the REST answer that describes an annotation
 	"""
 
+	w3c = False # Change to true for a full W3C compliant
 	webannot = annotation.produce_web_annotation()
-	return webannot.get_json_obj()
+	return webannot.get_json_obj(w3c)
 
 def create_arkidx_element_dict(elt_type, id_element, name, corpus, metadata=[],
 							has_children=False, zone=None):

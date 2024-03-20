@@ -1637,7 +1637,6 @@ class Annotation(models.Model):
 	'''An annotation qualifies a fragment of a score with an analytic concept'''
 	opus = models.ForeignKey(Opus,on_delete=models.CASCADE)
 	# Analytic concept: for the moment, a simple code. See how we can do better
-
 	analytic_concept = models.ForeignKey(AnalyticConcept,on_delete=models.CASCADE,null=True)
 
 	# reference to the element being annotated, in principle an xml:id

@@ -64,17 +64,28 @@ class Annotation:
 	def format_id(self):
 		return f'annot{self.id}' 
 
-	def get_json_obj (self):
+	def get_json_obj (self, w3c=True):
 		''' Produce the JSON string, conform to the W3C spec..'''
-		return {"id": self.id, "type": "Annotation", 
-			"creator": self.creator.get_json_obj(),
-			  "motivation": self.motivation, "annotation_model": self.annotation_model,
-			  "annotation_concept": self.annotation_concept,
-			 "body": self.body.get_json_obj(), 
-			 "target": self.target.get_json_obj(),
-			 "style": self.style.get_json_obj(),
-			 "created": str(self.created),
-			 "modified": str(self.modified)}
+		
+		if w3c:
+			return {"id": self.id, "type": "Annotation", 
+					"creator": self.creator.get_json_obj(),
+			  		"motivation": self.motivation, "annotation_model": self.annotation_model,
+			  		"annotation_concept": self.annotation_concept,
+			 		"body": self.body.get_json_obj(), 
+			 		"target": self.target.get_json_obj(),
+			 		#"style": self.style.get_json_obj(),
+			 		"created": str(self.created),
+			 		"modified": str(self.modified)}
+		else:
+			# Produce a simplified representation
+			return {"id": self.id, 
+			  		 "annotation_model": self.annotation_model,
+			  		"annotation_concept": self.annotation_concept,
+			 		"body": self.body.get_json_obj(w3c), 
+			 		"target": self.target.get_json_obj(w3c)
+			 		}
+			
 		
 	@staticmethod 
 	def create_from_json (data):
@@ -177,8 +188,12 @@ class Target:
 	def __str__ (self):
 		return str(self.resource)
 
-	def get_json_obj(self):
-		return {"resource": self.resource.get_json_obj(), "type": "SpecificResource"}
+	def get_json_obj(self, w3c=True):
+		if w3c:
+			return {"resource": self.resource.get_json_obj(), 
+			      "type": "SpecificResource"}
+		else:
+			return self.resource.get_json_obj()
 
 class Body:
 	'''
@@ -190,7 +205,7 @@ class Body:
 	def __init__(self):
 		self.type = "generic_body"
 		
-	def get_json_obj(self):
+	def get_json_obj(self, w3c=True):
 		''' 
 			Return an object from JSON serialisation
 		'''
@@ -209,7 +224,7 @@ class TextualBody(Body):
 	def __str__ (self):
 		return self.value
 	
-	def get_json_obj(self):
+	def get_json_obj(self, w3c=True):
 		return {"type": "TextualBody", "value": self.value}
 
 class ResourceBody(Body):
@@ -226,10 +241,13 @@ class ResourceBody(Body):
 	def __str__(self):
 		return f"ResourceBody. Source: {self.resource}"
 
-	def get_json_obj(self):
-		return {"type": "SpecificResource", 
-			"resource": self.resource.get_json_obj()}
-
+	def get_json_obj(self, w3c=True):
+		if w3c:
+			return {"type": "SpecificResource", 
+				"resource": self.resource.get_json_obj()}
+		else:
+			return self.resource.get_json_obj()
+			
 class Style:
 	'''
 	   Some instructions to display an annotation
