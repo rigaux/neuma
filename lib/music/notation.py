@@ -114,6 +114,10 @@ class TimeSignature:
 	def code(self):
 		return f"{self.numer} / {self.denom}"
 	
+	def barDuration(self):
+		# Expected duration of a bar with this TS
+		return self.m21_time_signature.barDuration
+	
 	def __str__ (self):
 		return f"({self.numer} / {self.denom})"
 	

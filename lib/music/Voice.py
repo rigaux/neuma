@@ -146,6 +146,13 @@ class Voice:
 
 		return freq
 
+	def get_duration(self):
+		# Return the sumof durations of the voice
+		duration = 0
+		for event in self.notesAndRests:
+			duration += event.duration
+		return duration
+	
 #	def get_all_durations(self):
 #		'''Return half-steps intervals'''
 #		du = map(lambda x: x.duration,self.m21_stream.notes())
@@ -197,15 +204,15 @@ class Voice:
 			# A tie is valid if it follows the pattern start - [continue] - stop
 			if not (group[0].tie.type == "start"):
 				valid_tie = False
-				print (f"The first note {group[0]} of a group has a non-start tie")
+				score_mod.logger.warning (f"The first note {group[0]} of a group has a non-start tie")
 			if not (group[-1].tie.type == "stop"):
 				valid_tie = False
-				print (f"The last note {group[0]} of a group has a non-stop tie")
+				score_mod.logger.warning (f"The last note {group[0]} of a group has a non-stop tie")
 			for i in range(len(group)):
 				n = group[i]
 				if i >= 1 and i < (len(group)-1) and not (n.tie.type =="continue"):
 					valid_tie = False
-					print (f"A middle note {group[0]} of a group has a non-continue tie")
+					score_mod.logger.warning (f"A middle note {group[0]} of a group has a non-continue tie")
 			
 			# a tie is valid if all the note have the same pitch and octave
 			first_pitch = group[0].pitch

@@ -552,11 +552,17 @@ class OmrScore:
 						# Add the voice to the measure of the relevant part
 						current_measure.add_voice (voice_part)
 						
+						
 						# This is not longer the initial measure of the system
 						initial_measure = False		
 					
 					# Checking consistency of time signatures
 					score.check_time_signatures(current_measures)
+					
+					
+					# Time to checkthe consistency of the measure
+					for measure in	current_measures.values():
+						measure.check_consistency()
 						
 		return score
 

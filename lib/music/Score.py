@@ -311,6 +311,8 @@ class Score:
 				count_ts["none"] = 1
 		# There should be only one: take the most frequent
 		if len (count_ts.keys()) > 1:
+			logger.warning (f"Measure {measure.id} has distinct time signatures. Attempt to fix... !!")
+
 			max_count = 0
 			for hm in count_ts.keys():
 				if max_count < count_ts[hm]:
@@ -320,7 +322,7 @@ class Score:
 			for measure in current_measures.values():
 				if measure.initial_ts.code() == main_ts:
 					ts_to_use = measure.initial_ts
-			print (f"The main TS is {ts_to_use}. We use it for all parts")
+			logger.warning  (f"The main TS is {ts_to_use}. We use it for all parts")
 				
 			if fix:
 				# Try to fix the issue
@@ -476,7 +478,8 @@ class Measure:
 		
 		# Same thing for initial time signatures. Used for checking consistency
 		# Note: there is only one time signature, common to all staves 
-		self.initial_ts = None
+		for staff in part.staves:
+			self.initial_ts = staff.current_time_signature
 		
 	def get_initial_clef_for_staff(self, staff_id):
 		if not (staff_id in self.initial_clefs.keys()):
@@ -532,7 +535,20 @@ class Measure:
 			# First of system? We insert the current clef
 			self.m21_measure.insert(0,  staff.current_clef.m21_clef)
 		
-	
+	def check_consistency(self, fix=True):
+		"""
+		   Check that the events in the measure cover exactly the
+		   expected duration
+		 """
+		
+		# First get the time signature in effect
+		logger.info (f"Measure {self.id}. Expected duration: {self.initial_ts.barDuration().quarterLength}")
+		for voice in self.m21_measure.getElementsByClass(m21.stream.Voice):
+			if not (voice.duration == self.initial_ts.barDuration()):					
+				logger.warning (f"Incomplete duration for voice {voice.id}. Duration: {voice.duration.quarterLength}")
+				for event in voice.notesAndRests:
+					print (f"Event {event.id}. Duration: {event.duration}. Hidden {event.style.hideObjectOnPrint}")
+		
 	def length(self):
 		# Music21 conventions
 		return self.m21_measure.duration
