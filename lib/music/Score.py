@@ -545,10 +545,19 @@ class Measure:
 		logger.info (f"Measure {self.id}. Expected duration: {self.initial_ts.barDuration().quarterLength}")
 		for voice in self.m21_measure.getElementsByClass(m21.stream.Voice):
 			if not (voice.duration == self.initial_ts.barDuration()):					
-				logger.warning (f"Incomplete duration for voice {voice.id}. Duration: {voice.duration.quarterLength}")
+				logger.warning (f"Incomplete duration in measure {self.id}. Expected duration: {self.initial_ts.barDuration().quarterLength}. Voice {voice.id} duration is {voice.duration.quarterLength}")
 				for event in voice.notesAndRests:
-					print (f"Event {event.id}. Duration: {event.duration}. Hidden {event.style.hideObjectOnPrint}")
+					print (f"Event {event.id}. Duration: {event.duration.quarterLength}. Hidden {event.style.hideObjectOnPrint}")
 		
+				# Trying to fix thi. Easy when we just have to complete the voice
+				if fix and voice.duration.quarterLength < self.initial_ts.barDuration().quarterLength:
+					quarters_to_add =  self.initial_ts.barDuration().quarterLength - voice.duration.quarterLength
+					logger.warning (f"Adding and event with duration {quarters_to_add}")
+					added_event = m21.note.Rest()
+					added_event.duration = m21.duration.Duration(quarters_to_add)
+					voice.append(added_event)
+					logger.warning (f"After completion. measure duration: {self.initial_ts.barDuration().quarterLength}. Voice {voice.id} duration {voice.duration.quarterLength}")
+					
 	def length(self):
 		# Music21 conventions
 		return self.m21_measure.duration

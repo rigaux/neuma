@@ -446,10 +446,15 @@ class OmrScore:
 							if initial_measure:
 								# Rare occurrence: no time signature on the
 								# initial measure: we hope it is stored in the staff
-								measure_for_part.add_time_signature (staff.current_time_signature)
+								logger.warning (f'No time signature at the beginning of staff {header.no_staff}. We take {staff.current_time_signature}')
+								ts = staff.current_time_signature.copy()
+								measure_for_part.add_time_signature (ts)
+								staff.set_current_time_signature (ts)
+		
 							# Sanity: we found at least one time signature change, it should
 							# apply to all staves
 							if new_time_signature is not None:
+								logger.warning (f'Using the time signature already found on another staff:  {new_time_signature}')
 								ts = new_time_signature.copy()
 								staff.set_current_time_signature (ts)
 								measure_for_part.add_time_signature (ts)
@@ -560,9 +565,9 @@ class OmrScore:
 					score.check_time_signatures(current_measures)
 					
 					
-					# Time to checkthe consistency of the measure
-					for measure in	current_measures.values():
-						measure.check_consistency()
+					# Time to check the consistency of the measure
+					#for measure in	current_measures.values():
+					#	measure.check_consistency()
 						
 		return score
 
