@@ -323,6 +323,13 @@ class OmrScore:
 				# Get the system from the manifest
 				mnf_system = mnf_page.get_system(current_system_no)
 
+				# Annotate this measure
+				annotation = annot_mod.Annotation.create_annot_from_xml_to_image(
+							self.creator, self.uri, f"P{current_page_no}-S{current_system_no}", 
+							page.page_url, system.region.string_xyhw(), 
+							constants_mod.IREGION_SYSTEM_CONCEPT)
+				score.add_annotation (annotation)
+
 				#score_system = score_model.System(system.id)
 				#score_page.add_system(score_system)
 				system_begins = True
@@ -384,6 +391,13 @@ class OmrScore:
 					logger.info (f"")
 					logger.info (f'Process measure {current_measure_no}, to be inserted at position {score.duration()}')
 
+					# Annotate this measure
+					annotation = annot_mod.Annotation.create_annot_from_xml_to_image(
+							self.creator, self.uri, f"P{current_page_no}-S{current_system_no}-M{current_measure_no}", 
+							page.page_url, measure.region.string_xyhw(), 
+							constants_mod.IREGION_MEASURE_CONCEPT)
+					score.add_annotation (annotation)
+
 					# Create a new measure for each part
 					current_measures = {}
 					for part in score.get_parts():
@@ -403,12 +417,6 @@ class OmrScore:
 							measure_for_part.add_system_break()
 							system_begins = False
 
-						# Annotate this measure
-						annotation = annot_mod.Annotation.create_annot_from_xml_to_image(
-							self.creator, self.uri, measure_for_part.id, 
-							page.page_url, measure.region.string_xyhw(), 
-							constants_mod.IREGION_MEASURE_CONCEPT)
-						score.add_annotation (annotation)
 								
 						# Add the measure to its part (notational events are added there)
 						part.append_measure (measure_for_part)
@@ -526,17 +534,16 @@ class OmrScore:
 								voice_part.append_clef(event, no_staff)
 							else:
 								logger.error (f'Unknown event type {type_event} for voice {voice.id}')
-								
-								
+		
 							# Annotate this event if the region is known
 							# We do not do that for the moment
-							'''if event_region is not None:
+							if event_region is not None:
 								annotation = annot_mod.Annotation.create_annot_from_xml_to_image(
 									self.creator, self.uri, event.id, 
 									self.score_image_url, event_region.string_xyhw(), 
 									constants_mod.IREGION_NOTE_CONCEPT)
 								score.add_annotation (annotation)
-							'''
+							
 							# Did we met errors ?
 							for error in item.errors:
 								annotation = annot_mod.Annotation.create_annot_from_error (

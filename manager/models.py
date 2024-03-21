@@ -1149,6 +1149,9 @@ class Opus(models.Model):
 		
 	def parse_dmos(self):
 		dmos_dir = os.path.join("file://" + settings.BASE_DIR, 'static/json/', 'dmos')
+		
+		# In case we just want to test annotations
+		just_annotations = False 
 
 		# Where is the schema?
 		schema_dir = os.path.join(dmos_dir, 'schema/')
@@ -1189,58 +1192,61 @@ class Opus(models.Model):
 		score = omr_score.get_score()
 	
 		# Store the MusicXML file in the opus
-		print ("Replace XML file")
-		mxml_file = "/tmp/score.xml"
-		score.write_as_musicxml (mxml_file)
-		with open(mxml_file) as f:
-			self.musicxml = File(f,name="score.xml")
-			self.save()
-		self.create_source_with_file(source_mod.OpusSource.MUSICXML_REF, 
+		if not just_annotations:
+			print ("Replace XML file")
+			mxml_file = "/tmp/score.xml"
+			score.write_as_musicxml (mxml_file)
+			with open(mxml_file) as f:
+				self.musicxml = File(f,name="score.xml")
+				self.save()
+			self.create_source_with_file(source_mod.OpusSource.MUSICXML_REF, 
 									SourceType.STYPE_MXML,
 							"", mxml_file, "score.xml")
 		
-		# Generate and store the MEI file as a source and main file
-		# Create the file
-		mei_file = "/tmp/score_mei.xml"
-		score.write_as_mei (mei_file)
-		with open(mei_file) as f:
-			print ("Replace MEI file")
-			self.mei = File(f,name="mei.xml")
-			self.save()	
-		mei_source = self.create_source_with_file("mei", SourceType.STYPE_MEI,
+			# Generate and store the MEI file as a source and main file
+			# Create the file
+			mei_file = "/tmp/score_mei.xml"
+			score.write_as_mei (mei_file)
+			with open(mei_file) as f:
+				print ("Replace MEI file")
+				self.mei = File(f,name="mei.xml")
+				self.save()	
+			mei_source = self.create_source_with_file("mei", SourceType.STYPE_MEI,
 							"", mei_file, "score.mei")
 		
-		# Generate the MIDI file
-		print ("Produce MIDI file")
-		midi_file = "/tmp/score.midi"
-		score.write_as_midi (midi_file)
-		self.create_source_with_file(source_mod.OpusSource.MIDI_REF, 
+			# Generate the MIDI file
+			print ("Produce MIDI file")
+			midi_file = "/tmp/score.midi"
+			score.write_as_midi (midi_file)
+			self.create_source_with_file(source_mod.OpusSource.MIDI_REF, 
 									SourceType.STYPE_MIDI,
 							"", midi_file, "score.midi", "rb")
 		
-		# Get the IIIF manifest for image infos
-		iiif_proxy = iiif_mod.Proxy(iiif_mod.GALLICA_BASEURL)
-		docid = iiif_mod.Proxy.decompose_gallica_ref(dmos_source.url)
-		try:
-			iiif_doc = iiif_proxy.get_document(docid)
-			print (f"Got the IIIF manifest. Nb canvases {iiif_doc.nb_canvases}")
-			images = iiif_doc.get_images()
-			for img in images:
-				print (f"Image {img.url}. Width {img.width}")
-			omr_score.manifest.add_image_info (images) 
-		except Exception as ex:
-			logger.error(str(ex))
+			# Get the IIIF manifest for image infos
+			iiif_proxy = iiif_mod.Proxy(iiif_mod.GALLICA_BASEURL)
+			docid = iiif_mod.Proxy.decompose_gallica_ref(dmos_source.url)
+			try:
+				iiif_doc = iiif_proxy.get_document(docid)
+				print (f"Got the IIIF manifest. Nb canvases {iiif_doc.nb_canvases}")
+				images = iiif_doc.get_images()
+				for img in images:
+					print (f"Image {img.url}. Width {img.width}")
+				omr_score.manifest.add_image_info (images) 
+			except Exception as ex:
+				logger.error(str(ex))
 
-		# Store the manifest 
-		for source in self.opussource_set.all ():
-			if source.ref == source_mod.OpusSource.IIIF_REF:
-				print ("Save the manifest")
-				source.manifest = ContentFile(json.dumps(omr_score.manifest.to_json()), name="manifest.json")
-				source.save()
+			# Store the manifest 
+			for source in self.opussource_set.all ():
+				if source.ref == source_mod.OpusSource.IIIF_REF:
+					print ("Save the manifest")
+					source.manifest = ContentFile(json.dumps(omr_score.manifest.to_json()), name="manifest.json")
+					source.save()
 		
-		# Now we know the full url of the MEI document
-		score.uri = mei_source.source_file.url
-		user_annot = User.objects.get(username=settings.COMPUTER_USER_NAME)
+			# Now we know the full url of the MEI document
+			score.uri = mei_source.source_file.url
+		else:
+			score.uri = "Undetermined: change the 'just_annotations' setting"
+
 		# <clean existing annotations
 		for dba in Annotation.objects.filter(opus=self):
 			if dba.target is not None:
@@ -1250,6 +1256,7 @@ class Opus(models.Model):
 			dba.delete()
 
 		print (f'Inserting annotations')
+		user_annot = User.objects.get(username=settings.COMPUTER_USER_NAME)
 		for annotation in score.annotations:
 			annotation.target.resource.source = score.uri
 

@@ -468,19 +468,23 @@ class Measure:
 		self.id = f'm{no_measure}-{Measure.sequence_measure}' 
 		self.m21_measure = m21.stream.Measure(id=self.id, number=no_measure)
 		self.m21_measure.style.absoluteX = 23
+		self.initial_clefs = {}
 		
 		# We keep the clef for each staff at the beginning of measure. They
 		# are used to determine the pitch from the head's height
-		self.initial_clefs = {}
-		for staff in part.staves:
-			self.initial_clefs[staff.id] = staff.current_clef
-			#print (f"Initial clef for measure {self.no} and staff {staff.id}: {staff.current_clef}")
-		
-		# Same thing for initial time signatures. Used for checking consistency
-		# Note: there is only one time signature, common to all staves 
-		for staff in part.staves:
-			self.initial_ts = staff.current_time_signature
-		
+		if len(part.staves) > 0:
+			for staff in part.staves:
+				self.initial_clefs[staff.id] = staff.current_clef
+				#print (f"Initial clef for measure {self.no} and staff {staff.id}: {staff.current_clef}")
+			# Same thing for initial time signatures. Used for checking consistency
+			# Note: there is only one time signature, common to all staves 
+			for staff in part.staves:
+				self.initial_ts = staff.current_time_signature
+		else:
+			# No staves for this measure????
+			logger.warning (f"Measure {self.id} has no staves? Assuming a time signature 4/4")
+			self.initial_ts = notation.TimeSignature() 
+			
 	def get_initial_clef_for_staff(self, staff_id):
 		if not (staff_id in self.initial_clefs.keys()):
 			# Oups, no such staff 

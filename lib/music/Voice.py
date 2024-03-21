@@ -215,17 +215,18 @@ class Voice:
 					score_mod.logger.warning (f"A middle note {group[0]} of a group has a non-continue tie")
 			
 			# a tie is valid if all the note have the same pitch and octave
-			first_pitch = group[0].pitch
-			first_octave = group[0].octave
-			for n in group:
-				if not (first_pitch == n.pitch and first_octave==n.octave):
-					# We found a mistake
-					valid_tie = False
-					score_mod.logger.warning (f"Invalid tie: found a note {n.pitch} in a tie starting with {first_pitch}")
-			# Clean invalid group
-			if not valid_tie:
+			if isinstance (group[0], m21.note.Note):
+				first_pitch = group[0].pitch
+				first_octave = group[0].octave
 				for n in group:
-					n.tie = None
+					if not (first_pitch == n.pitch and first_octave==n.octave):
+						# We found a mistake
+						valid_tie = False
+						score_mod.logger.warning (f"Invalid tie: found a note {n.pitch} in a tie starting with {first_pitch}")
+				# Clean invalid group
+				if not valid_tie:
+					for n in group:
+						n.tie = None
 		
 	def get_pitches(self):
 		# Valid key adjustment for sorting pitches
