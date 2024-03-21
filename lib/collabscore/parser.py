@@ -566,8 +566,8 @@ class OmrScore:
 					
 					
 					# Time to check the consistency of the measure
-					#for measure in	current_measures.values():
-					#	measure.check_consistency()
+					for measure in	current_measures.values():
+						measure.check_consistency()
 						
 		return score
 
