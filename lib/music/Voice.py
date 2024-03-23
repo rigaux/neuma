@@ -21,7 +21,7 @@ class Voice:
 		# A voice has an id, and the sequence is represented as a Music21 stream
 		self.part = part
 		self.id = voice_id
-		self.m21_stream = m21.stream.Voice()
+		self.m21_stream = m21.stream.Voice(id=voice_id)
 		
 		# For OMR: The current clefs are used to decode symbols on staves
 		self.current_clefs = {}
@@ -29,6 +29,7 @@ class Voice:
 		self.automatic_beaming = True
 
 		# For decoding durations, the time signature is sometimes required
+		self.current_time_signature = None
 		return
 	
 	def clean(self):
@@ -50,12 +51,13 @@ class Voice:
 			self.current_clefs[staff_id] = clef
 
 	def get_current_clef_for_staff(self, staff_id):
-		# What is the last clef met on this staff ?
-		if not (staff_id in self.current_clefs.keys()):
+		#  The staff should belong to the voice's part
+		if not self.part.staff_exists(staff_id):
 			# Oups, no such staff 
-			raise score_mod.CScoreModelError (f"No staff ‘{staff_id}' for voice {self.id}")
+			raise score_mod.CScoreModelError (f"No staff ‘{staff_id}' in part {self.part.id} for voice {self.id}")
 		else:
-			return self.current_clefs[staff_id]
+			staff = self.part.get_staff(staff_id)
+			return staff.current_clef
 
 	def set_from_m21(self, m21stream):
 		"""Feed the voice representation from a MusicXML document"""
@@ -66,8 +68,10 @@ class Voice:
 		if self.automatic_beaming == False and event.is_note():
 			# In order to disable auto beam, we add a pseudo-beam in the music21
 			# event. Ugly but ...
-			event.m21_event.beams.append(m21.beam.Beam(type='start', number=99999))
-			event.m21_event.beams.append(m21.beam.Beam(type='stop', number=99999))
+			
+			# Do differently: check at the end if the voice has a beam
+			#event.m21_event.beams.append(m21.beam.Beam(type='start', number=99999))
+			#event.m21_event.beams.append(m21.beam.Beam(type='stop', number=99999))
 			# No need to preserve the automatic beaming flag
 			self.automatic_beaming = True
 

@@ -132,6 +132,9 @@ class Manifest:
 	def add_part(self, part):
 		self.parts[part.id] = part
 
+	def part_exists(self, id_part):
+		return (id_part in self.parts.keys())
+
 	def get_part(self, id_part):
 		if not (id_part in self.parts.keys()):
 			raise score_mod.CScoreModelError ("Searching a non existing part : " + id_part )		
@@ -258,8 +261,10 @@ class MnfPage:
 		# Collect groups found in systems.
 		# Warning: in an extreme case we must manage group at the system level
 		for system in self.systems:
+			system.create_groups()
 			for id_part, staves in system.groups.items():
 				if not id_part in self.groups.keys():
+					score_mod.logger.info (f"Found a staff group in page {self.url} for part {id_part}")
 					self.groups[id_part] = staves
 
 class MnfSystem:
@@ -317,6 +322,7 @@ class MnfSystem:
 		# OK, now find parts with more that one staff
 		for id_part, staves in parts_staves.items():
 			if len(staves) > 1:
+				score_mod.logger.info (f"Found a staff group in system {self.number} for part {id_part}")
 				self.groups[id_part] = staves
 	
 	def count_staves_for_part (self, id_part):
@@ -355,7 +361,14 @@ class MnfStaff:
 				return True
 			else:
 				return False
-			
+	
+	def get_part_id(self):
+		# For the time being we allow only one part per staff
+		
+		if len(self.parts) > 1 or len(self.parts) == 0:
+			raise score_mod.CScoreModelError (f"Staff {self.id} should have exactly one part")
+		return self.parts[0].id
+		
 	def add_part(self, id_part):
 		# For the time being we allow only one part per staff
 		
