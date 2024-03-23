@@ -461,9 +461,15 @@ class Part:
 		logger.error (f"Unable to find a current measure for part {self.id} and staff {no_staff}")
 		raise CScoreModelError (f"Unable to find a current measure for part {self.id} and staff {no_staff}")
 			
-	def add_voice(self, voice, no_staff=None):
-		measure = self.get_measure_from_staff(no_staff)
-		measure.add_voice(voice)
+	def add_voice(self, voice):
+		if not self.part_type == Part.GROUP_PART:
+			self.current_measure.add_voice(voice)
+		else:
+			# We determine the main staff
+			no_staff = voice.determine_main_staff()
+			# We add the voice to the part measure with this staff
+			measure = self.get_measure_from_staff(no_staff)
+			measure.add_voice(voice)
 		
 	def add_system_break(self):
 		for measure in  self.get_current_measures():

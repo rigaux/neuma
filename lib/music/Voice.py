@@ -28,6 +28,9 @@ class Voice:
 		# Still for OMR: we can disable automatic beaming
 		self.automatic_beaming = True
 
+		# List of events
+		self.events = []
+		
 		# For decoding durations, the time signature is sometimes required
 		self.current_time_signature = None
 		return
@@ -75,6 +78,8 @@ class Voice:
 			# No need to preserve the automatic beaming flag
 			self.automatic_beaming = True
 
+		self.events.append(event)
+		
 		self.m21_stream.append(event.m21_event)
 
 	def append_clef(self, clef, no_staff):
@@ -85,6 +90,33 @@ class Voice:
 		self.part.add_clef_to_staff (no_staff, clef)
 		
 		self.m21_stream.append(clef.m21_clef)
+
+	def get_staff_distribution(self):
+		staff_distrib = {}
+		for event in self.events:
+			if event.no_staff is None:
+				continue
+			if event.no_staff in staff_distrib.keys():
+				# A new staff
+				staff_distrib[event.no_staff] += 1
+			else:
+				staff_distrib[event.no_staff] = 1
+		return staff_distrib
+	
+	def determine_main_staff(self):
+		# Choose the staff where the voice has the main part
+		main_staff = None
+		current_count = 0
+		for no_staff, count in  self.get_staff_distribution().items():
+			if main_staff is None:
+				main_staff = no_staff 
+				current_count = count
+			else:
+				if current_count < count:
+					current_count = count
+					main_staff = no_staff
+		print (f"In voice {self.id}, main staff is {main_staff} with count {current_count}")
+		return main_staff
 
 	def get_half_step_intervals(self):
 		'''Return half-steps intervals'''

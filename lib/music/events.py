@@ -58,10 +58,13 @@ class Event:
 		self.type = Event.TYPE_NOTE
 		# Mostly used for hidden rests 
 		self.visible = True
+		self.no_staff = None
 
 	def is_note(self):
 		return False
 	def is_rest(self):
+		return False
+	def is_chord(self):
 		return False
 	
 	def set_visibility(self, visibility):
@@ -219,6 +222,8 @@ class Chord (Event):
 	
 	def is_note(self):
 		return False
+	def is_chord(self):
+		return True
 	def get_no_staff(self):
 		return self.no_staff
 
