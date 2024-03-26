@@ -232,10 +232,13 @@ class OmrScore:
 
 		# Produce the manifest of the score
 		current_page_no = 0
+		current_measure_no = 0
+
 		self.manifest = Manifest(json_data["id"], json_data["score_image_url"])
 		for page in self.pages:
 			current_system_no = 0
 			current_page_no += 1
+			current_system_measure_no = 0
 			# Create the manifest from the source
 			src_page = source_mod.MnfPage(page.page_url, current_page_no, 0, 0,
 										self.manifest)
@@ -256,6 +259,15 @@ class OmrScore:
 						src_part = source_mod.MnfPart(header.id_part, header.id_part, header.id_part) 
 						self.manifest.add_part(src_part)
 					src_staff.add_part(header.id_part)
+				for measure in system.measures:
+					current_measure_no += 1
+					current_system_measure_no += 1
+					src_measure = source_mod.MnfMeasure(current_measure_no, 
+													  current_system_measure_no,
+													  src_system,
+														measure.region.to_json())
+					src_system.add_measure(src_measure)
+
 			self.manifest.add_page(src_page)
 		
 		# Now we create the groups to detect parts that extend over several staves

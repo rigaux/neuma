@@ -276,6 +276,7 @@ class MnfSystem:
 		self.page = page
 		self.number = number
 		self.staves  = []
+		self.measures  = []
 		self.groups = {}
 		self.region = MnfRegion(region)
 
@@ -290,12 +291,25 @@ class MnfSystem:
 		# Oups should never happpen
 		raise score_mod.CScoreModelError (f"Searching a non existing staff {id_staff} in system {self.number}")
 
+	def add_measure(self, measure):
+		self.measures.append(measure)
+		
+	def get_measure(self, no_measure):
+		for measure in self.measures:
+			if measure.number == no_measure:
+				return measure
+		# Oups should never happpen
+		raise score_mod.CScoreModelError (f"Searching a non existing measure {no_measure} in system {self.number}")
+
 	@staticmethod
 	def from_json (json_mnf, page):
 		system = MnfSystem(json_mnf["number"], page, json_mnf["region"])
 		for json_staff in json_mnf["staves"]:
 			staff = MnfStaff.from_json(json_staff, system)
 			system.add_staff(staff)
+		for json_measure in json_mnf["measures"]:
+			measure = MnfMeasure.from_json(json_measure, system)
+			system.add_measure(measure)
 			
 		system.create_groups()
 		
@@ -305,9 +319,14 @@ class MnfSystem:
 		staves_json = []
 		for staff in self.staves:
 			staves_json.append(staff.to_json())
+		measures_json = []
+		for measure in self.measures:
+			measures_json.append(measure.to_json())
 		return {"number": self.number, 
+				"region": self.region.to_json(),
 				"staves": staves_json,
-				"region": self.region.to_json()}
+				"measures": measures_json
+				}
 
 	def create_groups(self):
 		# identify parts that spread over several staves (ie keyboards)
@@ -418,7 +437,31 @@ class MnfStaff:
 		if "time_signature" in json_mnf:
 			staff.time_signature = MnfTimeSig.from_json(json_mnf["time_signature"])
 		return staff
+
 		
+class MnfMeasure:
+	'''
+		A measure in a system, covering all the staves
+	'''
+	
+	def __init__(self, no_measure, no_in_system, system, region) :
+		self.system = system
+		self.number = no_measure
+		self.number_in_system = no_in_system
+		self.region = MnfRegion(region)				
+		
+	def to_json (self):
+		return {"number": self.number, 
+				"number_in_system": self.number_in_system, 
+				"region": self.region.to_json()}
+	
+	@staticmethod
+	def from_json (json_measure, system):
+		measure = MnfMeasure(json_measure["number"], 
+							json_measure["number_in_system"], 
+								system, json_measure["region"])
+		return measure
+	
 class MnfTimeSig:
 	"""
 	  Sometimes we must add the time signature
