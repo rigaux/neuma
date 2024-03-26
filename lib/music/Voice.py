@@ -115,7 +115,6 @@ class Voice:
 				if current_count < count:
 					current_count = count
 					main_staff = no_staff
-		print (f"In voice {self.id}, main staff is {main_staff} with count {current_count}")
 		return main_staff
 
 	def get_half_step_intervals(self):

@@ -555,6 +555,7 @@ class OmrScore:
 								# The staff id is in the voice item
 								no_staff = item.no_staff_clef
 								# We found a clef change
+								print ("Add and event to staff {no_staff}")
 								voice_part.append_clef(event, no_staff)
 							else:
 								logger.error (f'Unknown event type {type_event} for voice {voice.id}')
@@ -680,8 +681,9 @@ class OmrScore:
 		elif voice_item.rest_attr is not None:
 			# It is a rest
 			for head in voice_item.rest_attr.heads:
-				event = score_events.Rest(duration, head.no_staff)
-			event.set_visibility(voice_item.rest_attr.visible)
+				no_staff = StaffHeader.make_id_staff(head.no_staff) # Will be used as the chord staff.
+				event = score_events.Rest(duration, no_staff)
+				event.set_visibility(voice_item.rest_attr.visible)
 		elif voice_item.clef_attr is not None:
 			#This is a clef change 
 			event = voice_item.clef_attr.get_notation_clef()
