@@ -82,6 +82,9 @@ class Voice:
 		
 		self.m21_stream.append(event.m21_event)
 
+	def nb_events(self):
+		return len(self.events)
+	
 	def append_clef(self, clef, no_staff):
 		score_mod.logger.info (f"Add a clef to staff {no_staff}")
 		# The current clef changes for the voice
@@ -115,6 +118,9 @@ class Voice:
 				if current_count < count:
 					current_count = count
 					main_staff = no_staff
+		if main_staff is None:
+			score_mod.logger.error (f"Unable to find a staff for voice {self.id}. Is the voice empty?")
+			
 		return main_staff
 
 	def get_half_step_intervals(self):
