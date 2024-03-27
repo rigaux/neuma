@@ -238,12 +238,12 @@ class OmrScore:
 		for page in self.pages:
 			current_system_no = 0
 			current_page_no += 1
-			current_system_measure_no = 0
 			# Create the manifest from the source
 			src_page = source_mod.MnfPage(page.page_url, current_page_no, 0, 0,
 										self.manifest)
 			for system in page.systems:
 				current_system_no += 1
+				current_system_measure_no = 0
 				src_system = source_mod.MnfSystem(current_system_no, src_page,
 												system.region.to_json())
 				src_page.add_system(src_system)
@@ -264,6 +264,7 @@ class OmrScore:
 					current_system_measure_no += 1
 					src_measure = source_mod.MnfMeasure(current_measure_no, 
 													  current_system_measure_no,
+													  "", # So far we do not know the MEI id
 													  src_system,
 														measure.region.to_json())
 					src_system.add_measure(src_measure)
@@ -418,6 +419,9 @@ class OmrScore:
 				
 					logger.info (f"")
 					logger.info (f'Process measure {current_measure_no}, to be inserted at position {score.duration()}')
+
+					# Get the measure from the manifest
+					mnf_measure = mnf_system.get_measure(current_measure_no)
 
 					# Accidentals are reset at the beginning of measures
 					score.reset_accidentals()

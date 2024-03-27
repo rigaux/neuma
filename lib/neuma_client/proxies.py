@@ -137,7 +137,7 @@ class Source:
 											full_neuma_ref=self.opus.ref,
 											source_ref=self.ref)
 			self.manifest_in_cache = True
-		return self.manifest
+		return Manifest(self.manifest)
 
 
 class Manifest:

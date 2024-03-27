@@ -444,22 +444,25 @@ class MnfMeasure:
 		A measure in a system, covering all the staves
 	'''
 	
-	def __init__(self, no_measure, no_in_system, system, region) :
+	def __init__(self, no_measure, no_in_system, mei_id, system, region) :
 		self.system = system
 		self.number = no_measure
 		self.number_in_system = no_in_system
+		self.mei_id = mei_id
 		self.region = MnfRegion(region)				
 		
 	def to_json (self):
 		return {"number": self.number, 
 				"number_in_system": self.number_in_system, 
+				"mei_id": self.mei_id,
 				"region": self.region.to_json()}
 	
 	@staticmethod
 	def from_json (json_measure, system):
 		measure = MnfMeasure(json_measure["number"], 
 							json_measure["number_in_system"], 
-								system, json_measure["region"])
+							json_measure["mei_id"], 
+							system, json_measure["region"])
 		return measure
 	
 class MnfTimeSig:

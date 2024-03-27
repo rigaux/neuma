@@ -46,7 +46,7 @@ def main(argv=None):
 		if iiif is None:
 			print (f"Unable to find source IIIF for opus {op.ref}")
 		elif iiif.has_manifest:
-			manifest = Manifest (iiif.get_manifest())
+			manifest = iiif.get_manifest()
 			print (f"\t\tSource IIIF : {iiif.ref}. Nb pages: {manifest.nb_pages()}")
 			for i in range (manifest.nb_pages()):
 				page = manifest.get_page(i)
@@ -58,7 +58,7 @@ def main(argv=None):
 					print (f"\t\t\t\tSystem {j+1} : Nb measures: {manifest.nb_measures(i,j)}")
 					for k in range (manifest.nb_measures(i, j)):
 						measure = manifest.get_measure(i, j, k)
-						print (f"\t\t\t\t\tMeasure {k}. Region {measure['region']}")
+						print (f"\t\t\t\t\tMeasure {measure['number_in_system']}. Region {measure['region']}")
 						
 		#break
 	
