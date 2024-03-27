@@ -591,7 +591,10 @@ class OmrScore:
 						voice_part.clean()
 						
 						# Add the voice to the measure of the relevant part
-						current_part.add_voice (voice_part)
+						if voice_part.nb_events() > 0:
+							current_part.add_voice (voice_part)
+						else:
+							logger.warning (f"Found an empty voice {voice_part.id}. Ignored")
 						
 						# This is not longer the initial measure of the system
 						initial_measure = False		
