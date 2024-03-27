@@ -132,6 +132,9 @@ class Manifest:
 	def add_part(self, part):
 		self.parts[part.id] = part
 
+	def part_exists(self, id_part):
+		return (id_part in self.parts.keys())
+
 	def get_part(self, id_part):
 		if not (id_part in self.parts.keys()):
 			raise score_mod.CScoreModelError ("Searching a non existing part : " + id_part )		
@@ -258,8 +261,10 @@ class MnfPage:
 		# Collect groups found in systems.
 		# Warning: in an extreme case we must manage group at the system level
 		for system in self.systems:
+			system.create_groups()
 			for id_part, staves in system.groups.items():
 				if not id_part in self.groups.keys():
+					score_mod.logger.info (f"Found a staff group in page {self.url} for part {id_part}")
 					self.groups[id_part] = staves
 
 class MnfSystem:
@@ -271,6 +276,7 @@ class MnfSystem:
 		self.page = page
 		self.number = number
 		self.staves  = []
+		self.measures  = []
 		self.groups = {}
 		self.region = MnfRegion(region)
 
@@ -285,12 +291,25 @@ class MnfSystem:
 		# Oups should never happpen
 		raise score_mod.CScoreModelError (f"Searching a non existing staff {id_staff} in system {self.number}")
 
+	def add_measure(self, measure):
+		self.measures.append(measure)
+		
+	def get_measure(self, no_measure):
+		for measure in self.measures:
+			if measure.number == no_measure:
+				return measure
+		# Oups should never happpen
+		raise score_mod.CScoreModelError (f"Searching a non existing measure {no_measure} in system {self.number}")
+
 	@staticmethod
 	def from_json (json_mnf, page):
 		system = MnfSystem(json_mnf["number"], page, json_mnf["region"])
 		for json_staff in json_mnf["staves"]:
 			staff = MnfStaff.from_json(json_staff, system)
 			system.add_staff(staff)
+		for json_measure in json_mnf["measures"]:
+			measure = MnfMeasure.from_json(json_measure, system)
+			system.add_measure(measure)
 			
 		system.create_groups()
 		
@@ -300,9 +319,14 @@ class MnfSystem:
 		staves_json = []
 		for staff in self.staves:
 			staves_json.append(staff.to_json())
+		measures_json = []
+		for measure in self.measures:
+			measures_json.append(measure.to_json())
 		return {"number": self.number, 
+				"region": self.region.to_json(),
 				"staves": staves_json,
-				"region": self.region.to_json()}
+				"measures": measures_json
+				}
 
 	def create_groups(self):
 		# identify parts that spread over several staves (ie keyboards)
@@ -317,6 +341,7 @@ class MnfSystem:
 		# OK, now find parts with more that one staff
 		for id_part, staves in parts_staves.items():
 			if len(staves) > 1:
+				score_mod.logger.info (f"Found a staff group in system {self.number} for part {id_part}")
 				self.groups[id_part] = staves
 	
 	def count_staves_for_part (self, id_part):
@@ -355,7 +380,14 @@ class MnfStaff:
 				return True
 			else:
 				return False
-			
+	
+	def get_part_id(self):
+		# For the time being we allow only one part per staff
+		
+		if len(self.parts) > 1 or len(self.parts) == 0:
+			raise score_mod.CScoreModelError (f"Staff {self.id} should have exactly one part")
+		return self.parts[0].id
+		
 	def add_part(self, id_part):
 		# For the time being we allow only one part per staff
 		
@@ -405,7 +437,34 @@ class MnfStaff:
 		if "time_signature" in json_mnf:
 			staff.time_signature = MnfTimeSig.from_json(json_mnf["time_signature"])
 		return staff
+
 		
+class MnfMeasure:
+	'''
+		A measure in a system, covering all the staves
+	'''
+	
+	def __init__(self, no_measure, no_in_system, mei_id, system, region) :
+		self.system = system
+		self.number = no_measure
+		self.number_in_system = no_in_system
+		self.mei_id = mei_id
+		self.region = MnfRegion(region)				
+		
+	def to_json (self):
+		return {"number": self.number, 
+				"number_in_system": self.number_in_system, 
+				"mei_id": self.mei_id,
+				"region": self.region.to_json()}
+	
+	@staticmethod
+	def from_json (json_measure, system):
+		measure = MnfMeasure(json_measure["number"], 
+							json_measure["number_in_system"], 
+							json_measure["mei_id"], 
+							system, json_measure["region"])
+		return measure
+	
 class MnfTimeSig:
 	"""
 	  Sometimes we must add the time signature

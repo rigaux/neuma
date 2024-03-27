@@ -6,7 +6,7 @@ from pathlib import Path
 
 from neuma_client.client import NeumaClient
 
-from neuma_client.proxies import Collections, Corpus, Opus, Source
+from neuma_client.proxies import Collections, Corpus, Opus, Source, Manifest
 
 def main(argv=None):
 	"""
@@ -46,14 +46,20 @@ def main(argv=None):
 		if iiif is None:
 			print (f"Unable to find source IIIF for opus {op.ref}")
 		elif iiif.has_manifest:
-			print (f"\t\tSource IIIF : {iiif.ref}. Nb pages: {iiif.nb_pages()}")
-			for i in range (iiif.nb_pages()):
-				page = iiif.get_page(i)
-				print (f"\t\t\tPage {i+1}. URL: {page['url']} ({page['width']}) Nb systems: {iiif.nb_systems(i)}")
-				for j in range (iiif.nb_systems(i)):
-					print (f"\t\t\t\tSystem {j+1} : Nb staves: {iiif.nb_staves(i,j)}")
-					print (f"\t\t\t\tSystem {j+1} : Region: {iiif.system_region(i,j)}")
-				
+			manifest = iiif.get_manifest()
+			print (f"\t\tSource IIIF : {iiif.ref}. Nb pages: {manifest.nb_pages()}")
+			for i in range (manifest.nb_pages()):
+				page = manifest.get_page(i)
+				print (f"\t\t\tPage {i+1}. URL: {page['url']} ({page['width']}) Nb systems: {manifest.nb_systems(i)}")
+				for j in range (manifest.nb_systems(i)):
+					system = manifest.get_system(i,j)
+					print (f"\t\t\t\tSystem {j+1} : Nb staves: {manifest.nb_staves(i,j)}")
+					print (f"\t\t\t\tSystem {j+1} : Region: {manifest.system_region(i,j)}")
+					print (f"\t\t\t\tSystem {j+1} : Nb measures: {manifest.nb_measures(i,j)}")
+					for k in range (manifest.nb_measures(i, j)):
+						measure = manifest.get_measure(i, j, k)
+						print (f"\t\t\t\t\tMeasure {measure['number_in_system']}. Region {measure['region']}")
+						
 		#break
 	
 if __name__ == "__main__":

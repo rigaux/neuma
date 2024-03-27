@@ -137,30 +137,23 @@ class Source:
 											full_neuma_ref=self.opus.ref,
 											source_ref=self.ref)
 			self.manifest_in_cache = True
-		return self.manifest
+		return Manifest(self.manifest)
 
-	def first_music_page(self):
-		if  self.manifest_in_cache == False:
-			self.get_manifest()
-			
-		if "first_music_page" in self.manifest.keys():
-			return self.manifest["first_music_page"]
-		else:
-			return 1
+
+class Manifest:
+	# Description of an IIIF source
+	
+	def __init__(self, manifest_dict):	
+		# The manifest dictionary, obtained from the REST call
+		self.manifest_dict  = manifest_dict
 
 	def nb_pages(self):
-		if  self.manifest_in_cache == False:
-			self.get_manifest()
-			
-		return len (self.manifest["pages"])
+		return len (self.manifest_dict["pages"])
 	
 	def get_page(self, i_page):
-		if i_page >= len(self.manifest["pages"]):
+		if i_page >= len(self.manifest_dict["pages"]):
 			raise Exception ("Attempt to read beyond the number of pages")		
-		return self.manifest["pages"][i_page]		
-	def nb_systems (self, i_page):
-		page = self.get_page(i_page)
-		return len(page["systems"])
+		return self.manifest_dict["pages"][i_page]		
 	def page_url (self, i_page):
 		page = self.get_page(i_page)
 		return page["url"]
@@ -170,6 +163,16 @@ class Source:
 	def page_height (self, i_page):
 		page = self.get_page(i_page)
 		return page["height"]
+	
+	def nb_systems (self, i_page):
+		page = self.get_page(i_page)
+		return len(page["systems"])
+
+	def first_music_page(self):
+		if "first_music_page" in self.manifest_dict.keys():
+			return self.manifest_dict["first_music_page"]
+		else:
+			return 1
 	
 	def get_system (self, i_page, i_system):
 		page = self.get_page(i_page)
@@ -184,3 +187,17 @@ class Source:
 	def system_region(self, i_page, i_system):
 		system = self.get_system(i_page, i_system)
 		return system["region"]
+
+	def nb_measures(self, i_page, i_system):
+		system = self.get_system(i_page, i_system)
+		if "measures" in system.keys():
+			return len(system["measures"])
+		else:
+			raise Exception ("No 'measures' field in the manifest. Probably an obsolete version")		
+
+	def get_measure(self, i_page, i_system, i_measure):
+		system = self.get_system(i_page, i_system)
+		if i_measure >= len(system["measures"]):
+			raise Exception (f"Attempt to read beyond the number of measures in system {i_system}")
+		return system["measures"][i_measure]
+			

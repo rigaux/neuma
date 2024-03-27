@@ -116,9 +116,8 @@ class Score:
 	def add_part (self, part):
 		""" Add a part to the main score or to the current page"""
 		
-		if not part.part_type == "group":
-			# We do not insert the StaffGroup in the list of parts 
-			# because we never insert anything there
+		if not part.part_type == Part.STAFF_PART:
+			# Just a staff in a multi-staves part: do not put in the score
 			self.parts.append(part)	
 
 		self.m21_score.insert(0, part.m21_part)
@@ -136,6 +135,12 @@ class Score:
 		
 		# Oups, the part has not been found ...
 		raise CScoreModelError ("Unable to find this part : " + id_part )
+
+	def get_part_from_staff(self, no_staff):
+		# Given a staff id, we return the part that contains this staff
+		for part in self.parts:
+			if part.staff_exists(no_staff):
+				return part 
 
 	def add_page (self, page):
 		self.pages.append (page)
@@ -293,44 +298,16 @@ class Score:
 	def add_annotation(self, annotation):
 		self.annotations.append(annotation)
 		
-	def check_time_signatures(self, current_measures, fix=True):
+	def check_time_signatures(self, fix=True):
 		"""
 		  Check the consistency of the time signatures for all parts
 		"""
-		# Checking consistency of time signatures
-		count_ts = {}
-		# Count the occurrences of each TS
-		for measure in current_measures.values():
-			if measure.initial_ts is not None:
-				hash_measure = measure.initial_ts.code()
-				if hash_measure in count_ts.keys():
-					count_ts[hash_measure] += 1
-				else:
-					count_ts[hash_measure] = 1
-			else:
-				count_ts["none"] = 1
-		# There should be only one: take the most frequent
-		if len (count_ts.keys()) > 1:
-			logger.warning (f"Measure {measure.id} has distinct time signatures. Attempt to fix... !!")
+		for part in self.parts:
+			part.check_time_signatures(fix)
 
-			max_count = 0
-			for hm in count_ts.keys():
-				if max_count < count_ts[hm]:
-					max_count = count_ts[hm]
-					main_ts = hm
-			
-			for measure in current_measures.values():
-				if measure.initial_ts.code() == main_ts:
-					ts_to_use = measure.initial_ts
-			logger.warning  (f"The main TS is {ts_to_use}. We use it for all parts")
-				
-			if fix:
-				# Try to fix the issue
-				for measure in current_measures.values():
-					ts = ts_to_use.copy()
-					for staff in measure.part.staves:
-						staff.set_current_time_signature (ts)
-					measure.replace_time_signature (ts)
+	def check_measure_consistency(self):
+		for part in self.parts:
+			part.check_measure_consistency()			
 
 class Part:
 	"""
@@ -347,7 +324,10 @@ class Part:
 		
 		if part_type==Part.GROUP_PART:
 			#print (f"Creating a part group for part {id_part}")
-			self.m21_part = m21.layout.StaffGroup(group, 
+			m21_group = []
+			for part_staff in group:
+				m21_group.append(part_staff.m21_part)
+			self.m21_part = m21.layout.StaffGroup(m21_group, 
 								 name=name, abbreviation=abbreviation,
 								 symbol='brace')
 			self.staff_group = group
@@ -366,32 +346,35 @@ class Part:
 		# List of staves the part is displayed on
 		self.staves = []
 		
-		# There should be a add_subpart method for recursive structure. Not
-		# used for the moment
+		# List of measures of this part
+		self.measures = []
+		self.current_measure = None
 
 	@staticmethod
-	def make_part_id (id_part, no_staff):
+	def make_part_id (id_part, no_staff=None):
 		'''
 		  Following the music21 model, a part is on a staff. So the identification
 		  is from the part id and the staff number. In case
 		  of multi-staves parts, we create one part per staff, and a part group
 		  that contain both  
 		'''
-		return f"{id_part}-{no_staff}"
+		if no_staff is None:
+			return f"{id_part}"
+		else:
+			return f"{id_part}-{no_staff}"
 	
 	def clear_staves(self):
 		'''
 		   To call when we reinitialize a system or a page
 		'''
-		
-		# Keep the current status of each staff in terms of signatures and clef
-		'''staves_status = {}
-		for staff in self.staves():
-			staves_status
-		'''
-		# Ok forget the staves
+	
 		self.staves = []
-		
+		if self.part_type == Part.GROUP_PART:
+			# Add also the staff to one of the sub parts
+			# We search the first sub part without staff
+			for staff_part in self.staff_group: 
+				staff_part.clear_staves()
+	
 	def has_staves(self):
 		# Check if at least one staff is allocated to the part
 		if len(self.staves) > 0:
@@ -402,6 +385,18 @@ class Part:
 	def add_staff (self, staff):
 		self.staves.append(staff)
 		
+		if self.part_type == Part.GROUP_PART:
+			# Add also the staff to one of the sub parts
+			# We search the first sub part without staff
+			for staff_part in self.staff_group: 
+				if not staff_part.has_staves():
+					logger.info(f"PartGroup: add the staff to sub-part {staff_part.id}")
+					staff_part.add_staff(staff)
+					return
+				else:
+					logger.info(f"PartGroup: sub-part {staff_part.id} has already a staff")
+			logger.error (f'Cannot add another staff {staff.id} to PartGroup {self.id}. All sub-parts have a staff!')
+			
 	def staff_exists (self, no_staff):
 		for staff in self.staves:
 			if staff.id == no_staff:
@@ -416,6 +411,13 @@ class Part:
 		# The staff has not been found: raise an exception
 		raise CScoreModelError (f'Unable to find staff {no_staff} in part {self.id}')
 
+	def get_current_time_signature(self):
+		# There should be at least one staff in the part
+		if  len(self.staves) == 0:
+			logger.error (f'Part {self.id} has no staff ! Cannot do anything')
+		# We assume that the time signature is the same for all staves. So take the fist one
+		return self.staves[0].current_time_signature
+	
 	def add_clef_to_staff (self, no_staff, clef):
 		# A new clef at the beginning of measure for this staff
 		if self.staff_exists (no_staff):
@@ -429,16 +431,74 @@ class Part:
 		staff = self.get_staff(no_staff)
 		staff.add_accidental( pitch_class, acc)
 
+	def add_measure (self, measure_no):
+		if not self.part_type == Part.GROUP_PART:
+			measure = Measure(self, measure_no)
+			self.measures.append(measure)
+			self.current_measure = measure
+			self.m21_part.append(measure.m21_measure)
+		else:
+			# We add a measure to eah sub-part
+			for staff_part in self.staff_group: 
+				staff_part.add_measure(measure_no)
+
+	def get_current_measures(self):
+		if not self.part_type == Part.GROUP_PART:
+			return [self.current_measure]
+		else:
+			current_measures = []
+			# We add a measure to eah sub-part
+			for staff_part in self.staff_group: 
+				current_measures.append(staff_part.current_measure)
+			return current_measures
+		
+	def get_measure_from_staff(self, no_staff):
+		# Given a staff id, we return the current measure for this staff
+		for measure in self.get_current_measures():
+			if measure.part.staff_exists(no_staff):
+				return measure 
+		
+		logger.error (f"Unable to find a current measure for part {self.id} and staff {no_staff}")
+		raise CScoreModelError (f"Unable to find a current measure for part {self.id} and staff {no_staff}")
+			
+	def add_voice(self, voice):
+		if not self.part_type == Part.GROUP_PART:
+			self.current_measure.add_voice(voice)
+		else:
+			# We determine the main staff
+			no_staff = voice.determine_main_staff()
+			# We add the voice to the part measure with this staff
+			measure = self.get_measure_from_staff(no_staff)
+			measure.add_voice(voice)
+		
+	def add_system_break(self):
+		for measure in  self.get_current_measures():
+			measure.add_system_break()
+
+	def add_page_break(self):
+		for measure in  self.get_current_measures():
+			measure.add_page_break()
+			
 	def append_measure (self, measure):
 		logger.info (f'Adding measure {measure.no} to part {self.id}')
-		self.m21_part.append(measure.m21_measure)
-
+		if not self.part_type == Part.GROUP_PART:
+			self.m21_part.append(measure.m21_measure)
+		else:
+			# Insert the measure in each part-staff
+			for staff_part in self.staff_group: 
+				staff_part.m21_part.append(measure.m21_measure)
+				break
+	
 	def insert_measure (self, position, measure):
 		logger.info (f'Inserting measure {measure.no} at position {position} in part {self.id}')
-		print(f'Inserting measure {measure.no} at position {position} in part {self.id}')
-		self.m21_part.insert(position, measure.m21_measure)
-
-	def add_system_break(self):
+		if not self.part_type == Part.GROUP_PART:
+			self.m21_part.insert(position, measure.m21_measure)
+		else:
+			# Insert the measure in each part-staff
+			for staff_part in self.staff_group: 
+				staff_part.m21_part.insert(position, measure.m21_measure)
+				
+	def add_system_break_does_not_work(self):
 		system_break = m21.layout.SystemLayout(isNew=True)
 		self.m21_part.append (system_break)
 
@@ -446,7 +506,50 @@ class Part:
 		# Used when a new measure starts: we fortget all accidentals met before
 		for staff in self.staves:
 			staff.reset_accidentals()
+
+	def check_time_signatures(self, fix=True):
+		"""
+		  Check the consistency of the time signatures for the current measure
+		"""
+		# Checking consistency of time signatures
+		count_ts = {}
+		# Count the occurrences of each TS
+		for measure in self.get_current_measures():
+			if measure.initial_ts is not None:
+				hash_measure = measure.initial_ts.code()
+				if hash_measure in count_ts.keys():
+					count_ts[hash_measure] += 1
+				else:
+					count_ts[hash_measure] = 1
+			else:
+				count_ts["none"] = 1
+		# There should be only one: take the most frequent
+		if len (count_ts.keys()) > 1:
+			logger.warning (f"Measure {measure.id} in part {self.id} has distinct time signatures. Attempt to fix... !!")
+
+			max_count = 0
+			for hm in count_ts.keys():
+				if max_count < count_ts[hm]:
+					max_count = count_ts[hm]
+					main_ts = hm
 			
+			for measure in self.get_current_measures():
+				if measure.initial_ts.code() == main_ts:
+					ts_to_use = measure.initial_ts
+			logger.warning  (f"The main TS is {ts_to_use}. We use it for all staves")
+				
+			if fix:
+				# Try to fix the issue
+				for measure in self.get_current_measures():
+					ts = ts_to_use.copy()
+					for staff in measure.part.staves:
+						staff.set_current_time_signature (ts)
+					measure.replace_time_signature (ts)
+
+	def check_measure_consistency(self):
+		for measure in	self.get_current_measures():
+			measure.check_consistency()			
+
 	@staticmethod
 	def create_part_id (id_part):
 		# Create a string that identifies the part
@@ -521,6 +624,7 @@ class Measure:
 		
 	def add_voice (self, voice):
 		self.m21_measure.insert (0, voice.m21_stream)
+		
 	def add_system_break(self):
 		system_break = m21.layout.SystemLayout(isNew=True)
 		self.m21_measure.insert (system_break)
@@ -531,7 +635,7 @@ class Measure:
 		system_break = m21.layout.PageLayout(isNew=True)
 		self.m21_measure.insert (system_break)
 		self.insert_initial_signatures()
-		
+
 	def insert_initial_signatures(self):
 		# If the measure is the first of score/part/staff, we report
 		# the current clef and other initial symboles
@@ -550,8 +654,8 @@ class Measure:
 		for voice in self.m21_measure.getElementsByClass(m21.stream.Voice):
 			if not (voice.duration == self.initial_ts.barDuration()):					
 				logger.warning (f"Incomplete duration in measure {self.id}. Expected duration: {self.initial_ts.barDuration().quarterLength}. Voice {voice.id} duration is {voice.duration.quarterLength}")
-				for event in voice.notesAndRests:
-					print (f"Event {event.id}. Duration: {event.duration.quarterLength}. Hidden {event.style.hideObjectOnPrint}")
+				#for event in voice.notesAndRests:
+				#	print (f"Event {event.id}. Duration: {event.duration.quarterLength}. Hidden {event.style.hideObjectOnPrint}")
 		
 				# Trying to fix thi. Easy when we just have to complete the voice
 				if fix and voice.duration.quarterLength < self.initial_ts.barDuration().quarterLength:
