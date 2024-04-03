@@ -11,6 +11,11 @@
     "articulations_bottom": {"type": "array", "items": { "$ref": "dmos_symbol.json" }},
     "directions": {"description": "nuances et autres symboles", "type": "array", 
         "items": { "$ref": "dmos_symbol.json" }},
+     "syllable": {"description": "Syllabe chantée sur la note", "$ref": "dmos_syllable.json"},
+     "verses": {"description": "En cas de couplets, tableau de syllabes", 
+      				"type": "array",
+                	"items": {"$ref": "dmos_syllable.json"}
+     			},
     "other_objects": {"type": "array", "items": { "$ref": "dmos_symbol.json" }},
     "errors": {"type": "array", "items": { "$ref": "dmos_error.json" }}
   },

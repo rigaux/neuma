@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "dmos_syllable.json",
+  "title": "Syllables",
+  "type": "object",
+  "properties": {
+     "text": {"description": "Text of the syllable", "type": "string"},
+     "pos_in_word": {"description": "Position of the syllable. Can be 'i', 'm', or 'e'", "type": "string"},
+     "placement": {"description": "Optional spec. of the placement. 'below' by default", "type": "string"}
+   },
+   "required": ["text", "pos_in_word"],
+  "additionalProperties": false
+}
