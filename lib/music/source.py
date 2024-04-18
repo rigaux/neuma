@@ -296,7 +296,6 @@ class MnfSystem:
 		
 	def get_measure(self, no_measure):
 		for measure in self.measures:
-			print (f"Found measure {measure.number_in_system}")
 			if measure.number_in_system == no_measure:
 				return measure
 		# Oups should never happpen

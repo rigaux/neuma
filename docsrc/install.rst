@@ -139,6 +139,10 @@ Neuma uses Celery for running large tasks in the background. Celery
 itself uses Redit. Just install an instance, with Docker or
 any other utility.
 
+.. code-block:: bash
+
+     docker run --name my-redis  -p 6379:6379  -d redis
+
 Celery
 ======
 
@@ -148,8 +152,6 @@ run as follows:
 .. code-block:: 
 
 	celery -A scorelib worker --loglevel=INFO
-
-
 
 
 Neuma setup
