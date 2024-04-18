@@ -16,6 +16,7 @@ class Voice:
 		Representation of a voice in a score. A voice is a sequence of events
 		with non-null duration
 	"""
+	PSEUDO_BEAM_ID = 99999
 	
 	def __init__(self, part, voice_id) :
 		# A voice has an id, and the sequence is represented as a Music21 stream
@@ -28,6 +29,12 @@ class Voice:
 		# Still for OMR: we can disable automatic beaming
 		self.automatic_beaming = True
 
+		# The main staff: if a voice is spread on severl staves,
+		# we identify the "main" one: in music21, the voice 
+		# is inserted in a measure in a part assigned to this staff
+		# This means that voice'events outside this staff must be post-corrected
+		self.main_staff = None
+		
 		# List of events
 		self.events = []
 		
@@ -39,8 +46,11 @@ class Voice:
 		"""
 		   Clean a voice for inconsistent data
 		"""
-		#print ("Cleaning the voice")
+		# Check that ties are consistent
 		self.remove_invalid_ties()
+
+		# Idem for beams
+		self.clean_beams()
 		
 	def set_current_time_signature(self, ts):
 		self.current_time_signature = ts
@@ -73,8 +83,8 @@ class Voice:
 			# event. Ugly but ...
 			
 			# Do differently: check at the end if the voice has a beam
-			#event.m21_event.beams.append(m21.beam.Beam(type='start', number=99999))
-			#event.m21_event.beams.append(m21.beam.Beam(type='stop', number=99999))
+			event.m21_event.beams.append(m21.beam.Beam(type='start', number=self.PSEUDO_BEAM_ID))
+			event.m21_event.beams.append(m21.beam.Beam(type='stop', number=self.PSEUDO_BEAM_ID))
 			# No need to preserve the automatic beaming flag
 			self.automatic_beaming = True
 
@@ -108,20 +118,19 @@ class Voice:
 	
 	def determine_main_staff(self):
 		# Choose the staff where the voice has the main part
-		main_staff = None
 		current_count = 0
 		for no_staff, count in  self.get_staff_distribution().items():
-			if main_staff is None:
-				main_staff = no_staff 
+			if self.main_staff is None:
+				self.main_staff = no_staff 
 				current_count = count
 			else:
 				if current_count < count:
 					current_count = count
-					main_staff = no_staff
-		if main_staff is None:
+					self.main_staff = no_staff
+		if self.main_staff is None:
 			score_mod.logger.error (f"Unable to find a staff for voice {self.id}. Is the voice empty?")
 			
-		return main_staff
+		return self.main_staff
 
 	def get_half_step_intervals(self):
 		'''Return half-steps intervals'''
@@ -216,6 +225,24 @@ class Voice:
 		k = self.m21_stream.analyze('key')
 		return [k,k.correlationCoefficient,k.alternateInterpretations]
 
+	def clean_beams(self):
+		# Check that beams are safe and complete
+		in_beam = False
+		for e in self.events:
+			if e.beam is not None:
+				if e.beam.beam_type == "start":
+					if in_beam == False:
+						in_beam = True
+					else:
+						score_mod.logger.warning (f"Found two successive 'start' beams")
+				elif e.beam.beam_type == "stop":
+					in_beam = False 
+			else:
+				if in_beam:
+					# Safety: we add a "continue"
+					#print ("Adding a continue beam")
+					e.continue_beam()
+						
 	def remove_invalid_ties(self):
 		# Check that ties are correct
 		

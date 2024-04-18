@@ -296,10 +296,11 @@ class MnfSystem:
 		
 	def get_measure(self, no_measure):
 		for measure in self.measures:
-			if measure.number == no_measure:
+			print (f"Found measure {measure.number_in_system}")
+			if measure.number_in_system == no_measure:
 				return measure
 		# Oups should never happpen
-		raise score_mod.CScoreModelError (f"Searching a non existing measure {no_measure} in system {self.number}")
+		raise score_mod.CScoreModelError (f"Searching the manifest for a non existing measure {no_measure} in system {self.number}")
 
 	@staticmethod
 	def from_json (json_mnf, page):

@@ -22,7 +22,6 @@ import lib.music.source as source_mod
 
 from .constants import *
 from lib.music.source import Manifest
-from numpy import True_
 
 # Get an instance of a logger
 # See https://realpython.com/python-logging/
@@ -224,6 +223,9 @@ class OmrScore:
 		for op in editions:
 			self.editions.append (op)
 
+		# Editions to apply to the outpu MusicXML
+		self.post_editions = []
+		
 		# Decode the DMOS input as Python objects
 		self.pages = []
 		for json_page in self.json_data["pages"]:
@@ -421,7 +423,7 @@ class OmrScore:
 					logger.info (f'Process measure {current_measure_no}, to be inserted at position {score.duration()}')
 
 					# Get the measure from the manifest
-					mnf_measure = mnf_system.get_measure(current_measure_no)
+					mnf_measure = mnf_system.get_measure(current_system_measure_no)
 
 					# Accidentals are reset at the beginning of measures
 					score.reset_accidentals()
@@ -482,7 +484,7 @@ class OmrScore:
 							if initial_measure:
 								# Rare occurrence: no time signature on the
 								# initial measure: we hope it is stored in the staff
-								logger.warning (f'No time signature at the beginning of staff {header.no_staff}. We take {staff.current_time_signature}')
+								logger.info (f'No time signature at the beginning of staff {header.no_staff}. We take {staff.current_time_signature}')
 								ts = staff.current_time_signature.copy()
 								measure_for_part.add_time_signature (ts)
 								staff.set_current_time_signature (ts)
@@ -490,7 +492,7 @@ class OmrScore:
 							# Sanity: we found at least one time signature change, it should
 							# apply to all staves
 							if new_time_signature is not None:
-								logger.warning (f'Using the time signature already found on another staff:  {new_time_signature}')
+								logger.info (f'Using the time signature already found on another staff:  {new_time_signature}')
 								ts = new_time_signature.copy()
 								staff.set_current_time_signature (ts)
 								measure_for_part.add_time_signature (ts)
@@ -506,14 +508,10 @@ class OmrScore:
 					
 					# Now we scan the voices
 					for voice in measure.voices:
-						# DMOS gives has 'id_part' the staff where
-						# the first voice event appears. From this staff, we deduce
-						# the part the voice belongs to
-						mnf_staff = mnf_system.get_staff(voice.id_staff)
-						current_part = score.get_part(mnf_staff.get_part_id())
+						current_part = score.get_part(voice.id_part)
 
 						logger.info (f"")
-						logger.info (f'Process voice {voice.id}, on staff {voice.id_staff} in part {current_part.id}')
+						logger.info (f'Process voice {voice.id} in part {current_part.id}')
 						
 						# Reset the event counter
 						score_events.Event.reset_counter(
@@ -547,6 +545,7 @@ class OmrScore:
 									#print (f"Start beam {item.beam_id}")
 									event.start_beam(item.beam_id)
 								current_beam =  item.beam_id
+								
 							previous_event = event
 							
 							if type_event == "event":
@@ -559,7 +558,7 @@ class OmrScore:
 								# The staff id is in the voice item
 								no_staff = item.no_staff_clef
 								# We found a clef change
-								print ("Add and event to staff {no_staff}")
+								logger.info (f"Add a clef to staff {no_staff}")
 								voice_part.append_clef(event, no_staff)
 							else:
 								logger.error (f'Unknown event type {type_event} for voice {voice.id}')
@@ -593,6 +592,21 @@ class OmrScore:
 						# Add the voice to the measure of the relevant part
 						if voice_part.nb_events() > 0:
 							current_part.add_voice (voice_part)
+							
+							# Searching for events outside the main staff
+							if current_part.part_type == score_model.Part.GROUP_PART:
+								for event in voice_part.events:
+									if event.is_note():
+										if event.no_staff != voice_part.main_staff:
+											if event.no_staff < voice_part.main_staff:
+												direction = "up"
+											else:
+												direction = "down"
+											move = editions_mod.Edition (editions_mod.Edition.MOVE_OBJECT_TO_STAFF,
+																	{"object_id": event.id, 
+																	"staff_no": event.no_staff,
+																	"direction": direction})
+											self.post_editions.append(move)
 						else:
 							logger.warning (f"Found an empty voice {voice_part.id}. Ignored")
 						
@@ -604,6 +618,9 @@ class OmrScore:
 		
 					# Time to check the consistency of the measure
 					score.check_measure_consistency()
+					
+					# Remove in the XML file the pseudo-beam
+					self.post_editions.append( editions_mod.Edition (editions_mod.Edition.CLEAN_BEAM))
 						
 		return score
 
@@ -703,8 +720,12 @@ class OmrScore:
 		return (event, event_region, "event")
 
 	def write_as_musicxml(self, out_file):
+		print ("Writing as MusicXML")
 		self.get_score().write_as_musicxml (out_file)
-
+		
+		for ed in self.post_editions:
+			ed.apply_to(self, out_file)
+			
 	def write_as_mei(self, out_file):
 		self.get_score().write_as_mei (out_file)
 
@@ -852,7 +873,7 @@ class Voice:
 		self.id = json_voice["id"]
 		self.id_part =  StaffHeader.make_id_part ( json_voice["id_part"])
 		# Obsolete, since a voice can spread several parts
-		self.id_staff =  StaffHeader.make_id_staff ( json_voice["id_part"])
+		#self.id_staff =  StaffHeader.make_id_staff ( json_voice["id_part"])
 		
 		self.items = []
 		for json_item in json_voice["elements"]:
