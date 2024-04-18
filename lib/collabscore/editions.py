@@ -1,5 +1,9 @@
 import sys 
 import lib.collabscore.parser as parser_mod
+PSEUDO_BEAM_ID = 99999
+
+# for XML editions
+import xml.etree.ElementTree as ET
 
 '''
   Edit operations applied to a score. Designed to be combined
@@ -13,8 +17,11 @@ class Edition:
 	MERGE_PARTS = "merge_parts"
 	DESCRIBE_PART = "describe_part"
 	MOVE_PART_TO_STAFF = "move_part_to_staff"
+	MOVE_OBJECT_TO_STAFF = "move_object_to_staff"
+	CLEAN_BEAM = "clean_beam"
 	
-	EDITION_CODES = [MERGE_PARTS,DESCRIBE_PART,MOVE_PART_TO_STAFF]
+	EDITION_CODES = [MERGE_PARTS,DESCRIBE_PART,MOVE_PART_TO_STAFF,
+					MOVE_OBJECT_TO_STAFF,CLEAN_BEAM]
 	
 	def __init__(self, name, params={}, target=None) :
 		if name not in Edition.EDITION_CODES:
@@ -29,7 +36,7 @@ class Edition:
 		else:
 			self.target = target
 		
-	def apply_to(self, omr_score):
+	def apply_to(self, omr_score, mxml_file=None):
 		parser_mod.logger.info (f"Apply edit operation {self.name}")
 		if self.name == Edition.MERGE_PARTS:
 			# Merge two of more parts
@@ -40,6 +47,12 @@ class Edition:
 		elif self.name == Edition.MOVE_PART_TO_STAFF:
 			# Assign a part to a staff
 			self.move_part_to_staff (omr_score)
+		elif self.name == Edition.MOVE_OBJECT_TO_STAFF:
+			# Assign an object to a staff. Done in the MusicXML file
+			self.move_object_to_staff (mxml_file)
+		elif self.name == Edition.CLEAN_BEAM:
+			# Assign an object to a staff. Done in the MusicXML file
+			self.clean_beam (mxml_file)
 			
 	def merge_parts(self, omr_score):
 		# Get the first part: we merge everything there
@@ -100,6 +113,45 @@ class Edition:
 						parser_mod.logger.warning(f"Part {part.id} assigned to staff {id_staff} in system {system.number} page {page.number}")
 						print(f"Part {part.id} assigned to staff {id_staff} in system {system.number} page {page.number}")
 
+	def move_object_to_staff(self, xml_file):
+		''' The parameters are: the staff id, and the object id (a note, a rest, a clef...)
+			This is a post-xml correction...
+		'''
+		parser_mod.logger.info(f"Operation move_object_to_staff")
+		object_id = self.params["object_id"]
+		staff_no = self.params["staff_no"]
+		direction = self.params["direction"]
+		parser_mod.logger.info(f"Moving {direction} object {object_id} to staff {staff_no}")
+		
+		mxml_doc = ET.parse(xml_file)
+		object = mxml_doc.find(f".//*[@id = '{object_id}']")
+		if object is not None:
+			staff = object.find("staff")
+			# An heuristic to infer the numbering of staves in MusicXML
+			if direction == "up":
+				staff_no = int(staff.text) - 1
+			else:
+				staff_no = int(staff.text) + 1
+			staff.text = f"{staff_no}"
+			mxml_doc.write (xml_file)
+		else:
+			parser_mod.logger.warning(f"Unable to find object {object_id} that should be moved to staff {staff_no}")
+		
+		return 
+	
+	def clean_beam (self, xml_file):
+		parser_mod.logger.info(f"Cleaning pseudo-beams")
+		
+		mxml_doc = ET.parse(xml_file)
+		notes = mxml_doc.findall(f".//note")
+		for note in notes:
+			beams = note.findall("beam")
+			for beam in beams:
+				if int(beam.get("number")) == PSEUDO_BEAM_ID:
+					#print (f"Removing pseudo Beam {beam}")
+					note.remove(beam)
+		mxml_doc.write (xml_file)
+	
 	def to_json (self):
 		return {"name": self.name,
 			     "params": self.params

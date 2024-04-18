@@ -7,8 +7,8 @@ import json
 from jsonref import JsonRef
 
 import os 
+import zipfile
 
-from xml.dom import minidom
 from django.core.files.base import ContentFile
 
 from django.conf import settings
@@ -42,7 +42,6 @@ from rest_framework.permissions import AllowAny
 from rest_framework import renderers
 from rest_framework.schemas import AutoSchema, ManualSchema
 
-import mido
 from django.core.files.storage import default_storage
 from django.core.files.base import ContentFile
 
@@ -545,7 +544,23 @@ class SourceFile (APIView):
 		source = self.get_object(full_neuma_ref, source_ref)
 
 		for filename, filecontent in request.FILES.items():
-			source.source_file.save(filename, filecontent)
+			name, extension = os.path.splitext(filename)
+			print (f"Received file {filename} with extension {extension}")
+			if extension == ".zip":
+					zfile = zipfile.ZipFile(filecontent, 'r')
+					for fname in zfile.namelist():
+						base, extension = os.path.splitext (fname)
+						if base == "" or base.startswith('_') or  base.startswith('.'):
+							continue
+						if extension == ".json":
+							with zfile.open(fname) as myfile:
+								fcontent = myfile.read().decode('utf-8')
+								#print (fcontent)
+								source.source_file.save(fname, ContentFile(fcontent))
+							print (f"Found a file {fname} with extension {extension}")
+			else:
+				# We received directly a JSON file
+				source.source_file.save(filename, filecontent)
 		
 		# Special case DMOS: parse the file and create XML files
 		if source_ref==source_mod.OpusSource.IIIF_REF:

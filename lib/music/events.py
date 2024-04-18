@@ -56,6 +56,7 @@ class Event:
 		self.duration = duration
 		self.m21_event = None 
 		self.type = Event.TYPE_NOTE
+		self.beam = None  
 		# Mostly used for hidden rests 
 		self.visible = True
 		self.no_staff = None
@@ -80,20 +81,27 @@ class Event:
 	def add_expression (self, expr):
 		self.m21_event.expressions.append(expr.m21_expression)
 
-	def start_beam(self, beam_id):
+	def start_beam(self, beam_id=1):
 		if not self.is_rest():
 			score_mod.logger.info (f"Start a beam : {beam_id}" )
-
-			# TODO: solve circular import pb
-			beam = score_notation.Beam()
-			self.m21_event.beams.append(beam.m21_beam)
+			self.beam = score_notation.Beam()
+			self.m21_event.beams.append(self.beam.m21_beam)
 		else:
 			score_mod.logger.warning ("Trying to start a beam ({beam_id}) on a rest")
-
-	def stop_beam(self, beam_id):
+	def continue_beam(self, beam_id=1):
+		if not self.is_rest():
+			score_mod.logger.info (f"Continue a beam : {beam_id}" )
+			self.beam = score_notation.Beam("continue")
+			#self.m21_event.beams.append("continue")
+			self.m21_event.beams.append(self.beam.m21_beam)
+		else:
+			score_mod.logger.warning ("Trying to continue a beam ({beam_id}) on a rest")
+	def stop_beam(self, beam_id=1):
 		if not self.is_rest():
 			score_mod.logger.info (f"Stop a beam : {beam_id}" )
-			self.m21_event.beams.append("stop")
+			self.beam = score_notation.Beam("stop")
+			#self.m21_event.beams.append("stop")
+			self.m21_event.beams.append(self.beam.m21_beam)
 		else:
 			score_mod.logger.warning (f"Trying to stop a beam ({beam_id}) on a rest")
 

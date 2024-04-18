@@ -257,8 +257,12 @@ class Beam:
 		Same as Music21
 	'''
 	number= 0
+	START_BEAM="start"
+	STOP_BEAM="stop"
+	CONTINUE_BEAM="continue"
 	
-	def __init__(self) :
+	def __init__(self, beam_type=START_BEAM) :
 		# Unclear role of the beam member. Seems to be useful in case of several beams on a same group
 		Beam.number = Beam.number + 1
-		self.m21_beam = m21.beam.Beam(type='start', number=1)
+		self.beam_type = beam_type
+		self.m21_beam = m21.beam.Beam(type=beam_type, number=1)

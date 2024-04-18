@@ -465,11 +465,12 @@ class Part:
 		if not self.part_type == Part.GROUP_PART:
 			self.current_measure.add_voice(voice)
 		else:
-			# We determine the main staff
-			no_staff = voice.determine_main_staff()
+			# A part on several staves. We determine the main staff
+			main_staff = voice.determine_main_staff()
 			# We add the voice to the part measure with this staff
-			measure = self.get_measure_from_staff(no_staff)
+			measure = self.get_measure_from_staff(main_staff)
 			measure.add_voice(voice)
+			
 		
 	def add_system_break(self):
 		for measure in  self.get_current_measures():
@@ -628,6 +629,12 @@ class Measure:
 	def add_system_break(self):
 		system_break = m21.layout.SystemLayout(isNew=True)
 		self.m21_measure.insert (system_break)
+		
+		# A new staff begins: trying to control its layout
+		#staff_layout = 	m21.layout.StaffLayout(staffNumber=1, staffLines=4)
+		staff_layout = 	m21.layout.StaffLayout(staffNumber=1)
+		self.m21_measure.insert(staff_layout)
+		
 		# We show the current clef at the beginning of staves
 		self.insert_initial_signatures()
 
