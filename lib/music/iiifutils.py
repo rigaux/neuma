@@ -19,7 +19,7 @@ f_handler.setLevel(logging.WARNING)
 f_format = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 f_handler.setFormatter(f_format)
 # Add handlers to the logger
-logger.addHandler(f_handler)
+#logger.addHandler(f_handler)
 
 # For the console
 c_handler = logging.StreamHandler()
