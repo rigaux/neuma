@@ -1195,7 +1195,8 @@ class Opus(models.Model):
 		if not just_annotations:
 			print ("Replace XML file")
 			mxml_file = "/tmp/score.xml"
-			score.write_as_musicxml (mxml_file)
+			omr_score.write_as_musicxml (mxml_file)
+
 			with open(mxml_file) as f:
 				self.musicxml = File(f,name="score.xml")
 				self.save()
@@ -1206,7 +1207,7 @@ class Opus(models.Model):
 			# Generate and store the MEI file as a source and main file
 			# Create the file
 			mei_file = "/tmp/score_mei.xml"
-			score.write_as_mei (mei_file)
+			omr_score.write_as_mei (mei_file)
 			with open(mei_file) as f:
 				print ("Replace MEI file")
 				self.mei = File(f,name="mei.xml")

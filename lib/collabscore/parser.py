@@ -215,6 +215,9 @@ class OmrScore:
 		#self.date = json_data["date"]
 		self.json_data = json_data
 		
+		# The Score, obtained after a call to get_score
+		self.score = None 
+		
 		self.creator = annot_mod.Creator ("collabscore", 
 										annot_mod.Creator.SOFTWARE_TYPE, 
 										"collabscore")
@@ -293,8 +296,12 @@ class OmrScore:
 			Builds a score (instance of our score model) from the Omerized document
 		'''		
 		# Create an OMR score (with layout)
-		score = score_model.Score(use_layout=False)
+		if self.score != None:
+			return self.score # Returning the score in cache
 		
+		# The score has not yet been computed
+		score = score_model.Score(use_layout=False)
+
 		# 
 		# The manifest tells us the parts of the score: we create them
 		for src_part in self.manifest.get_parts():
@@ -621,9 +628,9 @@ class OmrScore:
 					
 					# Remove in the XML file the pseudo-beam
 					self.post_editions.append( editions_mod.Edition (editions_mod.Edition.CLEAN_BEAM))
-						
-		return score
-
+		
+		self.score = score 			
+		return self.score
 
 	def decode_event(self, voice, voice_item):
 		'''

@@ -22,7 +22,6 @@ class DisplayVerovioScore extends HTMLElement {
     this.opus_ref = ""
   	this.current_page = 1
   	
- 	   this.vrvToolkit = new verovio.toolkit()
 
 	// Load the template	
   	let template = document.getElementById("display-verovio-score");
@@ -32,8 +31,6 @@ class DisplayVerovioScore extends HTMLElement {
     this.shadow = this.attachShadow({ mode: "open" });
     this.shadow.appendChild(templateContent.cloneNode(true));
 
-	DisplayVerovioScore.verovio = this.vrvToolkit
-	DisplayVerovioScore.shadow = this.shadow
 
   }
   
@@ -49,9 +46,12 @@ class DisplayVerovioScore extends HTMLElement {
 		    	};
 
 	// Create the Vevorio toolkit instance
-	
+	this.vrvToolkit = new verovio.toolkit()
 	this.vrvToolkit.setOptions(vrv_options);
  
+ 	DisplayVerovioScore.verovio = this.vrvToolkit
+	DisplayVerovioScore.shadow = this.shadow
+
 	// Where do we show the score
 	this.score_div = this.shadow.getElementById("verovio");
 

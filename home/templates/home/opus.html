@@ -194,10 +194,7 @@ if request.session.search_context.pattern != ""
  
 </template>
 
-
-<!-- if request.session.search_context.pattern != "" and opus.mei  -->
-
-    {%if  opus.mei  %}
+    {%if  opus.musicxml  %}
  
 <script>
 	  var vrvOptions = {
@@ -223,7 +220,7 @@ if request.session.search_context.pattern != ""
 	 });
 </script>
 
-<display-verovio-score opus_ref="{{opus.ref}}" mei_url="{{opus.mei.url}}">
+<display-verovio-score opus_ref="{{opus.ref}}" mei_url="{{opus.musicxml.url}}">
 </display-verovio-score>
 
 	{% else %}
