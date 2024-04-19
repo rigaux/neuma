@@ -113,7 +113,7 @@ class ParserConfig:
 		# Testing measure
 		if page_no == self.page_min and system_no == self.system_min and measure_no < self.measure_min:
 			return False 
-		if page_no == self.page_max and system_no == self.system_max and system_no > self.measure_max:
+		if page_no == self.page_max and system_no == self.system_max and measure_no > self.measure_max:
 			return False
 		# All good !
 		return True
@@ -296,8 +296,9 @@ class OmrScore:
 			Builds a score (instance of our score model) from the Omerized document
 		'''		
 		# Create an OMR score (with layout)
-		if self.score != None:
-			return self.score # Returning the score in cache
+		#if self.score != None:
+		#	print ("The score has already been computed. We return the version in cache")
+		#	return self.score # Returning the score in cache
 		
 		# The score has not yet been computed
 		score = score_model.Score(use_layout=False)
@@ -349,7 +350,7 @@ class OmrScore:
 			page = Page(json_page)							
 
 			logger.info (f"")
-			logger.info (f'Process page {current_page_no}')
+			logger.info (f'** Process page {current_page_no}')
 
 			# Get the page from the manifest
 			mnf_page = self.manifest.get_page(current_page_no)
@@ -364,7 +365,7 @@ class OmrScore:
 					continue
 
 				logger.info (f"")
-				logger.info (f'Process system {current_system_no}')
+				logger.info (f'*** Process system {current_system_no}')
 
 				# Get the system from the manifest
 				mnf_system = mnf_page.get_system(current_system_no)
@@ -423,11 +424,12 @@ class OmrScore:
 				for measure in system.measures:
 					current_measure_no += 1
 					current_system_measure_no += 1
-					if not self.config.in_range (current_page_no, current_system_no, current_measure_no):
+					if not self.config.in_range (current_page_no, current_system_no, current_system_measure_no):
+						logger.info (f'Skipping measure {current_measure_no}')
 						continue
 				
 					logger.info (f"")
-					logger.info (f'Process measure {current_measure_no}, to be inserted at position {score.duration()}')
+					logger.info (f'***** Process measure {current_measure_no}, to be inserted at position {score.duration()}')
 
 					# Get the measure from the manifest
 					mnf_measure = mnf_system.get_measure(current_system_measure_no)
@@ -449,6 +451,7 @@ class OmrScore:
 							print (f"Skipping measure {current_measure_no} for part {part.id}")
 							continue
 						'''
+						logger.info (f"Adding measure {current_measure_no} to part {part.id}")
 						part.add_measure (current_measure_no)
 						# Adding page and system breaks
 						if 	page_begins and current_page_no > 1:
@@ -513,6 +516,7 @@ class OmrScore:
 							# of the current measure
 							measure_for_part.add_key_signature (key_sign)
 					
+						measure_for_part.print_initial_clefs()
 					# Now we scan the voices
 					for voice in measure.voices:
 						current_part = score.get_part(voice.id_part)
@@ -609,6 +613,7 @@ class OmrScore:
 												direction = "up"
 											else:
 												direction = "down"
+											print (f"Object on staff {voice_part.main_staff}  must be moved ({direction}) to {event.no_staff} ")
 											move = editions_mod.Edition (editions_mod.Edition.MOVE_OBJECT_TO_STAFF,
 																	{"object_id": event.id, 
 																	"staff_no": event.no_staff,
@@ -621,14 +626,20 @@ class OmrScore:
 						initial_measure = False		
 					
 					# Checking consistency of time signatures
+					logger.info("")
+					logger.info("Checking time signatures")
+					logger.info("")
 					score.check_time_signatures()
 		
 					# Time to check the consistency of the measure
+					logger.info("")
+					logger.info("Checking consistency of measures")
+					logger.info("")
 					score.check_measure_consistency()
 					
 					# Remove in the XML file the pseudo-beam
 					self.post_editions.append( editions_mod.Edition (editions_mod.Edition.CLEAN_BEAM))
-		
+
 		self.score = score 			
 		return self.score
 
@@ -670,13 +681,13 @@ class OmrScore:
 					
 				note = score_events.Note(pitch_class, octave, duration, alter, no_staff)
 				# Check ties
-				if head.tied and head.tied=="forward":
+				'''if head.tied and head.tied=="forward":
 					#print (f"Tied note start with id {head.id_tie}")
 					note.start_tie()
 				if head.tied and head.tied=="backward":
 					#print (f"Tied note ends with id {head.id_tie}")
 					note.stop_tie()
-				
+				'''
 				# Check articulations
 				for json_art in head.articulations:
 					if json_art["label"] in ARTICULATIONS_LIST:

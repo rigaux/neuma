@@ -3,6 +3,8 @@ import json
 import lib.music.Score as score_mod
 import lib.music.notation as notation_mod
 import lib.music.iiifutils as iiif_mod
+from lib.music.Score import Part
+from collections import OrderedDict
 
 '''
  A class used to represent a source (multimedia document) associated to an Opus
@@ -141,7 +143,23 @@ class Manifest:
 		return self.parts[id_part]
 			
 	def get_parts(self):
-		return self.parts.values()
+		# Beware: depending on the order with which parts are discovered,
+		# Part1 might appear before Part2 or the opposite: we sort
+		
+		# Create a dictionary
+		dict_parts = {}
+		for part in self.parts.values():
+			dict_parts[part.id] = part 
+		# Sort the dict
+		sorted_dict = OrderedDict(sorted(dict_parts.items()))
+		# Create the sorted array
+		sorted_parts = []
+		for part in sorted_dict.values():
+			sorted_parts.append(part)
+		# Finally we reverse: DMOS gives the parts bottom-up
+		sorted_parts.reverse()
+		return sorted_parts
+
 
 	@staticmethod
 	def from_json (json_mnf):

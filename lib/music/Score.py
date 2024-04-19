@@ -307,7 +307,7 @@ class Score:
 
 	def check_measure_consistency(self):
 		for part in self.parts:
-			part.check_measure_consistency()			
+			part.check_measure_consistency()	
 
 class Part:
 	"""
@@ -411,6 +411,10 @@ class Part:
 		# The staff has not been found: raise an exception
 		raise CScoreModelError (f'Unable to find staff {no_staff} in part {self.id}')
 
+	def get_duration(self):
+		return self.m21_part.duration.quarterLength
+	
+	
 	def get_current_time_signature(self):
 		# There should be at least one staff in the part
 		if  len(self.staves) == 0:
@@ -549,7 +553,8 @@ class Part:
 
 	def check_measure_consistency(self):
 		for measure in	self.get_current_measures():
-			measure.check_consistency()			
+			measure.check_consistency()	
+					
 
 	@staticmethod
 	def create_part_id (id_part):
@@ -569,6 +574,7 @@ class Measure:
 		Measure.sequence_measure += 1
 		self.part = part
 		self.no = no_measure
+		self.voices = []
 		self.id = f'm{no_measure}-{Measure.sequence_measure}' 
 		self.m21_measure = m21.stream.Measure(id=self.id, number=no_measure)
 		self.m21_measure.style.absoluteX = 23
@@ -606,6 +612,8 @@ class Measure:
 				self.initial_clefs[staff_id] = clef
 				# We add the clef to music 21 measure. Sth strange: no staff specified...
 				self.m21_measure.insert(0,  clef.m21_clef)
+			else:
+				print (f"Clef already set for staff {staff_id}")
 
 	def print_initial_clefs(self):
 		for staff_id, clef in self.initial_clefs.items():
@@ -624,6 +632,15 @@ class Measure:
 		self.m21_measure.insert(0,  key_signature.m21_key_signature)
 		
 	def add_voice (self, voice):
+		if voice.get_duration() > self.get_expected_duration():
+			logger.warning (f"Duration error. In measure {self.no}, voice {voice.id} duration {voice.get_duration()} exceeds the expected duration {self.get_expected_duration()}.")
+			# Remove hidden events
+			voice.remove_hidden_events()
+			if voice.get_duration() > self.get_expected_duration():
+				logger.warning (f"After removal of hiden events, voice {voice.id} duration {voice.get_duration()} still exceeds the {self.get_expected_duration()}. Shrinking the voice")
+				# Still not enough
+				voice.shrink_to_bar_duration(self.get_expected_duration())
+		self.voices.append(voice)
 		self.m21_measure.insert (0, voice.m21_stream)
 		
 	def add_system_break(self):
@@ -658,21 +675,34 @@ class Measure:
 		
 		# First get the time signature in effect
 		logger.info (f"Measure {self.id}. Expected duration: {self.initial_ts.barDuration().quarterLength}")
-		for voice in self.m21_measure.getElementsByClass(m21.stream.Voice):
-			if not (voice.duration == self.initial_ts.barDuration()):					
-				logger.warning (f"Incomplete duration in measure {self.id}. Expected duration: {self.initial_ts.barDuration().quarterLength}. Voice {voice.id} duration is {voice.duration.quarterLength}")
-				#for event in voice.notesAndRests:
-				#	print (f"Event {event.id}. Duration: {event.duration.quarterLength}. Hidden {event.style.hideObjectOnPrint}")
+		for voice in self.voices:
+			bar_duration = self.get_expected_duration()
+			#self.m21_measure.getElementsByClass(m21.stream.Voice):
+			if not (voice.m21_stream.duration == self.initial_ts.barDuration()):					
+				# Trying to fix this. Easy when we just have to complete the voice
+				if fix:
+					if voice.m21_stream.duration.quarterLength < bar_duration:
+						logger.warning (f"Incomplete duration in measure {self.id}. Expected duration: {bar_duration}. Voice {voice.id} duration is {voice.get_duration()}")
+						voice.expand_to_bar_duration(bar_duration)
+					else:
+						logger.warning (f"Overduration in measure {self.id}. Expected duration: {bar_duration}. Voice {voice.id} duration is {voice.get_duration()}")
+						voice.shrink_to_bar_duration(bar_duration)
+					logger.warning (f"After fix, measure duration: {bar_duration}. Voice {voice.id} duration {voice.get_duration()}")
+
+		self.m21_measure = m21.stream.Measure(id=self.id, number=self.no)
+		for voice in self.voices:
+			#print (f"Re-Adding voice with duration {voice.get_duration()}")
+			self.m21_measure.insert (0, voice.m21_stream)
+		logger.info  (f"Measure duration AFTER FIX: {self.get_duration()}")
+
+	def get_duration(self):
+		# Returns the measure duration based on it metric
+		return self.m21_measure.duration.quarterLength
+			
+	def get_expected_duration(self):
+		# Returns the measure duration based on it metric
+		return self.initial_ts.barDuration().quarterLength
 		
-				# Trying to fix thi. Easy when we just have to complete the voice
-				if fix and voice.duration.quarterLength < self.initial_ts.barDuration().quarterLength:
-					quarters_to_add =  self.initial_ts.barDuration().quarterLength - voice.duration.quarterLength
-					logger.warning (f"Adding and event with duration {quarters_to_add}")
-					added_event = m21.note.Rest()
-					added_event.duration = m21.duration.Duration(quarters_to_add)
-					voice.append(added_event)
-					logger.warning (f"After completion. measure duration: {self.initial_ts.barDuration().quarterLength}. Voice {voice.id} duration {voice.duration.quarterLength}")
-					
 	def length(self):
 		# Music21 conventions
 		return self.m21_measure.duration

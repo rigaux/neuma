@@ -223,6 +223,16 @@ class Clef:
 		diatonic_num = diatonic_num_base + height
 		pitch = m21.pitch.Pitch() 
 		pitch.diatonicNoteNum = diatonic_num
+		
+		# Check
+		if pitch.octave < 0 or pitch.octave > 9:
+			score_mod.logger.error(f"Invalid octave found when decoding note with clef {m21.clef.TrebleClef()} and height {height}")
+			# Try to fix
+			if pitch.octave < 0:
+				pitch.octave = 0
+			if pitch.octave > 9:
+				pitch.octave = 9
+			
 		return (pitch.step, pitch.octave)
 
 	def __str__ (self):

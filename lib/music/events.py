@@ -25,6 +25,9 @@ class Duration:
 		else:
 			self.m21_duration = m21.duration.Duration(type="whole")
 
+	def get_value(self):
+		return self.m21_duration.quarterLength
+	
 	def __repr__(self):
 		return f'Duration({self.m21_duration})'
 
@@ -67,6 +70,9 @@ class Event:
 		return False
 	def is_chord(self):
 		return False
+	
+	def get_duration(self):
+		return self.duration.get_value()
 	
 	def set_visibility(self, visibility):
 		self.visible = visibility
@@ -202,7 +208,7 @@ class Note (Event):
 		return self.alter
 	def get_pitch_class(self):
 		return self.pitch_class
-
+		
 	def start_tie(self):
 		self.m21_event.tie = m21.tie.Tie('start')
 	def stop_tie(self):
