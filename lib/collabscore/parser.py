@@ -264,6 +264,7 @@ class OmrScore:
 						src_part = source_mod.MnfPart(header.id_part, header.id_part, header.id_part) 
 						self.manifest.add_part(src_part)
 					src_staff.add_part(header.id_part)
+					
 				for measure in system.measures:
 					current_measure_no += 1
 					current_system_measure_no += 1
@@ -290,6 +291,9 @@ class OmrScore:
 		self.config = ParserConfig(config)
 		self.config.print()		
 		
+		# We keep some global information, in case sth is missing
+		self.current_time_signature = score_notation.TimeSignature() 
+
 
 	def get_score(self):
 		'''
@@ -404,7 +408,7 @@ class OmrScore:
 						# See what we inherit from the previous staves of the part
 						if header.no_staff in previous_staves.keys():
 							for prev_staff in previous_staves[header.no_staff]:
-								#logger.info(f"Inherited TS for part {score_part_id} (in staff {prev_staff.id}):  {prev_staff.current_time_signature}")
+								logger.info(f"Inherited TS for part {score_part_id} (in staff {prev_staff.id}):  {prev_staff.current_time_signature}")
 								staff.set_current_time_signature(prev_staff.current_time_signature)
 								
 							# See if the manifest gives an explicit time signature
