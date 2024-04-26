@@ -125,6 +125,7 @@ class Voice:
 		main_staff = self.determine_main_staff()
 		duration = event_mod.Duration(fraction.numerator,fraction.denominator)
 		r = event_mod.Rest(duration, main_staff)
+		#r = event_mod.Note("A", 4, duration)
 		self.append_event(r)
 					
 	def nb_events(self):

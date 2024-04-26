@@ -129,12 +129,17 @@ class KeySignature:
 	counter = 0
 
 	def __init__(self, nb_sharps=0, nb_flats=0, nb_naturals=0) :
+		self.nb_sharps = nb_sharps
+		self.nb_flats = nb_flats
+		self.nb_naturals = nb_naturals
+		
 		if nb_sharps > 0:
 			self.m21_key_signature = m21.key.KeySignature(nb_sharps)
 		elif nb_flats > 0:
 			self.m21_key_signature = m21.key.KeySignature((-1) * nb_flats)
 		else:
 			self.m21_key_signature = m21.key.KeySignature(0)
+			
 		self.m21_key_signature.id = f"ksign{KeySignature.counter}"
 		KeySignature.counter += 1
 
@@ -145,8 +150,13 @@ class KeySignature:
 		else:
 			return score_events.Note.ALTER_NONE
 
+	def copy (self):
+		# Make a copy of the current object
+		return KeySignature (self.nb_sharps, self.nb_flats, self.nb_naturals)
+
 	def __str__ (self):
 		return f"{self.m21_key_signature.asKey()}"
+
 class Clef:
 	'''
 		Same as m21

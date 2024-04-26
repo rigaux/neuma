@@ -74,6 +74,11 @@ class Score:
 		self.pages = []
 		self.current_page = None
 
+		# During parsing, we maintain the current interpretation context 
+		# Useful when a part begins without explicit information
+		self.current_key_signature = notation.KeySignature() 
+		self.current_time_signature = notation.TimeSignature() 
+
 		'''
 			Reset all counters
 		'''
@@ -116,12 +121,20 @@ class Score:
 	def add_part (self, part):
 		""" Add a part to the main score or to the current page"""
 		
+		# The new part receives it initial key / time signature from the score
+		part.set_current_key_signature(self.current_key_signature)
+		part.set_current_time_signature(self.current_time_signature)
+		
 		if not part.part_type == Part.STAFF_PART:
 			# Just a staff in a multi-staves part: do not put in the score
 			self.parts.append(part)	
 
-		self.m21_score.insert(0, part.m21_part)
-				
+		# We delay the insertion of the part until a measures comes up
+		self.insert_part_at_pos(part, 0)
+			
+	def insert_part_at_pos (self, part, pos):
+		self.m21_score.insert(pos, part.m21_part)
+		
 	def part_exists (self, id_part):
 		for part in self.get_parts():
 				if part.id == id_part:
@@ -157,6 +170,15 @@ class Score:
 
 		# The staff has not been found: raise an exception
 		raise CScoreModelError (f'Unable to find staff {no_staff} in part {part.id}')
+
+	def set_current_key_signature (self, key):
+		self.current_key_signature = key
+	def set_current_time_signature (self, ts):
+		self.current_time_signature = ts
+	def get_current_time_signature(self):
+		return self.current_time_signature
+	def get_current_key_signature(self):
+		return self.current_key_signature
 
 	def reset_accidentals(self):
 		# Used when a new measure starts: we forget all accidentals met before
@@ -343,6 +365,10 @@ class Part:
 		self.m21_part.partAbbreviation = abbreviation
 		self.part_type = part_type
 
+		# During parsing, we maintain the current interpretation context 
+		self.current_key_signature = notation.KeySignature() 
+		self.current_time_signature = notation.TimeSignature() 
+
 		# List of staves the part is displayed on
 		self.staves = []
 		
@@ -385,6 +411,9 @@ class Part:
 	def add_staff (self, staff):
 		self.staves.append(staff)
 		
+		#
+		# PROBABLY USELESS !
+		#
 		if self.part_type == Part.GROUP_PART:
 			# Add also the staff to one of the sub parts
 			# We search the first sub part without staff
@@ -414,13 +443,22 @@ class Part:
 	def get_duration(self):
 		return self.m21_part.duration.quarterLength
 	
-	
+	def set_current_key_signature (self, key):
+		self.current_key_signature = key
+		if self.part_type == Part.GROUP_PART:
+			for staff_part in self.staff_group: 
+				staff_part.set_current_key_signature(key)
+				
+	def set_current_time_signature (self, ts):
+		self.current_time_signature = ts
+		if self.part_type == Part.GROUP_PART:
+			for staff_part in self.staff_group: 
+				staff_part.set_current_time_signature(ts)
+				
 	def get_current_time_signature(self):
-		# There should be at least one staff in the part
-		if  len(self.staves) == 0:
-			logger.error (f'Part {self.id} has no staff ! Cannot do anything')
-		# We assume that the time signature is the same for all staves. So take the fist one
-		return self.staves[0].current_time_signature
+		return self.current_time_signature
+	def get_current_key_signature(self):
+		return self.current_key_signature
 	
 	def add_clef_to_staff (self, no_staff, clef):
 		# A new clef at the beginning of measure for this staff
@@ -436,8 +474,19 @@ class Part:
 		staff.add_accidental( pitch_class, acc)
 
 	def add_measure (self, measure_no):
+
 		if not self.part_type == Part.GROUP_PART:
 			measure = Measure(self, measure_no)
+			
+			""" In case this is the first measure, we insert
+			   the current time signature (necessary when 
+			    a part begins after the other, and the TS is implicit)
+			    Music21 seems clever enough to remove subsequent and equals signatures
+			 """
+			if len(self.measures) == 0:
+				measure.add_time_signature(self.current_time_signature.copy())
+				measure.add_key_signature(self.current_key_signature.copy())
+			
 			self.measures.append(measure)
 			self.current_measure = measure
 			self.m21_part.append(measure.m21_measure)
@@ -448,7 +497,11 @@ class Part:
 
 	def get_current_measures(self):
 		if not self.part_type == Part.GROUP_PART:
-			return [self.current_measure]
+			if self.current_measure is None:
+				# The part has not yet begun
+				return []
+			else:
+				return [self.current_measure]
 		else:
 			current_measures = []
 			# We add a measure to eah sub-part
@@ -486,6 +539,7 @@ class Part:
 			
 	def append_measure (self, measure):
 		logger.info (f'Adding measure {measure.no} to part {self.id}')
+		
 		if not self.part_type == Part.GROUP_PART:
 			self.m21_part.append(measure.m21_measure)
 		else:
@@ -589,11 +643,11 @@ class Measure:
 			# Same thing for initial time signatures. Used for checking consistency
 			# Note: there is only one time signature, common to all staves 
 			for staff in part.staves:
-				self.initial_ts = staff.current_time_signature
+				self.initial_ts = part.current_time_signature
 		else:
 			# No staves for this measure????
-			logger.warning (f"Measure {self.id} has no staves? Assuming a time signature 4/4")
-			self.initial_ts = notation.TimeSignature() 
+			self.initial_ts = part.get_current_time_signature()
+			logger.warning (f"Measure {self.id} has no staves? Assuming a time signature {self.initial_ts}")
 			
 	def get_initial_clef_for_staff(self, staff_id):
 		if not (staff_id in self.initial_clefs.keys()):
@@ -611,6 +665,7 @@ class Measure:
 			if not self.initial_clefs[staff_id].equals(clef):
 				self.initial_clefs[staff_id] = clef
 				# We add the clef to music 21 measure. Sth strange: no staff specified...
+				print (f"Adding Clef {clef.m21_clef} to staff {staff_id}")
 				self.m21_measure.insert(0,  clef.m21_clef)
 			else:
 				print (f"Clef already set for staff {staff_id}")
@@ -649,20 +704,20 @@ class Measure:
 		
 		# A new staff begins: trying to control its layout
 		#staff_layout = 	m21.layout.StaffLayout(staffNumber=1, staffLines=4)
-		staff_layout = 	m21.layout.StaffLayout(staffNumber=1)
-		self.m21_measure.insert(staff_layout)
+		#staff_layout = 	m21.layout.StaffLayout(staffNumber=1)
+		#self.m21_measure.insert(staff_layout)
 		
 		# We show the current clef at the beginning of staves
-		self.insert_initial_signatures()
+		#self.insert_initial_signatures()
 
 	def add_page_break(self):
 		system_break = m21.layout.PageLayout(isNew=True)
 		self.m21_measure.insert (system_break)
-		self.insert_initial_signatures()
+		#self.insert_initial_signatures()
 
 	def insert_initial_signatures(self):
 		# If the measure is the first of score/part/staff, we report
-		# the current clef and other initial symboles
+		# the current clef and other initial symbols
 		for staff in self.part.staves:
 			# First of system? We insert the current clef
 			self.m21_measure.insert(0,  staff.current_clef.m21_clef)
