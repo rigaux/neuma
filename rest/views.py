@@ -711,7 +711,7 @@ class AnnotationList(generics.ListAPIView):
 			).delete()
 		return JSONResponse({"message": f"All annotations of {full_neuma_ref} for annotation model {model_code} have been deleted"})
 
-class AnnotationDetail(APIView):
+class AnnotationDetail(generics.RetrieveDestroyAPIView):
 	serializer_class = AnnotationSerializer
 	
 	def get_queryset(self):
@@ -726,9 +726,22 @@ class AnnotationDetail(APIView):
 
 	@extend_schema(operation_id="AnnotationDetail")
 	def get(self, request, full_neuma_ref, annotation_id):
-		db_annotation = self.get_object(annotation_id)
-		return JSONResponse(AnnotationSerializer(db_annotation).data)
+		try:
+			db_annotation =  Annotation.objects.get(id=annotation_id)
+			return JSONResponse(AnnotationSerializer(db_annotation).data)
+		except Annotation.DoesNotExist:
+			return Response(status=status.HTTP_404_NOT_FOUND)
 
+	@extend_schema(operation_id="AnnotationDelete")
+	def delete(self, request, full_neuma_ref, annotation_id):
+		try:
+			db_annotation =  Annotation.objects.get(id=annotation_id)
+			db_annotation.delete()
+			serializer = MessageSerializer({"status": "ok", 
+										    "message" : f"Successfully destroyed annotation {annotation_id}"})
+			return JSONResponse(serializer.data)
+		except Annotation.DoesNotExist:
+			return Response(status=status.HTTP_404_NOT_FOUND)
 
 class AnnotationCreate(APIView):
 	serializer_class = AnnotationSerializer

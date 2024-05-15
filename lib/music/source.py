@@ -386,6 +386,10 @@ class MnfStaff:
 		# In principle we might have a list of parts on a same staff
 		self.parts  = []
 		
+		# The local staff number tells us the id of the staff
+		# in a part with multiple staves
+		self.number_in_part = 1
+		
 		# The "local" part is a combination of the part ID and the staff number
 		# for this part. In case of a part "P1" with two staves, we will have for
 		# instance "P1-1" for the first staff and "P1-2" for the second. Useful
@@ -415,10 +419,10 @@ class MnfStaff:
 		self.parts.append(self.system.page.manifest.get_part(id_part))
 		
 		# How many staves for this part in the current system?
-		no_staff_part = self.system.count_staves_for_part (id_part) 
+		self.number_in_part = self.system.count_staves_for_part (id_part) 
 		
 		# Warning: will not work in case we have several parts
-		self.local_part_id = score_mod.Part.make_part_id(id_part, no_staff_part)
+		self.local_part_id = score_mod.Part.make_part_id(id_part, self.number_in_part)
 
 	def clear_and_replace_part(self, id_part):
 		# Clear the parts, add a new one
@@ -432,8 +436,8 @@ class MnfStaff:
 				# Still assuming one part per staff
 				self.parts = [target] 
 				# Update the number of staves and the local part id
-				no_staff_part = self.system.count_staves_for_part (target.id) 
-				self.local_part_id = score_mod.Part.make_part_id(target.id, no_staff_part)
+				self.number_in_part = self.system.count_staves_for_part (target.id) 
+				self.local_part_id = score_mod.Part.make_part_id(target.id, self.number_in_part)
 		
 	def to_json (self):
 		partids = []

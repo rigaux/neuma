@@ -23,7 +23,8 @@ class Duration:
 		if not whole:
 			self.m21_duration = m21.duration.Duration(self.fraction)
 		else:
-			self.m21_duration = m21.duration.Duration(type="whole")
+			dur = m21.duration.convertTypeToQuarterLength("whole", dots=1)
+			self.m21_duration = m21.duration.Duration(dur)
 
 	def get_value(self):
 		return self.m21_duration.quarterLength

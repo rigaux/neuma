@@ -61,14 +61,6 @@ class Voice:
 		for staff_id, clef in cur_clefs.items():
 			self.current_clefs[staff_id] = clef
 
-	def get_current_clef_for_staff(self, staff_id):
-		#  The staff should belong to the voice's part
-		if not self.part.staff_exists(staff_id):
-			# Oups, no such staff 
-			raise score_mod.CScoreModelError (f"No staff ‘{staff_id}' in part {self.part.id} for voice {self.id}")
-		else:
-			staff = self.part.get_staff(staff_id)
-			return staff.current_clef
 
 	def set_from_m21(self, m21stream):
 		"""Feed the voice representation from a MusicXML document"""
