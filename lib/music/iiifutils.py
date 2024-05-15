@@ -1,35 +1,10 @@
 
-# import the logging library
-import logging
 import json
 import requests
 
 from urllib.parse import urljoin, urlparse
 from pathlib import Path, PurePath
 
-# Get an instance of a logger
-
-logger = logging.getLogger(__name__)
-
-
-# Create file handler
-f_handler = logging.FileHandler(__name__ + '.log')
-f_handler.setLevel(logging.WARNING)
-# Create formatters and add it to handlers
-f_format = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-f_handler.setFormatter(f_format)
-# Add handlers to the logger
-#logger.addHandler(f_handler)
-
-# For the console
-c_handler = logging.StreamHandler()
-c_handler.setLevel(logging.WARNING)
-c_format = logging.Formatter('%(name)s - %(levelname)s - %(message)s')
-c_handler.setFormatter(c_format)
-#logger.addHandler(c_handler)
-
-def set_logging_level(level):
-	logger.setLevel(level)
 			
 GALLICA_BASEURL = 'https://gallica.bnf.fr/iiif/ark:/'
 GALLICA_UI_BASEURL = 'https://gallica.bnf.fr/ark:/'
@@ -98,7 +73,7 @@ class Document:
 	
 	def get_canvas (self, i_canvas):
 		if i_canvas < 0 or i_canvas >= self.nb_canvases:
-			logger.error (f"Attempt to access a canvas beyond range: {i_canvas} ")
+			print(f"Attempt to access a canvas beyond range: {i_canvas} ")
 		return Canvas (self.manifest["sequences"][0]["canvases"][i_canvas])
 
 	def get_images(self):
@@ -118,7 +93,7 @@ class Canvas:
 	
 	def get_image(self, i_img):
 		if i_img < 0 or i_img >= self.nb_images:
-			logger.error (f"Attempt to access an image beyond range: {i_img} ")
+			print (f"Attempt to access an image beyond range: {i_img} ")
 		return Image (self.value["images"][i_img])
 	
 class Image:
