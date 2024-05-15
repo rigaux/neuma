@@ -111,27 +111,32 @@ class Edition:
 												    f"cannot find staff {id_staff} in system {system.number} page {page.number}")
 					else:
 						parser_mod.logger.warning(f"Part {part.id} assigned to staff {id_staff} in system {system.number} page {page.number}")
-						print(f"Part {part.id} assigned to staff {id_staff} in system {system.number} page {page.number}")
 
 	def move_object_to_staff(self, xml_file):
 		''' The parameters are: the staff id, and the object id (a note, a rest, a clef...)
 			This is a post-xml correction...
 		'''
-		parser_mod.logger.info(f"Operation move_object_to_staff")
+
 		object_id = self.params["object_id"]
 		staff_no = self.params["staff_no"]
 		direction = self.params["direction"]
-		parser_mod.logger.info(f"Moving {direction} object {object_id} to staff {staff_no}")
 		
 		mxml_doc = ET.parse(xml_file)
 		object = mxml_doc.find(f".//*[@id = '{object_id}']")
 		if object is not None:
+			# Note: staves in MusicXML are numbered internally
+			# to a part. So, if we move a note, it is either
+			# to staff 2 of direction is down, or staff 1 if direction is up
+			
 			staff = object.find("staff")
 			# An heuristic to infer the numbering of staves in MusicXML
 			if direction == "up":
-				staff_no = int(staff.text) - 1
+				#staff_no = int(staff.text) - 1
+				staff_no = 1
 			else:
-				staff_no = int(staff.text) + 1
+				# staff_no = int(staff.text) + 1
+				staff_no = 2
+			parser_mod.logger.info(f"Moving {direction} object {object_id} to staff {staff_no}")
 			staff.text = f"{staff_no}"
 			mxml_doc.write (xml_file)
 		else:

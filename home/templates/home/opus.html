@@ -43,13 +43,6 @@ var tabNames = [
 </script>
 
 
- {% if dmos_report %}
- <h3>Report from DMOS data processing</h3>
- 
-   <div>
-   {{dmos_report}}
-   </div>
-   
 <h1>
     <ul class="toolbar active">
 
@@ -61,19 +54,8 @@ var tabNames = [
                          </li> 
                          {% endif %}
     </ul>
-
 {{opus.title}}</h1>
-<!-- 
-if request.session.search_context.pattern != "" 
-  <div class="pattern-summary">
-  <h2>{% trans "Search pattern" %} [<a href="{% url 'home:opus' opus.ref %}?pattern=">{% trans "Clear" %}</a>]</h2>
-  <div id="pattern_score"></div>
-  </div>
-  endif 
- -->
- 
- {% endif %}
- 
+
 <dl class="description">
 	<dt>{% trans "Corpus" %}</dt>
 	<dd>
@@ -121,11 +103,31 @@ if request.session.search_context.pattern != ""
             href="{{opus.summary.url}}">Summary</a> 
             {% endif %}
            </dd>
-           
-       
- 
-           
+  
   </dl>
+  
+         
+    <h4>{% trans "Sources"%}</h4>
+    
+      <ul>
+       {% for source in opus.opussource_set.all %}
+         <li>
+          <b>Source {{source.ref}}</b>. 
+            {% if source.url %}      
+                <a target="_blank" href="{{source.url}}">Link to the source</a> |
+            {% endif %} 
+          {% if source.source_file %}
+           <a href="{{source.source_file.url}}">File: {{source.source_file.name}}</a>
+          {% endif %}           
+         {% if "change_corpus" in user_corpus_perms %}
+           | <a href="{% url 'admin:manager_opussource_change' source.id %}">
+                           Edit
+                   </a> 
+               {% endif %}  
+         </li>
+      {% endfor %}
+      </ul>
+  
 <!-- fin div .description -->
 
            
@@ -194,10 +196,7 @@ if request.session.search_context.pattern != ""
  
 </template>
 
-
-<!-- if request.session.search_context.pattern != "" and opus.mei  -->
-
-    {%if  opus.mei  %}
+    {%if  opus.musicxml  %}
  
 <script>
 	  var vrvOptions = {
@@ -223,7 +222,7 @@ if request.session.search_context.pattern != ""
 	 });
 </script>
 
-<display-verovio-score opus_ref="{{opus.ref}}" mei_url="{{opus.mei.url}}">
+<display-verovio-score opus_ref="{{opus.ref}}" mei_url="{{opus.musicxml.url}}">
 </display-verovio-score>
 
 	{% else %}

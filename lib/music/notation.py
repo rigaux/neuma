@@ -26,18 +26,10 @@ class Staff:
 		'''
 		self.id = no_staff
 		self.current_clef = Clef(Clef.NO_CLEF)
-		self.current_key_signature = KeySignature() 
-		self.current_time_signature = TimeSignature() 
-
-		# Probably not useful at the end, since these notations are
-		# directly injected in the music21 measure.
-		self.clef_events = {}
-		self.time_signature_events = {}
-		self.key_signature_events = {}
-		#####
 		
 		# List of accidentals met so far
-		self.accidentals = {"A": "", "B": "", "C": "", "D": "", "E":"", "F": "", "G": ""}
+		self.accidentals = {"A": None, "B": None, "C": None, 
+						  "D": None, "E": None, "F": None, "G": None}
 		self.reset_accidentals()
 
 	def reset_accidentals (self):
@@ -48,41 +40,8 @@ class Staff:
 		# Record accidentals met in a measure
 		self.accidentals[pitch_class] = acc
 		
-	def get_accidental (self, pitch_class):
-				
-		if self.accidentals[pitch_class] != "":
-			return self.accidentals[pitch_class]
-		else:
-			# The key signature holds
-			return self.current_key_signature.accidentalByStep(pitch_class)
-
 	def set_current_clef (self, clef):
 		self.current_clef = clef
-	def set_current_key_signature (self, key):
-		self.current_key_signature = key
-	def set_current_time_signature (self, ts):
-		self.current_time_signature = ts
-
-	'''
-	    All these functions are now useless. To be removed
-	
-		
-	def add_clef (self, no_measure, clef):
-		self.clef_events[no_measure] = clef
-		self.current_clef = clef
-	def add_time_signature (self, no_measure, ts):
-		self.time_signature_events[no_measure] = ts
-		
-	def clef_found_at_measure (self, no_measure):
-		return (no_measure in self.clef_events.keys())
-	def get_clef (self, no_measure):
-		return self.clef_events[no_measure]
-
-	def ts_found_at_measure (self, no_measure):
-		return (no_measure in self.time_signature_events.keys())
-	def get_time_signature (self, no_measure):
-		return self.time_signature_events[no_measure]
-	'''
 		
 class TimeSignature:
 	'''
@@ -129,24 +88,34 @@ class KeySignature:
 	counter = 0
 
 	def __init__(self, nb_sharps=0, nb_flats=0, nb_naturals=0) :
+		self.nb_sharps = nb_sharps
+		self.nb_flats = nb_flats
+		self.nb_naturals = nb_naturals
+		
 		if nb_sharps > 0:
 			self.m21_key_signature = m21.key.KeySignature(nb_sharps)
 		elif nb_flats > 0:
 			self.m21_key_signature = m21.key.KeySignature((-1) * nb_flats)
 		else:
 			self.m21_key_signature = m21.key.KeySignature(0)
+			
 		self.m21_key_signature.id = f"ksign{KeySignature.counter}"
 		KeySignature.counter += 1
 
 	# Layer over the music21 functions
-	def accidentalByStep(self, pitch):
+	def accidental_by_step(self, pitch):
 		if self.m21_key_signature.accidentalByStep(pitch) is not None:
 			return self.m21_key_signature.accidentalByStep(pitch).name
 		else:
 			return score_events.Note.ALTER_NONE
 
+	def copy (self):
+		# Make a copy of the current object
+		return KeySignature (self.nb_sharps, self.nb_flats, self.nb_naturals)
+
 	def __str__ (self):
 		return f"{self.m21_key_signature.asKey()}"
+
 class Clef:
 	'''
 		Same as m21
@@ -223,6 +192,16 @@ class Clef:
 		diatonic_num = diatonic_num_base + height
 		pitch = m21.pitch.Pitch() 
 		pitch.diatonicNoteNum = diatonic_num
+		
+		# Check
+		if pitch.octave < 0 or pitch.octave > 9:
+			score_mod.logger.error(f"Invalid octave found when decoding note with clef {m21.clef.TrebleClef()} and height {height}")
+			# Try to fix
+			if pitch.octave < 0:
+				pitch.octave = 0
+			if pitch.octave > 9:
+				pitch.octave = 9
+			
 		return (pitch.step, pitch.octave)
 
 	def __str__ (self):

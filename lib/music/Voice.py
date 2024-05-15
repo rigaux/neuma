@@ -5,9 +5,7 @@ from collections import namedtuple, OrderedDict
 from fractions import Fraction
 
 import lib.music.Score as score_mod
-
-#from home.templatetags.extras import scale_degree, semitoneconv
-#from home.templatetags.extras import rhythm_figures_print
+import lib.music.events as event_mod
 
 DURATION_UNIT = 16
 
@@ -63,14 +61,6 @@ class Voice:
 		for staff_id, clef in cur_clefs.items():
 			self.current_clefs[staff_id] = clef
 
-	def get_current_clef_for_staff(self, staff_id):
-		#  The staff should belong to the voice's part
-		if not self.part.staff_exists(staff_id):
-			# Oups, no such staff 
-			raise score_mod.CScoreModelError (f"No staff ‘{staff_id}' in part {self.part.id} for voice {self.id}")
-		else:
-			staff = self.part.get_staff(staff_id)
-			return staff.current_clef
 
 	def set_from_m21(self, m21stream):
 		"""Feed the voice representation from a MusicXML document"""
@@ -81,8 +71,6 @@ class Voice:
 		if self.automatic_beaming == False and event.is_note():
 			# In order to disable auto beam, we add a pseudo-beam in the music21
 			# event. Ugly but ...
-			
-			# Do differently: check at the end if the voice has a beam
 			event.m21_event.beams.append(m21.beam.Beam(type='start', number=self.PSEUDO_BEAM_ID))
 			event.m21_event.beams.append(m21.beam.Beam(type='stop', number=self.PSEUDO_BEAM_ID))
 			# No need to preserve the automatic beaming flag
@@ -92,6 +80,46 @@ class Voice:
 		
 		self.m21_stream.append(event.m21_event)
 
+	def remove_hidden_events(self):
+		# We rebuild the voice without hidden events
+		old_stream = self.m21_stream
+		self.m21_stream = m21.stream.Voice(id=self.id)
+		
+		old_events = self.events
+		self.events = []
+
+		# OK, scan the old events
+		for event in old_events:
+			if event.visible:
+				self.append_event(event)
+
+	def shrink_to_bar_duration(self, bar_duration):
+		# Ensure that a voice duration does not exceeds bar duration
+		
+		# First remove hidden events
+		if self.get_duration() > bar_duration:
+			self.remove_hidden_events()
+		
+		# Not enough ? Remove the last events....
+		if self.get_duration() > bar_duration:
+			old_stream = self.m21_stream
+			self.m21_stream = m21.stream.Voice(id=self.id)
+			old_events = self.events
+			self.events = []
+			for event in old_events:
+				if self.get_duration() + event.get_duration() < bar_duration:
+					self.append_event(event)
+	
+	def expand_to_bar_duration(self, bar_duration):
+		# Adding rests 			
+		quarters_to_add =  bar_duration - self.get_duration()
+		fraction = Fraction(quarters_to_add)
+		main_staff = self.determine_main_staff()
+		duration = event_mod.Duration(fraction.numerator,fraction.denominator)
+		r = event_mod.Rest(duration, main_staff)
+		#r = event_mod.Note("A", 4, duration)
+		self.append_event(r)
+					
 	def nb_events(self):
 		return len(self.events)
 	
@@ -199,8 +227,8 @@ class Voice:
 	def get_duration(self):
 		# Return the sumof durations of the voice
 		duration = 0
-		for event in self.notesAndRests:
-			duration += event.duration
+		for event in self.events:
+			duration += event.duration.get_value()
 		return duration
 	
 #	def get_all_durations(self):

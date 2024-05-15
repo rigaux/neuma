@@ -74,6 +74,11 @@ class Score:
 		self.pages = []
 		self.current_page = None
 
+		# During parsing, we maintain the current interpretation context 
+		# Useful when a part begins without explicit information
+		self.current_key_signature = notation.KeySignature() 
+		self.current_time_signature = notation.TimeSignature() 
+
 		'''
 			Reset all counters
 		'''
@@ -116,12 +121,20 @@ class Score:
 	def add_part (self, part):
 		""" Add a part to the main score or to the current page"""
 		
+		# The new part receives it initial key / time signature from the score
+		part.set_current_key_signature(self.current_key_signature)
+		part.set_current_time_signature(self.current_time_signature)
+		
 		if not part.part_type == Part.STAFF_PART:
 			# Just a staff in a multi-staves part: do not put in the score
 			self.parts.append(part)	
 
-		self.m21_score.insert(0, part.m21_part)
-				
+		# We delay the insertion of the part until a measures comes up
+		self.insert_part_at_pos(part, 0)
+			
+	def insert_part_at_pos (self, part, pos):
+		self.m21_score.insert(pos, part.m21_part)
+		
 	def part_exists (self, id_part):
 		for part in self.get_parts():
 				if part.id == id_part:
@@ -157,6 +170,15 @@ class Score:
 
 		# The staff has not been found: raise an exception
 		raise CScoreModelError (f'Unable to find staff {no_staff} in part {part.id}')
+
+	def set_current_key_signature (self, key):
+		self.current_key_signature = key
+	def set_current_time_signature (self, ts):
+		self.current_time_signature = ts
+	def get_current_time_signature(self):
+		return self.current_time_signature
+	def get_current_key_signature(self):
+		return self.current_key_signature
 
 	def reset_accidentals(self):
 		# Used when a new measure starts: we forget all accidentals met before
@@ -307,7 +329,7 @@ class Score:
 
 	def check_measure_consistency(self):
 		for part in self.parts:
-			part.check_measure_consistency()			
+			part.check_measure_consistency()	
 
 class Part:
 	"""
@@ -318,9 +340,13 @@ class Part:
 	GROUP_PART="group"
 	STAFF_PART="partstaff"
 	
-	def __init__(self, id_part, name="", abbreviation="", part_type=SINGLE_PART, group=[]) :
+	def __init__(self, id_part, name="", abbreviation="", 
+				   part_type=SINGLE_PART, group=[], no_staff=1) :
 		self.id = id_part
 		self.staff_group = [] # For parts with multiple PartStaff
+
+		# List of staves the part is displayed on
+		self.staves = {}
 		
 		if part_type==Part.GROUP_PART:
 			#print (f"Creating a part group for part {id_part}")
@@ -331,11 +357,17 @@ class Part:
 								 name=name, abbreviation=abbreviation,
 								 symbol='brace')
 			self.staff_group = group
+			
+			# This part has several staves. They are numbered from 1 to ...
+			for i_staff in range(1, len(m21_group)+1):
+				self.staves[i_staff] =  notation.Staff(i_staff)
 		elif part_type == Part.STAFF_PART:
-			#print (f"Creating a part Staff for part {id_part}")
+			print (f"Creating a part Staff for part {id_part} and no staff {no_staff}")
 			self.m21_part = m21.stream.PartStaff(id=id_part)
+			self.staves[no_staff] =  notation.Staff(no_staff)
 		else:
 			self.m21_part = m21.stream.Part(id=id_part)
+			self.staves[no_staff] =  notation.Staff(no_staff)
 	
 		# Metadata
 		self.m21_part.id  = "P" + id_part
@@ -343,9 +375,10 @@ class Part:
 		self.m21_part.partAbbreviation = abbreviation
 		self.part_type = part_type
 
-		# List of staves the part is displayed on
-		self.staves = []
-		
+		# During parsing, we maintain the current interpretation context 
+		self.current_key_signature = notation.KeySignature() 
+		self.current_time_signature = notation.TimeSignature() 
+	
 		# List of measures of this part
 		self.measures = []
 		self.current_measure = None
@@ -368,7 +401,7 @@ class Part:
 		   To call when we reinitialize a system or a page
 		'''
 	
-		self.staves = []
+		self.staves = {}
 		if self.part_type == Part.GROUP_PART:
 			# Add also the staff to one of the sub parts
 			# We search the first sub part without staff
@@ -377,7 +410,7 @@ class Part:
 	
 	def has_staves(self):
 		# Check if at least one staff is allocated to the part
-		if len(self.staves) > 0:
+		if len(self.staves.keys()) > 0:
 			return True
 		else:
 			return False
@@ -385,6 +418,9 @@ class Part:
 	def add_staff (self, staff):
 		self.staves.append(staff)
 		
+		#
+		# PROBABLY USELESS !
+		#
 		if self.part_type == Part.GROUP_PART:
 			# Add also the staff to one of the sub parts
 			# We search the first sub part without staff
@@ -398,25 +434,34 @@ class Part:
 			logger.error (f'Cannot add another staff {staff.id} to PartGroup {self.id}. All sub-parts have a staff!')
 			
 	def staff_exists (self, no_staff):
-		for staff in self.staves:
-			if staff.id == no_staff:
-				return True
-		return False
+		return no_staff in self.staves.keys()
 	
 	def get_staff (self, no_staff):
-		for staff in self.staves:
-			if staff.id == no_staff:
-				return staff
-			
-		# The staff has not been found: raise an exception
-		raise CScoreModelError (f'Unable to find staff {no_staff} in part {self.id}')
+		if self.staff_exists(no_staff):
+			return self.staves[no_staff]
+		else:
+			# The staff does not exists: raise an exception
+			raise CScoreModelError (f'Unable to find staff {no_staff} in part {self.id}')
 
+	def get_duration(self):
+		return self.m21_part.duration.quarterLength
+	
+	def set_current_key_signature (self, key):
+		self.current_key_signature = key
+		if self.part_type == Part.GROUP_PART:
+			for staff_part in self.staff_group: 
+				staff_part.set_current_key_signature(key)
+				
+	def set_current_time_signature (self, ts):
+		self.current_time_signature = ts
+		if self.part_type == Part.GROUP_PART:
+			for staff_part in self.staff_group: 
+				staff_part.set_current_time_signature(ts)
+				
 	def get_current_time_signature(self):
-		# There should be at least one staff in the part
-		if  len(self.staves) == 0:
-			logger.error (f'Part {self.id} has no staff ! Cannot do anything')
-		# We assume that the time signature is the same for all staves. So take the fist one
-		return self.staves[0].current_time_signature
+		return self.current_time_signature
+	def get_current_key_signature(self):
+		return self.current_key_signature
 	
 	def add_clef_to_staff (self, no_staff, clef):
 		# A new clef at the beginning of measure for this staff
@@ -432,19 +477,34 @@ class Part:
 		staff.add_accidental( pitch_class, acc)
 
 	def add_measure (self, measure_no):
+
 		if not self.part_type == Part.GROUP_PART:
 			measure = Measure(self, measure_no)
+			
+			""" In case this is the first measure, we insert
+			   the current time signature (necessary when 
+			    a part begins after the other, and the TS is implicit)
+			    Music21 seems clever enough to remove subsequent and equals signatures
+			 """
+			if len(self.measures) == 0:
+				measure.add_time_signature(self.current_time_signature.copy())
+				measure.add_key_signature(self.current_key_signature.copy())
+			
 			self.measures.append(measure)
 			self.current_measure = measure
 			self.m21_part.append(measure.m21_measure)
 		else:
-			# We add a measure to eah sub-part
+			# We add a measure to each sub-part
 			for staff_part in self.staff_group: 
 				staff_part.add_measure(measure_no)
 
 	def get_current_measures(self):
 		if not self.part_type == Part.GROUP_PART:
-			return [self.current_measure]
+			if self.current_measure is None:
+				# The part has not yet begun
+				return []
+			else:
+				return [self.current_measure]
 		else:
 			current_measures = []
 			# We add a measure to eah sub-part
@@ -482,6 +542,7 @@ class Part:
 			
 	def append_measure (self, measure):
 		logger.info (f'Adding measure {measure.no} to part {self.id}')
+		
 		if not self.part_type == Part.GROUP_PART:
 			self.m21_part.append(measure.m21_measure)
 		else:
@@ -505,7 +566,7 @@ class Part:
 
 	def reset_accidentals(self):
 		# Used when a new measure starts: we fortget all accidentals met before
-		for staff in self.staves:
+		for staff in self.staves.values():
 			staff.reset_accidentals()
 
 	def check_time_signatures(self, fix=True):
@@ -543,13 +604,14 @@ class Part:
 				# Try to fix the issue
 				for measure in self.get_current_measures():
 					ts = ts_to_use.copy()
-					for staff in measure.part.staves:
+					for staff in measure.part.staves.values():
 						staff.set_current_time_signature (ts)
 					measure.replace_time_signature (ts)
 
 	def check_measure_consistency(self):
 		for measure in	self.get_current_measures():
-			measure.check_consistency()			
+			measure.check_consistency()	
+					
 
 	@staticmethod
 	def create_part_id (id_part):
@@ -569,6 +631,7 @@ class Measure:
 		Measure.sequence_measure += 1
 		self.part = part
 		self.no = no_measure
+		self.voices = []
 		self.id = f'm{no_measure}-{Measure.sequence_measure}' 
 		self.m21_measure = m21.stream.Measure(id=self.id, number=no_measure)
 		self.m21_measure.style.absoluteX = 23
@@ -576,18 +639,19 @@ class Measure:
 		
 		# We keep the clef for each staff at the beginning of measure. They
 		# are used to determine the pitch from the head's height
-		if len(part.staves) > 0:
-			for staff in part.staves:
+		if len(part.staves.values()) > 0:
+			for staff in part.staves.values():
 				self.initial_clefs[staff.id] = staff.current_clef
 				#print (f"Initial clef for measure {self.no} and staff {staff.id}: {staff.current_clef}")
-			# Same thing for initial time signatures. Used for checking consistency
-			# Note: there is only one time signature, common to all staves 
-			for staff in part.staves:
-				self.initial_ts = staff.current_time_signature
+		
 		else:
 			# No staves for this measure????
-			logger.warning (f"Measure {self.id} has no staves? Assuming a time signature 4/4")
-			self.initial_ts = notation.TimeSignature() 
+			self.initial_ts = part.get_current_time_signature()
+			logger.warning (f"Measure {self.id} has no staves? Assuming a time signature {self.initial_ts}")
+
+		# Same thing for initial time signatures. Used for checking consistency
+		# Note: there is only one time signature, common to all staves 
+		self.initial_ts = part.current_time_signature
 			
 	def get_initial_clef_for_staff(self, staff_id):
 		if not (staff_id in self.initial_clefs.keys()):
@@ -605,7 +669,10 @@ class Measure:
 			if not self.initial_clefs[staff_id].equals(clef):
 				self.initial_clefs[staff_id] = clef
 				# We add the clef to music 21 measure. Sth strange: no staff specified...
+				print (f"Adding Clef {clef.m21_clef} to staff {staff_id}")
 				self.m21_measure.insert(0,  clef.m21_clef)
+			else:
+				print (f"Clef already set for staff {staff_id}")
 
 	def print_initial_clefs(self):
 		for staff_id, clef in self.initial_clefs.items():
@@ -624,6 +691,15 @@ class Measure:
 		self.m21_measure.insert(0,  key_signature.m21_key_signature)
 		
 	def add_voice (self, voice):
+		if voice.get_duration() > self.get_expected_duration():
+			logger.warning (f"Duration error. In measure {self.no}, voice {voice.id} duration {voice.get_duration()} exceeds the expected duration {self.get_expected_duration()}.")
+			# Remove hidden events
+			voice.remove_hidden_events()
+			if voice.get_duration() > self.get_expected_duration():
+				logger.warning (f"After removal of hiden events, voice {voice.id} duration {voice.get_duration()} still exceeds the {self.get_expected_duration()}. Shrinking the voice")
+				# Still not enough
+				voice.shrink_to_bar_duration(self.get_expected_duration())
+		self.voices.append(voice)
 		self.m21_measure.insert (0, voice.m21_stream)
 		
 	def add_system_break(self):
@@ -632,21 +708,21 @@ class Measure:
 		
 		# A new staff begins: trying to control its layout
 		#staff_layout = 	m21.layout.StaffLayout(staffNumber=1, staffLines=4)
-		staff_layout = 	m21.layout.StaffLayout(staffNumber=1)
-		self.m21_measure.insert(staff_layout)
+		#staff_layout = 	m21.layout.StaffLayout(staffNumber=1)
+		#self.m21_measure.insert(staff_layout)
 		
 		# We show the current clef at the beginning of staves
-		self.insert_initial_signatures()
+		#self.insert_initial_signatures()
 
 	def add_page_break(self):
 		system_break = m21.layout.PageLayout(isNew=True)
 		self.m21_measure.insert (system_break)
-		self.insert_initial_signatures()
+		#self.insert_initial_signatures()
 
 	def insert_initial_signatures(self):
 		# If the measure is the first of score/part/staff, we report
-		# the current clef and other initial symboles
-		for staff in self.part.staves:
+		# the current clef and other initial symbols
+		for staff in self.part.staves.values():
 			# First of system? We insert the current clef
 			self.m21_measure.insert(0,  staff.current_clef.m21_clef)
 		
@@ -658,21 +734,34 @@ class Measure:
 		
 		# First get the time signature in effect
 		logger.info (f"Measure {self.id}. Expected duration: {self.initial_ts.barDuration().quarterLength}")
-		for voice in self.m21_measure.getElementsByClass(m21.stream.Voice):
-			if not (voice.duration == self.initial_ts.barDuration()):					
-				logger.warning (f"Incomplete duration in measure {self.id}. Expected duration: {self.initial_ts.barDuration().quarterLength}. Voice {voice.id} duration is {voice.duration.quarterLength}")
-				#for event in voice.notesAndRests:
-				#	print (f"Event {event.id}. Duration: {event.duration.quarterLength}. Hidden {event.style.hideObjectOnPrint}")
+		for voice in self.voices:
+			bar_duration = self.get_expected_duration()
+			#self.m21_measure.getElementsByClass(m21.stream.Voice):
+			if not (voice.m21_stream.duration == self.initial_ts.barDuration()):					
+				# Trying to fix this. Easy when we just have to complete the voice
+				if fix:
+					if voice.m21_stream.duration.quarterLength < bar_duration:
+						logger.warning (f"Incomplete duration in measure {self.id}. Expected duration: {bar_duration}. Voice {voice.id} duration is {voice.get_duration()}")
+						voice.expand_to_bar_duration(bar_duration)
+					else:
+						logger.warning (f"Overduration in measure {self.id}. Expected duration: {bar_duration}. Voice {voice.id} duration is {voice.get_duration()}")
+						voice.shrink_to_bar_duration(bar_duration)
+					logger.warning (f"After fix, measure duration: {bar_duration}. Voice {voice.id} duration {voice.get_duration()}")
+
+		self.m21_measure = m21.stream.Measure(id=self.id, number=self.no)
+		for voice in self.voices:
+			#print (f"Re-Adding voice with duration {voice.get_duration()}")
+			self.m21_measure.insert (0, voice.m21_stream)
+		logger.info  (f"Measure duration AFTER FIX: {self.get_duration()}")
+
+	def get_duration(self):
+		# Returns the measure duration based on it metric
+		return self.m21_measure.duration.quarterLength
+			
+	def get_expected_duration(self):
+		# Returns the measure duration based on it metric
+		return self.initial_ts.barDuration().quarterLength
 		
-				# Trying to fix thi. Easy when we just have to complete the voice
-				if fix and voice.duration.quarterLength < self.initial_ts.barDuration().quarterLength:
-					quarters_to_add =  self.initial_ts.barDuration().quarterLength - voice.duration.quarterLength
-					logger.warning (f"Adding and event with duration {quarters_to_add}")
-					added_event = m21.note.Rest()
-					added_event.duration = m21.duration.Duration(quarters_to_add)
-					voice.append(added_event)
-					logger.warning (f"After completion. measure duration: {self.initial_ts.barDuration().quarterLength}. Voice {voice.id} duration {voice.duration.quarterLength}")
-					
 	def length(self):
 		# Music21 conventions
 		return self.m21_measure.duration

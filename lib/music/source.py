@@ -3,6 +3,8 @@ import json
 import lib.music.Score as score_mod
 import lib.music.notation as notation_mod
 import lib.music.iiifutils as iiif_mod
+from lib.music.Score import Part
+from collections import OrderedDict
 
 '''
  A class used to represent a source (multimedia document) associated to an Opus
@@ -141,7 +143,23 @@ class Manifest:
 		return self.parts[id_part]
 			
 	def get_parts(self):
-		return self.parts.values()
+		# Beware: depending on the order with which parts are discovered,
+		# Part1 might appear before Part2 or the opposite: we sort
+		
+		# Create a dictionary
+		dict_parts = {}
+		for part in self.parts.values():
+			dict_parts[part.id] = part 
+		# Sort the dict
+		sorted_dict = OrderedDict(sorted(dict_parts.items()))
+		# Create the sorted array
+		sorted_parts = []
+		for part in sorted_dict.values():
+			sorted_parts.append(part)
+		# Finally we reverse: DMOS gives the parts bottom-up
+		sorted_parts.reverse()
+		return sorted_parts
+
 
 	@staticmethod
 	def from_json (json_mnf):
@@ -368,6 +386,10 @@ class MnfStaff:
 		# In principle we might have a list of parts on a same staff
 		self.parts  = []
 		
+		# The local staff number tells us the id of the staff
+		# in a part with multiple staves
+		self.number_in_part = 1
+		
 		# The "local" part is a combination of the part ID and the staff number
 		# for this part. In case of a part "P1" with two staves, we will have for
 		# instance "P1-1" for the first staff and "P1-2" for the second. Useful
@@ -397,10 +419,10 @@ class MnfStaff:
 		self.parts.append(self.system.page.manifest.get_part(id_part))
 		
 		# How many staves for this part in the current system?
-		no_staff_part = self.system.count_staves_for_part (id_part) 
+		self.number_in_part = self.system.count_staves_for_part (id_part) 
 		
 		# Warning: will not work in case we have several parts
-		self.local_part_id = score_mod.Part.make_part_id(id_part, no_staff_part)
+		self.local_part_id = score_mod.Part.make_part_id(id_part, self.number_in_part)
 
 	def clear_and_replace_part(self, id_part):
 		# Clear the parts, add a new one
@@ -414,8 +436,8 @@ class MnfStaff:
 				# Still assuming one part per staff
 				self.parts = [target] 
 				# Update the number of staves and the local part id
-				no_staff_part = self.system.count_staves_for_part (target.id) 
-				self.local_part_id = score_mod.Part.make_part_id(target.id, no_staff_part)
+				self.number_in_part = self.system.count_staves_for_part (target.id) 
+				self.local_part_id = score_mod.Part.make_part_id(target.id, self.number_in_part)
 		
 	def to_json (self):
 		partids = []
