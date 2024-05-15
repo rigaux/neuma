@@ -248,9 +248,6 @@ SPECTACULAR_SETTINGS = {
     # OTHER SETTINGS
 }
 
-# Directory where the qprse program is to be found
-QPARSE_BIN_DIR = "/Users/philippe/git/qparselib"
-CONFIG_FILE_PATH = "/Users/philippe/git/params.ini"
 #
 # ElasticSearch
 #
@@ -265,6 +262,8 @@ REDIS_PORT = int(env("REDIS_PORT"))
 CELERY_BROKER_URL = "redis://%s:%d/0" % (REDIS_HOST, REDIS_PORT)
 CELERY_RESULT_BACKEND = 'django-db'
 CELERY_CACHE_BACKEND = 'django-cache'
+CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP= True
+
 
 # List of similarity measures
 SIMILARITY_MEASURES = ["pitches","intervals","degrees","rhythms"]
