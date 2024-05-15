@@ -391,6 +391,8 @@ class OpusView(NeumaView):
 		score = opus.get_score()
 		context["opus"] = opus
 		context["score"] = score
+		# We use the service to provide file, in order to avoid caching
+		context["opus_file_url"] = reverse("rest:opus_file_request", kwargs={"full_neuma_ref": opus.ref})
 		
 		try:
 			context["opus_diff"] = OpusDiff.objects.get(opus=opus)

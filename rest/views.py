@@ -333,6 +333,35 @@ class Element (APIView):
 
 
 
+
+@permission_classes((AllowAny, ))
+class OpusFile (APIView):
+	"""
+	 Return the file  of a Opus, disabling caching
+	 
+	"""
+	
+	@extend_schema(operation_id="OpusFileGet")
+	def get(self, request, full_neuma_ref):
+		opus, object_type = get_object_from_neuma_ref(full_neuma_ref)
+		if opus.mei:
+			with open(opus.mei.path, "r") as f:
+				file_name = os.path.basename(opus.mei.path).split('/')[-1]
+				content = f.read()
+				resp = FileResponse(content) 
+				resp['Content-type'] = "binary/octet-stream"  # source.source_type.mime_type
+				resp["Content-Disposition"] = f"attachment; filename={file_name}"
+				resp['Access-Control-Allow-Origin'] = '*'
+				resp['Access-Control-Allow-Credentials'] = "true"
+				resp['Access-Control-Allow-Methods'] = 'GET, OPTIONS'
+				resp['Access-Control-Allow-Headers'] = 'Access-Control-Allow-Headers, Origin, Accept, ' \
+                                               'X-Requested-With, Content-Type, Access-Control-Request-Method,' \
+                                               ' Access-Control-Request-Headers, credentials'	
+			return resp
+		else:
+			return Response(status=status.HTTP_404_NOT_FOUND)
+
+
 @extend_schema(operation_id="TopLevelCorpusList")
 class TopLevelCorpusList(generics.ListAPIView):
 	"""

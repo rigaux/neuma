@@ -56,13 +56,7 @@ urlpatterns = [
     path(r'collections/<str:full_neuma_ref>/_opera/', views.OpusList.as_view(), name='handle_opera_request'),
     #re_path(r'collections/(?P<full_neuma_ref>(.*))/_uploads/(?P<upload_id>(.*))/_import/$',views.handle_import_request, name='handle_import_request'),
      # Generic request to a corpus or an opus 
+	path ('collections/<str:full_neuma_ref>/_file/', views.OpusFile.as_view(), name='opus_file_request'),
     path ('collections/<str:full_neuma_ref>/', views.Element.as_view(), name='handle_neuma_ref_request'),
-
-    #  ArkIndex API implementation
-    path('retrieve_corpus/<str:id>/', views.RetrieveCorpus.as_view(), name='retrieve_corpus'),
-   path('list_elements/<str:corpus>/', views.ArkIdxListElements.as_view(), name='list_element'),
-   path('list_element_children/<str:id>/', views.ArkIdxListElementChildren.as_view(), name='list_element_children'),
-    path('list_element_metadata/<str:id>/', views.ArkIdxListElementMetaData.as_view(), name='list_element_children'),
-	path('get_element_file/<str:id>/', views.ArkIdxGetElementFile.as_view(), name='retrieve_element_file'),
  
 ]
