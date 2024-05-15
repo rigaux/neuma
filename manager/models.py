@@ -8,6 +8,7 @@ import jsonschema
 
 import zipfile
 import os
+import shortuuid
 
 from django.db import models
 from django.core.files import File
@@ -1194,7 +1195,7 @@ class Opus(models.Model):
 		# Store the MusicXML file in the opus
 		if not just_annotations:
 			print ("Replace XML file")
-			mxml_file = "/tmp/score.xml"
+			mxml_file = "/tmp/" + shortuuid.uuid() + ".xml"
 			omr_score.write_as_musicxml (mxml_file)
 
 			with open(mxml_file) as f:
@@ -1206,7 +1207,7 @@ class Opus(models.Model):
 		
 			# Generate and store the MEI file as a source and main file
 			# Create the file
-			mei_file = "/tmp/score_mei.xml"
+			mei_file = "/tmp/" + shortuuid.uuid() + "_mei.xml"
 			omr_score.write_as_mei (mei_file)
 			with open(mei_file) as f:
 				print ("Replace MEI file")
