@@ -119,6 +119,10 @@ var tabNames = [
           {% if source.source_file %}
            <a href="{{source.source_file.url}}">File: {{source.source_file.name}}</a>
           {% endif %}           
+          {% if source.ref == 'iiif' %}
+              | <a href="{% url 'home:opus' opus.ref %}?convert_dmos=1">
+                           Convert DMOS file
+        {% endif %}           
          {% if "change_corpus" in user_corpus_perms %}
            | <a href="{% url 'admin:manager_opussource_change' source.id %}">
                            Edit
@@ -127,6 +131,8 @@ var tabNames = [
          </li>
       {% endfor %}
       </ul>
+  
+  Résultat DMOS: {{result_dmos}}
   
 <!-- fin div .description -->
 

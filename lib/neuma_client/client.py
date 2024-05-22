@@ -30,6 +30,7 @@ SERVICES_PATH = "rest"
 logger = logging.getLogger(__name__)
 
 # Create file handler
+"""
 f_handler = logging.FileHandler(__name__ + '.log')
 f_handler.setLevel(logging.WARNING)
 # Create formatters and add it to handlers
@@ -37,6 +38,7 @@ f_format = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message
 f_handler.setFormatter(f_format)
 # Add handlers to the logger
 logger.addHandler(f_handler)
+"""
 # For the console
 c_handler = logging.StreamHandler()
 c_handler.setLevel(logging.WARNING)
@@ -180,7 +182,7 @@ class NeumaClient(apistar.Client):
 			token=token,
 			auth_scheme=auth_scheme,
 			base_url = base_url,
-			services_url= urljoin(base_url, SERVICES_PATH),
+			services_url=  base_url, #urljoin(base_url, SERVICES_PATH),
 			csrf_cookie=csrf_cookie,
 			sleep=sleep,
 		)

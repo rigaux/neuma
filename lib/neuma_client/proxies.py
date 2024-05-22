@@ -15,7 +15,7 @@ class Collections:
 	def __init__(self, client) :
 		self.client = client
 		try:
-			client.request ("Welcome")
+			client.request ("NeumaApi_v3")
 			logger.info (f"Connection OK to {client.url()}")
 			print (f"Connection OK to {client.url()}")
 		except Exception as ex :
@@ -64,6 +64,7 @@ class Opus:
 	def __init__(self, client, opus_dict):	
 		self.client = client
 		self.ref = opus_dict["ref"]	
+		self.local_ref = opus_dict["local_ref"]	
 		self.title = opus_dict["title"]	
 
 		self.sources_in_cache = False 
@@ -147,6 +148,11 @@ class Manifest:
 		# The manifest dictionary, obtained from the REST call
 		self.manifest_dict  = manifest_dict
 
+	def id_source(self):
+		return self.manifest_dict ["id"]
+	def url_source(self):
+		return self.manifest_dict ["url"]
+	
 	def nb_pages(self):
 		return len (self.manifest_dict["pages"])
 	

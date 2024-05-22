@@ -387,6 +387,13 @@ class OpusView(NeumaView):
 			context["occurrences"] = occurrences
 			context["matching_ids"] = mark_safe(json.dumps(matching_ids))
 		
+		#
+		if "convert_dmos" in self.request.GET:
+			opus.parse_dmos()
+			context["result_dmos"] = "Calculé"
+		else:
+			context["result_dmos"] = "None"
+			
 		# Analyze the score
 		score = opus.get_score()
 		context["opus"] = opus
