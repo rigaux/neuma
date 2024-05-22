@@ -672,7 +672,8 @@ class OmrScore:
 
 				logger.info (f'Adding note {pitch_class}{octave}-{alter}, duration {duration.get_value()} to staff {id_staff} with current clef {staff.current_clef}.')
 					
-				note = score_events.Note(pitch_class, octave, duration, alter, mnf_staff.number_in_part)
+				note = score_events.Note(pitch_class, octave, duration, alter, 
+											mnf_staff.number_in_part, stem_direction=voice_item.direction)
 				# Check ties
 				if head.tied and head.tied=="forward":
 					#print (f"Tied note start with id {head.id_tie}")
@@ -912,6 +913,7 @@ class VoiceItem:
 		if "tuplet_info" in json_voice_item:
 			self.tuplet_info = TupletInfo (json_voice_item["tuplet_info"])
 
+		self.direction = None
 		if "direction" in json_voice_item:
 			self.direction = json_voice_item["direction"]
 		if "att_note" in json_voice_item:

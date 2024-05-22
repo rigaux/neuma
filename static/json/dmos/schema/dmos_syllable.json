@@ -5,9 +5,9 @@
   "type": "object",
   "properties": {
      "text": {"description": "Text of the syllable", "type": "string"},
-     "pos_in_word": {"description": "Position of the syllable. Can be 'i', 'm', or 'e'", "type": "string"},
+     "followed_by_dash": {"description": "True if the syllable is followed by a dash", "type": "bool"},
      "placement": {"description": "Optional spec. of the placement. 'below' by default", "type": "string"}
    },
-   "required": ["text", "pos_in_word"],
+   "required": ["text", "followed_by_dash"],
   "additionalProperties": false
 }

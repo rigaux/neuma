@@ -183,8 +183,13 @@ class Note (Event):
 	ALTER_NATURAL = "n"
 	ALTER_NONE = ""
 		
+	# Stem directions (uses music21 codes)
+	SD_UNSPECIFIED = "unspecified"
+	SD_UP = "up"
+	SD_DOWN = "down"
+	
 	def __init__(self, pitch_class, octave, duration,  alter=ALTER_NONE,
-				no_staff=UNDEFINED_STAFF, tied=False) :
+				no_staff=UNDEFINED_STAFF, tied=False, stem_direction=None) :
 		super ().__init__(duration)
 		
 		self.type = Event.TYPE_NOTE
@@ -198,7 +203,10 @@ class Note (Event):
 		self.m21_event.id = self.id
 		self.no_staff = no_staff
 		self.tied = tied
+		self.stem_direction = stem_direction
 		
+		if stem_direction != None:
+			self.m21_event.stemDirection = stem_direction
 		return
 	
 	def is_note(self):

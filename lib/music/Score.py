@@ -669,7 +669,7 @@ class Measure:
 			if not self.initial_clefs[staff_id].equals(clef):
 				self.initial_clefs[staff_id] = clef
 				# We add the clef to music 21 measure. Sth strange: no staff specified...
-				print (f"Adding Clef {clef.m21_clef} to staff {staff_id}")
+				logger.info (f"Adding Clef {clef.m21_clef} to staff {staff_id}")
 				self.m21_measure.insert(0,  clef.m21_clef)
 			else:
 				print (f"Clef already set for staff {staff_id}")
