@@ -699,6 +699,13 @@ class OmrScore:
 			if len(events) == 1:
 				# A single note
 				event = events[0]
+				# Is there a syllable ?
+				if voice_item.note_attr.syllable is not None:
+					syl = voice_item.note_attr.syllable
+					txt = syl["text"]
+					if syl["followed_by_dash"]:
+						txt = txt + "-"
+					event.add_syllable(txt)
 			else:
 				# A chord
 				event = score_events.Chord (duration, mnf_staff.number_in_part, events)
@@ -954,6 +961,12 @@ class NoteAttr:
 		self.visible = True
 		if "visible" in json_note_attr:
 			self.visible = json_note_attr["visible"]
+		self.syllable = None
+		if "syllable" in json_note_attr:
+			self.syllable = json_note_attr["syllable"]
+		if "verses" in json_note_attr:
+			for syl in json_note_attr["verses"]:
+				self.syllable = syl
 		for json_head in json_note_attr["heads"]:
 			note = Note (json_head)
 			

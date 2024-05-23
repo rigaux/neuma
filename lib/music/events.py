@@ -6,6 +6,7 @@ from fractions import Fraction
 import lib.music.notation as score_notation
 
 import lib.music.Score as score_mod
+from numpy.distutils.fcompiler import none
 
 '''
  Classes representing musical event (e.g., pairs (duratioin, value)
@@ -205,6 +206,8 @@ class Note (Event):
 		self.tied = tied
 		self.stem_direction = stem_direction
 		
+		self.syllable = None 
+		
 		if stem_direction != None:
 			self.m21_event.stemDirection = stem_direction
 		return
@@ -222,6 +225,9 @@ class Note (Event):
 		self.m21_event.tie = m21.tie.Tie('start')
 	def stop_tie(self):
 		self.m21_event.tie = m21.tie.Tie('stop')
+	
+	def add_syllable(self, text, dashed=False):
+		self.m21_event.lyric =  text
 		
 class Chord (Event):
 	"""
