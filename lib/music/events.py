@@ -231,6 +231,7 @@ class Chord (Event):
 	def __init__(self,  duration, no_staff, notes) :
 		super ().__init__(duration)
 		self.type = Event.TYPE_CHORD
+		self.notes = notes
 		# Create the m21 representation: encode 
 		m21_notes = []
 		for note in notes:

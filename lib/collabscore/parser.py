@@ -509,7 +509,7 @@ class OmrScore:
 							# of the current measure
 							measure_for_part.add_key_signature (key_sign)
 					
-						measure_for_part.print_initial_clefs()
+						#measure_for_part.print_initial_clefs()
 					# Now we scan the voices
 					for voice in measure.voices:
 						current_part = score.get_part(voice.id_part)
@@ -568,13 +568,23 @@ class OmrScore:
 								logger.error (f'Unknown event type {type_event} for voice {voice.id}')
 		
 							# Annotate this event if the region is known
-							# We do not do that for the moment
 							if event_region is not None:
-								annotation = annot_mod.Annotation.create_annot_from_xml_to_image(
-									self.creator, self.uri, event.id, 
-									self.score_image_url, event_region.string_xyhw(), 
-									constants_mod.IREGION_NOTE_CONCEPT)
-								score.add_annotation (annotation)
+								if event.is_chord():
+									# We do not know how to assign an id to a chord, so we annotate the notes
+									for note in event.notes:
+										# Same region for all notes....
+										annotation = annot_mod.Annotation.create_annot_from_xml_to_image(
+											self.creator, self.uri, note.id, 
+											self.score_image_url, event_region.string_xyhw(), 
+											constants_mod.IREGION_NOTE_CONCEPT)
+										score.add_annotation (annotation)
+								else:
+									annotation = annot_mod.Annotation.create_annot_from_xml_to_image(
+										self.creator, self.uri, event.id, 
+										self.score_image_url, event_region.string_xyhw(), 
+										constants_mod.IREGION_NOTE_CONCEPT)
+									score.add_annotation (annotation)
+								
 							
 							# Did we met errors ?
 							for error in item.errors:

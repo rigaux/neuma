@@ -671,8 +671,8 @@ class Measure:
 				# We add the clef to music 21 measure. Sth strange: no staff specified...
 				logger.info (f"Adding Clef {clef.m21_clef} to staff {staff_id}")
 				self.m21_measure.insert(0,  clef.m21_clef)
-			else:
-				print (f"Clef already set for staff {staff_id}")
+			#else:
+			#	print (f"Clef already set for staff {staff_id}")
 
 	def print_initial_clefs(self):
 		for staff_id, clef in self.initial_clefs.items():
