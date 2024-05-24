@@ -604,8 +604,7 @@ class Part:
 				# Try to fix the issue
 				for measure in self.get_current_measures():
 					ts = ts_to_use.copy()
-					for staff in measure.part.staves.values():
-						staff.set_current_time_signature (ts)
+					measure.part.set_current_time_signature (ts)
 					measure.replace_time_signature (ts)
 
 	def check_measure_consistency(self):
