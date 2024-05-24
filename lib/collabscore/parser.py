@@ -535,9 +535,8 @@ class OmrScore:
 							# on the time signature
 							if item.duration.whole:
 								# A la blanche (4) ou autre ?
-								denom_factor = int(4 / current_part.get_current_time_signature().denom)
-								item.duration.numer =  current_part.get_current_time_signature().numer * denom_factor
-								item.duration.denom = 1
+								item.duration.numer =  4* current_part.get_current_time_signature().numer 
+								item.duration.denom = current_part.get_current_time_signature().denom
 
 								
 							# Decode the event
@@ -556,7 +555,10 @@ class OmrScore:
 							previous_event = event
 							
 							if type_event == "event":
-								voice_part.append_event(event)
+								if event.get_duration() == 0.:
+									logger.error (f"Null duration for event. Ignored")
+								else:
+									voice_part.append_event(event)
 							elif type_event == "clef":
 								# The staff id is in the voice item
 								id_staff = item.no_staff_clef

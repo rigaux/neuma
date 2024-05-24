@@ -362,7 +362,7 @@ class Part:
 			for i_staff in range(1, len(m21_group)+1):
 				self.staves[i_staff] =  notation.Staff(i_staff)
 		elif part_type == Part.STAFF_PART:
-			print (f"Creating a part Staff for part {id_part} and no staff {no_staff}")
+			#print (f"Creating a part Staff for part {id_part} and no staff {no_staff}")
 			self.m21_part = m21.stream.PartStaff(id=id_part)
 			self.staves[no_staff] =  notation.Staff(no_staff)
 		else:
