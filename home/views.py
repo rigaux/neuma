@@ -516,6 +516,7 @@ def add_opus (request, corpus_ref):
 def edit_opus (request, opus_ref):
 	""" Form to edit an opus"""
 	
+	context = {}
 	context["opus"] = Opus.objects.get(ref=opus_ref)
 	context["corpus"] = context["opus"].corpus
 	context["mode"] = "update"

@@ -188,17 +188,14 @@ class Score:
 	def write_as_musicxml(self, filename):
 			''' Produce the MusicXML encoding thanks to Music21'''
 			self.m21_score.write ("musicxml", filename)
-		
-	def write_as_mei(self, filename):
-			''' Produce the MEI encoding thanks to Verovio'''
+	
+	def write_as_mei(self, mxml_file, mei_name):
+			''' Produce the MEI encoding from MusicXML thanks to Verovio'''
 			tk = verovio.toolkit()
-			tmp_file = "/tmp/tmp.xml"
-			#print (f"Write in {tmp_file}")
-			self.m21_score.write ("musicxml", tmp_file)
-			#print (f"Load  {tmp_file}")
-			tk.loadFile(tmp_file)
-			#print (f"Convert to MEI and write")
-			with open(filename, "w") as mei_file:
+			print (f"Load MusicXML {mxml_file}")
+			tk.loadFile(mxml_file)
+			print (f"Convert {mxml_file} to MEI and write in {mei_name}")
+			with open(mei_name, "w") as mei_file:
 				mei_file.write(tk.getMEI())
 
 	def write_as_midi(self, filename):

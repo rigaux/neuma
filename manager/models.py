@@ -647,6 +647,7 @@ class Corpus(models.Model):
 								if base == source.ref:
 									# The file contains the source itself
 									sfile_content = source_zip.read(fname)
+									print (f"Saving source file {fname}")
 									source.source_file.save(fname, ContentFile(sfile_content))
 									# In that case the URL is irrelevant
 									source.url=""
@@ -1208,7 +1209,7 @@ class Opus(models.Model):
 			# Generate and store the MEI file as a source and main file
 			# Create the file
 			mei_file = "/tmp/" + shortuuid.uuid() + "_mei.xml"
-			omr_score.write_as_mei (mei_file)
+			omr_score.write_as_mei (mxml_file, mei_file)
 			with open(mei_file) as f:
 				print ("Replace MEI file")
 				self.mei = File(f,name="mei.xml")

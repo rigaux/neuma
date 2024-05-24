@@ -771,8 +771,8 @@ class OmrScore:
 		for ed in self.post_editions:
 			ed.apply_to(self, out_file)
 			
-	def write_as_mei(self, out_file):
-		self.get_score().write_as_mei (out_file)
+	def write_as_mei(self, mxml_file, out_file):
+		self.get_score().write_as_mei (mxml_file, out_file)
 
 class Point:
 	"""
