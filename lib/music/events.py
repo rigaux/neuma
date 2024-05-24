@@ -196,7 +196,7 @@ class Note (Event):
 		self.type = Event.TYPE_NOTE
 		self.alter = alter
 		self.pitch_class = pitch_class
-
+		self.octave = octave
 		pitch_name = pitch_class + alter + str(octave)
 		self.alter = alter
 		self.m21_event = m21.note.Note(pitch_name)
@@ -212,6 +212,8 @@ class Note (Event):
 			self.m21_event.stemDirection = stem_direction
 		return
 	
+	def get_code(self):
+		return self.pitch_class + self.alter + str(self.octave) 
 	def is_note(self):
 		return True
 	def get_no_staff(self):
@@ -256,7 +258,6 @@ class Chord (Event):
 		return True
 	def get_no_staff(self):
 		return self.no_staff
-
 
 class Rest (Event):
 	"""

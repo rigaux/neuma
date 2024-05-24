@@ -22,6 +22,7 @@ import lib.music.source as source_mod
 
 from .constants import *
 from lib.music.source import Manifest
+from pip._vendor.distlib._backport.shutil import move
 
 # Get an instance of a logger
 # See https://realpython.com/python-logging/
@@ -534,11 +535,9 @@ class OmrScore:
 							# Duration exception: in case of "whole" note, depends 
 							# on the time signature
 							if item.duration.whole:
-								# A la blanche (4) ou autre ?
+								# A la blanche (4) ou autre (3/1, 3/2, 6/8, etc)
 								item.duration.numer =  4* current_part.get_current_time_signature().numer 
 								item.duration.denom = current_part.get_current_time_signature().denom
-
-								
 							# Decode the event
 							(event, event_region, type_event) = self.decode_event(mnf_system, voice_part, item) 
 							# Manage beams
@@ -607,22 +606,21 @@ class OmrScore:
 						
 						# Add the voice to the measure of the relevant part
 						if voice_part.nb_events() > 0:
+							# This functions computes the main staff of the voice
 							current_part.add_voice (voice_part)
 							
 							# Searching for events outside the main staff
 							if current_part.part_type == score_model.Part.GROUP_PART:
 								for event in voice_part.events:
 									if event.is_note():
-										if event.no_staff != voice_part.main_staff:
-											if event.no_staff < voice_part.main_staff:
-												direction = "up"
-											else:
-												direction = "down"
-											move = editions_mod.Edition (editions_mod.Edition.MOVE_OBJECT_TO_STAFF,
-																	{"object_id": event.id, 
-																	"staff_no": event.no_staff,
-																	"direction": direction})
+										move = self.move_to_correct_staff(event, voice_part.main_staff)
+										if move is not None:
 											self.post_editions.append(move)
+									elif event.is_chord():
+										for note in event.notes:
+											move = self.move_to_correct_staff(note, voice_part.main_staff)
+											if move is not None:
+												self.post_editions.append(move)
 						else:
 							logger.warning (f"Found an empty voice {voice_part.id}. Ignored")
 											
@@ -643,6 +641,22 @@ class OmrScore:
 
 		self.score = score 			
 		return self.score
+
+	def move_to_correct_staff(self, note, main_staff):
+		# Register an edition to move a note to its correct staff
+		if note.no_staff != main_staff:
+			if note.no_staff < main_staff:
+				direction = "up"
+			else:
+				direction = "down"
+			logger.info  (f"Moving note {note.get_code()} direction {direction} ")
+			move = editions_mod.Edition (editions_mod.Edition.MOVE_OBJECT_TO_STAFF,
+										{"object_id": note.id, 
+										"staff_no": note.no_staff,
+										"direction": direction})
+			return move
+		else:
+			return None
 
 	def decode_event(self, mnf_system, voice, voice_item):
 		'''
@@ -682,7 +696,6 @@ class OmrScore:
 					else: 
 						alter = voice.part.get_current_key_signature().accidental_by_step(pitch_class)
 
-				logger.info (f'Adding note {pitch_class}{octave}-{alter}, duration {duration.get_value()} to staff {id_staff} with current clef {staff.current_clef}.')
 					
 				note = score_events.Note(pitch_class, octave, duration, alter, 
 											mnf_staff.number_in_part, stem_direction=voice_item.direction)
@@ -701,6 +714,7 @@ class OmrScore:
 			if len(events) == 1:
 				# A single note
 				event = events[0]
+				logger.info (f'Adding note {event.pitch_class}{event.octave}-{event.alter}, duration {event.duration.get_value()} to staff {id_staff} with current clef {staff.current_clef}.')
 				# Is there a syllable ?
 				if voice_item.note_attr.syllable is not None:
 					syl = voice_item.note_attr.syllable
@@ -710,6 +724,9 @@ class OmrScore:
 					event.add_syllable(txt)
 			else:
 				# A chord
+				logger.info (f'Adding a chord with {len(events)} notes.')
+				for event in events:
+					logger.info (f'\tNote {event.pitch_class}{event.octave}-{event.alter}, duration {event.duration.get_value()} to staff {id_staff} with current clef {staff.current_clef}.')
 				event = score_events.Chord (duration, mnf_staff.number_in_part, events)
 				self.add_dynamic_to_event(events, event, head.articulations)
 		elif voice_item.rest_attr is not None:
