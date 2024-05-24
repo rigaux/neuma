@@ -303,11 +303,11 @@ class OmrScore:
 						if self.initial_key_signature is None:
 							# Whaouh, no key signature on the initial measure
 							self.initial_key_signature = score_notation.KeySignature()
-							logger.error (f"Missing time signature at the beginning of the score. Taking {self.initial_key_signature}")						
+							logger.error (f"Missing key signature at the beginning of the score. Taking {self.initial_key_signature}")						
 						if self.initial_time_signature is None:
 							# Whaouh, no time signature on the initial measure
-							self.initial_key_signature = score_notation.TimeSignature()
-							logger.error (f"Missing key signature at the beginning of the score. Taking {self.initial_time_signature}")						
+							self.initial_time_signature = score_notation.TimeSignature()
+							logger.error (f"Missing time signature at the beginning of the score. Taking {self.initial_time_signature}")						
 					initial_measure = False
 
 			self.manifest.add_page(src_page)
