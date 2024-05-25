@@ -166,8 +166,6 @@ class DisplayVerovioScore extends HTMLElement {
 
 }
 
-customElements.define("display-verovio-score", DisplayVerovioScore);
-
 
 /**
 

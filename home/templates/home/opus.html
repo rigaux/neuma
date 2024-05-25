@@ -22,6 +22,20 @@ $(function() {
 {% include "alternate-banner.html" %}
 
 
+<!--
+  Pas trop compris, mais cette insertion à cet endroit 
+  semble permettre un affichage correct, sans appel aux fonctions
+  Verovio AVANT qu'elles ne soient définies.
+  En bas de page, j'ai défini l'élément HTML en m'assurant
+  que le code verovio était bien chargé à ce moment-là. Bref
+  ça semble aller.
+  
+-->
+<script src="/static/js/verovio-toolkit.js"></script>
+<script>
+    var vrvToolkit = new verovio.toolkit();
+</script>
+    
 <script language="JavaScript" type="text/JavaScript">
 /* Declare the list of tabs in the current page */
 {% if "change_corpus" in user_corpus_perms  %}
@@ -434,6 +448,16 @@ function displaySource(src, type, target) {
    );
   </script>
 
+<script>
+
+document.addEventListener( 'DOMContentLoaded', 
+     verovio.module.onRuntimeInitialized = () => {
+            let tk = new verovio.toolkit();
+            console.log("Verovio has loaded!");
+		    customElements.define("display-verovio-score", DisplayVerovioScore)
+          }
+);
+</script>
   <!-- Parameters supplied to the ComputeAnnotations() Ajax call -->
 <input id="compute_opus_ref" type="hidden" name="opus_ref" value="{{opus.ref}}"/>
 <input id="compute_model_code" type="hidden" name="model_code" value="image-region"/>
