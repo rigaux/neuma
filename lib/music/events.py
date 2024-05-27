@@ -228,8 +228,11 @@ class Note (Event):
 	def stop_tie(self):
 		self.m21_event.tie = m21.tie.Tie('stop')
 	
-	def add_syllable(self, text, dashed=False):
-		self.m21_event.lyric =  text
+	def add_syllable(self, txt, nb=1, dashed=False):
+		if dashed:
+			txt = txt + "-"
+		lyric = m21.note.Lyric(text=txt,number=nb)
+		self.m21_event.lyrics.append(lyric)
 		
 class Chord (Event):
 	"""

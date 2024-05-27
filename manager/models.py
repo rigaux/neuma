@@ -258,6 +258,14 @@ class Corpus(models.Model):
 			child.get_children(recursive)
 		return self.children
 	
+	def parse_dmos(self):
+		for opus in Opus.objects.filter(corpus=self).order_by("ref"):
+			print (f"\n\nProcessing opus {opus.ref}")
+			try:
+				opus.parse_dmos()
+			except Exception as e:
+				print ("Error when trying to convert DMOS file for opus {opus.ref}:{e}")
+
 	def get_direct_children(self):
 		return self.get_children(False)
 
