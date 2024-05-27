@@ -22,7 +22,6 @@ import lib.music.source as source_mod
 
 from .constants import *
 from lib.music.source import Manifest
-from pip._vendor.distlib._backport.shutil import move
 
 # Get an instance of a logger
 # See https://realpython.com/python-logging/
