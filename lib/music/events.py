@@ -197,9 +197,9 @@ class Note (Event):
 		self.alter = alter
 		self.pitch_class = pitch_class
 		self.octave = octave
-		pitch_name = pitch_class + alter + str(octave)
+		self.pitch_name = pitch_class + alter + str(octave)
 		self.alter = alter
-		self.m21_event = m21.note.Note(pitch_name)
+		self.m21_event = m21.note.Note(self.pitch_name)
 		self.m21_event.duration = duration.m21_duration
 		self.m21_event.id = self.id
 		self.no_staff = no_staff
@@ -228,8 +228,11 @@ class Note (Event):
 	def stop_tie(self):
 		self.m21_event.tie = m21.tie.Tie('stop')
 	
-	def add_syllable(self, text, dashed=False):
-		self.m21_event.lyric =  text
+	def add_syllable(self, txt, nb=1, dashed=False):
+		if dashed:
+			txt = txt + "-"
+		lyric = m21.note.Lyric(text=txt,number=nb)
+		self.m21_event.lyrics.append(lyric)
 		
 class Chord (Event):
 	"""

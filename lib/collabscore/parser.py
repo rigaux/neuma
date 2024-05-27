@@ -715,12 +715,10 @@ class OmrScore:
 				event = events[0]
 				logger.info (f'Adding note {event.pitch_class}{event.octave}-{event.alter}, duration {event.duration.get_value()} to staff {id_staff} with current clef {staff.current_clef}.')
 				# Is there a syllable ?
-				if voice_item.note_attr.syllable is not None:
-					syl = voice_item.note_attr.syllable
-					txt = syl["text"]
-					if syl["followed_by_dash"]:
-						txt = txt + "-"
-					event.add_syllable(txt)
+				i_verse = 1
+				for syl in voice_item.note_attr.syllables:
+					event.add_syllable(syl["text"],nb=i_verse,dashed=syl["followed_by_dash"])
+					i_verse += 1
 			else:
 				# A chord
 				logger.info (f'Adding a chord with {len(events)} notes.')
@@ -977,14 +975,14 @@ class NoteAttr:
 		self.nb_heads = json_note_attr["nb_heads"]
 		self.heads = []
 		self.visible = True
+		self.syllables = []
 		if "visible" in json_note_attr:
 			self.visible = json_note_attr["visible"]
-		self.syllable = None
 		if "syllable" in json_note_attr:
-			self.syllable = json_note_attr["syllable"]
+			self.syllables.append(json_note_attr["syllable"])
 		if "verses" in json_note_attr:
 			for syl in json_note_attr["verses"]:
-				self.syllable = syl
+				self.syllables.append(syl)
 		for json_head in json_note_attr["heads"]:
 			note = Note (json_head)
 			
