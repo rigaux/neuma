@@ -41,7 +41,16 @@ class Staff:
 		self.accidentals[pitch_class] = acc
 		
 	def set_current_clef (self, clef):
-		self.current_clef = clef
+		if self.current_clef.equals(clef):
+			# No need to change the clef ! Probably an initial signature
+			score_mod.logger.info (f"Clef {clef} is already the current clef for staff {self.id}")
+			return False
+		else:
+			score_mod.logger.info (f"Clef {clef} becomes the current clef for staff {self.id}")
+			self.current_clef = clef
+
+	def get_current_clef (self):
+		return self.current_clef
 		
 class TimeSignature:
 	'''
@@ -206,30 +215,6 @@ class Clef:
 
 	def __str__ (self):
 		return f"({self.m21_clef.sign},{self.m21_clef.line})"
-
-class Dynamics ():
-	"""
-		Dynamics = directions
-	"""
-	
-	PIANO="p"
-	PIANISSIMO="pp"
-	FORTE="f"
-	FORTISSIMO="ff"
-	MEZZOPIANO="mp"
-	MEZZOFORTE="mf"
-	
-	def __init__(self, placement, dyn_type) :
-		if dyn_type == Dynamics.PIANO:
-			self.m21_dynamic = m21.dynamics.Dynamic('p')
-		elif dyn_type == Dynamics.FORTE:
-			self.m21_dynamic = m21.dynamics.Dynamic('f')
-		else:
-			raise score_mod.CScoreModelError (f"Unknown dynaics type: '{dyn_type}'")
-
-		self.m21_dynamic.placement = placement
-		
-		return
 
 class Beam:
 	'''

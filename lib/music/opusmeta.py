@@ -36,7 +36,9 @@ class OpusMeta:
 		Serializable representation of an Opus
 	'''
 	
-	def __init__(self, corpus_ref, local_ref, title, composer):
+	def __init__(self, corpus_ref, local_ref, title, composer, id=None):
+		self.id = id 
+		
 		self.local_ref = local_ref
 		self.ref = corpus_ref + ":" + local_ref
 		self.corpus_ref = corpus_ref
@@ -64,16 +66,24 @@ class OpusMeta:
 		files =[]
 		for f in self.files:
 			files.append(f.to_json())
-		return {"ref": self.ref,
-				"local_ref": self.local_ref,
-				"corpus_ref": self.corpus_ref,
-				"title": self.title,
-				"composer": self.composer,
-				"features": features,
-				"sources": sources,
-				"files": files
-				}
-	
+
+		if self.id is not None:
+			# Adding the DB id. Useful for REST services that want to 
+			# directly require and opus
+			opus_dict = {"db_id": self.id}
+		else:
+			opus_dict = {}
+		opus_dict["ref"] =  self.ref
+		opus_dict["local_ref"] = self.local_ref
+		opus_dict["corpus_ref"] = self.corpus_ref
+		opus_dict["title"] = self.title
+		opus_dict["composer"] = self.composer
+		opus_dict["features"] =  features
+		opus_dict["sources"] = sources
+		opus_dict["files"] = files
+		
+		return opus_dict
+
 	def to_jsonld(self):
 		ontos = {"scorelib": JsonLD.SCORELIB_ONTOLOGY_URI}
 		jsonld = JsonLD (ontos)

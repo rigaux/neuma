@@ -23,11 +23,11 @@ class Voice:
 		self.m21_stream = m21.stream.Voice(id=voice_id)
 		
 		# For OMR: The current clefs are used to decode symbols on staves
-		self.current_clefs = {}
+		#self.current_clefs = {}
 		# Still for OMR: we can disable automatic beaming
 		self.automatic_beaming = True
 
-		# The main staff: if a voice is spread on severl staves,
+		# The main staff: if a voice is spread on several staves,
 		# we identify the "main" one: in music21, the voice 
 		# is inserted in a measure in a part assigned to this staff
 		# This means that voice'events outside this staff must be post-corrected
@@ -37,7 +37,11 @@ class Voice:
 		self.events = []
 		
 		# For decoding durations, the time signature is sometimes required
-		self.current_time_signature = None
+		#self.current_time_signature = None
+		
+		# Absolute position. Set when the voice is inserted in the parent stream
+		self.absolute_position = 0
+		
 		return
 	
 	def clean(self):
@@ -50,17 +54,8 @@ class Voice:
 		# Idem for beams
 		self.clean_beams()
 		
-	def set_current_time_signature(self, ts):
-		self.current_time_signature = ts
-	
-	def set_current_clefs(self, cur_clefs):
-		'''
-		  Initialize the clefs for all the staves 
-		'''
-		
-		for staff_id, clef in cur_clefs.items():
-			self.current_clefs[staff_id] = clef
-
+	#def set_current_time_signature(self, ts):
+	#	self.current_time_signature = ts
 
 	def set_from_m21(self, m21stream):
 		"""Feed the voice representation from a MusicXML document"""
@@ -122,15 +117,10 @@ class Voice:
 					
 	def nb_events(self):
 		return len(self.events)
-	
-	def append_clef(self, clef, no_staff):
-		score_mod.logger.info (f"Add a clef to staff {no_staff}")
-		# The current clef changes for the voice
-		self.current_clefs[no_staff] = clef
-		# Inform the staff that the clef has changed
-		self.part.add_clef_to_staff (no_staff, clef)
-		
-		self.m21_stream.append(clef.m21_clef)
+
+	def append_decoration(self, deco):
+		score_mod.logger.info (f"Add a decoration to voice {self.id} at relative pos. {deco.relative_position}")
+		self.m21_stream.append(deco.m21_object)
 
 	def get_staff_distribution(self):
 		staff_distrib = {}
@@ -230,20 +220,6 @@ class Voice:
 		for event in self.events:
 			duration += event.duration.get_value()
 		return duration
-	
-#	def get_all_durations(self):
-#		'''Return half-steps intervals'''
-#		du = map(lambda x: x.duration,self.m21_stream.notes())
-#		return du
-
-#	def count_durations(self):
-#		all_durations = {}
-#		du = self.get_all_durations()
-#		for d in du:
-#			if d in all_durations:
-#				all_durations[i]+=1
-#			else:
-#				all_durations[i] = 1
 
 	def get_ambitus(self):
 		i = self.m21_stream.analyze('ambitus')
@@ -446,10 +422,6 @@ class Voice:
 #			print(k)
 #		print('/M')
 		return len(self.m21_stream.getElementsByClass('Measure'))
-
-
-#	def count_beats(self):
-#		return len(self.getElementsByClass('Measure'))
 
 	def format_rhythmicfigures(self):
 		# Philippe: methode annulee car renvoie une erreur "'method' object is not iterable"

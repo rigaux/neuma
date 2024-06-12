@@ -1097,7 +1097,7 @@ class Opus(models.Model):
 											self.composer_ld.dbpedia_uri)
 		else:
 			opusmeta = opusmeta_mod.OpusMeta(self.corpus.ref, self.local_ref(), self.title, 
-											self.composer)
+											self.composer, self.id)
 			
 		# Adding sources
 		for source in self.opussource_set.all ():
@@ -1673,6 +1673,9 @@ class Annotation(models.Model):
 								default=annot_mod.Annotation.MOTIVATION_LINKING)
 	textual_body = models.TextField(null=True)
 	
+	# We "cache" the web annotation as a JSON object for web exchanges
+	web_annotation = models.JSONField(blank=True,default=dict)
+	
 	# Creation / update dates
 	created_at = models.DateTimeField(auto_now_add=True, null=True, blank=True)
 	updated_at = models.DateTimeField(auto_now=True, null=True, blank=True)
@@ -1688,33 +1691,41 @@ class Annotation(models.Model):
 		'''
 			Create an annotation of our score model from the DB data
 		'''
-		target_selector = annot_mod.FragmentSelector(
-				annot_mod.FragmentSelector.XML_SELECTOR, self.target.selector_value)
-		target_resource = annot_mod.SpecificResource(self.target.source, target_selector)
-		target = annot_mod.Target(target_resource)
 		
-		if self.body is not None:
-			body_selector = annot_mod.FragmentSelector(self.body.selector_conforms_to, 
+		if len(self.web_annotation) == 0:
+			# Let's create the annotation
+			target_selector = annot_mod.FragmentSelector(
+					annot_mod.FragmentSelector.XML_SELECTOR, self.target.selector_value)
+			target_resource = annot_mod.SpecificResource(self.target.source, target_selector)
+			target = annot_mod.Target(target_resource)
+		
+			if self.body is not None:
+				body_selector = annot_mod.FragmentSelector(self.body.selector_conforms_to, 
 												self.body.selector_value)
-			body_resource = annot_mod.SpecificResource(self.body.source, body_selector)
-			body = annot_mod.ResourceBody(body_resource)
-		if self.textual_body is not None:
-			body = annot_mod.TextualBody(self.textual_body)
-		if self.user is not None:
-			creator = annot_mod.Creator(self.user.id, annot_mod.Creator.PERSON_TYPE, 
+				body_resource = annot_mod.SpecificResource(self.body.source, body_selector)
+				body = annot_mod.ResourceBody(body_resource)
+			if self.textual_body is not None:
+				body = annot_mod.TextualBody(self.textual_body)
+			if self.user is not None:
+				creator = annot_mod.Creator(self.user.id, annot_mod.Creator.PERSON_TYPE, 
 									self.user.username)
-		else:
-			creator = annot_mod.Creator('xxx', annot_mod.Creator.SOFTWARE_TYPE, 
+			else:
+				creator = annot_mod.Creator('xxx', annot_mod.Creator.SOFTWARE_TYPE, 
 									settings.COMPUTER_USER_NAME)
 
-		annotation = annot_mod.Annotation(self.id, creator, target, body, 
+			annotation = annot_mod.Annotation(self.id, creator, target, body, 
 							self.analytic_concept.model.code, self.analytic_concept.code, 
 							self.motivation,
 							self.created_at, self.updated_at)
-		annotation.set_style (annot_mod.Style (self.analytic_concept.icon,
+			annotation.set_style (annot_mod.Style (self.analytic_concept.icon,
 											 self.analytic_concept.display_options))
-		return annotation
-
+			
+			# Store it for the next time !
+			self.web_annotation = annotation.get_json_obj(False)
+			self.save()
+			return annotation
+		else:
+			return self.web_annotation
 		
 	@staticmethod 
 	def create_from_web_annotation(user, opus, webannot):

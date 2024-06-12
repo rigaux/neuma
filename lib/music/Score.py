@@ -3,23 +3,12 @@ import logging
 
 import music21 as m21
 
-#from neumasearch.MusicSummary import MusicSummary
-# No longer useful?
-
-'''
-the layout stream hierarchy is in perpetual beta, so some things 
-won’t work (for instance, reconstruction of standard stream from 
-layout stream doesn’t yet exist), but do look at the music21.layout 
-module for the docs and proper routines, especially  
-layout.divideByPages(normalStream).
-
-'''
-
 import verovio
 
 # Voice is a complex class defined in a separate file
 from .Voice import Voice
 from . import notation
+from . import events
 
 logging.basicConfig(level=logging.WARNING)
 logger = logging.getLogger(__name__)
@@ -27,7 +16,7 @@ logger = logging.getLogger(__name__)
 
 # For the console
 c_handler = logging.StreamHandler()
-c_handler.setLevel(logging.WARNING)
+c_handler.setLevel(logging.INFO)
 c_format = logging.Formatter('%(name)s - %(levelname)s - %(message)s')
 c_handler.setFormatter(c_format)
 #logger.addHandler(c_handler)
@@ -149,28 +138,11 @@ class Score:
 		# Oups, the part has not been found ...
 		raise CScoreModelError ("Unable to find this part : " + id_part )
 
-	def get_part_from_staff(self, no_staff):
-		# Given a staff id, we return the part that contains this staff
-		for part in self.parts:
-			if part.staff_exists(no_staff):
-				return part 
-
 	def add_page (self, page):
 		self.pages.append (page)
 		self.current_page = page
 		self.m21_score.append(page.m21_page)
-
-	def get_staff (self, no_staff):
-		''' 
-		    Find a staff of the score. Staves are embedded in parts
-		'''
-		for part in self.get_parts():
-			if part.staff_exists (no_staff):
-				return part.get_staff(no_staff)
-
-		# The staff has not been found: raise an exception
-		raise CScoreModelError (f'Unable to find staff {no_staff} in part {part.id}')
-
+		
 	def set_current_key_signature (self, key):
 		self.current_key_signature = key
 	def set_current_time_signature (self, ts):
@@ -245,7 +217,6 @@ class Score:
 				# NB: self is assumed to be a part
 				voice = Voice(self, self.id + "-" + str(default_voice_id))
 				voice.set_from_m21(m21voice)
-				#print ("Create voice in component "	self.id	" with id "	voice.id)
 				default_voice_id += 1
 				self.components.append(voice)
 
@@ -255,7 +226,6 @@ class Score:
 			for p in partStream:
 				score = Score()
 				score.id = "P" + str(default_part_id)
-				#print ("Create component score with id "	score.id)
 				default_part_id += 1
 				self.components.append(score)
 				# Recursive call
@@ -343,7 +313,7 @@ class Part:
 		self.staff_group = [] # For parts with multiple PartStaff
 
 		# List of staves the part is displayed on
-		self.staves = {}
+		#self.staves = {}
 		
 		if part_type==Part.GROUP_PART:
 			#print (f"Creating a part group for part {id_part}")
@@ -356,15 +326,15 @@ class Part:
 			self.staff_group = group
 			
 			# This part has several staves. They are numbered from 1 to ...
-			for i_staff in range(1, len(m21_group)+1):
-				self.staves[i_staff] =  notation.Staff(i_staff)
+			#for i_staff in range(1, len(m21_group)+1):
+			#	self.staves[i_staff] =  notation.Staff(i_staff)
 		elif part_type == Part.STAFF_PART:
 			#print (f"Creating a part Staff for part {id_part} and no staff {no_staff}")
 			self.m21_part = m21.stream.PartStaff(id=id_part)
-			self.staves[no_staff] =  notation.Staff(no_staff)
+			#self.staves[no_staff] =  notation.Staff(no_staff)
 		else:
 			self.m21_part = m21.stream.Part(id=id_part)
-			self.staves[no_staff] =  notation.Staff(no_staff)
+			#self.staves[no_staff] =  notation.Staff(no_staff)
 	
 		# Metadata
 		self.m21_part.id  = "P" + id_part
@@ -372,9 +342,26 @@ class Part:
 		self.m21_part.partAbbreviation = abbreviation
 		self.part_type = part_type
 
-		# During parsing, we maintain the current interpretation context 
+		"""
+		   During parsing, we maintain the current interpretation 
+		   context. It consists in the current key, current time 
+		   signature, current alterations met so far, and current clef.
+		   
+		   This is based on the fact that a part = a staff in the
+		   music21 model (for parts with part_type = STAFF_PART)
+		"""
 		self.current_key_signature = notation.KeySignature() 
 		self.current_time_signature = notation.TimeSignature() 
+		
+		# Sequence of clefs found in the part, at a given position
+		self.current_clefs = [
+			{"pos": -1, "clef": notation.Clef(notation.Clef.NO_CLEF)}
+			]
+		
+		# List of accidentals met so far
+		self.accidentals = {"A": None, "B": None, "C": None, 
+						  "D": None, "E": None, "F": None, "G": None}
+		self.reset_accidentals()
 	
 		# List of measures of this part
 		self.measures = []
@@ -393,7 +380,7 @@ class Part:
 		else:
 			return f"{id_part}-{no_staff}"
 	
-	def clear_staves(self):
+	def clear_staves_todel(self):
 		'''
 		   To call when we reinitialize a system or a page
 		'''
@@ -405,14 +392,14 @@ class Part:
 			for staff_part in self.staff_group: 
 				staff_part.clear_staves()
 	
-	def has_staves(self):
+	def has_staves_todel(self):
 		# Check if at least one staff is allocated to the part
 		if len(self.staves.keys()) > 0:
 			return True
 		else:
 			return False
 		
-	def add_staff (self, staff):
+	def add_staff_todel (self, staff):
 		self.staves.append(staff)
 		
 		#
@@ -429,11 +416,37 @@ class Part:
 				else:
 					logger.info(f"PartGroup: sub-part {staff_part.id} has already a staff")
 			logger.error (f'Cannot add another staff {staff.id} to PartGroup {self.id}. All sub-parts have a staff!')
+
+	def reset_accidentals (self):
+		# Used to forget that we ever met an accidental on this staff
+		if self.part_type==Part.GROUP_PART:
+			for part_staff in self.staff_group:
+				part_staff.reset_accidentals()
+		else:
+			for pitch_class in self.accidentals.keys():
+				self.accidentals[pitch_class] = events.Note.ALTER_NONE		
+				
+	def add_accidental (self, pitch_class, acc):
+		# Record accidentals met in a measure
+		self.accidentals[pitch_class] = acc
 			
-	def staff_exists (self, no_staff):
+	def staff_exists_todel (self, no_staff):
 		return no_staff in self.staves.keys()
 	
-	def get_staff (self, no_staff):
+	def get_part_staff (self, no_staff):
+		# Given the number of the staff, returns the 
+		# corresponding part staff
+		if self.part_type == Part.GROUP_PART:
+			if len(self.staff_group) >= no_staff:
+				return self.staff_group[no_staff-1]
+			else:
+				logger.error (f"Unable to find a current measure for part {self.id} and staff {no_staff}")
+				raise CScoreModelError (f"Unable to find a current measure for part {self.id} and staff {no_staff}")
+		else:
+			# Too easy...
+			return self
+		
+	def get_staff_todel (self, no_staff):
 		if self.staff_exists(no_staff):
 			return self.staves[no_staff]
 		else:
@@ -441,7 +454,11 @@ class Part:
 			raise CScoreModelError (f'Unable to find staff {no_staff} in part {self.id}')
 
 	def get_duration(self):
-		return self.m21_part.duration.quarterLength
+		if self.part_type == Part.GROUP_PART:
+			#WARNING: hope that both sub-part are at the same position
+			return self.staff_group[0].get_duration()
+		else:
+			return self.m21_part.duration.quarterLength
 	
 	def set_current_key_signature (self, key):
 		self.current_key_signature = key
@@ -454,24 +471,35 @@ class Part:
 		if self.part_type == Part.GROUP_PART:
 			for staff_part in self.staff_group: 
 				staff_part.set_current_time_signature(ts)
+
+	def get_clef_at_pos (self, position=0):
+		# Find, in the stream of clef, the clef valid at the given pos
+		clef = self.current_clefs[0]['clef']
+		for cur_clef in self.current_clefs:
+			if cur_clef['pos'] <= position:
+				clef = cur_clef['clef'] 
+		return clef
+
+	def set_current_clef (self, clef, no_staff, abs_position=0):
+		# Get the part, given the staff
+		part = self.get_part_staff(no_staff)
+		current_clef = part.get_clef_at_pos(abs_position)
+		
+		if current_clef.equals(clef):
+			# No need to change the clef ! Probably an initial signature
+			logger.info (f"Clef {clef} is already the current clef for part {part.id} at position {abs_position}")
+			return False
+		else:
+			logger.info (f"Setting the current clef to {clef} for part {part.id} at position {abs_position}")
+			part.current_clefs.append({"pos": abs_position, "clef": clef})
+			# Insert the clef in the music flow
+			part.current_measure.set_initial_clef(clef, abs_position)
+			return True
 				
 	def get_current_time_signature(self):
 		return self.current_time_signature
 	def get_current_key_signature(self):
 		return self.current_key_signature
-	
-	def add_clef_to_staff (self, no_staff, clef):
-		# A new clef at the beginning of measure for this staff
-		if self.staff_exists (no_staff):
-			staff = self.get_staff (no_staff)
-			staff.set_current_clef (clef)
-		else:
-			# Unknown staff: raise an exception
-			raise CScoreModelError (f'Unable to find staff {no_staff} in part {self.id}')
-
-	def add_accidental (self, no_staff, pitch_class, acc):
-		staff = self.get_staff(no_staff)
-		staff.add_accidental( pitch_class, acc)
 
 	def add_measure (self, measure_no):
 
@@ -510,13 +538,8 @@ class Part:
 			return current_measures
 		
 	def get_measure_from_staff(self, no_staff):
-		# Given a staff id, we return the current measure for this staff
-		for measure in self.get_current_measures():
-			if measure.part.staff_exists(no_staff):
-				return measure 
-		
-		logger.error (f"Unable to find a current measure for part {self.id} and staff {no_staff}")
-		raise CScoreModelError (f"Unable to find a current measure for part {self.id} and staff {no_staff}")
+		part = self.get_part_staff(no_staff)
+		return part.current_measure
 			
 	def add_voice(self, voice):
 		if not self.part_type == Part.GROUP_PART:
@@ -528,7 +551,6 @@ class Part:
 			measure = self.get_measure_from_staff(main_staff)
 			measure.add_voice(voice)
 			
-		
 	def add_system_break(self):
 		for measure in  self.get_current_measures():
 			measure.add_system_break()
@@ -560,11 +582,6 @@ class Part:
 	def add_system_break_does_not_work(self):
 		system_break = m21.layout.SystemLayout(isNew=True)
 		self.m21_part.append (system_break)
-
-	def reset_accidentals(self):
-		# Used when a new measure starts: we fortget all accidentals met before
-		for staff in self.staves.values():
-			staff.reset_accidentals()
 
 	def check_time_signatures(self, fix=True):
 		"""
@@ -631,49 +648,20 @@ class Measure:
 		self.id = f'm{no_measure}-{Measure.sequence_measure}' 
 		self.m21_measure = m21.stream.Measure(id=self.id, number=no_measure)
 		self.m21_measure.style.absoluteX = 23
-		self.initial_clefs = {}
 		
-		# We keep the clef for each staff at the beginning of measure. They
-		# are used to determine the pitch from the head's height
-		if len(part.staves.values()) > 0:
-			for staff in part.staves.values():
-				self.initial_clefs[staff.id] = staff.current_clef
-				#print (f"Initial clef for measure {self.no} and staff {staff.id}: {staff.current_clef}")
+		# Absolute position of the measure. Initialized with the current part position
+		self.absolute_position = part.get_duration()
 		
-		else:
-			# No staves for this measure????
-			self.initial_ts = part.get_current_time_signature()
-			logger.warning (f"Measure {self.id} has no staves? Assuming a time signature {self.initial_ts}")
-
-		# Same thing for initial time signatures. Used for checking consistency
+		# Used for checking consistency
 		# Note: there is only one time signature, common to all staves 
 		self.initial_ts = part.current_time_signature
 			
-	def get_initial_clef_for_staff(self, staff_id):
-		if not (staff_id in self.initial_clefs.keys()):
-			# Oups, no such staff 
-			raise CScoreModelError (f"No staff ‘{staff_id}' for measure {self.no}")
-		else:
-			return self.initial_clefs[staff_id]
+	def set_initial_clef (self, clef, abs_position=0):
+		# We add the clef to music 21 measure. 
+		relative_position = abs_position - self.absolute_position 
+		logger.info (f"Adding Clef {clef.m21_clef} at relative position {relative_position} to the current measure of part {self.part.id}")
+		self.m21_measure.insert(relative_position,  clef.m21_clef)
 		
-	def set_initial_clef_for_staff(self, staff_id, clef):
-		if not (staff_id in self.initial_clefs.keys()):
-			# Oups, no such staff 
-			raise CScoreModelError (f"No staff ‘{staff_id}' for measure {self.no}")
-		else:
-			# No need to change the clef if it is already there
-			if not self.initial_clefs[staff_id].equals(clef):
-				self.initial_clefs[staff_id] = clef
-				# We add the clef to music 21 measure. Sth strange: no staff specified...
-				logger.info (f"Adding Clef {clef.m21_clef} to staff {staff_id}")
-				self.m21_measure.insert(0,  clef.m21_clef)
-			#else:
-			#	print (f"Clef already set for staff {staff_id}")
-
-	def print_initial_clefs(self):
-		for staff_id, clef in self.initial_clefs.items():
-			print (f"Measure {self.no}, staff {staff_id}: initial clef {clef}")
-			
 	def add_time_signature(self, time_signature):
 		self.initial_ts = time_signature
 		self.m21_measure.insert(0,  time_signature.m21_time_signature)
@@ -695,8 +683,12 @@ class Measure:
 				logger.warning (f"After removal of hiden events, voice {voice.id} duration {voice.get_duration()} still exceeds the {self.get_expected_duration()}. Shrinking the voice")
 				# Still not enough
 				voice.shrink_to_bar_duration(self.get_expected_duration())
+
 		self.voices.append(voice)
 		self.m21_measure.insert (0, voice.m21_stream)
+		
+		# The absolute position of the voice is that of the measure
+		#voice.absolute_position = self.absolute_position
 		
 	def add_system_break(self):
 		system_break = m21.layout.SystemLayout(isNew=True)
@@ -746,7 +738,6 @@ class Measure:
 
 		self.m21_measure = m21.stream.Measure(id=self.id, number=self.no)
 		for voice in self.voices:
-			#print (f"Re-Adding voice with duration {voice.get_duration()}")
 			self.m21_measure.insert (0, voice.m21_stream)
 		logger.info  (f"Measure duration AFTER FIX: {self.get_duration()}")
 

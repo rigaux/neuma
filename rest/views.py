@@ -225,26 +225,37 @@ def get_object_from_neuma_ref(full_neuma_ref):
 	"""
 	Receives a path to a corpus or an Opus, check if it exists returns the object
 	"""
-	# OK, we check whether the path refers to an Opus of a corpus
-	neuma_ref = full_neuma_ref.replace("/", settings.NEUMA_ID_SEPARATOR)
-
-	try:
-		return Opus.objects.get(ref=neuma_ref), OPUS_RESOURCE
-	except Opus.DoesNotExist:
-		# Not an opus. Maybe a corpus?
+	
+	# We can receive the object request either as a path or as 
+	# a local DB id. We use the latter if possible.
+	
+	if full_neuma_ref.isdigit ():
 		try:
-			return Corpus.objects.get(ref=neuma_ref), CORPUS_RESOURCE
-		except Corpus.DoesNotExist:
-			# Last possibility: an internal id in the MEI file of an Opus
-			last_slash = full_neuma_ref.rfind("/")
-			opus_id = full_neuma_ref[:last_slash].replace(
-				"/", settings.NEUMA_ID_SEPARATOR
-			)
+			return Opus.objects.get(id=int(full_neuma_ref)), OPUS_RESOURCE
+		except Opus.DoesNotExist:
+			# Unknown object
+			return None, UNKNOWN_RESOURCE
+	else:
+		# OK, we check whether the path refers to an Opus of a corpus
+		neuma_ref = full_neuma_ref.replace("/", settings.NEUMA_ID_SEPARATOR)
+
+		try:
+			return Opus.objects.get(ref=neuma_ref), OPUS_RESOURCE
+		except Opus.DoesNotExist:
+			# Not an opus. Maybe a corpus?
 			try:
-				return Opus.objects.get(ref=opus_id), INTERNAL_REF_RESOURCE
-			except Opus.DoesNotExist:
-				# Unknown object
-				return None, UNKNOWN_RESOURCE
+				return Corpus.objects.get(ref=neuma_ref), CORPUS_RESOURCE
+			except Corpus.DoesNotExist:
+				# Last possibility: an internal id in the MEI file of an Opus
+				last_slash = full_neuma_ref.rfind("/")
+				opus_id = full_neuma_ref[:last_slash].replace(
+					"/", settings.NEUMA_ID_SEPARATOR
+					)
+				try:
+					return Opus.objects.get(ref=opus_id), INTERNAL_REF_RESOURCE
+				except Opus.DoesNotExist:
+					# Unknown object
+					return None, UNKNOWN_RESOURCE
 
 @permission_classes((AllowAny, ))
 class Element (APIView):
@@ -409,7 +420,10 @@ class SourceList(generics.ListAPIView):
 
 	def get_queryset(self):
 		opus_ref = self.kwargs['full_neuma_ref']
-		queryset = OpusSource.objects.filter(opus__ref=opus_ref)
+		if opus_ref.isdigit():
+			queryset = OpusSource.objects.filter(opus__id=int(opus_ref))
+		else:
+			queryset = OpusSource.objects.filter(opus__ref=opus_ref)
 		return queryset
 	
 	@extend_schema(operation_id="SourceCreate")
@@ -444,12 +458,13 @@ class Source(APIView):
 	def get_queryset(self):
 		opus_ref = self.kwargs['full_neuma_ref']
 		source_ref = self.kwargs['source_ref']
-		queryset = OpusSource.objects.filter(opus__ref=opus_ref, ref=source_ref)
-		return queryset
+		opus, object_type = get_object_from_neuma_ref(opus_ref)
+		return OpusSource.objects.filter(opus=opus, ref=source_ref)
 
 	def get_object(self, full_neuma_ref, source_ref):
 		try:
-			return OpusSource.objects.get(opus__ref=full_neuma_ref, ref=source_ref)
+			opus, object_type = get_object_from_neuma_ref(full_neuma_ref)
+			return OpusSource.objects.get(opus=opus, ref=source_ref)
 		except OpusSource.DoesNotExist:
 			raise Http404
 
@@ -471,7 +486,8 @@ class Source(APIView):
 			return JSONResponse(serializer.data)
 		except SourceType.DoesNotExist:
 			serializer = MessageSerializer({"message": "Source type " + request.data.get("source_type", "") + " does not exists"})
-			return JSONResponse(serializer.data)		
+			return JSONResponse(serializer.data)	
+			
 		try:
 			source = OpusSource.objects.get(opus=opus,ref=source_ref)
 			source.source_type = source_type
@@ -504,12 +520,13 @@ class SourceManifest(APIView):
 	def get_queryset(self):
 		opus_ref = self.kwargs['full_neuma_ref']
 		source_ref = self.kwargs['source_ref']
-		queryset = OpusSource.objects.filter(opus__ref=opus_ref, ref=source_ref)
-		return queryset
+		opus, object_type = get_object_from_neuma_ref(opus_ref)
+		return OpusSource.objects.filter(opus=opus, ref=source_ref)
 
 	def get_object(self, full_neuma_ref, source_ref):
 		try:
-			return OpusSource.objects.get(opus__ref=full_neuma_ref, ref=source_ref)
+			opus, object_type = get_object_from_neuma_ref(full_neuma_ref)
+			return OpusSource.objects.get(opus=opus, ref=source_ref)
 		except OpusSource.DoesNotExist:
 			raise Http404
 
@@ -532,12 +549,13 @@ class SourceFile (APIView):
 	def get_queryset(self):
 		opus_ref = self.kwargs['full_neuma_ref']
 		source_ref = self.kwargs['source_ref']
-		queryset = OpusSource.objects.filter(opus__ref=opus_ref, ref=source_ref)
-		return queryset
+		opus, object_type = get_object_from_neuma_ref(opus_ref)
+		return OpusSource.objects.filter(opus=opus, ref=source_ref)
 
 	def get_object(self, full_neuma_ref, source_ref):
 		try:
-			return OpusSource.objects.get(opus__ref=full_neuma_ref, ref=source_ref)
+			opus, object_type = get_object_from_neuma_ref(full_neuma_ref)
+			return OpusSource.objects.get(opus=opus, ref=source_ref)
 		except OpusSource.DoesNotExist:
 			raise Http404
 
@@ -566,10 +584,6 @@ class SourceFile (APIView):
 				 responses= MessageSerializer)
 	@parser_classes([MultiPartParser])
 	def post(self, request, full_neuma_ref, source_ref):
-		# Little trick for backward compatibility
-		if source_ref == source_mod.OpusSource.DMOS_REF:
-			source_ref = source_mod.OpusSource.IIIF_REF
-
 		source = self.get_object(full_neuma_ref, source_ref)
 
 		for filename, filecontent in request.FILES.items():
@@ -593,7 +607,7 @@ class SourceFile (APIView):
 		
 		# Special case DMOS: parse the file and create XML files
 		if source_ref==source_mod.OpusSource.IIIF_REF:
-			opus = Opus.objects.get(ref=full_neuma_ref)
+			opus, object_type = get_object_from_neuma_ref(full_neuma_ref)
 			
 			print ("Parsing DMOS in asynchronous mode")
 			parse_dmos.delay(opus.ref)

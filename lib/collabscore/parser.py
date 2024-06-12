@@ -335,6 +335,7 @@ class OmrScore:
 		
 		# The score has not yet been computed
 		score = score_model.Score(use_layout=False)
+		
 		# Set initial context
 		logger.info (f"Initial time signature set to {self.initial_time_signature}")						
 		score.current_key_signature = self.initial_key_signature
@@ -361,14 +362,16 @@ class OmrScore:
 					i_staff+= 1
 					part_staff = score_model.Part(id_part=id_part_staff, name=src_part.name, 
 												abbreviation=src_part.abbreviation,
-												part_type="partstaff", no_staff=i_staff)
+												part_type=score_model.Part.STAFF_PART, 
+												no_staff=i_staff)
 					logger.info (f"Add a staff part {id_part_staff} in a part group")
 					staff_group.append(part_staff)
 					score.add_part(part_staff)
 				# + a Staff grouo for the global part
 				part_group = score_model.Part(id_part=src_part.id, name=src_part.name, 
 												abbreviation=src_part.abbreviation,
-												part_type="group", group=staff_group)
+												part_type=score_model.Part.GROUP_PART, 
+												group=staff_group)
 				logger.info (f"Add a part group {src_part.id} with {i_staff} staff-parts")
 				score.add_part(part_group)
 	
@@ -397,6 +400,7 @@ class OmrScore:
 			page_begins = True
 			
 			for system in page.systems:
+				system_begins = True
 				current_system_no += 1
 				current_system_measure_no = 0
 				if not self.config.in_range (current_page_no, current_system_no):
@@ -415,9 +419,6 @@ class OmrScore:
 							constants_mod.IREGION_SYSTEM_CONCEPT)
 				score.add_annotation (annotation)
 
-				#score_system = score_model.System(system.id)
-				#score_page.add_system(score_system)
-				system_begins = True
 				
 				# Now, for the current system, we know the parts and the staves for 
 				# each part, initialized with their time signatures
@@ -470,7 +471,7 @@ class OmrScore:
 						mnf_staff = mnf_system.get_staff(header.no_staff)
 						id_part = mnf_staff.get_part_id()
 						part = score.get_part (id_part)
-						staff = part.get_staff (mnf_staff.number_in_part)
+						#staff = part.get_staff (mnf_staff.number_in_part)
 						measure_for_part = part.get_measure_from_staff(mnf_staff.number_in_part)
 						
 						if header.region is not None:
@@ -482,9 +483,11 @@ class OmrScore:
 							score.add_annotation (annotation)
 						if header.clef is not None:
 							clef_staff = header.clef.get_notation_clef()
-							staff.set_current_clef (clef_staff)
-							logger.info (f'Clef {clef_staff} found on staff {header.no_staff} at measure {current_measure_no}')
-							measure_for_part.set_initial_clef_for_staff(staff.id, clef_staff)
+							clef_position = part.get_duration()
+							logger.info (f'Clef {clef_staff} found on staff {header.no_staff} at measure {current_measure_no}, position {clef_position}')
+							part.set_current_clef (clef_staff, 
+												mnf_staff.number_in_part,
+												clef_position)
 						if header.time_signature is not None:
 							new_time_signature = header.time_signature.get_notation_object()
 							logger.info (f'Time signature  {new_time_signature} found on staff {header.no_staff} at measure {current_measure_no}')
@@ -508,8 +511,7 @@ class OmrScore:
 							# We will display the key signature at the beginning
 							# of the current measure
 							measure_for_part.add_key_signature (key_sign)
-					
-						#measure_for_part.print_initial_clefs()
+			
 					# Now we scan the voices
 					for voice in measure.voices:
 						current_part = score.get_part(voice.id_part)
@@ -523,7 +525,7 @@ class OmrScore:
 
 						# Create the voice
 						voice_part = voice_model.Voice(part=current_part,voice_id=voice.id)
-						
+						voice_part.absolute_position = measure_for_part.absolute_position
 						# We disable automatic beaming
 						voice_part.automatic_beaming = False
 
@@ -556,14 +558,18 @@ class OmrScore:
 								if event.get_duration() == 0.:
 									logger.error (f"Null duration for event. Ignored")
 								else:
+									## Add decorations first (pos. of the nevent)
+									for decoration in event.decorations:
+										voice_part.append_decoration(decoration)
 									voice_part.append_event(event)
 							elif type_event == "clef":
 								# The staff id is in the voice item
 								id_staff = item.no_staff_clef
 								mnf_staff = mnf_system.get_staff(id_staff)
+								clef_position = measure_for_part.absolute_position + voice_part.get_duration()
 								# We found a clef change
-								logger.info (f"Add a clef to staff {id_staff}")
-								voice_part.append_clef(event, mnf_staff.number_in_part)
+								logger.info (f"Add a clef to staff {id_staff} at position {clef_position}")
+								current_part.set_current_clef (event, mnf_staff.number_in_part, clef_position)
 							else:
 								logger.error (f'Unknown event type {type_event} for voice {voice.id}')
 		
@@ -635,8 +641,8 @@ class OmrScore:
 					logger.info("")
 					score.check_measure_consistency()
 					
-					# Remove in the XML file the pseudo-beam
-					self.post_editions.append( editions_mod.Edition (editions_mod.Edition.CLEAN_BEAM))
+		# Remove in the XML file the pseudo-beam
+		self.post_editions.append( editions_mod.Edition (editions_mod.Edition.CLEAN_BEAM))
 
 		self.score = score 			
 		return self.score
@@ -677,9 +683,12 @@ class OmrScore:
 			for head in voice_item.note_attr.heads:
 				id_staff = StaffHeader.make_id_staff(head.no_staff) # Will be used as the chord staff.
 				mnf_staff = mnf_system.get_staff(id_staff)
-				staff = voice.part.get_staff(mnf_staff.number_in_part)
-				current_clef = staff.current_clef
-		
+				
+				# Get the sub-part where the event is positioned. Seen as a staff
+				staff = voice.part.get_part_staff(mnf_staff.number_in_part)
+				event_position = voice.absolute_position + voice.get_duration()
+				current_clef = staff.get_clef_at_pos(event_position)
+
 				# The head position gives the position of the note on the staff
 				(pitch_class, octave)  = current_clef.decode_pitch (head.height)
 			
@@ -706,14 +715,14 @@ class OmrScore:
 					#print (f"Tied note ends with id {head.id_tie}")
 					note.stop_tie()
 				
-				# Check articulations
-				self.add_dynamic_to_event(events, note, head.articulations)
+				# Add articulations and dynamics
+				self.add_expression_to_event(events, note, head.articulations)
 				events.append(note)
 				
 			if len(events) == 1:
 				# A single note
 				event = events[0]
-				logger.info (f'Adding note {event.pitch_class}{event.octave}-{event.alter}, duration {event.duration.get_value()} to staff {id_staff} with current clef {staff.current_clef}.')
+				logger.info (f'Adding note {event.pitch_class}{event.octave}-{event.alter}, duration {event.duration.get_value()} to staff {id_staff} with current clef {current_clef}.')
 				# Is there a syllable ?
 				i_verse = 1
 				for syl in voice_item.note_attr.syllables:
@@ -723,15 +732,15 @@ class OmrScore:
 				# A chord
 				logger.info (f'Adding a chord with {len(events)} notes.')
 				for event in events:
-					logger.info (f'\tNote {event.pitch_class}{event.octave}-{event.alter}, duration {event.duration.get_value()} to staff {id_staff} with current clef {staff.current_clef}.')
+					logger.info (f'\tNote {event.pitch_class}{event.octave}-{event.alter}, duration {event.duration.get_value()} to staff {id_staff} with current clef {current_clef}.')
 				event = score_events.Chord (duration, mnf_staff.number_in_part, events)
-				self.add_dynamic_to_event(events, event, head.articulations)
+				self.add_expression_to_event(events, event, head.articulations)
 		elif voice_item.rest_attr is not None:
 			# It is a rest
 			for head in voice_item.rest_attr.heads:
 				id_staff = StaffHeader.make_id_staff(head.no_staff) # Will be used as the chord staff.
 				mnf_staff = mnf_system.get_staff(id_staff)
-				staff = voice.part.get_staff(mnf_staff.number_in_part)
+				#staff = voice.part.get_staff(mnf_staff.number_in_part)
 
 				id_staff = StaffHeader.make_id_staff(head.no_staff) # Will be used as the chord staff.
 				event = score_events.Rest(duration, mnf_staff.number_in_part)
@@ -748,7 +757,7 @@ class OmrScore:
 		
 		return (event, event_region, "event")
 
-	def add_dynamic_to_event(self, events, event, articulations):
+	def add_expression_to_event(self, events, event, articulations):
 		for json_art in articulations:
 			if json_art["label"] in ARTICULATIONS_LIST:
 				articulation = score_events.Articulation(json_art["placement"], json_art["label"])
@@ -757,9 +766,9 @@ class OmrScore:
 				expression = score_events.Expression(json_art["placement"], json_art["label"])
 				event.add_expression(expression)
 			elif json_art["label"] in DYNAMICS_LIST:
-				dynamic = score_notation.Dynamics(json_art["placement"], json_art["label"])
+				dynamic = score_events.Dynamics(json_art["placement"], json_art["label"])
 				# A dynamic is inserted in the music flow
-				events.append(dynamic)
+				event.add_decoration(dynamic)
 
 	def write_as_musicxml(self, out_file):
 		print ("Writing as MusicXML")

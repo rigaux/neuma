@@ -65,7 +65,11 @@ class Event:
 		# Mostly used for hidden rests 
 		self.visible = True
 		self.no_staff = None
-
+		
+		# A "decoration" is any object that can be inserted 
+		# in the music flow, at a position relative to the event
+		self.decorations = []
+		
 	def is_note(self):
 		return False
 	def is_rest(self):
@@ -116,6 +120,9 @@ class Event:
 	def id(self):
 		return self.m21_event.id
 	
+	def add_decoration(self, decoration):
+		self.decorations.append(decoration)
+
 class Articulation ():
 	"""
 		Articulation = some performance indication attached to a note
@@ -246,7 +253,8 @@ class Chord (Event):
 		# Create the m21 representation: encode 
 		m21_notes = []
 		for note in notes:
-			m21_notes.append (note.m21_event)
+			if isinstance(note, Note):
+				m21_notes.append (note.m21_event)
 		self.m21_event = m21.chord.Chord(m21_notes)
 		self.m21_event.duration = duration.m21_duration
 		self.m21_event.id = f'{Event.counter_context}c{Event.counter_event}'
@@ -284,3 +292,48 @@ class Rest (Event):
 		return True
 	def get_no_staff(self):
 		return self.no_staff
+
+
+class Decoration():
+	""" 
+		A "decoration" is any object that can be inserted 
+		in the music flow, at a position relative to the event
+	"""
+	def __init__(self, relative_pos=0) :
+		self.m21_object = None
+		self.relative_position = relative_pos
+
+
+class Dynamics (Decoration):
+	"""
+		Dynamics = directions
+	"""
+	
+	PIANO="p"
+	PIANISSIMO="pp"
+	FORTE="f"
+	FORTISSIMO="ff"
+	MEZZOPIANO="mp"
+	MEZZOFORTE="mf"
+	
+	def __init__(self, placement, dyn_type) :
+		super ().__init__(0)
+
+		if dyn_type == Dynamics.PIANO:
+			self.m21_object = m21.dynamics.Dynamic('p')
+		elif dyn_type == Dynamics.PIANISSIMO:
+			self.m21_object = m21.dynamics.Dynamic('pp')
+		elif dyn_type == Dynamics.FORTE:
+			self.m21_object = m21.dynamics.Dynamic('f')
+		elif dyn_type == Dynamics.FORTISSIMO:
+			self.m21_object = m21.dynamics.Dynamic('ff')
+		elif dyn_type == Dynamics.MEZZOPIANO:
+			self.m21_object = m21.dynamics.Dynamic('mp')
+		elif dyn_type == Dynamics.MEZZOFORTE:
+			self.m21_object = m21.dynamics.Dynamic('mf')
+		else:
+			raise score_mod.CScoreModelError (f"Unknown dynamics type: '{dyn_type}'")
+
+		self.m21_object.placement = placement
+		
+		return
