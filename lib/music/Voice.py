@@ -75,6 +75,14 @@ class Voice:
 		
 		self.m21_stream.append(event.m21_event)
 
+	def has_only_rests (self):
+		#  Check if a voice only contains rests
+		only_rests = True
+		for event in self.events:
+			if not event.is_rest():
+				only_rests = False 
+		return only_rests
+
 	def remove_hidden_events(self):
 		# We rebuild the voice without hidden events
 		old_stream = self.m21_stream
@@ -253,51 +261,67 @@ class Voice:
 		# We first collect groups of tied notes
 		groups = []
 		current_group = None
-		for n in self.m21_stream.notes:
-			if n.tie is not None:
-				if n.tie.type=="start":
+		for n in self.events:
+			if n.is_note() and n.tied:
+				if n.tie_type=="start":
 					# Ok a group begins here
 					current_group = [n]
 					groups.append(current_group)
-				elif n.tie.type=="stop" or n.tie.type=="continue":
+				elif n.tie_type=="stop" or n.tie_type=="continue":
 					# No group ? We create one, although it will be invalid later
 					if current_group is None:
 						current_group = [n]
 						groups.append(current_group)
 					else:
+						# Add the note to the group
 						current_group.append(n)
 			else:
-				# Ensure that the current group is emopty
+				# Ensure that the current group is empty
 				current_group = None
 					
 		# Fine let's check the groups
-		for group in groups:	
+		for group in groups:
+			print (f"Analyse group ")
+			for n in group:
+				print (f"Note in group {n}. Tied : {n.tied}.")
 			valid_tie = True
+			first_note = group[0]
+			last_note = group[-1]
 			# A tie is valid if it follows the pattern start - [continue] - stop
-			if not (group[0].tie.type == "start"):
+			if not (first_note.tie_type == "start"):
 				valid_tie = False
-				score_mod.logger.warning (f"The first note {group[0]} of a group has a non-start tie")
-			if not (group[-1].tie.type == "stop"):
+				score_mod.logger.warning (f"The first note {group[0]} of a group has a non-start tie ({group[0].tie_type})")
+			if not (last_note.tie_type == "stop"):
 				valid_tie = False
 				score_mod.logger.warning (f"The last note {group[0]} of a group has a non-stop tie")
 			for i in range(len(group)):
 				n = group[i]
-				if i >= 1 and i < (len(group)-1) and not (n.tie.type =="continue"):
+				if i >= 1 and i < (len(group)-1) and not (n.tie_type =="continue"):
 					valid_tie = False
 					score_mod.logger.warning (f"A middle note {group[0]} of a group has a non-continue tie")
 			
-			# a tie is valid if all the note have the same pitch and octave
-			if isinstance (group[0], m21.note.Note):
+			# a tie is valid if all the notes have the same pitch and octave
+			if valid_tie:
 				for n in group:
-					if not (n == group[0]):
+					if not (n.same_pitch(group[0])):
 						# We found a mistake
 						valid_tie = False
 						score_mod.logger.warning (f"Invalid tie: found a note {n} in a tie starting with {group[0]}")
-				# Clean invalid group
+			
 				if not valid_tie:
+					# Probably a slur: we add it
+					m21_group = []
 					for n in group:
-						n.tie = None
-		
+						m21_group.append(n.m21_event)		
+					self.part.m21_part.insert(0, m21.spanner.Slur(m21_group))
+
+			# Clean invalid group
+			if not valid_tie:
+				for n in group:
+					n.tied = False
+					n.tie_type =None
+					n.m21_event.tie = None
+
 	def get_pitches(self):
 		# Valid key adjustment for sorting pitches
 		def pitch_to_int(x):

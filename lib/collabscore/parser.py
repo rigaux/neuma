@@ -471,7 +471,6 @@ class OmrScore:
 						mnf_staff = mnf_system.get_staff(header.no_staff)
 						id_part = mnf_staff.get_part_id()
 						part = score.get_part (id_part)
-						#staff = part.get_staff (mnf_staff.number_in_part)
 						measure_for_part = part.get_measure_from_staff(mnf_staff.number_in_part)
 						
 						if header.region is not None:
@@ -485,24 +484,13 @@ class OmrScore:
 							clef_staff = header.clef.get_notation_clef()
 							clef_position = part.get_duration()
 							logger.info (f'Clef {clef_staff} found on staff {header.no_staff} at measure {current_measure_no}, position {clef_position}')
-							part.set_current_clef (clef_staff, 
-												mnf_staff.number_in_part,
-												clef_position)
+							part.set_current_clef (clef_staff, mnf_staff.number_in_part, clef_position)
 						if header.time_signature is not None:
 							new_time_signature = header.time_signature.get_notation_object()
 							logger.info (f'Time signature  {new_time_signature} found on staff {header.no_staff} at measure {current_measure_no}')
+							# Setting the TS at the score level propagates to all parts
 							score.set_current_time_signature (new_time_signature)
-							part.set_current_time_signature (new_time_signature)
-							measure_for_part.add_time_signature (new_time_signature)
-						else:
-							# Sanity: we found at least one time signature change, it should
-							# apply to all staves. Still necessary?
-							"""if new_time_signature is not None:
-								logger.info (f'Using the time signature already found on another staff:  {new_time_signature}')
-								ts = new_time_signature.copy()
-								staff.set_current_time_signature (ts)
-								measure_for_part.add_time_signature (ts)
-							"""	
+			
 						if header.key_signature is not None:
 							key_sign = header.key_signature.get_notation_object()
 							logger.info (f'Key signature {key_sign} found on staff {header.no_staff} at measure {current_measure_no}')
@@ -511,7 +499,7 @@ class OmrScore:
 							# We will display the key signature at the beginning
 							# of the current measure
 							measure_for_part.add_key_signature (key_sign)
-			
+
 					# Now we scan the voices
 					for voice in measure.voices:
 						current_part = score.get_part(voice.id_part)
@@ -604,15 +592,11 @@ class OmrScore:
 							#print (f"Stop beam {current_beam}")
 							previous_event.stop_beam(current_beam)
 							current_beam =  None
-							
-						# Clean the voice of possible inconsistencies. For
-						# instance ties that to not make sense
-						voice_part.clean()
-						
+													
 						# Add the voice to the measure of the relevant part
 						if voice_part.nb_events() > 0:
 							# This functions computes the main staff of the voice
-							current_part.add_voice (voice_part)
+							current_part.add_measure_voice (voice_part)
 							
 							# Searching for events outside the main staff
 							if current_part.part_type == score_model.Part.GROUP_PART:
@@ -641,6 +625,15 @@ class OmrScore:
 					logger.info("")
 					score.check_measure_consistency()
 					
+		# Aggrgate voices at the part level
+		logger.info("")
+		logger.info("Create part voices from measure voices")
+		logger.info("")
+		score.aggregate_voices_from_measures()
+		# Now clean the voice of possible inconsistencies. For
+		# instance ties that to not make sense
+		score.clean_voices() 
+	
 		# Remove in the XML file the pseudo-beam
 		self.post_editions.append( editions_mod.Edition (editions_mod.Edition.CLEAN_BEAM))
 
@@ -709,11 +702,11 @@ class OmrScore:
 											mnf_staff.number_in_part, stem_direction=voice_item.direction)
 				# Check ties
 				if head.tied and head.tied=="forward":
-					#print (f"Tied note start with id {head.id_tie}")
-					note.start_tie()
+					print (f"Tied note {note} start with id {head.id_tie}")
+					note.start_tie(head.id_tie)
 				if head.tied and head.tied=="backward":
-					#print (f"Tied note ends with id {head.id_tie}")
-					note.stop_tie()
+					print (f"Tied note {note} ends with id {head.id_tie}")
+					note.stop_tie(head.id_tie)
 				
 				# Add articulations and dynamics
 				self.add_expression_to_event(events, note, head.articulations)
@@ -774,6 +767,7 @@ class OmrScore:
 		print ("Writing as MusicXML")
 		self.get_score().write_as_musicxml (out_file)
 		
+		print ("\n\nApplying post-editions to the MusicXML file\n")
 		for ed in self.post_editions:
 			ed.apply_to(self, out_file)
 			

@@ -6,7 +6,7 @@ from fractions import Fraction
 import lib.music.notation as score_notation
 
 import lib.music.Score as score_mod
-from numpy.distutils.fcompiler import none
+
 
 '''
  Classes representing musical event (e.g., pairs (duratioin, value)
@@ -31,7 +31,7 @@ class Duration:
 		return self.m21_duration.quarterLength
 	
 	def __repr__(self):
-		return f'Duration({self.m21_duration})'
+		return f'Duration({self.m21_duration.quarterLength})'
 
 class Event:
 	'''
@@ -123,6 +123,9 @@ class Event:
 	def add_decoration(self, decoration):
 		self.decorations.append(decoration)
 
+	def __str__(self):
+		return f"Event {self.id}. Duration {self.duration}"
+	
 class Articulation ():
 	"""
 		Articulation = some performance indication attached to a note
@@ -211,6 +214,8 @@ class Note (Event):
 		self.m21_event.id = self.id
 		self.no_staff = no_staff
 		self.tied = tied
+		self.tie_type = None
+		self.id_tie = None
 		self.stem_direction = stem_direction
 		
 		self.syllable = None 
@@ -230,9 +235,21 @@ class Note (Event):
 	def get_pitch_class(self):
 		return self.pitch_class
 		
-	def start_tie(self):
+	def same_pitch(self, note):
+		if self.pitch_class==note.pitch_class and self.octave==note.octave and self.alter==note.alter:
+			return True
+		else:
+			return False
+		
+	def start_tie(self, id_tie):
+		self.tied = True
+		self.tie_type = "start"
+		self.id_tie = id_tie
 		self.m21_event.tie = m21.tie.Tie('start')
-	def stop_tie(self):
+	def stop_tie(self, id_tie):
+		self.tied = True
+		self.tie_type = "stop"
+		self.id_tie = id_tie
 		self.m21_event.tie = m21.tie.Tie('stop')
 	
 	def add_syllable(self, txt, nb=1, dashed=False):
@@ -241,6 +258,10 @@ class Note (Event):
 		lyric = m21.note.Lyric(text=txt,number=nb)
 		self.m21_event.lyrics.append(lyric)
 		
+		
+	def __str__(self):
+		return f"Note {self.id}. {self.pitch_class}{self.octave}{self.alter}-{self.duration}"
+
 class Chord (Event):
 	"""
 		Representation of a chord = a list of notes
