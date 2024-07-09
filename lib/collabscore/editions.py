@@ -16,11 +16,11 @@ class Edition:
 	
 	MERGE_PARTS = "merge_parts"
 	DESCRIBE_PART = "describe_part"
-	MOVE_PART_TO_STAFF = "move_part_to_staff"
+	ASSIGN_PART_TO_STAFF = "assign_staff_to_part"
 	MOVE_OBJECT_TO_STAFF = "move_object_to_staff"
 	CLEAN_BEAM = "clean_beam"
 	
-	EDITION_CODES = [MERGE_PARTS,DESCRIBE_PART,MOVE_PART_TO_STAFF,
+	EDITION_CODES = [MERGE_PARTS,DESCRIBE_PART,ASSIGN_PART_TO_STAFF,
 					MOVE_OBJECT_TO_STAFF,CLEAN_BEAM]
 	
 	def __init__(self, name, params={}, target=None) :
@@ -44,9 +44,9 @@ class Edition:
 		elif self.name == Edition.DESCRIBE_PART:
 			# Provide attributes for a part
 			self.describe_part (omr_score)
-		elif self.name == Edition.MOVE_PART_TO_STAFF:
+		elif self.name == Edition.ASSIGN_PART_TO_STAFF:
 			# Assign a part to a staff
-			self.move_part_to_staff (omr_score)
+			self.assign_staff_to_part (omr_score)
 		elif self.name == Edition.MOVE_OBJECT_TO_STAFF:
 			# Assign an object to a staff. Done in the MusicXML file
 			self.move_object_to_staff (mxml_file)
@@ -81,13 +81,15 @@ class Edition:
 		if "instrument" in self.params["values"].keys():
 			part.instrument = self.params["values"]["instrument"]
 
-	def move_part_to_staff(self, omr_score):
-		''' The parameters are: the staff id, and the part id
-		Everywhere in the range: we assign the part to the staff
+	def assign_staff_to_part(self, omr_score):
+		''' The parameters are: 
+		       the staff id (Staff1, Staff2, etc)
+		       the part id
+			Everywhere in the range: we assign the staff to the part
 		'''
 		#
 		part = omr_score.manifest.get_part (self.params["part"])
-		id_staff =  self.params["staff"]
+		staff_id =  self.params["staff_id"]
 		# Loop on the staves in the target
 		for page in omr_score.manifest.pages:
 			for system in page.systems:
@@ -102,15 +104,15 @@ class Edition:
 					# Second pass: find the new staff, clear and replace 
 					staff_found = False
 					for staff in system.staves:
-						if staff.id == id_staff:
+						if staff.id == staff_id:
 							staff_found = True
 							staff.clear_and_replace_part(part.id)
 
 					if staff_found == False:
 						parser_mod.logger.warning(f"Operation assign_staff: " +
-												    f"cannot find staff {id_staff} in system {system.number} page {page.number}")
+												    f"cannot find staff {staff_id} in system {system.number} page {page.number}")
 					else:
-						parser_mod.logger.warning(f"Part {part.id} assigned to staff {id_staff} in system {system.number} page {page.number}")
+						parser_mod.logger.warning(f"Part {part.id} assigned to staff {staff_id} in system {system.number} page {page.number}")
 
 	def move_object_to_staff(self, xml_file):
 		''' The parameters are: the staff id, and the object id (a note, a rest, a clef...)
