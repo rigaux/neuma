@@ -58,15 +58,22 @@ class TimeSignature:
 	'''
 	counter = 0
 	
-	def __init__(self, numer=4, denom=4) :
+	def __init__(self, numer=4, denom=4, id_ts=None) :
 		#self.fraction = Fraction (numer, denom)
+		if id_ts is None:
+			self.id =f"tsign{TimeSignature.counter}" 
+			TimeSignature.counter += 1
+		else:
+			self.id = id_ts
+
 		self.numer = numer
 		self.denom = denom
+		self.single_digit = False
 		# m21 duration is the float obtained from the fraction
 		self.m21_time_signature = m21.meter.TimeSignature('{}/{}'.format(self.numer, self.denom))
-		self.m21_time_signature.id = f"tsign{TimeSignature.counter}" 
+		self.m21_time_signature.id = self.id
 		
-		TimeSignature.counter += 1
+		
 
 	def symbolize(self):
 		# Display the TS as a symbole
@@ -75,6 +82,10 @@ class TimeSignature:
 		if (self.numer==2 and self.denom==4):
 			self.m21_time_signature.symbol="cut"
 
+	def set_single_digit(self):
+		# Option to show the numerator only
+		self.m21_time_signature.symbol="single-number"
+	
 	def copy (self):
 		# Make a copy of the current object
 		return TimeSignature (self.numer, self.denom)
@@ -96,7 +107,7 @@ class KeySignature:
 	
 	counter = 0
 
-	def __init__(self, nb_sharps=0, nb_flats=0, nb_naturals=0) :
+	def __init__(self, nb_sharps=0, nb_flats=0, nb_naturals=0, id_key=None) :
 		self.nb_sharps = nb_sharps
 		self.nb_flats = nb_flats
 		self.nb_naturals = nb_naturals
@@ -108,8 +119,13 @@ class KeySignature:
 		else:
 			self.m21_key_signature = m21.key.KeySignature(0)
 			
-		self.m21_key_signature.id = f"ksign{KeySignature.counter}"
-		KeySignature.counter += 1
+		if id_key is None:
+			self.id = f"ksign{KeySignature.counter}"
+			KeySignature.counter += 1
+		else:
+			self.id = id_key
+		self.m21_key_signature.id = self.id
+		
 
 	# Layer over the music21 functions
 	def accidental_by_step(self, pitch):
@@ -142,8 +158,12 @@ class Clef:
 	BASS_CLEF = m21.clef.BassClef
 	NO_CLEF = m21.clef.NoClef
 	
-	def __init__(self, clef_code) :
-		self.id = f"clef{Clef.counter}"
+	def __init__(self, clef_code, id=None) :
+		if id is None:
+			self.id = f"clef{Clef.counter}"
+		else:
+			# Id provided
+			self.id = id
 
 		if clef_code == self.TREBLE_CLEF:
 			self.m21_clef = m21.clef.TrebleClef()
@@ -166,16 +186,16 @@ class Clef:
 			return False
 		
 	@staticmethod 
-	def decode_from_dmos (dmos_code, dmos_height):
+	def decode_from_dmos (dmos_code, dmos_height, dmos_id=None):
 		#print ("Decode " + dmos_code)
 		if dmos_code == Clef.DMOS_TREBLE_CLEF:
-			return Clef (Clef.TREBLE_CLEF)
+			return Clef (Clef.TREBLE_CLEF, dmos_id)
 		elif dmos_code == Clef.DMOS_BASS_CLEF:
-			return Clef (Clef.BASS_CLEF)
+			return Clef (Clef.BASS_CLEF, dmos_id)
 		elif dmos_code == Clef.DMOS_UT_CLEF and dmos_height==3:
-			return Clef (Clef.ALTO_CLEF)
+			return Clef (Clef.ALTO_CLEF, dmos_id)
 		elif dmos_code == Clef.DMOS_UT_CLEF and dmos_height==4:
-			return Clef (Clef.TENOR_CLEF)
+			return Clef (Clef.TENOR_CLEF, dmos_id)
 		else:
 			# Should not happen
 			score_mod.logger.error('Unable to decode DMOS code for clef: ' + dmos_code 

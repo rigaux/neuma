@@ -503,8 +503,8 @@ class OmrScore:
 							part.set_current_key_signature (key_sign)
 							# We will display the key signature at the beginning
 							# of the current measure
-							measure_for_part.add_key_signature (key_sign)
-
+							measure_for_part.replace_key_signature (key_sign)
+			
 					# Now we scan the voices
 					for voice in measure.voices:
 						current_part = score.get_part(voice.id_part)
@@ -1049,13 +1049,19 @@ class Clef:
 	"""
 	
 	def __init__(self, json_clef):
+		if "id" in json_clef:
+			self.id  = json_clef["id"]
+		else:
+			self.id = None
+
 		self.symbol =  Symbol (json_clef["symbol"])
 		self.height  = json_clef["height"]
 		
 	def get_notation_clef(self):
 		# Decode the DMOS infos
 		return score_notation.Clef.decode_from_dmos(self.symbol.label, 
-												self.height)
+													self.height,
+													self.id)
 		
 class KeySignature:
 	"""
@@ -1063,6 +1069,11 @@ class KeySignature:
 	"""
 	
 	def __init__(self, json_key_sign):
+		if "id" in json_key_sign:
+			self.id  = json_key_sign["id"]
+		else:
+			self.id = None
+
 		self.element =   json_key_sign["element"]
 		self.nb_naturals =   json_key_sign["nb_naturals"]
 		self.nb_alterations =   json_key_sign["nb_alterations"]
@@ -1079,7 +1090,10 @@ class KeySignature:
 			return 0
 	def get_notation_object(self):
 		# Decode the DMOS infos
-		return score_notation.KeySignature (self.nb_sharps(), self.nb_flats())
+		print (f"Decode KEY id = {self.id}")
+		return score_notation.KeySignature (self.nb_sharps(), 
+										self.nb_flats(),
+										id_key=self.id)
 
 class Error:
 	"""
@@ -1142,15 +1156,22 @@ class TimeSignature:
 	"""
 	
 	def __init__(self, json_time_sign):
+		if "id" in json_time_sign:
+			self.id  = json_time_sign["id"]
+		else:
+			self.id = None
+
 		self.element =   json_time_sign["element"]
 		self.time =   json_time_sign["time"]
 		self.unit =   json_time_sign["unit"]
 
 	def get_notation_object(self):
 		# Decode the DMOS infos
-		ts = score_notation.TimeSignature (self.time, self.unit)
+		ts = score_notation.TimeSignature (self.time, self.unit, self.id)
 		if self.element == "letter":
 			ts.symbolize()
+		elif self.element == "singleDigit":
+			ts.set_single_digit()
 		return ts
 	
 class StaffHeader:
