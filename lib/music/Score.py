@@ -656,6 +656,9 @@ class Measure:
 		# Note: there is only one time signature, common to all staves 
 		self.initial_ts = part.current_time_signature
 			
+		# Same thing for the key signature
+		self.initial_ks = part.current_key_signature
+		
 	def set_initial_clef (self, clef, abs_position=0):
 		# We add the clef to music 21 measure. 
 		relative_position = abs_position - self.absolute_position 
@@ -672,7 +675,12 @@ class Measure:
 			self.add_time_signature(new_time_signature)
 		
 	def add_key_signature(self, key_signature):
+		self.initial_ks = key_signature
 		self.m21_measure.insert(0,  key_signature.m21_key_signature)
+	def replace_key_signature(self, new_key_signature):
+		if 	self.initial_ks is not None:
+			self.m21_measure.remove(self.initial_ks.m21_key_signature)
+		self.add_key_signature(new_key_signature)
 		
 	def add_voice (self, voice):
 		if voice.get_duration() > self.get_expected_duration():
