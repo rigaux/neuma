@@ -21,6 +21,7 @@ IREGION_SYSTEM_CONCEPT = "system-region"
 IREGION_MEASURE_CONCEPT = "measure-region"
 IREGION_MEASURE_STAFF_CONCEPT = "mstaff-region"
 IREGION_NOTE_CONCEPT = "note-region"
+IREGION_SYMBOL_CONCEPT = "symbol-region"
 
 # Concepts for the AUDIO_TIME_FRAME annotation
 TFRAME_MEASURE_CONCEPT = "measure-tframe"

@@ -55,7 +55,7 @@ class Event:
 		Event.counter_context = new_context
 		Event.counter_event = 0
 		
-	def __init__(self, duration) :
+	def __init__(self, duration, tied=False) :
 		Event.counter_event += 1
 		self.id = f'{Event.counter_context}E{Event.counter_event}'
 		self.duration = duration
@@ -65,6 +65,11 @@ class Event:
 		# Mostly used for hidden rests 
 		self.visible = True
 		self.no_staff = None
+
+		# Tie information, applies to notes and chords
+		self.tied = tied
+		self.tie_type = None
+		self.id_tie = None
 		
 		# A "decoration" is any object that can be inserted 
 		# in the music flow, at a position relative to the event
@@ -201,7 +206,7 @@ class Note (Event):
 	
 	def __init__(self, pitch_class, octave, duration,  alter=ALTER_NONE,
 				no_staff=UNDEFINED_STAFF, tied=False, stem_direction=None) :
-		super ().__init__(duration)
+		super ().__init__(duration, tied)
 		
 		self.type = Event.TYPE_NOTE
 		self.alter = alter
@@ -213,9 +218,6 @@ class Note (Event):
 		self.m21_event.duration = duration.m21_duration
 		self.m21_event.id = self.id
 		self.no_staff = no_staff
-		self.tied = tied
-		self.tie_type = None
-		self.id_tie = None
 		self.stem_direction = stem_direction
 		
 		self.syllable = None 
@@ -267,8 +269,8 @@ class Chord (Event):
 		Representation of a chord = a list of notes
 	"""
 	
-	def __init__(self,  duration, no_staff, notes) :
-		super ().__init__(duration)
+	def __init__(self,  duration, no_staff, notes, tied=False) :
+		super ().__init__(duration, tied)
 		self.type = Event.TYPE_CHORD
 		self.notes = notes
 		# Create the m21 representation: encode 
@@ -290,6 +292,13 @@ class Chord (Event):
 		return True
 	def get_no_staff(self):
 		return self.no_staff
+
+		
+	def __str__(self):
+		note_list = ""
+		for note in self.notes:
+			note_list += f"{note.pitch_class}{note.octave}{note.alter} "
+		return f"Chord {self.id}. [{note_list}]-{self.duration}"
 
 class Rest (Event):
 	"""

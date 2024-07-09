@@ -485,6 +485,11 @@ class OmrScore:
 							clef_position = part.get_duration()
 							logger.info (f'Clef {clef_staff} found on staff {header.no_staff} at measure {current_measure_no}, position {clef_position}')
 							part.set_current_clef (clef_staff, mnf_staff.number_in_part, clef_position)
+							# Annotate this symbol
+							annotation = annot_mod.Annotation.create_annot_from_xml_to_image(
+								self.creator, self.uri, f"P{current_page_no}-S{current_system_no}-M{current_measure_no}", 
+								page.page_url, header.clef.symbol.region.string_xyhw(), constants_mod.IREGION_SYMBOL_CONCEPT)
+							score.add_annotation (annotation)
 						if header.time_signature is not None:
 							new_time_signature = header.time_signature.get_notation_object()
 							logger.info (f'Time signature  {new_time_signature} found on staff {header.no_staff} at measure {current_measure_no}')

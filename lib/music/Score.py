@@ -305,7 +305,7 @@ class Score:
 	def aggregate_voices_from_measures(self):
 		for part in self.parts:
 			part.aggregate_voices_from_measures()
-			break
+			
 	def clean_voices(self):
 		for part in self.parts:
 			part.clean_voices()
