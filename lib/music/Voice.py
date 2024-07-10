@@ -54,6 +54,10 @@ class Voice:
 		# Idem for beams
 		self.clean_beams()
 		
+	def copy_from (self, source):
+		for e in source.events:
+			self.append_event(e)
+
 	#def set_current_time_signature(self, ts):
 	#	self.current_time_signature = ts
 
@@ -257,70 +261,84 @@ class Voice:
 						
 	def remove_invalid_ties(self):
 		# Check that ties are correct
+		score_mod.logger.info (f"Checking ties")
 		
 		# We first collect groups of tied notes
 		groups = []
 		current_group = None
-		for n in self.events:
-			if n.is_note() and n.tied:
-				if n.tie_type=="start":
+		for e in self.events:
+			if not (e.is_rest()) and e.tied:
+				if e.tie_type=="start":
 					# Ok a group begins here
-					current_group = [n]
+					current_group = [e]
 					groups.append(current_group)
-				elif n.tie_type=="stop" or n.tie_type=="continue":
+				elif e.tie_type=="stop" or e.tie_type=="continue":
 					# No group ? We create one, although it will be invalid later
 					if current_group is None:
-						current_group = [n]
+						current_group = [e]
 						groups.append(current_group)
 					else:
 						# Add the note to the group
-						current_group.append(n)
+						current_group.append(e)
 			else:
 				# Ensure that the current group is empty
 				current_group = None
 					
 		# Fine let's check the groups
 		for group in groups:
-			print (f"Analyse group ")
-			for n in group:
-				print (f"Note in group {n}. Tied : {n.tied}.")
+			#print (f"Analyse group ")
+			#for e in group:
+			#	print (f"Event in group {e}. Tied : {e.tied}.")
 			valid_tie = True
-			first_note = group[0]
-			last_note = group[-1]
+			first_event = group[0]
+			last_event = group[-1]
 			# A tie is valid if it follows the pattern start - [continue] - stop
-			if not (first_note.tie_type == "start"):
+			if not (first_event.tie_type == "start"):
 				valid_tie = False
-				score_mod.logger.warning (f"The first note {group[0]} of a group has a non-start tie ({group[0].tie_type})")
-			if not (last_note.tie_type == "stop"):
+				score_mod.logger.warning (f"The first event {group[0]} of a group has a non-start tie ({group[0].tie_type})")
+			if not (last_event.tie_type == "stop"):
 				valid_tie = False
-				score_mod.logger.warning (f"The last note {group[0]} of a group has a non-stop tie")
+				score_mod.logger.warning (f"The last event {group[0]} of a group has a non-stop tie")
 			for i in range(len(group)):
-				n = group[i]
-				if i >= 1 and i < (len(group)-1) and not (n.tie_type =="continue"):
+				e = group[i]
+				if i >= 1 and i < (len(group)-1) and not (e.tie_type =="continue"):
 					valid_tie = False
-					score_mod.logger.warning (f"A middle note {group[0]} of a group has a non-continue tie")
+					score_mod.logger.warning (f"A middle event {group[0]} of a group has a non-continue tie")
 			
 			# a tie is valid if all the notes have the same pitch and octave
 			if valid_tie:
-				for n in group:
-					if not (n.same_pitch(group[0])):
+				for e in group:
+					if not (e.same_pitch(group[0])):
 						# We found a mistake
 						valid_tie = False
-						score_mod.logger.warning (f"Invalid tie: found a note {n} in a tie starting with {group[0]}")
+						score_mod.logger.warning (f"Invalid tie: found an event {e} in a tie starting with {group[0]}")
 			
 				if not valid_tie:
 					# Probably a slur: we add it
-					m21_group = []
-					for n in group:
-						m21_group.append(n.m21_event)		
-					self.part.m21_part.insert(0, m21.spanner.Slur(m21_group))
+					events = []
+					for e in group:
+						events.append(e)
+					# Does not work very well		
+					self.part.add_slur(events)
+				else:
+					pass
+					#print (f"This tie is valid!!")
 
 			# Clean invalid group
 			if not valid_tie:
-				for n in group:
-					n.tied = False
-					n.tie_type =None
-					n.m21_event.tie = None
+				for e in group:
+					e.tied = False
+					e.tie_type =None
+					e.m21_event.tie = None
+					if e.is_chord():
+						for n in e.notes:
+							n.tied = False 
+							n.m21_event.tie = None
+
+	def display(self):
+			print (f"\n\nVoice {self.id} in part {self.part.id}")
+			for e in self.events:
+				print (f"\tEvent {e}")
 
 	def get_pitches(self):
 		# Valid key adjustment for sorting pitches

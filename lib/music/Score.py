@@ -537,6 +537,16 @@ class Part:
 			measure = self.get_measure_from_staff(main_staff)
 			measure.add_voice(voice)
 			
+	def add_slur(self, events):
+		m21_group = []
+		for e in events:
+			m21_group.append(e.m21_event)
+			if self.part_type == Part.GROUP_PART:
+				# Shoudl we insert in one of the sub parts ??
+				self.current_measure.m21_measure.insert(0, m21.spanner.Slur(m21_group))
+			else:
+				self.m21_part.insert(0, m21.spanner.Slur(m21_group))
+
 	def add_system_break(self):
 		for measure in  self.get_current_measures():
 			measure.add_system_break()
@@ -601,40 +611,56 @@ class Part:
 			 This function attempts to connect the voices internal to the measures
 			 in a set of voices global to the part
 		"""
-		print (f"\nAggregate measure voices for part {self.id}") 
+		logger.info (f"\nAggregate measure voices for part {self.id}") 
 		self.voices = []
+		current_voice_id = 0
+		# We maintain an array of current voices
+		current_voices = []
 		for m in self.measures:
-			print (f"Processing voice from measure {m.id}. Nb voices: {m.nb_voices()}")
+			#print (f"Processing voice from measure {m.id}. Nb voices = {m.nb_voices()} Current nb of voices: {len(current_voices)}")
 			if self.voices == []:
 				# Copy the voices of the first measure
 				for v in m.voices:
-					#print (f"Adding voice {v.id} to the part")
-					part_voice = Voice(self, v.id)
-					for e in v.events:
-						part_voice.append_event(e)
+					current_voice_id += 1
+					part_voice = Voice(self, f"{current_voice_id}")
+					part_voice.copy_from(v)
 					self.voices.append(part_voice)	
+					current_voices.append (part_voice)
 			else:
-				if len(m.voices) == len(self.voices):
-					# OK, same number of voices: we just append
-					for i_voice in range (len(m.voices)):
-						part_voice = self.voices[i_voice]
+				if len(m.voices) >= len(current_voices):
+					# We copy the first voices of the measure if the opened voices. 
+					# We can probably do better in terms of matching
+					i_voice = 0
+					for part_voice in current_voices:
 						measure_voice = m.voices[i_voice]
-						#print (f"Append events of voice {i_voice} to part voice")
-						for  e in measure_voice.events:
-							part_voice.append_event(e)
+						part_voice.copy_from(measure_voice)
+						i_voice += 1
+					# Now what happens if there is a new voice ?
+					if len(m.voices) > len(current_voices):
+						for i_voice in range (len(current_voices), len(m.voices)):
+							current_voice_id += 1
+							#print (f"Adding a new voice {current_voice_id} at this measure.")
+							part_voice = Voice(self, f"{current_voice_id}")
+							part_voice.copy_from(m.voices[i_voice])
+							self.voices.append(part_voice)
+							current_voices.append (part_voice)				
 				else:
-					print (f"Warning: the number of voices is inconsistent. Ignored")
+					# This closes the last additional voice met
+					#print (f"Warning: the number of voices is lesser for this measure.")
+					for i_voice in range (len(m.voices), len(current_voices)):
+						current_voices.pop()
+						
+			#for voice in current_voices:
+			#	print (f"Current voice voice {voice.id}")
 
-		for v in self.voices:
-			print (f"\n\n Voice {v.id}")
-			for e in v.events:
-				print (f"Event {e}")
+		#for v in self.voices:
+		#	v.display()
 				
 	def clean_voices(self):
 		# Clean the voice of possible inconsistencies. For
 		# instance ties that to not make sense
 		for voice in self.voices:
-			print (f"Cleaning voice {voice.id} in part {self.id}")
+			#print (f"Cleaning voice {voice.id} in part {self.id}")
 			voice.clean()
 							
 	@staticmethod

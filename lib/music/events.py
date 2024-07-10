@@ -7,7 +7,6 @@ import lib.music.notation as score_notation
 
 import lib.music.Score as score_mod
 
-
 '''
  Classes representing musical event (e.g., pairs (duratioin, value)
 '''
@@ -104,7 +103,7 @@ class Event:
 			self.beam = score_notation.Beam()
 			self.m21_event.beams.append(self.beam.m21_beam)
 		else:
-			score_mod.logger.warning ("Trying to start a beam ({beam_id}) on a rest")
+			score_mod.logger.warning (f"Trying to start a beam ({beam_id}) on a rest")
 	def continue_beam(self, beam_id=1):
 		if not self.is_rest():
 			score_mod.logger.info (f"Continue a beam : {beam_id}" )
@@ -112,7 +111,7 @@ class Event:
 			#self.m21_event.beams.append("continue")
 			self.m21_event.beams.append(self.beam.m21_beam)
 		else:
-			score_mod.logger.warning ("Trying to continue a beam ({beam_id}) on a rest")
+			score_mod.logger.warning (f"Trying to continue a beam ({beam_id}) on a rest")
 	def stop_beam(self, beam_id=1):
 		if not self.is_rest():
 			score_mod.logger.info (f"Stop a beam : {beam_id}" )
@@ -238,6 +237,10 @@ class Note (Event):
 		return self.pitch_class
 		
 	def same_pitch(self, note):
+		
+		if not (note.is_note()):
+			# Cannot compare
+			return False
 		if self.pitch_class==note.pitch_class and self.octave==note.octave and self.alter==note.alter:
 			return True
 		else:
@@ -269,8 +272,8 @@ class Chord (Event):
 		Representation of a chord = a list of notes
 	"""
 	
-	def __init__(self,  duration, no_staff, notes, tied=False) :
-		super ().__init__(duration, tied)
+	def __init__(self,  duration, no_staff, notes) :
+		super ().__init__(duration)
 		self.type = Event.TYPE_CHORD
 		self.notes = notes
 		# Create the m21 representation: encode 
@@ -278,7 +281,19 @@ class Chord (Event):
 		for note in notes:
 			if isinstance(note, Note):
 				m21_notes.append (note.m21_event)
+				
+				# If at least one note is tied, the chord is candidate for being tied
+				if note.tied:
+					self.tied = True
+					self.tie_type = note.tie_type
+					
 		self.m21_event = m21.chord.Chord(m21_notes)
+		
+		if self.tie_type == "start":
+			self.m21_event.tie = m21.tie.Tie('start')
+		else:
+			self.m21_event.tie = m21.tie.Tie('stop')
+
 		self.m21_event.duration = duration.m21_duration
 		self.m21_event.id = f'{Event.counter_context}c{Event.counter_event}'
 
@@ -293,6 +308,25 @@ class Chord (Event):
 	def get_no_staff(self):
 		return self.no_staff
 
+	def contains_pitch (self, pitch):
+		# Param pitch is a note instance: we test if the pitch is in the chord
+		for n in self.notes:
+			if n.same_pitch(pitch):
+				return True
+		return False
+		
+	def same_pitch(self, chord):
+		if not (chord.is_chord()):
+			# Cannot compare
+			return False
+
+		# Check if two chords contain exactly the same pitches
+		if len(self.notes) != len(chord.notes):
+			return False
+		for n in self.notes: 
+			if not (chord.contains_pitch(n)):
+				return False 
+		return True
 		
 	def __str__(self):
 		note_list = ""

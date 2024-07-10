@@ -487,7 +487,7 @@ class OmrScore:
 							part.set_current_clef (clef_staff, mnf_staff.number_in_part, clef_position)
 							# Annotate this symbol
 							annotation = annot_mod.Annotation.create_annot_from_xml_to_image(
-								self.creator, self.uri, f"P{current_page_no}-S{current_system_no}-M{current_measure_no}", 
+								self.creator, self.uri, header.clef.id, 
 								page.page_url, header.clef.symbol.region.string_xyhw(), constants_mod.IREGION_SYMBOL_CONCEPT)
 							score.add_annotation (annotation)
 						if header.time_signature is not None:
