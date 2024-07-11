@@ -19,6 +19,7 @@ AM_OMR_ERROR = "omr-error"
 # Concepts for the IMAGE_REGION annotation
 IREGION_SYSTEM_CONCEPT = "system-region"
 IREGION_MEASURE_CONCEPT = "measure-region"
+IREGION_STAFF_CONCEPT = "staff-region"
 IREGION_MEASURE_STAFF_CONCEPT = "mstaff-region"
 IREGION_NOTE_CONCEPT = "note-region"
 IREGION_SYMBOL_CONCEPT = "symbol-region"

@@ -412,13 +412,21 @@ class OmrScore:
 				# Get the system from the manifest
 				mnf_system = mnf_page.get_system(current_system_no)
 
-				# Annotate this measure
+				# Annotate the region of the whole system
 				annotation = annot_mod.Annotation.create_annot_from_xml_to_image(
 							self.creator, self.uri, f"P{current_page_no}-S{current_system_no}", 
 							page.page_url, system.region.string_xyhw(), 
 							constants_mod.IREGION_SYSTEM_CONCEPT)
 				score.add_annotation (annotation)
 
+				for staff_header in system.headers:
+					if staff_header.region is not None:
+						# Record the region of the staff in the system
+						annotation = annot_mod.Annotation.create_annot_from_xml_to_image(
+									self.creator, self.uri, f"P{current_page_no}-S{current_system_no}", 
+									page.page_url, staff_header.region.string_xyhw(), 
+									constants_mod.IREGION_STAFF_CONCEPT)
+						score.add_annotation (annotation)
 				
 				# Now, for the current system, we know the parts and the staves for 
 				# each part, initialized with their time signatures
@@ -494,8 +502,7 @@ class OmrScore:
 							new_time_signature = header.time_signature.get_notation_object()
 							logger.info (f'Time signature  {new_time_signature} found on staff {header.no_staff} at measure {current_measure_no}')
 							# Setting the TS at the score level propagates to all parts
-							score.set_current_time_signature (new_time_signature)
-			
+							score.set_current_time_signature (new_time_signature)			
 						if header.key_signature is not None:
 							key_sign = header.key_signature.get_notation_object()
 							logger.info (f'Key signature {key_sign} found on staff {header.no_staff} at measure {current_measure_no}')
@@ -563,6 +570,11 @@ class OmrScore:
 								# We found a clef change
 								logger.info (f"Add a clef to staff {id_staff} at position {clef_position}")
 								current_part.set_current_clef (event, mnf_staff.number_in_part, clef_position)
+								# Annotate this symbol
+								annotation = annot_mod.Annotation.create_annot_from_xml_to_image(
+									self.creator, self.uri, header.clef.id, 
+									page.page_url, header.clef.symbol.region.string_xyhw(), constants_mod.IREGION_SYMBOL_CONCEPT)
+								score.add_annotation (annotation)
 							else:
 								logger.error (f'Unknown event type {type_event} for voice {voice.id}')
 		
@@ -707,10 +719,10 @@ class OmrScore:
 											mnf_staff.number_in_part, stem_direction=voice_item.direction)
 				# Check ties
 				if head.tied and head.tied=="forward":
-					print (f"Tied note {note} start with id {head.id_tie}")
+					#print (f"Tied note {note} start with id {head.id_tie}")
 					note.start_tie(head.id_tie)
 				if head.tied and head.tied=="backward":
-					print (f"Tied note {note} ends with id {head.id_tie}")
+					#print (f"Tied note {note} ends with id {head.id_tie}")
 					note.stop_tie(head.id_tie)
 				
 				# Add articulations and dynamics
@@ -1090,7 +1102,6 @@ class KeySignature:
 			return 0
 	def get_notation_object(self):
 		# Decode the DMOS infos
-		print (f"Decode KEY id = {self.id}")
 		return score_notation.KeySignature (self.nb_sharps(), 
 										self.nb_flats(),
 										id_key=self.id)
@@ -1184,6 +1195,12 @@ class StaffHeader:
 		self.no_staff = StaffHeader.make_id_staff( json_system_header['no_staff'])
 		if "first_bar" in json_system_header:
 			self.first_bar = Segment(json_system_header["first_bar"])
+		else:
+			self.first_bar = None
+		if "region" in json_system_header:
+			self.region = Region(json_system_header["region"])
+		else:
+			self.region = None
 
 	@staticmethod
 	def make_id_staff (no_staff):

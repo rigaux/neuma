@@ -5,8 +5,10 @@
   "type": "object",
     "properties": {
        "id_part": {"$type": "string" },
+       "name": {"$type": "string" },
        "no_staff": {"$type": "integer" },
-       "first_bar": {"$ref": "dmos_segment.json" }
+       "first_bar": {"$ref": "dmos_segment.json" },
+       "region": {"$ref": "dmos_region.json"}
    },
    "required": [ "id_part", "no_staff"],
   "additionalProperties": false
