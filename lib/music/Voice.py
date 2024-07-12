@@ -114,7 +114,7 @@ class Voice:
 			old_events = self.events
 			self.events = []
 			for event in old_events:
-				if self.get_duration() + event.get_duration() < bar_duration:
+				if self.get_duration() + event.get_duration() <= bar_duration:
 					self.append_event(event)
 	
 	def expand_to_bar_duration(self, bar_duration):

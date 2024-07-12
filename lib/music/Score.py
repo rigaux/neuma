@@ -645,6 +645,9 @@ class Part:
 							self.voices.append(part_voice)
 							current_voices.append (part_voice)				
 				else:
+					for i_voice in range (len(m.voices)):
+						part_voice = current_voices[i_voice]
+						part_voice.copy_from(m.voices[i_voice])
 					# This closes the last additional voice met
 					#print (f"Warning: the number of voices is lesser for this measure.")
 					for i_voice in range (len(m.voices), len(current_voices)):
