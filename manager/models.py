@@ -1736,6 +1736,7 @@ class Annotation(models.Model):
 			annot_concept = AnalyticConcept.objects.get(code=webannot.annotation_concept)
 		except AnalyticConcept.DoesNotExist:
 			logger.error (f'Unknown annotation concept {webannot.annotation_concept}')
+			return
 		
 		# Create the target
 		wtarget = webannot.target

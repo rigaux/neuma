@@ -22,6 +22,7 @@ import lib.music.source as source_mod
 
 from .constants import *
 from lib.music.source import Manifest
+from lib.collabscore.parser_avant_voix2portees import StaffHeader
 
 # Get an instance of a logger
 # See https://realpython.com/python-logging/
@@ -422,8 +423,9 @@ class OmrScore:
 				for staff_header in system.headers:
 					if staff_header.region is not None:
 						# Record the region of the staff in the system
+						staff_id = StaffHeader.make_id_staff(staff_header.no_staff)
 						annotation = annot_mod.Annotation.create_annot_from_xml_to_image(
-									self.creator, self.uri, f"P{current_page_no}-S{current_system_no}", 
+									self.creator, self.uri, f"P{current_page_no}-S{current_system_no}-{staff_id}", 
 									page.page_url, staff_header.region.string_xyhw(), 
 									constants_mod.IREGION_STAFF_CONCEPT)
 						score.add_annotation (annotation)
