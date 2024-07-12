@@ -571,10 +571,10 @@ class OmrScore:
 								logger.info (f"Add a clef to staff {id_staff} at position {clef_position}")
 								current_part.set_current_clef (event, mnf_staff.number_in_part, clef_position)
 								# Annotate this symbol
-								annotation = annot_mod.Annotation.create_annot_from_xml_to_image(
-									self.creator, self.uri, header.clef.id, 
-									page.page_url, header.clef.symbol.region.string_xyhw(), constants_mod.IREGION_SYMBOL_CONCEPT)
-								score.add_annotation (annotation)
+								#annotation = annot_mod.Annotation.create_annot_from_xml_to_image(
+								#	self.creator, self.uri, event.id, 
+								#	page.page_url, header.clef.symbol.region.string_xyhw(), constants_mod.IREGION_SYMBOL_CONCEPT)
+								#score.add_annotation (annotation)
 							else:
 								logger.error (f'Unknown event type {type_event} for voice {voice.id}')
 		
