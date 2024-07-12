@@ -423,9 +423,8 @@ class OmrScore:
 				for staff_header in system.headers:
 					if staff_header.region is not None:
 						# Record the region of the staff in the system
-						staff_id = StaffHeader.make_id_staff(staff_header.no_staff)
 						annotation = annot_mod.Annotation.create_annot_from_xml_to_image(
-									self.creator, self.uri, f"P{current_page_no}-S{current_system_no}-{staff_id}", 
+									self.creator, self.uri, f"P{current_page_no}-S{current_system_no}-{staff_header.no_staff}", 
 									page.page_url, staff_header.region.string_xyhw(), 
 									constants_mod.IREGION_STAFF_CONCEPT)
 						score.add_annotation (annotation)
