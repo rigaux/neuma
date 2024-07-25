@@ -42,7 +42,7 @@
             
   <div class="section" id="data-management">
 <span id="chap-data"></span><h1>Data management<a class="headerlink" href="#data-management" title="Permalink to this headline">¶</a></h1>
-<p>Neuma only knows two types of objects: <em>corpus(es)</em> and <em>opus(es)</em>.
+<p>Neuma only knows two tpes of objects: <em>corpus(es)</em> and <em>opus(es)</em>.
 Each  corpus is a container with (sub-) <em>corpuses</em> and/or a list of <em>opuses</em>. The structure of a collection
 is therefore a hierarchy,  rooted at as pseudo-corpus named <em>all</em>. Internal nodes
 are corpuses, leaves are opuses.</p>
@@ -95,7 +95,8 @@ proposed</p>
 <div><ul class="simple">
 <li><p>Editing the corpus, to change its description</p></li>
 <li><p>Adding a sub-corpus</p></li>
-<li><p>Exporting a zip file</p></li>
+<li><p>Adding a zip file containing a list of opuses to import in the corpus</p></li>
+<li><p>Importing a zip file</p></li>
 </ul>
 </div></blockquote>
 <div class="section" id="editing-corpuses">
@@ -165,14 +166,14 @@ the public corpuses are, by definition, acessible (in read mode) for everybody.<
 corpus (and its set of opera) or to a single corpus.</p>
 <p>All these command can be run from the <code class="docutils literal notranslate"><span class="pre">scorelib</span></code> root directory via the `` manage.py`` script.
 The general syntax is:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python3 manage.py &lt;command_name&gt; &lt;options&gt;
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python3<span class="w"> </span>manage.py<span class="w"> </span>&lt;command_name&gt;<span class="w"> </span>&lt;options&gt;
 </pre></div>
 </div>
 <p>For corpuses, the command is <code class="docutils literal notranslate"><span class="pre">scan_corpus</span></code>. It always take an option <code class="docutils literal notranslate"><span class="pre">-c</span></code> with the reference
 of the corpus
 (for instance <code class="docutils literal notranslate"><span class="pre">composers:monteverdi</span></code>) and a <code class="docutils literal notranslate"><span class="pre">-a</span></code> action with the specific action to carry out.
 For instance the following command builds and index for the psautiers corpus.</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python3 manage.py scan_corpus -c psautiers -a index
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python3<span class="w"> </span>manage.py<span class="w"> </span>scan_corpus<span class="w"> </span>-c<span class="w"> </span>psautiers<span class="w"> </span>-a<span class="w"> </span>index
 </pre></div>
 </div>
 <p>Here is the list of available actions:</p>
@@ -182,7 +183,7 @@ For instance the following command builds and index for the psautiers corpus.</p
 <dt><code class="docutils literal notranslate"><span class="pre">mei</span></code>: this action converts the MusicXML file of each opus to an MEI file.</dt><dd><p>The MEI XSLT conversion stylesheet is used and taken from the <code class="docutils literal notranslate"><span class="pre">scripts</span></code> directory.  See
 the github repository for details:
 <a class="reference external" href="https://github.com/music-encoding/encoding-tools/releases/tag/v3.0.0">https://github.com/music-encoding/encoding-tools/releases/tag/v3.0.0</a></p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python3 manage.py scan_corpus -c &lt;corpus_ref&gt; -a mei
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python3<span class="w"> </span>manage.py<span class="w"> </span>scan_corpus<span class="w"> </span>-c<span class="w"> </span>&lt;corpus_ref&gt;<span class="w"> </span>-a<span class="w"> </span>mei
 </pre></div>
 </div>
 </dd>
@@ -191,7 +192,7 @@ the github repository for details:
 <li><p><code class="docutils literal notranslate"><span class="pre">index</span></code>: this actions extracts descriptors from each opus of a corpus, and
 stores these descriptors in the <code class="docutils literal notranslate"><span class="pre">Descriptor</span></code> table. Descriptors are then sent
 to ElasticSearch</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python3 manage.py scan_corpus -c &lt;corpus_ref&gt; -a index
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python3<span class="w"> </span>manage.py<span class="w"> </span>scan_corpus<span class="w"> </span>-c<span class="w"> </span>&lt;corpus_ref&gt;<span class="w"> </span>-a<span class="w"> </span>index
 </pre></div>
 </div>
 </li>
@@ -218,42 +219,26 @@ for compressed MusicXML, and ‘mei’ for MEI.</p>
 <code class="docutils literal notranslate"><span class="pre">bwv333.xml</span></code> for the MusicXML file of choral BWV333, and <code class="docutils literal notranslate"><span class="pre">bwv333.json</span></code> for metadata.
 The Json file is optional: if absent, the import procedure attempts to extract metadata from
 the XML file.</p>
-<div class="section" id="importing-zip-files">
-<h3>Importing zip files<a class="headerlink" href="#importing-zip-files" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="upload-files">
+<h3>Upload files<a class="headerlink" href="#upload-files" title="Permalink to this headline">¶</a></h3>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
-<p>In the <code class="docutils literal notranslate"><span class="pre">data</span></code> directory of Neuma, you will find Zip files ready to be imported.</p>
+<p>In the <code class="docutils literal notranslate"><span class="pre">data</span></code> directory of Neuma, you will find that Zip files ready to be imported.</p>
 </div>
-<p>For import/export, corpuses (including their children
-corpuses and opuses) are gathered in Zip files. In order to create such a file, proceed as follows</p>
+<p>For import/export, opuses are gathered in Zip files. In order to create such a file, proceed as follows</p>
 <blockquote>
 <div><ul class="simple">
-<li><p>create a directory, named after the local corpus reference, say <code class="docutils literal notranslate"><span class="pre">symphonies</span></code>;</p></li>
+<li><p>create a directory (its name is not important), say <code class="docutils literal notranslate"><span class="pre">myImport</span></code>;</p></li>
 <li><p>put the opuses files in this directory. It is essential to respect the naming
 rules explained above.</p></li>
-<li><p>add a <code class="docutils literal notranslate"><span class="pre">corpus.json</span></code> file with a few metadata on the corpus: titles, description, etc.</p></li>
-<li><p>compress the directory as a zip file, e.g., <code class="docutils literal notranslate"><span class="pre">op8.zip</span></code>.</p></li>
-<li><p>add a <code class="docutils literal notranslate"><span class="pre">cover.jpg</span></code> file with a square image illustrating the corpus (optional)</p></li>
+<li><p>compress the directory as a zip file, e.g., <code class="docutils literal notranslate"><span class="pre">myImport.zip</span></code>.</p></li>
 </ul>
 </div></blockquote>
-<p>Here is an example of the JSON file:</p>
-<div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span><span class="nt">&quot;ref&quot;</span><span class="p">:</span> <span class="s2">&quot;airs&quot;</span><span class="p">,</span>
-  <span class="nt">&quot;title&quot;</span><span class="p">:</span> <span class="s2">&quot;Airs &amp; songs&quot;</span><span class="p">,</span>
-  <span class="nt">&quot;short_title&quot;</span><span class="p">:</span> <span class="s2">&quot;Airs&quot;</span><span class="p">,</span>
-  <span class="nt">&quot;description&quot;</span><span class="p">:</span> <span class="s2">&quot;Airs and songs from all periods and areas&quot;</span><span class="p">,</span>
-  <span class="nt">&quot;is_public&quot;</span><span class="p">:</span> <span class="kc">true</span><span class="p">,</span>
-          <span class="nt">&quot;short_description&quot;</span><span class="p">:</span> <span class="s2">&quot;Airs and songs from all periods and areas&quot;</span><span class="p">,</span>
-          <span class="nt">&quot;licence_code&quot;</span><span class="p">:</span> <span class="s2">&quot;CC BY-SA&quot;</span><span class="p">,</span>
-          <span class="nt">&quot;copyright&quot;</span><span class="p">:</span> <span class="s2">&quot;IR\u00e9Mus&quot;</span><span class="p">,</span>
-          <span class="nt">&quot;supervisors&quot;</span><span class="p">:</span> <span class="kc">null</span><span class="p">}</span>
-</pre></div>
-</div>
 <p><strong>Be careful with opus references</strong>: the file names (without extension)
 define the local reference of an opus inside its corpus. if, for instance,
-one imports a zip file <code class="docutils literal notranslate"><span class="pre">op8.zip</span></code> in a corpus <code class="docutils literal notranslate"><span class="pre">composers:vivaldi</span></code>, then a file
-<code class="docutils literal notranslate"><span class="pre">allegro.xml</span></code> will be imported in the corpus with (global) reference
-<code class="docutils literal notranslate"><span class="pre">composers:vivaldi:op8</span></code>. The global reference of this opus
-will be <code class="docutils literal notranslate"><span class="pre">composers:vivaldi:op8:allegro</span></code>.</p>
+one imports in a corpus <code class="docutils literal notranslate"><span class="pre">psautiers:godeau1656</span></code>, then a file
+<code class="docutils literal notranslate"><span class="pre">mynopus.xml</span></code> will be imported in the corpus with (globl) reference
+<code class="docutils literal notranslate"><span class="pre">psautiers:godeau1656:monopus</span></code>.</p>
 <p>Opus references cannot be modified after import.  <strong>Use a consistent naming scheme,
 in lowercase, as short as possible</strong>. Note that opuses are sorted
 on their (local) reference whenever a corpus is displayed. This must be anticipated
@@ -262,26 +247,23 @@ if order is important. For instance,
 but the latter  appears <em>after</em> <code class="docutils literal notranslate"><span class="pre">opus_12</span></code>. Use padding 0 to obtain a correct sorting,
 such as <code class="docutils literal notranslate"><span class="pre">opus_01</span></code>,
 <code class="docutils literal notranslate"><span class="pre">opus_02</span></code>, <cite>òpus_12`</cite> (in case two  positions are enough).</p>
-<p>In order to bulkload the content of a ZIP file , run the following command:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python3 manage.py import_zip -c &lt;parent_corpus_id&gt; -f &lt;file_path&gt; <span class="o">[</span>-r corpus_ref<span class="o">]</span>
+</div>
+<div class="section" id="inserting-upload-files">
+<h3>Inserting upload files<a class="headerlink" href="#inserting-upload-files" title="Permalink to this headline">¶</a></h3>
+<p>In the <em>Management</em> tab of a corpus, a form allows to upload a zip file. You must supply
+a sort description of the Zip content, and the Zip file itself.</p>
+<p>Once uploaded, Zip files appear in a list, left of the <em>Management</em> tab. Note the ID of a
+file which is required to trigger its insertion.</p>
+<p>The Django admin form gives additional access to upload files (deletion, replacement, etc.)</p>
+</div>
+<div class="section" id="importing-opuses">
+<h3>Importing opuses<a class="headerlink" href="#importing-opuses" title="Permalink to this headline">¶</a></h3>
+<p>In order to bulkload the content of a ZIP file, run the following command:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python3<span class="w"> </span>manage.py<span class="w"> </span>import_zip<span class="w"> </span>-u<span class="w"> </span>&lt;upload_id&gt;
 </pre></div>
 </div>
-<p>Where</p>
-<blockquote>
-<div><ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">parent_corpus_id</span></code> is the id of the corpus the new corpus should be added to</p></li>
-<li><dl class="simple">
-<dt><code class="docutils literal notranslate"><span class="pre">file_path</span></code> is the path to the zip file (remember: you will find</dt><dd><p>many of those file in the <code class="docutils literal notranslate"><span class="pre">data</span></code> directory.)</p>
-</dd>
-</dl>
-</li>
-<li><p><code class="docutils literal notranslate"><span class="pre">corpus_ref</span></code> (optional) give the reference of the new corpus, in case the JSON
-file <code class="docutils literal notranslate"><span class="pre">corpus.json</span></code> is absent from the ZIP. Shoudl be avoided.</p></li>
-</ul>
-</div></blockquote>
-<p>A set of zip files with recursives corpuses can be found in <code class="docutils literal notranslate"><span class="pre">data</span></code>. They can
-be imported as children of the root corpus. For instance:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python3 manage.py import_zip -c all -f data/composers/corelli.zip
+<p>This function can be run in asynchronous mode with:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python3<span class="w"> </span>manage.py<span class="w"> </span>import_zip<span class="w"> </span>-u<span class="w"> </span>&lt;upload_id&gt;<span class="w"> </span>-a<span class="w"> </span><span class="m">1</span>
 </pre></div>
 </div>
 </div>
@@ -308,7 +290,9 @@ be imported as children of the root corpus. For instance:</p>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#managing-opuses">Managing opuses</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#importing-zip-files">Importing zip files</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#upload-files">Upload files</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#inserting-upload-files">Inserting upload files</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#importing-opuses">Importing opuses</a></li>
 </ul>
 </li>
 </ul>

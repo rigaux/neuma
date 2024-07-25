@@ -60,45 +60,45 @@ such as metadata issues, rendering issues, etc.</p></li>
 The following is an excerpt of the <code class="docutils literal notranslate"><span class="pre">quality_model.xml</span></code> document.</p>
 <div class="highlight-xml notranslate"><div class="highlight"><pre><span></span><span class="cp">&lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot; ?&gt;</span>
 
-<span class="nt">&lt;analytic_model</span> <span class="na">id=</span><span class="s">&quot;quality&quot;</span><span class="nt">&gt;</span>
-    <span class="nt">&lt;name&gt;</span>Quality<span class="nt">&lt;/name&gt;</span>
-    <span class="nt">&lt;description&gt;</span>Quality measures
-    <span class="nt">&lt;/description&gt;</span>
+<span class="nt">&lt;analytic_model</span><span class="w"> </span><span class="na">id=</span><span class="s">&quot;quality&quot;</span><span class="nt">&gt;</span>
+<span class="w">    </span><span class="nt">&lt;name&gt;</span>Quality<span class="nt">&lt;/name&gt;</span>
+<span class="w">    </span><span class="nt">&lt;description&gt;</span>Quality<span class="w"> </span>measures
+<span class="w">    </span><span class="nt">&lt;/description&gt;</span>
 
 
-    <span class="c">&lt;!-- Tree of concepts --&gt;</span>
-    <span class="nt">&lt;concepts&gt;</span>
-        <span class="nt">&lt;concept</span> <span class="na">id=</span><span class="s">&quot;content&quot;</span><span class="nt">&gt;</span>
-            <span class="nt">&lt;name&gt;</span>Music content issues<span class="nt">&lt;/name&gt;</span>
-            <span class="nt">&lt;description&gt;</span>
-                Quality issues related to the content of the score, and
-                not to its rendering
-            <span class="nt">&lt;/description&gt;</span>
-            <span class="nt">&lt;concepts&gt;</span>
-                <span class="nt">&lt;concept</span> <span class="na">id=</span><span class="s">&quot;structure&quot;</span><span class="nt">&gt;</span>
-                   ...
-                <span class="nt">&lt;/concept&gt;</span>
-                 <span class="nt">&lt;concept</span> <span class="na">id=</span><span class="s">&quot;voice&quot;</span><span class="nt">&gt;</span>
-                ...
-                <span class="nt">&lt;/concept&gt;</span>
-                <span class="nt">&lt;concept</span> <span class="na">id=</span><span class="s">&quot;lyrics&quot;</span><span class="nt">&gt;</span>
-                    <span class="nt">&lt;name&gt;</span>Lyrics issues<span class="nt">&lt;/name&gt;</span>
-                    <span class="nt">&lt;description&gt;</span>
-                        Issues related to lyrics (if any) and their
-                        relationship to music
-                    <span class="nt">&lt;/description&gt;</span>
-                    <span class="nt">&lt;concepts&gt;</span>
-                      <span class="nt">&lt;concept</span> <span class="na">id=</span><span class="s">&quot;invalidlyrics&quot;</span><span class="nt">&gt;</span>
-                        <span class="nt">&lt;name&gt;</span>Invalid lyrics encoding<span class="nt">&lt;/name&gt;</span>
-                        <span class="nt">&lt;description&gt;</span>
-                            The lyrics text contains invalid characters.
-                        <span class="nt">&lt;/description&gt;</span>
-                       <span class="nt">&lt;/concept&gt;</span>
-                    <span class="nt">&lt;/concepts&gt;</span>
-             <span class="nt">&lt;/concept&gt;</span>
-        <span class="nt">&lt;/concepts&gt;</span>
-    <span class="nt">&lt;/concept&gt;</span>
-  <span class="nt">&lt;/concepts&gt;</span>
+<span class="w">    </span><span class="cm">&lt;!-- Tree of concepts --&gt;</span>
+<span class="w">    </span><span class="nt">&lt;concepts&gt;</span>
+<span class="w">        </span><span class="nt">&lt;concept</span><span class="w"> </span><span class="na">id=</span><span class="s">&quot;content&quot;</span><span class="nt">&gt;</span>
+<span class="w">            </span><span class="nt">&lt;name&gt;</span>Music<span class="w"> </span>content<span class="w"> </span>issues<span class="nt">&lt;/name&gt;</span>
+<span class="w">            </span><span class="nt">&lt;description&gt;</span>
+<span class="w">                </span>Quality<span class="w"> </span>issues<span class="w"> </span>related<span class="w"> </span>to<span class="w"> </span>the<span class="w"> </span>content<span class="w"> </span>of<span class="w"> </span>the<span class="w"> </span>score,<span class="w"> </span>and
+<span class="w">                </span>not<span class="w"> </span>to<span class="w"> </span>its<span class="w"> </span>rendering
+<span class="w">            </span><span class="nt">&lt;/description&gt;</span>
+<span class="w">            </span><span class="nt">&lt;concepts&gt;</span>
+<span class="w">                </span><span class="nt">&lt;concept</span><span class="w"> </span><span class="na">id=</span><span class="s">&quot;structure&quot;</span><span class="nt">&gt;</span>
+<span class="w">                   </span>...
+<span class="w">                </span><span class="nt">&lt;/concept&gt;</span>
+<span class="w">                 </span><span class="nt">&lt;concept</span><span class="w"> </span><span class="na">id=</span><span class="s">&quot;voice&quot;</span><span class="nt">&gt;</span>
+<span class="w">                </span>...
+<span class="w">                </span><span class="nt">&lt;/concept&gt;</span>
+<span class="w">                </span><span class="nt">&lt;concept</span><span class="w"> </span><span class="na">id=</span><span class="s">&quot;lyrics&quot;</span><span class="nt">&gt;</span>
+<span class="w">                    </span><span class="nt">&lt;name&gt;</span>Lyrics<span class="w"> </span>issues<span class="nt">&lt;/name&gt;</span>
+<span class="w">                    </span><span class="nt">&lt;description&gt;</span>
+<span class="w">                        </span>Issues<span class="w"> </span>related<span class="w"> </span>to<span class="w"> </span>lyrics<span class="w"> </span>(if<span class="w"> </span>any)<span class="w"> </span>and<span class="w"> </span>their
+<span class="w">                        </span>relationship<span class="w"> </span>to<span class="w"> </span>music
+<span class="w">                    </span><span class="nt">&lt;/description&gt;</span>
+<span class="w">                    </span><span class="nt">&lt;concepts&gt;</span>
+<span class="w">                      </span><span class="nt">&lt;concept</span><span class="w"> </span><span class="na">id=</span><span class="s">&quot;invalidlyrics&quot;</span><span class="nt">&gt;</span>
+<span class="w">                        </span><span class="nt">&lt;name&gt;</span>Invalid<span class="w"> </span>lyrics<span class="w"> </span>encoding<span class="nt">&lt;/name&gt;</span>
+<span class="w">                        </span><span class="nt">&lt;description&gt;</span>
+<span class="w">                            </span>The<span class="w"> </span>lyrics<span class="w"> </span>text<span class="w"> </span>contains<span class="w"> </span>invalid<span class="w"> </span>characters.
+<span class="w">                        </span><span class="nt">&lt;/description&gt;</span>
+<span class="w">                       </span><span class="nt">&lt;/concept&gt;</span>
+<span class="w">                    </span><span class="nt">&lt;/concepts&gt;</span>
+<span class="w">             </span><span class="nt">&lt;/concept&gt;</span>
+<span class="w">        </span><span class="nt">&lt;/concepts&gt;</span>
+<span class="w">    </span><span class="nt">&lt;/concept&gt;</span>
+<span class="w">  </span><span class="nt">&lt;/concepts&gt;</span>
 <span class="nt">&lt;/analytic_model&gt;</span>
 </pre></div>
 </div>
@@ -106,7 +106,7 @@ The following is an excerpt of the <code class="docutils literal notranslate"><s
 (used in tooltips windows). The id has to be unique.</p>
 <p>A model has to be imported in the database. This is done by running the following
 command.</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python3 manage.py setup_neuma
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python3<span class="w"> </span>manage.py<span class="w"> </span>setup_neuma
 </pre></div>
 </div>
 <p>A concept has also a semantic: it associates some meaning to some elements
@@ -127,7 +127,7 @@ the meaning of each concept.</p>
 in a voice.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="nd">@staticmethod</span>
 <span class="k">def</span> <span class="nf">missing_lyrics</span><span class="p">(</span><span class="n">opus</span><span class="p">,</span> <span class="n">voice</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot; Missing lyrics metrics&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot; Missing lyrics metrics&quot;&quot;&quot;</span>
 
     <span class="k">for</span> <span class="n">event</span> <span class="ow">in</span> <span class="n">voice</span><span class="o">.</span><span class="n">m21_stream</span><span class="o">.</span><span class="n">notes</span><span class="p">:</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">event</span><span class="o">.</span><span class="n">hasLyrics</span><span class="p">():</span>
@@ -179,14 +179,14 @@ of the model. These workflow are in <code class="docutils literal notranslate"><
 <p class="admonition-title">Note</p>
 <dl>
 <dt>A REST call can be used to obtain the forest of concepts</dt><dd><p>for a model. In JSON:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>curl http://neuma.huma-num.fr/rest/analysis/models/quality/concepts/json/
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>curl<span class="w"> </span>http://neuma.huma-num.fr/rest/analysis/models/quality/concepts/json/
 </pre></div>
 </div>
 </dd>
 </dl>
 <p>or in Latex</p>
 <blockquote>
-<div><div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>curl http://neuma.huma-num.fr/rest/analysis/models/quality/concepts/latex/
+<div><div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>curl<span class="w"> </span>http://neuma.huma-num.fr/rest/analysis/models/quality/concepts/latex/
 </pre></div>
 </div>
 </div></blockquote>
@@ -205,11 +205,11 @@ at least one measure, called <code class="docutils literal notranslate"><span cl
 <h3>Building a measure matrix<a class="headerlink" href="#building-a-measure-matrix" title="Permalink to this headline">¶</a></h3>
 <p>A matrix of similarities can be built for all the opera of a corpus thanks
 to the following command:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python3 manage.py scan_corpus -a cptdist -c &lt;corpus_id&gt;
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python3<span class="w"> </span>manage.py<span class="w"> </span>scan_corpus<span class="w"> </span>-a<span class="w"> </span>cptdist<span class="w"> </span>-c<span class="w"> </span>&lt;corpus_id&gt;
 </pre></div>
 </div>
 <p>Par exemple:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python3 manage.py scan_corpus -a cptdist -c psautiers:godeau1658
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python3<span class="w"> </span>manage.py<span class="w"> </span>scan_corpus<span class="w"> </span>-a<span class="w"> </span>cptdist<span class="w"> </span>-c<span class="w"> </span>psautiers:godeau1658
 </pre></div>
 </div>
 <p>One matrix is produced for each of the similarity measures found in table <code class="docutils literal notranslate"><span class="pre">SimMeasure</span></code>.</p>

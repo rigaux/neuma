@@ -50,7 +50,7 @@ and on an ElasticSearch server for search operations.</p>
 <p>Download the code. The root directory of the project is named <code class="docutils literal notranslate"><span class="pre">scorelib</span></code>. Most of the commands
 given below can be run from this directory through the <code class="docutils literal notranslate"><span class="pre">manage.py</span></code>  script. The general
 form is</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python3 manage.py &lt;command&gt; &lt;options&gt;
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python3<span class="w"> </span>manage.py<span class="w"> </span>&lt;command&gt;<span class="w"> </span>&lt;options&gt;
 </pre></div>
 </div>
 <div class="admonition note">
@@ -70,16 +70,16 @@ tutorial at <a class="reference external" href="https://www.djangoproject.com/">
 </div>
 <p>Follow the standard instructions for installing Django. It should not be more
 difficult that</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip3 install django
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip3<span class="w"> </span>install<span class="w"> </span>django
 </pre></div>
 </div>
 <p>Neuma depends on many Python packages. We use Conda (<a class="reference external" href="https://docs.conda.io/en/latest/">https://docs.conda.io/en/latest/</a>)
 to manage these dependencies. You should be able to install them in one shot thanks to the followng command:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>conda env create -f environment.yml
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>conda<span class="w"> </span>env<span class="w"> </span>create<span class="w"> </span>-f<span class="w"> </span>environment.yml
 </pre></div>
 </div>
 <p>One mandatory step is the creation of a Django administration user:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python3 manage.py createsuperuser
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python3<span class="w"> </span>manage.py<span class="w"> </span>createsuperuser
 </pre></div>
 </div>
 <p>Enter the nameand password of the super-user for django. For instance (used  in the following):
@@ -91,9 +91,9 @@ to manage these dependencies. You should be able to install them in one shot tha
 A nice client interface to enter commands is pgAdmin (<a class="reference external" href="https://www.pgadmin.org/">https://www.pgadmin.org/</a>).</p>
 <p>Then
 create a Postgres database named <code class="docutils literal notranslate"><span class="pre">scorelib</span></code>, and a user with all privileges on this DB. For instance:</p>
-<div class="highlight-sql notranslate"><div class="highlight"><pre><span></span><span class="k">create</span> <span class="k">database</span> <span class="n">scorelib</span>
-<span class="k">create</span> <span class="k">user</span> <span class="n">neumadmin</span> <span class="k">with</span> <span class="k">encrypted</span> <span class="n">password</span> <span class="s1">&#39;neuma&#39;</span><span class="p">;</span>
-<span class="k">grant</span> <span class="k">all</span> <span class="k">privileges</span> <span class="k">on</span> <span class="k">database</span> <span class="n">scorelib</span> <span class="k">to</span> <span class="n">neumadmin</span>
+<div class="highlight-sql notranslate"><div class="highlight"><pre><span></span><span class="k">create</span><span class="w"> </span><span class="k">database</span><span class="w"> </span><span class="n">scorelib</span>
+<span class="k">create</span><span class="w"> </span><span class="k">user</span><span class="w"> </span><span class="n">neumadmin</span><span class="w"> </span><span class="k">with</span><span class="w"> </span><span class="k">encrypted</span><span class="w"> </span><span class="n">password</span><span class="w"> </span><span class="s1">&#39;neuma&#39;</span><span class="p">;</span>
+<span class="k">grant</span><span class="w"> </span><span class="k">all</span><span class="w"> </span><span class="k">privileges</span><span class="w"> </span><span class="k">on</span><span class="w"> </span><span class="k">database</span><span class="w"> </span><span class="n">scorelib</span><span class="w"> </span><span class="k">to</span><span class="w"> </span><span class="n">neumadmin</span>
 </pre></div>
 </div>
 <p>Choose the names and passwords at your convenience of course. They must be
@@ -113,7 +113,7 @@ in the <code class="docutils literal notranslate"><span class="pre">scorelib/loc
 </div>
 <p>The database schema is automatically created and maintained by Django. In principle, you
 just have to run:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python3 manage.py migrate
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python3<span class="w"> </span>manage.py<span class="w"> </span>migrate
 </pre></div>
 </div>
 <div class="admonition important">
@@ -145,10 +145,27 @@ inspecting the index. If you want to do so,
 install the client such as Kibana or Cerebro (<a class="reference external" href="https://github.com/lmenezes/cerebro">https://github.com/lmenezes/cerebro</a>). Being
 able to send HTTP requests with <code class="docutils literal notranslate"><span class="pre">curl</span></code> might also prove to be useful</p>
 </div>
+<div class="section" id="redit">
+<h3>Redit<a class="headerlink" href="#redit" title="Permalink to this headline">¶</a></h3>
+<p>Neuma uses Celery for running large tasks in the background. Celery
+itself uses Redit. Just install an instance, with Docker or
+any other utility.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>docker<span class="w"> </span>run<span class="w"> </span>--name<span class="w"> </span>my-redis<span class="w">  </span>-p<span class="w"> </span><span class="m">6379</span>:6379<span class="w">  </span>-d<span class="w"> </span>redis
+</pre></div>
+</div>
+</div>
+<div class="section" id="celery">
+<h3>Celery<a class="headerlink" href="#celery" title="Permalink to this headline">¶</a></h3>
+<p>Finally we must run the Celery worker. In development environment,
+run as follows:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">celery</span> <span class="o">-</span><span class="n">A</span> <span class="n">scorelib</span> <span class="n">worker</span> <span class="o">--</span><span class="n">loglevel</span><span class="o">=</span><span class="n">INFO</span>
+</pre></div>
+</div>
+</div>
 <div class="section" id="neuma-setup">
 <h3>Neuma setup<a class="headerlink" href="#neuma-setup" title="Permalink to this headline">¶</a></h3>
 <p>Now some objects must be created in Neuma. This can be done by running the <code class="docutils literal notranslate"><span class="pre">setup_neuma</span></code>  command as follows:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python3 manage.py setup_neuma
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python3<span class="w"> </span>manage.py<span class="w"> </span>setup_neuma
 </pre></div>
 </div>
 <p>This creates some mandatory objects in the DB.</p>
@@ -161,7 +178,7 @@ are provided and documented in Chapter <span class="xref std std-ref">chap-comma
 <div class="section" id="does-it-work">
 <h3>Does it work?<a class="headerlink" href="#does-it-work" title="Permalink to this headline">¶</a></h3>
 <p>Launch the Django app.</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python3 manage.py runserver
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python3<span class="w"> </span>manage.py<span class="w"> </span>runserver
 </pre></div>
 </div>
 <p>And Neuma should be accessible at <a class="reference external" href="http://localhost:8000">http://localhost:8000</a>.</p>
@@ -192,6 +209,8 @@ relies on the Django authentication system). Figure <a class="reference internal
 <li class="toctree-l3"><a class="reference internal" href="#python-django">Python/Django</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#postgres">Postgres</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#elasticsearch">ElasticSearch</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#redit">Redit</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#celery">Celery</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#neuma-setup">Neuma setup</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#does-it-work">Does it work?</a></li>
 </ul>

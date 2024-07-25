@@ -50,13 +50,13 @@ translations can be created.</p>
 <h3>Creation<a class="headerlink" href="#creation" title="Permalink to this headline">¶</a></h3>
 <p>First, run the <code class="docutils literal notranslate"><span class="pre">makemessages</span></code> process. Example
 for French:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>django-admin makemessages --locale<span class="o">=</span>fr
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>django-admin<span class="w"> </span>makemessages<span class="w"> </span>--locale<span class="o">=</span>fr
 </pre></div>
 </div>
 <p>This creates a new translation file <code class="docutils literal notranslate"><span class="pre">django.po</span></code>  in <code class="docutils literal notranslate"><span class="pre">locale/fr/LC_MESSAGES</span></code>. Edit
 this file (in UTF-8) and supply the translations. The format is straightfoward. Then
 compile the messages with</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>django-admin compilemessages
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>django-admin<span class="w"> </span>compilemessages
 </pre></div>
 </div>
 <p>That’s it! This creates a <code class="docutils literal notranslate"><span class="pre">.mo</span></code> file, the one that needs to be distributed.</p>
