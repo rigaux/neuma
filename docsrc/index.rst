@@ -3,7 +3,6 @@ Neuma developer documentation
 
 Contents:
 
-
 .. toctree::
    :maxdepth: 2
 
