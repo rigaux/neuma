@@ -4,8 +4,9 @@
 <html>
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Searching Neuma collections &#8212; Neuma dev. guide 1.0 documentation</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17: http://docutils.sourceforge.net/" />
+
+    <title>Searching Neuma collections &#8212; Neuma User Guide 1.0 documentation</title>
     <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="_static/agogo.css" />
     <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
@@ -20,7 +21,7 @@
     <div class="header-wrapper" role="banner">
       <div class="header">
         <div class="headertitle"><a
-          href="index.html">Neuma dev. guide 1.0 documentation</a></div>
+          href="index.html">Neuma User Guide 1.0 documentation</a></div>
         <div class="rel" role="navigation" aria-label="related navigation">
           <a href="utils.html" title="Utilities"
              accesskey="P">previous</a> |
@@ -40,59 +41,59 @@
         <div class="bodywrapper">
           <div class="body" role="main">
             
-  <div class="section" id="searching-neuma-collections">
+  <section id="searching-neuma-collections">
 <span id="chap-search"></span><h1>Searching Neuma collections<a class="headerlink" href="#searching-neuma-collections" title="Permalink to this headline">¶</a></h1>
 <p>The chapter describes the search operations in Neuma.</p>
-<div class="section" id="elasticsearch">
+<section id="elasticsearch">
 <h2>ElasticSearch<a class="headerlink" href="#elasticsearch" title="Permalink to this headline">¶</a></h2>
-</div>
-<div class="section" id="searching">
+</section>
+<section id="searching">
 <h2>Searching<a class="headerlink" href="#searching" title="Permalink to this headline">¶</a></h2>
-<div class="section" id="exact-search">
+<section id="exact-search">
 <h3>Exact search<a class="headerlink" href="#exact-search" title="Permalink to this headline">¶</a></h3>
 <p>A descriptor is produced that combines melodic and rythmic information. It is stored in ElasticSearch.</p>
-</div>
-<div class="section" id="melodic-search">
+</section>
+<section id="melodic-search">
 <h3>Melodic search<a class="headerlink" href="#melodic-search" title="Permalink to this headline">¶</a></h3>
 <p>A descriptor is produced with melodic information. Ranking is done a rythmic similarity
 of the best occurrence.</p>
-</div>
-<div class="section" id="rythmic-search">
+</section>
+<section id="rythmic-search">
 <h3>Rythmic search<a class="headerlink" href="#rythmic-search" title="Permalink to this headline">¶</a></h3>
 <p>A descriptor is produced with rythmic information. Ranking is done a rythmic similarity.</p>
-</div>
-</div>
-<div class="section" id="ranking">
+</section>
+</section>
+<section id="ranking">
 <h2>Ranking<a class="headerlink" href="#ranking" title="Permalink to this headline">¶</a></h2>
 <div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
-<span class="nt">&quot;query&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="nt">&quot;function_score&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-<span class="w">     </span><span class="nt">&quot;query&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-<span class="w">        </span><span class="nt">&quot;match&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-<span class="w">        </span><span class="nt">&quot;body&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;foo&quot;</span>
-<span class="w">        </span><span class="p">}</span>
-<span class="w">    </span><span class="p">},</span>
-<span class="w">    </span><span class="nt">&quot;functions&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
-<span class="w">        </span><span class="p">{</span>
-<span class="w">        </span><span class="nt">&quot;script_score&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-<span class="w">            </span><span class="nt">&quot;script&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-<span class="w">            </span><span class="nt">&quot;source&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;scorelib&quot;</span><span class="p">,</span>
-<span class="w">            </span><span class="nt">&quot;lang&quot;</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;ScoreSim&quot;</span><span class="p">,</span>
-<span class="w">            </span><span class="nt">&quot;params&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-<span class="w">                </span><span class="nt">&quot;query&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[{</span><span class="nt">&quot;index&quot;</span><span class="p">:</span><span class="mi">5</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;duration&quot;</span><span class="p">:</span><span class="mi">3</span><span class="p">},</span><span class="w"> </span><span class="p">{</span><span class="nt">&quot;index&quot;</span><span class="p">:</span><span class="mi">6</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;duration&quot;</span><span class="p">:</span><span class="mi">2</span><span class="p">}],</span>
-<span class="w">                </span><span class="nt">&quot;type&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span>
-<span class="w">            </span><span class="p">}</span>
-<span class="w">            </span><span class="p">}</span>
-<span class="w">          </span><span class="p">}</span>
-<span class="w">        </span><span class="p">}</span>
-<span class="w">      </span><span class="p">]</span>
-<span class="w">    </span><span class="p">}</span>
-<span class="w">  </span><span class="p">}</span>
+<span class="nt">&quot;query&quot;</span><span class="p">:</span> <span class="p">{</span>
+    <span class="nt">&quot;function_score&quot;</span><span class="p">:</span> <span class="p">{</span>
+     <span class="nt">&quot;query&quot;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="nt">&quot;match&quot;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="nt">&quot;body&quot;</span><span class="p">:</span> <span class="s2">&quot;foo&quot;</span>
+        <span class="p">}</span>
+    <span class="p">},</span>
+    <span class="nt">&quot;functions&quot;</span><span class="p">:</span> <span class="p">[</span>
+        <span class="p">{</span>
+        <span class="nt">&quot;script_score&quot;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="nt">&quot;script&quot;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="nt">&quot;source&quot;</span><span class="p">:</span> <span class="s2">&quot;scorelib&quot;</span><span class="p">,</span>
+            <span class="nt">&quot;lang&quot;</span> <span class="p">:</span> <span class="s2">&quot;ScoreSim&quot;</span><span class="p">,</span>
+            <span class="nt">&quot;params&quot;</span><span class="p">:</span> <span class="p">{</span>
+                <span class="nt">&quot;query&quot;</span><span class="p">:</span> <span class="p">[{</span><span class="nt">&quot;index&quot;</span><span class="p">:</span><span class="mi">5</span><span class="p">,</span> <span class="nt">&quot;duration&quot;</span><span class="p">:</span><span class="mi">3</span><span class="p">},</span> <span class="p">{</span><span class="nt">&quot;index&quot;</span><span class="p">:</span><span class="mi">6</span><span class="p">,</span> <span class="nt">&quot;duration&quot;</span><span class="p">:</span><span class="mi">2</span><span class="p">}],</span>
+                <span class="nt">&quot;type&quot;</span><span class="p">:</span> <span class="mi">1</span>
+            <span class="p">}</span>
+            <span class="p">}</span>
+          <span class="p">}</span>
+        <span class="p">}</span>
+      <span class="p">]</span>
+    <span class="p">}</span>
+  <span class="p">}</span>
 <span class="p">}</span>
 </pre></div>
 </div>
-</div>
-</div>
+</section>
+</section>
 
 
             <div class="clearer"></div>
@@ -156,8 +157,8 @@ of the best occurrence.</p>
         <div class="right">
           
     <div class="footer" role="contentinfo">
-        &#169; Copyright 2016-2021 Philippe et al..
-      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.2.0.
+        &#169; Copyright 2016-2024 Philippe Rigaux.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.0.1.
     </div>
         </div>
         <div class="clearer"></div>

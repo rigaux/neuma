@@ -59,9 +59,9 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = u'Neuma dev. guide'
-copyright = u'2016-2021 Philippe et al.'
-author = u'Philippe et al.'
+project = u'Neuma User Guide'
+copyright = u'2016-2024 Philippe Rigaux'
+author = u'Philippe Rigaux'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -128,6 +128,16 @@ html_theme = 'agogo'
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
 # documentation.
+
+
+html_theme_options = {
+    "headerbg": "#440909",
+     "linkcolor": "#440909",
+        "headercolor1": "#440909",
+           "headercolor2": "#440909"
+}
+
+
 #html_theme_options = {}
 
 # Add any paths that contain custom themes here, relative to this directory.
