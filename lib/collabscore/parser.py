@@ -22,7 +22,6 @@ import lib.music.source as source_mod
 
 from .constants import *
 from lib.music.source import Manifest
-from lib.collabscore.parser_avant_voix2portees import StaffHeader
 
 # Get an instance of a logger
 # See https://realpython.com/python-logging/
@@ -30,7 +29,6 @@ from lib.collabscore.parser_avant_voix2portees import StaffHeader
 #logging.basicConfig(level=logging.INFO)
 
 logger = logging.getLogger(__name__)
-
 
 # Create file handler
 f_handler = logging.FileHandler(__name__ + '.log')
@@ -504,6 +502,14 @@ class OmrScore:
 							logger.info (f'Time signature  {new_time_signature} found on staff {header.no_staff} at measure {current_measure_no}')
 							# Setting the TS at the score level propagates to all parts
 							score.set_current_time_signature (new_time_signature)			
+							# We assign the TS specifically to the current parts: the id is preserved
+							part.set_current_time_signature (new_time_signature)			
+							# Annotate the key with its region
+							if header.time_signature.region is not None:
+								annotation = annot_mod.Annotation.create_annot_from_xml_to_image(
+									self.creator, self.uri, header.time_signature.id, 
+									page.page_url, header.time_signature.region.string_xyhw(), constants_mod.IREGION_SYMBOL_CONCEPT)
+								score.add_annotation (annotation)
 						if header.key_signature is not None:
 							key_sign = header.key_signature.get_notation_object()
 							logger.info (f'Key signature {key_sign} found on staff {header.no_staff} at measure {current_measure_no}')
@@ -512,6 +518,11 @@ class OmrScore:
 							# We will display the key signature at the beginning
 							# of the current measure
 							measure_for_part.replace_key_signature (key_sign)
+							if header.key_signature.region is not None:
+								annotation = annot_mod.Annotation.create_annot_from_xml_to_image(
+									self.creator, self.uri, header.key_signature.id, 
+									page.page_url, header.key_signature.region.string_xyhw(), constants_mod.IREGION_SYMBOL_CONCEPT)
+								score.add_annotation (annotation)
 			
 					# Now we scan the voices
 					for voice in measure.voices:
@@ -572,10 +583,11 @@ class OmrScore:
 								logger.info (f"Add a clef to staff {id_staff} at position {clef_position}")
 								current_part.set_current_clef (event, mnf_staff.number_in_part, clef_position)
 								# Annotate this symbol
-								#annotation = annot_mod.Annotation.create_annot_from_xml_to_image(
-								#	self.creator, self.uri, event.id, 
-								#	page.page_url, header.clef.symbol.region.string_xyhw(), constants_mod.IREGION_SYMBOL_CONCEPT)
-								#score.add_annotation (annotation)
+								if event_region is not None:
+									annotation = annot_mod.Annotation.create_annot_from_xml_to_image(
+										self.creator, self.uri, event.id, 
+										page.page_url, event_region.string_xyhw(), constants_mod.IREGION_SYMBOL_CONCEPT)
+									score.add_annotation (annotation)
 							else:
 								logger.error (f'Unknown event type {type_event} for voice {voice.id}')
 		
@@ -1075,7 +1087,38 @@ class Clef:
 		return score_notation.Clef.decode_from_dmos(self.symbol.label, 
 													self.height,
 													self.id)
-		
+
+
+class TimeSignature:
+	"""
+		Representation of a time signature
+	"""
+	
+	def __init__(self, json_time_sign):
+		if "id" in json_time_sign:
+			self.id  = json_time_sign["id"]
+		else:
+			self.id = None
+
+		self.element =   json_time_sign["element"]
+		self.time =   json_time_sign["time"]
+		self.unit =   json_time_sign["unit"]
+
+		if "region" in json_time_sign:
+			self.region = Region(json_time_sign["region"])
+		else:
+			self.region = None
+
+	def get_notation_object(self):
+		# Decode the DMOS infos
+		ts = score_notation.TimeSignature (self.time, self.unit, 
+											id_ts=self.id)
+		if self.element == "letter":
+			ts.symbolize()
+		elif self.element == "singleDigit":
+			ts.set_single_digit()
+		return ts
+
 class KeySignature:
 	"""
 		Representation of a key signature
@@ -1090,6 +1133,11 @@ class KeySignature:
 		self.element =   json_key_sign["element"]
 		self.nb_naturals =   json_key_sign["nb_naturals"]
 		self.nb_alterations =   json_key_sign["nb_alterations"]
+
+		if "region" in json_key_sign:
+			self.region = Region(json_key_sign["region"])
+		else:
+			self.region = None
 		
 	def nb_sharps(self):
 		if self.element == SHARP_SYMBOL:
@@ -1161,30 +1209,6 @@ class TupletInfo:
 	def __init__(self, json_tinfo):
 		self.num = json_tinfo["num"]
 		self.num_base = int (json_tinfo["numbase"])
-
-class TimeSignature:
-	"""
-		Representation of a time signature
-	"""
-	
-	def __init__(self, json_time_sign):
-		if "id" in json_time_sign:
-			self.id  = json_time_sign["id"]
-		else:
-			self.id = None
-
-		self.element =   json_time_sign["element"]
-		self.time =   json_time_sign["time"]
-		self.unit =   json_time_sign["unit"]
-
-	def get_notation_object(self):
-		# Decode the DMOS infos
-		ts = score_notation.TimeSignature (self.time, self.unit, self.id)
-		if self.element == "letter":
-			ts.symbolize()
-		elif self.element == "singleDigit":
-			ts.set_single_digit()
-		return ts
 	
 class StaffHeader:
 	"""
