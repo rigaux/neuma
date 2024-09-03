@@ -43,15 +43,13 @@ var tabNames = [
 	            {"tabId": "tab1", "divId": "score"}, 
                 {"tabId": "tab2", "divId":"sources"},
                 {"tabId": "tab3", "divId":"features"},
-                {"tabId": "tab4", "divId":"comparison"},
-                {"tabId": "tab5", "divId":"manage"}
+                {"tabId": "tab4", "divId":"manage"}
                 ]
  {% else %}
 var tabNames = [
 	     {"tabId": "tab1", "divId": "score"}, 
          {"tabId": "tab2", "divId":"sources"},
-         {"tabId": "tab3", "divId":"features"},
-         {"tabId": "tab4", "divId":"comparison"}
+         {"tabId": "tab3", "divId":"features"}
                 ]
 {% endif %}
 </script>
@@ -146,8 +144,6 @@ var tabNames = [
       {% endfor %}
       </ul>
   
-  Résultat DMOS: {{result_dmos}}
-  
 <!-- fin div .description -->
 
            
@@ -187,10 +183,8 @@ var tabNames = [
 			onClick="TabClick(tabNames, 1);">Sources</a></li>
         <li id="tab3"><a href="#"
 			onClick="TabClick(tabNames, 2);">Features</a></li>
-        <li id="tab4"><a href="#"
-			onClick="TabClick(tabNames, 3);">Comparison</a></li>
          {% if "change_corpus" in user_corpus_perms %}
-           <li id="tab5"><a href="#" onClick="TabClick(tabNames, 4);">Manage</a></li>
+           <li id="tab5"><a href="#" onClick="TabClick(tabNames, 3);">Manage</a></li>
         {% endif %}
 		</li>
 	</ul>
@@ -399,32 +393,6 @@ function displaySource(src, type, target) {
   </div>
 </div>
 
-
-<!--   Tab for comparison  -->
-<div id="comparison" style="display: none">
- 
-    {% if opus_diff %} 
- <div>
-    <table border='0' width="100%">
-    <tr>
-    <td width="50%">
-
-    <display-verovio-score opus_ref="{{opus.ref}}" mei_url="{{opus_diff.mei_omr.url}}">
-</display-verovio-score>
-
-  </td>
-  <td  width="50%">
-             <display-verovio-score opus_ref="{{source.ref}}" mei_url="{{opus_diff.mei_ref.url}}">
-</display-verovio-score>         
-
-</td>
-  </tr>
-  </table>
-  </div>
-  {% else %}
-    No comparison data available
-    {% endif %}
-</div>
 
 {% endblock content %}
 

@@ -46,8 +46,8 @@
 <p>The main objects managed in Neuma are <em>corpus(es)</em> and <em>opus(es)</em>. They
 implement a data organization comparable to the classical
 concepts of <em>folders</em> and <em>files</em> in a computer. A <em>corpus</em>
-is a container. Its content consists of either opuses or (sub)corpuses,
-or both. An <em>opus</em> is a musical work, such as, e.g., The Goldberg variations
+is a container. Its content consists of either
+opuses or (sub)corpuses. An <em>opus</em> is a musical work, such as, e.g., The Goldberg variations
 or The New World Symphony. Thus, data in Neuma is essentially
 a hierarchy,  rooted at as pseudo-corpus named <em>all</em>, where internal nodes
 are corpuses, and leaves are opuses. Both corpuses
@@ -62,7 +62,7 @@ external document that refers to the opus, etc.</p>
 <p>Let’s now explain these concepts in details.</p>
 <section id="corpus-and-opus">
 <h2>Corpus and Opus<a class="headerlink" href="#corpus-and-opus" title="Permalink to this headline">¶</a></h2>
-<p>As explained above, a corpus is a contained, whereas an opus
+<p>As explained above, a corpus is a container, whereas an opus
 gathers a set of information about a musical work. In Neuma, objects
 of both types receive a unique and immutable reference when they are
 created. Since this reference is essential for further data
@@ -105,6 +105,9 @@ recommended:</p>
 <li><p>never us special characters, and preferably avoid accents.</p></li>
 </ul>
 </div></blockquote>
+</section>
+<section id="the-hierarchy-of-corpuses">
+<h3>The hierarchy of corpuses<a class="headerlink" href="#the-hierarchy-of-corpuses" title="Permalink to this headline">¶</a></h3>
 <p>Initially, Neuma proposes the root corpus, and a few pre-defined corpuses
 (children of the root) for generic
 activities. They are shown on the welcome page of Neuma
@@ -122,8 +125,11 @@ is shown at <a class="reference external" href="http://neuma.huma-num.fr/home/co
 <section id="exploring-corpuses">
 <h2>Exploring corpuses<a class="headerlink" href="#exploring-corpuses" title="Permalink to this headline">¶</a></h2>
 <p>By clicking on a corpus’s icon, one obtain a page that
-details the corpus content. Let’s examine first the case
-of a “container” corpus, e.g., a corpus that contains
+details the corpus content.</p>
+<section id="sub-corpuses">
+<h3>Sub-corpuses<a class="headerlink" href="#sub-corpuses" title="Permalink to this headline">¶</a></h3>
+<p>Let’s examine first the case
+of a “folder” corpus, e.g., a corpus that contains
 sub-corpus. Examine <a class="reference internal" href="#exploringcorpus"><span class="std std-numref">Fig. 2</span></a> below,
 showing the page dedicated to corpus <code class="docutils literal notranslate"><span class="pre">all:composers</span></code>.</p>
 <figure class="align-center" id="id2">
@@ -143,175 +149,52 @@ used for navigation purposes: see the breadcrumb at the top of the page</p></li>
 <li><p>and finally, the list of sub-corpuses or opuses.</p></li>
 </ul>
 </div></blockquote>
+<p>Note also that each corpus has a unique parent. By clicking
+on the parent’s icon, one can move up one level in the hierarchy.</p>
+</section>
+<section id="opus-containers">
+<h3>Opus containers<a class="headerlink" href="#opus-containers" title="Permalink to this headline">¶</a></h3>
 <p>It turns out that <code class="docutils literal notranslate"><span class="pre">all:composers</span></code> consists only of sub-corpuses,
-one for each composer.</p>
+one for each composer. For a corpus consisting of opuses, a
+list is shown with a music score incipit (<a class="reference internal" href="#exploringcorpus"><span class="std std-numref">Fig. 2</span></a>, showing
+the first opuses of corpus <code class="docutils literal notranslate"><span class="pre">all:airs:cdc</span></code>).</p>
 <figure class="align-center" id="id3">
 <span id="exploringcorpus2"></span><a class="reference internal image-reference" href="_images/exploringCorpus2.png"><img alt="_images/exploringCorpus2.png" src="_images/exploringCorpus2.png" style="width: 90%;" /></a>
 <figcaption>
 <p><span class="caption-number">Fig. 3 </span><span class="caption-text">A corpus with opuses</span><a class="headerlink" href="#id3" title="Permalink to this image">¶</a></p>
 </figcaption>
 </figure>
-<p>Fields:</p>
-<blockquote>
-<div><ul class="simple">
-<li><p>title, for the main page of the corpus</p></li>
-<li><p>short title, used for lists and links</p></li>
-<li><p>description</p></li>
-<li><p>short description (a few lines)</p></li>
-<li><dl class="simple">
-<dt><code class="docutils literal notranslate"><span class="pre">isPublic</span></code>: a corpus can be either <em>Public</em> (not access restrictions) or <em>Private</em>. In the</dt><dd><p>latter case it is shown only to users with access grants.</p>
-</dd>
-</dl>
-</li>
-<li><p>Parent corpus: each corpus has a unique parent. Choose the parent from the list</p></li>
-<li><p>Reference code: this is the <em>global</em> reference code, for instance <code class="docutils literal notranslate"><span class="pre">composers:bach:chorals</span></code>
-for the <code class="docutils literal notranslate"><span class="pre">chorals</span></code> corpus, child of <code class="docutils literal notranslate"><span class="pre">bach</span></code>, itself child of <code class="docutils literal notranslate"><span class="pre">composers</span></code>. <strong>Be very careful</strong>
-when entering the reference, because its is essential to ensure the consistency of
-navigation and searches in Neuma.</p></li>
-<li><p>The cover is an image that illustrates the corpus.</p></li>
-</ul>
-</div></blockquote>
-<section id="access-rights-on-corpuses">
-<h3>Access rights on corpuses<a class="headerlink" href="#access-rights-on-corpuses" title="Permalink to this headline">¶</a></h3>
-<p>Neuma is implemented with the Django framework, which proposes an automatically
-generated interface for administrating data. Among these administration tasks,
-<em>access rights management</em> is used to protect corpuses and opuses.</p>
-<p>In the admin page of a corpus, a link located in the top-right corner gives
-access to the permissions form. Links are defined per user: first choose the
-user as shown on Figure  <a class="reference internal" href="#droits-specif-user"><span class="std std-numref">Fig. 4</span></a>.</p>
+<p>Each opus in the list is shown with a title, the composer (if known)
+and the corpus it belongs to. By clicking of the title, one can access
+to the page that details the opus.</p>
+</section>
+</section>
+<section id="the-opus-object">
+<h2>The Opus object<a class="headerlink" href="#the-opus-object" title="Permalink to this headline">¶</a></h2>
+<p>An Opus gathers a set of information related to a musical work,
+including  <em>digital score</em> in XML format (MusicXML or MEI).
+<a class="reference internal" href="#opus-page"><span class="std std-numref">Fig. 4</span></a> shows how this information is displayed in the
+web page dedicated to an opus.</p>
 <figure class="align-center" id="id4">
-<span id="droits-specif-user"></span><a class="reference internal image-reference" href="_images/droits_specif_user.png"><img alt="_images/droits_specif_user.png" src="_images/droits_specif_user.png" style="width: 100%;" /></a>
+<span id="opus-page"></span><a class="reference internal image-reference" href="_images/opus_page.png"><img alt="_images/opus_page.png" src="_images/opus_page.png" style="width: 90%;" /></a>
 <figcaption>
-<p><span class="caption-number">Fig. 4 </span><span class="caption-text">Choosing the user for permissions</span><a class="headerlink" href="#id4" title="Permalink to this image">¶</a></p>
+<p><span class="caption-number">Fig. 4 </span><span class="caption-text">A page showing an Opus</span><a class="headerlink" href="#id4" title="Permalink to this image">¶</a></p>
 </figcaption>
 </figure>
-<p>One obtains the form of Figure <a class="reference internal" href="#droits-specif"><span class="std std-numref">Fig. 5</span></a>.</p>
-<figure class="align-center" id="id5">
-<span id="droits-specif"></span><a class="reference internal image-reference" href="_images/droits_specif.png"><img alt="_images/droits_specif.png" src="_images/droits_specif.png" style="width: 100%;" /></a>
-<figcaption>
-<p><span class="caption-number">Fig. 5 </span><span class="caption-text">Access rights form</span><a class="headerlink" href="#id5" title="Permalink to this image">¶</a></p>
-</figcaption>
-</figure>
-<p>The following rights can be given to the user:</p>
-<blockquote>
-<div><ul class="simple">
-<li><p><em>Read</em>: allows to inspect the corpus. This is only relevant for non-public corpuses,
-the public corpuses are, by definition, acessible (in read mode) for everybody.</p></li>
-<li><p><em>Write</em>: rights to modify a corpus, add sub-corpuses and import opuses.</p></li>
-<li><dl class="simple">
-<dt><em>Delete</em>: there is no function to delete a corpus from the Neuma interface. This right is therefore</dt><dd><p>ignored.</p>
-</dd>
-</dl>
-</li>
-</ul>
-</div></blockquote>
+<section id="metadata">
+<h3>Metadata<a class="headerlink" href="#metadata" title="Permalink to this headline">¶</a></h3>
 </section>
-<section id="commands-on-corpuses">
-<h3>Commands on corpuses<a class="headerlink" href="#commands-on-corpuses" title="Permalink to this headline">¶</a></h3>
-<p>A set of Django commands is available on the command line to apply actions to either a
-corpus (and its set of opera) or to a single corpus.</p>
-<p>All these command can be run from the <code class="docutils literal notranslate"><span class="pre">scorelib</span></code> root directory via the `` manage.py`` script.
-The general syntax is:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python3 manage.py &lt;command_name&gt; &lt;options&gt;
-</pre></div>
-</div>
-<p>For corpuses, the command is <code class="docutils literal notranslate"><span class="pre">scan_corpus</span></code>. It always take an option <code class="docutils literal notranslate"><span class="pre">-c</span></code> with the reference
-of the corpus
-(for instance <code class="docutils literal notranslate"><span class="pre">composers:monteverdi</span></code>) and a <code class="docutils literal notranslate"><span class="pre">-a</span></code> action with the specific action to carry out.
-For instance the following command builds and index for the psautiers corpus.</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python3 manage.py scan_corpus -c psautiers -a index
-</pre></div>
-</div>
-<p>Here is the list of available actions:</p>
-<blockquote>
-<div><ul>
-<li><dl>
-<dt><code class="docutils literal notranslate"><span class="pre">mei</span></code>: this action converts the MusicXML file of each opus to an MEI file.</dt><dd><p>The MEI XSLT conversion stylesheet is used and taken from the <code class="docutils literal notranslate"><span class="pre">scripts</span></code> directory.  See
-the github repository for details:
-<a class="reference external" href="https://github.com/music-encoding/encoding-tools/releases/tag/v3.0.0">https://github.com/music-encoding/encoding-tools/releases/tag/v3.0.0</a></p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python3 manage.py scan_corpus -c &lt;corpus_ref&gt; -a mei
-</pre></div>
-</div>
-</dd>
-</dl>
-</li>
-<li><p><code class="docutils literal notranslate"><span class="pre">index</span></code>: this actions extracts descriptors from each opus of a corpus, and
-stores these descriptors in the <code class="docutils literal notranslate"><span class="pre">Descriptor</span></code> table. Descriptors are then sent
-to ElasticSearch</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python3 manage.py scan_corpus -c &lt;corpus_ref&gt; -a index
-</pre></div>
-</div>
-</li>
-</ul>
-</div></blockquote>
+<section id="score">
+<h3>Score<a class="headerlink" href="#score" title="Permalink to this headline">¶</a></h3>
 </section>
+<section id="sources">
+<h3>Sources<a class="headerlink" href="#sources" title="Permalink to this headline">¶</a></h3>
 </section>
-<section id="managing-opuses">
-<h2>Managing opuses<a class="headerlink" href="#managing-opuses" title="Permalink to this headline">¶</a></h2>
-<p>Like corpuses, opuses cn be edited via the Django admin form. This form can be accessed, for
-connected users with access rights, thanks to a small pen displayed left of the opus title.</p>
-<p>However, in general opuses are managed in batches. The main procedure consists in importing
-(and exporting) Zip files containing opuses contents.</p>
-<p>For data exchanges, all infos related to an opus are gathered in two files</p>
-<blockquote>
-<div><ul class="simple">
-<li><p>The score, either a MusicXML (and its compressed variant) or MEI</p></li>
-<li><p>(Optional) metadata sotred in a Json file.</p></li>
-</ul>
-</div></blockquote>
-<p>For XML files (scores), three extensions are accepted:  ‘xml’ for MusicXML, ‘mxl’
-for compressed MusicXML, and ‘mei’ for MEI.</p>
-<p>Both files are named accoding to the (local) reference of the opus, for instance
-<code class="docutils literal notranslate"><span class="pre">bwv333.xml</span></code> for the MusicXML file of choral BWV333, and <code class="docutils literal notranslate"><span class="pre">bwv333.json</span></code> for metadata.
-The Json file is optional: if absent, the import procedure attempts to extract metadata from
-the XML file.</p>
-<section id="upload-files">
-<h3>Upload files<a class="headerlink" href="#upload-files" title="Permalink to this headline">¶</a></h3>
-<div class="admonition note">
-<p class="admonition-title">Note</p>
-<p>In the <code class="docutils literal notranslate"><span class="pre">data</span></code> directory of Neuma, you will find that Zip files ready to be imported.</p>
-</div>
-<p>For import/export, opuses are gathered in Zip files. In order to create such a file, proceed as follows</p>
-<blockquote>
-<div><ul class="simple">
-<li><p>create a directory (its name is not important), say <code class="docutils literal notranslate"><span class="pre">myImport</span></code>;</p></li>
-<li><p>put the opuses files in this directory. It is essential to respect the naming
-rules explained above.</p></li>
-<li><p>compress the directory as a zip file, e.g., <code class="docutils literal notranslate"><span class="pre">myImport.zip</span></code>.</p></li>
-</ul>
-</div></blockquote>
-<p><strong>Be careful with opus references</strong>: the file names (without extension)
-define the local reference of an opus inside its corpus. if, for instance,
-one imports in a corpus <code class="docutils literal notranslate"><span class="pre">psautiers:godeau1656</span></code>, then a file
-<code class="docutils literal notranslate"><span class="pre">mynopus.xml</span></code> will be imported in the corpus with (globl) reference
-<code class="docutils literal notranslate"><span class="pre">psautiers:godeau1656:monopus</span></code>.</p>
-<p>Opus references cannot be modified after import.  <strong>Use a consistent naming scheme,
-in lowercase, as short as possible</strong>. Note that opuses are sorted
-on their (local) reference whenever a corpus is displayed. This must be anticipated
-if order is important. For instance,
-<code class="docutils literal notranslate"><span class="pre">opus_1</span></code>  appears before <code class="docutils literal notranslate"><span class="pre">opus_2</span></code> in alphanumeric order, ,
-but the latter  appears <em>after</em> <code class="docutils literal notranslate"><span class="pre">opus_12</span></code>. Use padding 0 to obtain a correct sorting,
-such as <code class="docutils literal notranslate"><span class="pre">opus_01</span></code>,
-<code class="docutils literal notranslate"><span class="pre">opus_02</span></code>, <cite>òpus_12`</cite> (in case two  positions are enough).</p>
+<section id="features">
+<h3>Features<a class="headerlink" href="#features" title="Permalink to this headline">¶</a></h3>
 </section>
-<section id="inserting-upload-files">
-<h3>Inserting upload files<a class="headerlink" href="#inserting-upload-files" title="Permalink to this headline">¶</a></h3>
-<p>In the <em>Management</em> tab of a corpus, a form allows to upload a zip file. You must supply
-a sort description of the Zip content, and the Zip file itself.</p>
-<p>Once uploaded, Zip files appear in a list, left of the <em>Management</em> tab. Note the ID of a
-file which is required to trigger its insertion.</p>
-<p>The Django admin form gives additional access to upload files (deletion, replacement, etc.)</p>
-</section>
-<section id="importing-opuses">
-<h3>Importing opuses<a class="headerlink" href="#importing-opuses" title="Permalink to this headline">¶</a></h3>
-<p>In order to bulkload the content of a ZIP file, run the following command:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python3 manage.py import_zip -u &lt;upload_id&gt;
-</pre></div>
-</div>
-<p>This function can be run in asynchronous mode with:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python3 manage.py import_zip -u &lt;upload_id&gt; -a <span class="m">1</span>
-</pre></div>
-</div>
+<section id="annotations">
+<h3>Annotations<a class="headerlink" href="#annotations" title="Permalink to this headline">¶</a></h3>
 </section>
 </section>
 </section>
@@ -330,17 +213,20 @@ file which is required to trigger its insertion.</p>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Data organization</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#corpus-and-opus">Corpus and Opus</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#managing-references">Managing references</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#the-hierarchy-of-corpuses">The hierarchy of corpuses</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#exploring-corpuses">Exploring corpuses</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#access-rights-on-corpuses">Access rights on corpuses</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#commands-on-corpuses">Commands on corpuses</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#sub-corpuses">Sub-corpuses</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#opus-containers">Opus containers</a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="#managing-opuses">Managing opuses</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#upload-files">Upload files</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#inserting-upload-files">Inserting upload files</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#importing-opuses">Importing opuses</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#the-opus-object">The Opus object</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#metadata">Metadata</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#score">Score</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#sources">Sources</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#features">Features</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#annotations">Annotations</a></li>
 </ul>
 </li>
 </ul>
