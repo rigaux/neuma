@@ -1,22 +1,17 @@
-Neuma developer documentation
-=============================
+Neuma User Guide
+================
 
 Contents:
 
 .. toctree::
    :maxdepth: 2
 
-
   intro
-  install
-  data
+  dataorg
+  datamgt
   utils
   searching
   analysis
-
-.. automodule:: transcription.models
-   :members:
-
 
 
 Indices and tables

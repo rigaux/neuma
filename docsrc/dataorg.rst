@@ -1,4 +1,4 @@
-.. _chap-data:
+.. _chap-dataorg:
 
 #################
 Data organization
@@ -40,36 +40,44 @@ Managing references
 
 
 Each object, whether *corpus* or *opus*, is identified by a unique Neuma *reference*. 
-A reference
+A (global) reference
 represents a path from the top-level corpus to the object, 
 and takes the following form:
 
-   .. code-block:: text
+.. code-block:: text
    
-         ref1:ref2:...:refN
+       all:ref2:...:refN
          
-Each *refi* is the *local* reference. The first *n-1* references are local *corpus* reference (since
-internal nodes of the hierarchy consist of corpuses). The last refence is either a corpus local
-reference of an opus local reference, depending of the object referred to.
+Each *refi* is the *local* reference. The top-level corpus
+reference is *all*, hence all pathes begin with ``all:``.
+The first *n-1* references are local *corpus* reference (since
+internal nodes of the hierarchy consist of corpuses). 
+The last reference is either a corpus local
+reference of an opus local reference, depending of the 
+object referred to.
 
-For instance, 
-   
-      - the corpus *Composers*, with local reference ``composers``, located
-        below the top-level corpus, has also ``composers`` as its global reference;
-      - the corpus *Monteverdi*, with local reference ``monteverdi``, located
-        below the *Composers* corpus, has ``composers:monteverdi`` as its global reference;
-      - the opus *Madrigal XII*,  with local reference ``madrigal12``, located
-        below the *Monteverdi* corpus, has ``composers:monteverdi:madrigal12`` as its global reference.
+Let's take some examples:
 
-   (Global) reference are therefore quite similar to  absolute paths in a file system. Although the
-   choice of reference string is free, a good practice is to use short identifier, un lowercase,
-   without special characters.
-    
-    
-Initially, Neuma proposes the root corpus, and a few pre-defined corpuses (children of the root)
-for specific
-activities. You can access to the root page by clicking the "Collection" link, choosing "All".
-You should obtain the result of Figure :ref:`initialCorpus`.
+  - the corpus *Composers*, with local reference ``composers``, located
+    below the top-level corpus, has ``all:composers`` as its global reference;
+  - the corpus *Monteverdi*, with local reference ``monteverdi``, located
+    below the *Composers* corpus, has ``all:composers:monteverdi`` as its global reference;
+  - the opus *Madrigal XII*,  with local reference ``madrigal12``, located
+    below the *Monteverdi* corpus, has ``all:composers:monteverdi:madrigal12`` as 
+    its global reference.
+
+(Global) reference are therefore quite similar to  absolute paths in a file system. Although the
+choice of reference string is free, there are some good practices highly
+recommended:
+
+  - use short, and if possibly meaningful, identifiers, u
+  - allways use lowercase strings,
+  - never us special characters, and preferably avoid accents.
+
+Initially, Neuma proposes the root corpus, and a few pre-defined corpuses 
+(children of the root) for generic 
+activities. They are shown on the welcome page of Neuma
+(:numref:`initialCorpus`).
 
 .. _initialCorpus:
 .. figure:: ./figures/initialCorpus.png       
@@ -78,44 +86,45 @@ You should obtain the result of Figure :ref:`initialCorpus`.
    
         The root (initial) corpus
 
-Note the "Management" tab: as a super user, you can add sub-corpuses to any corpus, and import
-opuses in a corpus. Let us explain both operations in turn.
+The complete list of corpuses, along with some stats of their opuses,
+is shown at http://neuma.huma-num.fr/home/collecti
 
-*****************
-Managing corpuses
-*****************
+******************
+Exploring corpuses
+******************
 
-By clicking to the "Management", one obtain the forms shown on Figure :ref:`manageCorpus`. 
+By clicking on a corpus's icon, one obtain a page that 
+details the corpus content. Let's examine first the case
+of a "container" corpus, e.g., a corpus that contains
+sub-corpus. Examine :numref:`exploringCorpus` below,
+showing the page dedicated to corpus ``all:composers``.
 
-.. _manageCorpus:
-.. figure:: ./figures/manageCorpus.png       
+.. _exploringCorpus:
+.. figure:: ./figures/exploringCorpus.png       
         :width: 90%
         :align: center
    
-        Managing a corpus and its sub-corpuses
+        A corpus with sub-corpuses
 
-The following actions are 
-proposed
+Each corpus consists first of some general informations:
 
-  - Editing the corpus, to change its description
-  - Adding a sub-corpus
-  - Adding a zip file containing a list of opuses to import in the corpus
-  - Importing a zip file
+  - a title, in short and detailed form. The short form is 
+    used for navigation purposes: see the breadcrumb at the top of the page
+  - a description, also in short and detailed forms.
+  - a licence, that applies to all the corpuses contents
+  - a cover image, used as an icon in lists
+  - and finally, the list of sub-corpuses or opuses.
   
-Editing corpuses
-================
+It turns out that ``all:composers`` consists only of sub-corpuses,
+one for each composer.
 
-The *Edit corpus* form is shown on Figure :ref:`editCorpus`. Note that it is automatically 
-produced by Django from the schema. This form can be used for creating and 
-editing (modifying) corpuses.
-
-.. _editCorpus:
-.. figure:: ./figures/editCorpus.png       
+.. _exploringCorpus2:
+.. figure:: ./figures/exploringCorpus2.png       
         :width: 90%
         :align: center
    
-        Corpus form 
-        
+        A corpus with opuses
+
 Fields:
 
  - title, for the main page of the corpus

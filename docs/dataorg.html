@@ -15,7 +15,7 @@
     <script src="_static/doctools.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="Utilities" href="utils.html" />
+    <link rel="next" title="Data management" href="datamgt.html" />
     <link rel="prev" title="Introduction" href="intro.html" /> 
   </head><body>
     <div class="header-wrapper" role="banner">
@@ -25,7 +25,7 @@
         <div class="rel" role="navigation" aria-label="related navigation">
           <a href="intro.html" title="Introduction"
              accesskey="P">previous</a> |
-          <a href="utils.html" title="Utilities"
+          <a href="datamgt.html" title="Data management"
              accesskey="N">next</a> |
           <a href="genindex.html" title="General Index"
              accesskey="I">index</a>
@@ -42,7 +42,7 @@
           <div class="body" role="main">
             
   <section id="data-organization">
-<span id="chap-data"></span><h1>Data organization<a class="headerlink" href="#data-organization" title="Permalink to this headline">¶</a></h1>
+<span id="chap-dataorg"></span><h1>Data organization<a class="headerlink" href="#data-organization" title="Permalink to this headline">¶</a></h1>
 <p>The main objects managed in Neuma are <em>corpus(es)</em> and <em>opus(es)</em>. They
 implement a data organization comparable to the classical
 concepts of <em>folders</em> and <em>files</em> in a computer. A <em>corpus</em>
@@ -70,75 +70,85 @@ management tasks, this is the first aspect to address.</p>
 <section id="managing-references">
 <h3>Managing references<a class="headerlink" href="#managing-references" title="Permalink to this headline">¶</a></h3>
 <p>Each object, whether <em>corpus</em> or <em>opus</em>, is identified by a unique Neuma <em>reference</em>.
-A reference
+A (global) reference
 represents a path from the top-level corpus to the object,
 and takes the following form:</p>
-<blockquote>
-<div><div class="highlight-text notranslate"><div class="highlight"><pre><span></span>ref1:ref2:...:refN
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>all:ref2:...:refN
 </pre></div>
 </div>
-</div></blockquote>
-<p>Each <em>refi</em> is the <em>local</em> reference. The first <em>n-1</em> references are local <em>corpus</em> reference (since
-internal nodes of the hierarchy consist of corpuses). The last refence is either a corpus local
-reference of an opus local reference, depending of the object referred to.</p>
-<p>For instance,</p>
+<p>Each <em>refi</em> is the <em>local</em> reference. The top-level corpus
+reference is <em>all</em>, hence all pathes begin with <code class="docutils literal notranslate"><span class="pre">all:</span></code>.
+The first <em>n-1</em> references are local <em>corpus</em> reference (since
+internal nodes of the hierarchy consist of corpuses).
+The last reference is either a corpus local
+reference of an opus local reference, depending of the
+object referred to.</p>
+<p>Let’s take some examples:</p>
 <blockquote>
-<div><blockquote>
 <div><ul class="simple">
 <li><p>the corpus <em>Composers</em>, with local reference <code class="docutils literal notranslate"><span class="pre">composers</span></code>, located
-below the top-level corpus, has also <code class="docutils literal notranslate"><span class="pre">composers</span></code> as its global reference;</p></li>
+below the top-level corpus, has <code class="docutils literal notranslate"><span class="pre">all:composers</span></code> as its global reference;</p></li>
 <li><p>the corpus <em>Monteverdi</em>, with local reference <code class="docutils literal notranslate"><span class="pre">monteverdi</span></code>, located
-below the <em>Composers</em> corpus, has <code class="docutils literal notranslate"><span class="pre">composers:monteverdi</span></code> as its global reference;</p></li>
+below the <em>Composers</em> corpus, has <code class="docutils literal notranslate"><span class="pre">all:composers:monteverdi</span></code> as its global reference;</p></li>
 <li><p>the opus <em>Madrigal XII</em>,  with local reference <code class="docutils literal notranslate"><span class="pre">madrigal12</span></code>, located
-below the <em>Monteverdi</em> corpus, has <code class="docutils literal notranslate"><span class="pre">composers:monteverdi:madrigal12</span></code> as its global reference.</p></li>
+below the <em>Monteverdi</em> corpus, has <code class="docutils literal notranslate"><span class="pre">all:composers:monteverdi:madrigal12</span></code> as
+its global reference.</p></li>
 </ul>
 </div></blockquote>
 <p>(Global) reference are therefore quite similar to  absolute paths in a file system. Although the
-choice of reference string is free, a good practice is to use short identifier, un lowercase,
-without special characters.</p>
+choice of reference string is free, there are some good practices highly
+recommended:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>use short, and if possibly meaningful, identifiers, u</p></li>
+<li><p>allways use lowercase strings,</p></li>
+<li><p>never us special characters, and preferably avoid accents.</p></li>
+</ul>
 </div></blockquote>
-<p>Initially, Neuma proposes the root corpus, and a few pre-defined corpuses (children of the root)
-for specific
-activities. You can access to the root page by clicking the “Collection” link, choosing “All”.
-You should obtain the result of Figure <a class="reference internal" href="#initialcorpus"><span class="std std-ref">The root (initial) corpus</span></a>.</p>
+<p>Initially, Neuma proposes the root corpus, and a few pre-defined corpuses
+(children of the root) for generic
+activities. They are shown on the welcome page of Neuma
+(<a class="reference internal" href="#initialcorpus"><span class="std std-numref">Fig. 1</span></a>).</p>
 <figure class="align-center" id="id1">
 <span id="initialcorpus"></span><a class="reference internal image-reference" href="_images/initialCorpus.png"><img alt="_images/initialCorpus.png" src="_images/initialCorpus.png" style="width: 90%;" /></a>
 <figcaption>
 <p><span class="caption-number">Fig. 1 </span><span class="caption-text">The root (initial) corpus</span><a class="headerlink" href="#id1" title="Permalink to this image">¶</a></p>
 </figcaption>
 </figure>
-<p>Note the “Management” tab: as a super user, you can add sub-corpuses to any corpus, and import
-opuses in a corpus. Let us explain both operations in turn.</p>
+<p>The complete list of corpuses, along with some stats of their opuses,
+is shown at <a class="reference external" href="http://neuma.huma-num.fr/home/collecti">http://neuma.huma-num.fr/home/collecti</a></p>
 </section>
 </section>
-<section id="managing-corpuses">
-<h2>Managing corpuses<a class="headerlink" href="#managing-corpuses" title="Permalink to this headline">¶</a></h2>
-<p>By clicking to the “Management”, one obtain the forms shown on Figure <a class="reference internal" href="#managecorpus"><span class="std std-ref">Managing a corpus and its sub-corpuses</span></a>.</p>
+<section id="exploring-corpuses">
+<h2>Exploring corpuses<a class="headerlink" href="#exploring-corpuses" title="Permalink to this headline">¶</a></h2>
+<p>By clicking on a corpus’s icon, one obtain a page that
+details the corpus content. Let’s examine first the case
+of a “container” corpus, e.g., a corpus that contains
+sub-corpus. Examine <a class="reference internal" href="#exploringcorpus"><span class="std std-numref">Fig. 2</span></a> below,
+showing the page dedicated to corpus <code class="docutils literal notranslate"><span class="pre">all:composers</span></code>.</p>
 <figure class="align-center" id="id2">
-<span id="managecorpus"></span><a class="reference internal image-reference" href="_images/manageCorpus.png"><img alt="_images/manageCorpus.png" src="_images/manageCorpus.png" style="width: 90%;" /></a>
+<span id="exploringcorpus"></span><a class="reference internal image-reference" href="_images/exploringCorpus.png"><img alt="_images/exploringCorpus.png" src="_images/exploringCorpus.png" style="width: 90%;" /></a>
 <figcaption>
-<p><span class="caption-number">Fig. 2 </span><span class="caption-text">Managing a corpus and its sub-corpuses</span><a class="headerlink" href="#id2" title="Permalink to this image">¶</a></p>
+<p><span class="caption-number">Fig. 2 </span><span class="caption-text">A corpus with sub-corpuses</span><a class="headerlink" href="#id2" title="Permalink to this image">¶</a></p>
 </figcaption>
 </figure>
-<p>The following actions are
-proposed</p>
+<p>Each corpus consists first of some general informations:</p>
 <blockquote>
 <div><ul class="simple">
-<li><p>Editing the corpus, to change its description</p></li>
-<li><p>Adding a sub-corpus</p></li>
-<li><p>Adding a zip file containing a list of opuses to import in the corpus</p></li>
-<li><p>Importing a zip file</p></li>
+<li><p>a title, in short and detailed form. The short form is
+used for navigation purposes: see the breadcrumb at the top of the page</p></li>
+<li><p>a description, also in short and detailed forms.</p></li>
+<li><p>a licence, that applies to all the corpuses contents</p></li>
+<li><p>a cover image, used as an icon in lists</p></li>
+<li><p>and finally, the list of sub-corpuses or opuses.</p></li>
 </ul>
 </div></blockquote>
-<section id="editing-corpuses">
-<h3>Editing corpuses<a class="headerlink" href="#editing-corpuses" title="Permalink to this headline">¶</a></h3>
-<p>The <em>Edit corpus</em> form is shown on Figure <a class="reference internal" href="#editcorpus"><span class="std std-ref">Corpus form</span></a>. Note that it is automatically
-produced by Django from the schema. This form can be used for creating and
-editing (modifying) corpuses.</p>
+<p>It turns out that <code class="docutils literal notranslate"><span class="pre">all:composers</span></code> consists only of sub-corpuses,
+one for each composer.</p>
 <figure class="align-center" id="id3">
-<span id="editcorpus"></span><a class="reference internal image-reference" href="_images/editCorpus.png"><img alt="_images/editCorpus.png" src="_images/editCorpus.png" style="width: 90%;" /></a>
+<span id="exploringcorpus2"></span><a class="reference internal image-reference" href="_images/exploringCorpus2.png"><img alt="_images/exploringCorpus2.png" src="_images/exploringCorpus2.png" style="width: 90%;" /></a>
 <figcaption>
-<p><span class="caption-number">Fig. 3 </span><span class="caption-text">Corpus form</span><a class="headerlink" href="#id3" title="Permalink to this image">¶</a></p>
+<p><span class="caption-number">Fig. 3 </span><span class="caption-text">A corpus with opuses</span><a class="headerlink" href="#id3" title="Permalink to this image">¶</a></p>
 </figcaption>
 </figure>
 <p>Fields:</p>
@@ -161,7 +171,6 @@ navigation and searches in Neuma.</p></li>
 <li><p>The cover is an image that illustrates the corpus.</p></li>
 </ul>
 </div></blockquote>
-</section>
 <section id="access-rights-on-corpuses">
 <h3>Access rights on corpuses<a class="headerlink" href="#access-rights-on-corpuses" title="Permalink to this headline">¶</a></h3>
 <p>Neuma is implemented with the Django framework, which proposes an automatically
@@ -323,8 +332,7 @@ file which is required to trigger its insertion.</p>
 <li class="toctree-l3"><a class="reference internal" href="#managing-references">Managing references</a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="#managing-corpuses">Managing corpuses</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#editing-corpuses">Editing corpuses</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#exploring-corpuses">Exploring corpuses</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#access-rights-on-corpuses">Access rights on corpuses</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#commands-on-corpuses">Commands on corpuses</a></li>
 </ul>
@@ -337,6 +345,7 @@ file which is required to trigger its insertion.</p>
 </li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="datamgt.html">Data management</a></li>
 <li class="toctree-l1"><a class="reference internal" href="utils.html">Utilities</a></li>
 <li class="toctree-l1"><a class="reference internal" href="searching.html">Searching Neuma collections</a></li>
 <li class="toctree-l1"><a class="reference internal" href="analysis.html">Analysis</a></li>
@@ -361,14 +370,14 @@ file which is required to trigger its insertion.</p>
           <div role="navigation" aria-label="related navigaton">
             <a href="intro.html" title="Introduction"
               >previous</a> |
-            <a href="utils.html" title="Utilities"
+            <a href="datamgt.html" title="Data management"
               >next</a> |
             <a href="genindex.html" title="General Index"
               >index</a>
           </div>
           <div role="note" aria-label="source link">
               <br/>
-              <a href="_sources/data.rst.txt"
+              <a href="_sources/dataorg.rst.txt"
                 rel="nofollow">Show Source</a>
           </div>
         </div>

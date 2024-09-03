@@ -145,7 +145,7 @@ html_theme_options = {
 
 # The name for this set of Sphinx documents.  If None, it defaults to
 # "<project> v<release> documentation".
-#html_title = None
+html_title = "Neuma User Guide"
 
 # A shorter title for the navigation bar.  Default is the same as html_title.
 #html_short_title = None
@@ -247,7 +247,7 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-  (master_doc, 'Scorelibappdoc.tex', u'Scorelib app. doc Documentation',
+  (master_doc, 'Scorelibappdoc.tex', u'Scorelib app. doc',
    u'Philippe et al.', 'manual'),
 ]
 
@@ -277,7 +277,7 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    (master_doc, 'scorelibappdoc', u'Scorelib app. doc Documentation',
+    (master_doc, 'scorelibappdoc', u'Scorelib app. doc',
      [author], 1)
 ]
 
@@ -291,7 +291,7 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-  (master_doc, 'Scorelibappdoc', u'Scorelib app. doc Documentation',
+  (master_doc, 'Scorelibappdoc', u'Scorelib app. doc',
    author, 'Scorelibappdoc', 'One line description of project.',
    'Miscellaneous'),
 ]

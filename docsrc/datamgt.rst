@@ -1,56 +1,8 @@
-.. _chap-data:
-   
+.. _chap-datamgt:
 
 ###############
 Data management
 ###############
-
-Neuma only knows two tpes of objects: *corpus(es)* and *opus(es)*. 
-Each  corpus is a container with (sub-) *corpuses* and/or a list of *opuses*. The structure of a collection
-is therefore a hierarchy,  rooted at as pseudo-corpus named *all*. Internal nodes
-are corpuses, leaves are opuses.
-
-.. important:: References for corpuses and opuses
-
-   Each object, whether *corpus* or *opus*, is identified by a unique Neuma *reference*. A reference
-   represents a path from the top-level corpus to the object, and takes the forms
-   
-   .. code-block:: text
-   
-         ref1:ref2:...:refN
-         
-   Each *refi* is the *local* reference. The first *n-1* references are local *corpus* reference (since
-   internal nodes of the hierarchy consist of corpuses). The last refence is either a corpus local
-   reference of an opus local reference, depending of the object referred to.
-   
-   For instance, 
-   
-      - the corpus *Composers*, with local reference ``composers``, located
-        below the top-level corpus, has also ``composers`` as its global reference;
-      - the corpus *Monteverdi*, with local reference ``monteverdi``, located
-        below the *Composers* corpus, has ``composers:monteverdi`` as its global reference;
-      - the opus *Madrigal XII*,  with local reference ``madrigal12``, located
-        below the *Monteverdi* corpus, has ``composers:monteverdi:madrigal12`` as its global reference.
-
-   (Global) reference are therefore quite similar to  absolute paths in a file system. Although the
-   choice of reference string is free, a good practice is to use short identifier, un lowercase,
-   without special characters.
-    
-    
-Initially, Neuma proposes the root corpus, and a few pre-defined corpuses (children of the root)
-for specific
-activities. You can access to the root page by clicking the "Collection" link, choosing "All".
-You should obtain the result of Figure :ref:`initialCorpus`.
-
-.. _initialCorpus:
-.. figure:: ./figures/initialCorpus.png       
-        :width: 90%
-        :align: center
-   
-        The root (initial) corpus
-
-Note the "Management" tab: as a super user, you can add sub-corpuses to any corpus, and import
-opuses in a corpus. Let us explain both operations in turn.
 
 *****************
 Managing corpuses
