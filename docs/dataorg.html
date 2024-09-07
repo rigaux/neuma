@@ -1,0 +1,356 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Data organization &#8212; Neuma User Guide</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="_static/agogo.css" />
+    <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Data management" href="datamgt.html" />
+    <link rel="prev" title="Introduction" href="intro.html" /> 
+  </head><body>
+    <div class="header-wrapper" role="banner">
+      <div class="header">
+        <div class="headertitle"><a
+          href="index.html">Neuma User Guide</a></div>
+        <div class="rel" role="navigation" aria-label="related navigation">
+          <a href="intro.html" title="Introduction"
+             accesskey="P">previous</a> |
+          <a href="datamgt.html" title="Data management"
+             accesskey="N">next</a> |
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a>
+        </div>
+       </div>
+    </div>
+
+    <div class="content-wrapper">
+      <div class="content">
+        <div class="document">
+            
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="data-organization">
+<span id="chap-dataorg"></span><h1>Data organization<a class="headerlink" href="#data-organization" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="main-principles">
+<h2>Main principles<a class="headerlink" href="#main-principles" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="corpus-and-opus">
+<h3>Corpus and opus<a class="headerlink" href="#corpus-and-opus" title="Permalink to this headline">¶</a></h3>
+<p>The main objects managed in Neuma are <em>corpus(es)</em> and <em>opus(es)</em>. They
+implement a data organization comparable to the classical
+concepts of <em>directoris</em> and <em>files</em> in a computer. A <em>corpus</em>
+is a container. Its content consists of either
+opuses or (sub)corpuses.
+An <em>opus</em> is a musical work, such as, e.g., The Goldberg variations
+or The New World Symphony. Thus, data in Neuma is essentially
+a hierarchy,  rooted at as pseudo-corpus named <em>all</em>, where internal nodes
+are corpuses, and leaves are opuses. <a class="reference internal" href="#dataorg"><span class="std std-numref">Fig. 1</span></a> illustrates the structure.</p>
+<div class="figure align-center" id="id3">
+<span id="dataorg"></span><a class="reference internal image-reference" href="_images/dataorg.png"><img alt="_images/dataorg.png" src="_images/dataorg.png" style="width: 90%;" /></a>
+<p class="caption"><span class="caption-number">Fig. 1 </span><span class="caption-text">Data organization in Neuma</span><a class="headerlink" href="#id3" title="Permalink to this image">¶</a></p>
+</div>
+<p>Both corpuses and opuses are described by textual meta-data, along
+with several other data items, e.g. typically files.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>In the following, for the sake of clarity, we will use
+the following terminology:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>a <em>container</em> is a corpus that contains sub-corpuses</p></li>
+<li><p>an <em>folder</em> is a corpus that contains opuses</p></li>
+</ul>
+</div></blockquote>
+</div>
+<p>A third, important type of object is called <em>Source</em>. A source is
+any digital document that represents an information about an opus.
+A source is typically a file that encodes the music in a format such as
+MusicXML or MEI. A source can also be an audio file, an image, atextbook, an
+external document that refers to the opus, etc (<a class="reference internal" href="#opus-org"><span class="std std-numref">Fig. 2</span></a>).</p>
+<p>Finally, an opus can be annotated. Annotations express a statement
+(the <em>body</em>) about an opus or one of its sources (the <em>target</em>).</p>
+<div class="figure align-center" id="id4">
+<span id="opus-org"></span><a class="reference internal image-reference" href="_images/opus_org.png"><img alt="_images/opus_org.png" src="_images/opus_org.png" style="width: 90%;" /></a>
+<p class="caption"><span class="caption-number">Fig. 2 </span><span class="caption-text">Structure of an Opus</span><a class="headerlink" href="#id4" title="Permalink to this image">¶</a></p>
+</div>
+<p>In Neuma, Corpus and Opus objects
+receive a unique and immutable reference when they are
+created. Since this reference is essential for further data
+management tasks, this is the first aspect to address.</p>
+</div>
+<div class="section" id="managing-references">
+<h3>Managing references<a class="headerlink" href="#managing-references" title="Permalink to this headline">¶</a></h3>
+<p>Each object, whether <em>corpus</em> or <em>opus</em>, is identified by a unique Neuma <em>reference</em>.</p>
+<blockquote>
+<div><ul>
+<li><p>The <em>local refrence</em> uniquely identifies an object in the context of
+its corpus. For instance, in the context of the <code class="docutils literal notranslate"><span class="pre">goldberg</span></code> corpus,
+<code class="docutils literal notranslate"><span class="pre">var1</span></code> and <code class="docutils literal notranslate"><span class="pre">var12</span></code> are local references uniquely identify opuses.</p></li>
+<li><p>the <em>global</em> reference uniquely identifies an object in Neuma. It
+takes the form of a path from the top-level corpus to the object,
+represented as follows:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>all:ref2:...:refN
+</pre></div>
+</div>
+<p>where each <em>refi</em> is a <em>local</em> reference.</p>
+</li>
+</ul>
+</div></blockquote>
+<p>The top-level corpus
+reference is <em>all</em>, hence all pathes begin with <code class="docutils literal notranslate"><span class="pre">all:</span></code>.
+The first <em>n-1</em> references are local <em>corpus</em> references (since
+internal nodes of the hierarchy consist of corpuses).
+The last reference is either a corpus local
+reference of an opus local reference, depending of the
+object referred to.</p>
+<p>Let’s take some examples:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>the corpus <em>Composers</em>, with local reference <code class="docutils literal notranslate"><span class="pre">composers</span></code>, located
+below the top-level corpus, has <code class="docutils literal notranslate"><span class="pre">all:composers</span></code> as its global reference;</p></li>
+<li><p>the corpus <em>Monteverdi</em>, with local reference <code class="docutils literal notranslate"><span class="pre">monteverdi</span></code>, located
+below the <em>Composers</em> corpus, has <code class="docutils literal notranslate"><span class="pre">all:composers:monteverdi</span></code> as its global reference;</p></li>
+<li><p>the opus <em>Madrigal XII</em>,  with local reference <code class="docutils literal notranslate"><span class="pre">madrigal12</span></code>, located
+below the <em>Monteverdi</em> corpus, has <code class="docutils literal notranslate"><span class="pre">all:composers:monteverdi:madrigal12</span></code> as
+its global reference.</p></li>
+</ul>
+</div></blockquote>
+<p>Global reference are therefore quite similar to  absolute paths in a file system.
+<em>In Neuma, references are the primary mean to refer to an object (corpus or opus)
+and they are immutable (no way to change them after creation</em>. Hence they
+ust be chosen with great care.
+Although the choice of reference string is free, there are some good practices highly
+recommended:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>use short, and if possibly meaningful, identifiers,</p></li>
+<li><p>allways use lowercase strings,</p></li>
+<li><p>never us special characters, and preferably avoid accents.</p></li>
+<li><p>ensure that a local reference is unique inside its container</p></li>
+<li><p>seek for consistency: the set of local references in a given container
+should follow the same pattern.</p></li>
+</ul>
+</div></blockquote>
+<p>Let’s now explain these concepts in details.</p>
+</div>
+</div>
+<div class="section" id="the-corpus-object">
+<h2>The Corpus object<a class="headerlink" href="#the-corpus-object" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="the-hierarchy-of-corpuses">
+<h3>The hierarchy of corpuses<a class="headerlink" href="#the-hierarchy-of-corpuses" title="Permalink to this headline">¶</a></h3>
+<p>Initially, Neuma proposes the root corpus, and a few pre-defined corpuses
+(children of the root) for generic
+categories of musical works. They are shown on the welcome page of Neuma
+(<a class="reference internal" href="#initialcorpus"><span class="std std-numref">Fig. 3</span></a>).</p>
+<div class="figure align-center" id="id5">
+<span id="initialcorpus"></span><a class="reference internal image-reference" href="_images/initialCorpus.png"><img alt="_images/initialCorpus.png" src="_images/initialCorpus.png" style="width: 90%;" /></a>
+<p class="caption"><span class="caption-number">Fig. 3 </span><span class="caption-text">The root (initial) corpus</span><a class="headerlink" href="#id5" title="Permalink to this image">¶</a></p>
+</div>
+<p>By clicking on a corpus’s icon, one obtain a page that
+details the corpus content.
+New corpus can be inserted in the hierarchy by authorized users.
+The complete list of corpuses, along with some stats of their opuses,
+is shown at <a class="reference external" href="http://neuma.huma-num.fr/home/collections">http://neuma.huma-num.fr/home/collections</a></p>
+</div>
+<div class="section" id="containers">
+<h3>Containers<a class="headerlink" href="#containers" title="Permalink to this headline">¶</a></h3>
+<p>Let’s examine first the case
+of a <em>container</em>, e.g., a corpus that contains
+sub-corpus. Examine <a class="reference internal" href="#exploringcorpus"><span class="std std-numref">Fig. 4</span></a> below,
+showing the page dedicated to corpus <code class="docutils literal notranslate"><span class="pre">all:composers</span></code>.</p>
+<div class="figure align-center" id="id6">
+<span id="exploringcorpus"></span><a class="reference internal image-reference" href="_images/exploringCorpus.png"><img alt="_images/exploringCorpus.png" src="_images/exploringCorpus.png" style="width: 90%;" /></a>
+<p class="caption"><span class="caption-number">Fig. 4 </span><span class="caption-text">A corpus with sub-corpuses</span><a class="headerlink" href="#id6" title="Permalink to this image">¶</a></p>
+</div>
+<p>Each corpus consists first of some general informations:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>a title, in short and detailed form. The short form is
+used for navigation purposes: see the breadcrumb at the top of the page</p></li>
+<li><p>a description, also in short and detailed forms.</p></li>
+<li><p>a licence, that applies to all the corpuses contents</p></li>
+<li><p>a cover image, used as an icon in lists</p></li>
+<li><p>and finally, the list of sub-corpuses or opuses.</p></li>
+</ul>
+</div></blockquote>
+<p>Note also that each corpus has a unique parent. By clicking
+on the parent’s icon, one can move up one level in the hierarchy.</p>
+</div>
+<div class="section" id="folders">
+<h3>Folders<a class="headerlink" href="#folders" title="Permalink to this headline">¶</a></h3>
+<p>It turns out that <code class="docutils literal notranslate"><span class="pre">all:composers</span></code> consists only of sub-corpuses,
+one for each composer. For a <a href="#id1"><span class="problematic" id="id2">*</span></a>folder, a corpus consisting of opuses, the page
+presents a list with a music score incipit (<a class="reference internal" href="#exploringcorpus"><span class="std std-numref">Fig. 4</span></a>, showing
+the first opuses of corpus <code class="docutils literal notranslate"><span class="pre">all:airs:cdc</span></code>).</p>
+<div class="figure align-center" id="id7">
+<span id="exploringcorpus2"></span><a class="reference internal image-reference" href="_images/exploringCorpus2.png"><img alt="_images/exploringCorpus2.png" src="_images/exploringCorpus2.png" style="width: 90%;" /></a>
+<p class="caption"><span class="caption-number">Fig. 5 </span><span class="caption-text">A corpus with opuses</span><a class="headerlink" href="#id7" title="Permalink to this image">¶</a></p>
+</div>
+<p>Each opus in the list is shown with a title, the composer (if known)
+and the corpus it belongs to. By clicking of the title, one can access
+to the page that details the opus.</p>
+</div>
+</div>
+<div class="section" id="the-opus-object">
+<h2>The Opus object<a class="headerlink" href="#the-opus-object" title="Permalink to this headline">¶</a></h2>
+<p>An Opus gathers a set of information related to a musical work,
+including  <em>digital score</em> in XML format (MusicXML or MEI).
+<a class="reference internal" href="#opus-page"><span class="std std-numref">Fig. 6</span></a> shows how this information is displayed in the
+web page dedicated to an opus.</p>
+<div class="figure align-center" id="id8">
+<span id="opus-page"></span><a class="reference internal image-reference" href="_images/opus_page.png"><img alt="_images/opus_page.png" src="_images/opus_page.png" style="width: 90%;" /></a>
+<p class="caption"><span class="caption-number">Fig. 6 </span><span class="caption-text">A page showing an Opus</span><a class="headerlink" href="#id8" title="Permalink to this image">¶</a></p>
+</div>
+<div class="section" id="metadata">
+<h3>Metadata<a class="headerlink" href="#metadata" title="Permalink to this headline">¶</a></h3>
+<p>Each opus is described by a short list of pre-defined attributes:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>a title, in short and detailed form. The short form is
+used for navigation purposes: see the breadcrumb at the top of the page</p></li>
+<li><p>a description, also in short and detailed forms.</p></li>
+<li><p>a composer (optional)</p></li>
+</ul>
+</div></blockquote>
+<p>Additionally, a list of free metadata can be added, as a list of key-value pairs.</p>
+</div>
+<div class="section" id="score">
+<h3>Score<a class="headerlink" href="#score" title="Permalink to this headline">¶</a></h3>
+<p>The default display of an Opus in Neuma is taken from a MEI or MusicXML file. They
+must be provided at the Opus creation.</p>
+</div>
+<div class="section" id="sources">
+<h3>Sources<a class="headerlink" href="#sources" title="Permalink to this headline">¶</a></h3>
+<p>A list of <em>sources</em> can be associated to an Opus. Whereas an opus gathers
+information about a musical work, a <em>source</em> provide an actual
+digital representation of this work.  A source is essentially a digital document
+which can be</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>a file associated to the source, locally stored in Neuma, or</p></li>
+<li><p>an external document referred to by it URL.</p></li>
+</ul>
+</div></blockquote>
+<p>Both the MEI and MusicXML files used for displaying an Opus in Neuma are alos stored
+as sources. In addition, here is a non limitative list of source examples:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>an image of a legacy score, stored in a digital library (e.g., Gallica), and referred to by it URL;</p></li>
+<li><p>an audio file, stored locally</p></li>
+<li><p>a video, stored in an external media server (e.g., YouTube)</p></li>
+<li><p>any encoding of a score, in any format</p></li>
+<li><p>a textbook</p></li>
+</ul>
+</div></blockquote>
+<p>Each source is described by a short list of pre-defined attributes:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>a code that serves as a unique identifier to refer to a source in the context of its opus</p></li>
+<li><p>a description</p></li>
+<li><p>a type (image, audio, XML, etc.)</p></li>
+<li><p>a URL, or</p></li>
+<li><p>a file content</p></li>
+</ul>
+</div></blockquote>
+</div>
+<div class="section" id="features">
+<h3>Features<a class="headerlink" href="#features" title="Permalink to this headline">¶</a></h3>
+<p>To be developped.</p>
+</div>
+<div class="section" id="annotations">
+<h3>Annotations<a class="headerlink" href="#annotations" title="Permalink to this headline">¶</a></h3>
+<p>To be developped.</p>
+</div>
+</div>
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+        </div>
+        <div class="sidebar">
+          
+          <h3>Table of Contents</h3>
+          <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="intro.html">Introduction</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Data organization</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#main-principles">Main principles</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#corpus-and-opus">Corpus and opus</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#managing-references">Managing references</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#the-corpus-object">The Corpus object</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#the-hierarchy-of-corpuses">The hierarchy of corpuses</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#containers">Containers</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#folders">Folders</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#the-opus-object">The Opus object</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#metadata">Metadata</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#score">Score</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#sources">Sources</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#features">Features</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#annotations">Annotations</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="datamgt.html">Data management</a></li>
+</ul>
+
+          <div role="search">
+            <h3 style="margin-top: 1.5em;">Search</h3>
+            <form class="search" action="search.html" method="get">
+                <input type="text" name="q" />
+                <input type="submit" value="Go" />
+            </form>
+          </div>
+
+        </div>
+        <div class="clearer"></div>
+      </div>
+    </div>
+
+    <div class="footer-wrapper">
+      <div class="footer">
+        <div class="left">
+          <div role="navigation" aria-label="related navigaton">
+            <a href="intro.html" title="Introduction"
+              >previous</a> |
+            <a href="datamgt.html" title="Data management"
+              >next</a> |
+            <a href="genindex.html" title="General Index"
+              >index</a>
+          </div>
+          <div role="note" aria-label="source link">
+              <br/>
+              <a href="_sources/dataorg.rst.txt"
+                rel="nofollow">Show Source</a>
+          </div>
+        </div>
+
+        <div class="right">
+          
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2016-2024 Philippe Rigaux.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.2.0.
+    </div>
+        </div>
+        <div class="clearer"></div>
+      </div>
+    </div>
+
+  </body>
+</html>

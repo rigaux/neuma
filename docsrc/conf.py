@@ -59,9 +59,9 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = u'Neuma dev. guide'
-copyright = u'2016-2021 Philippe et al.'
-author = u'Philippe et al.'
+project = u'Neuma User Guide'
+copyright = u'2016-2024 Philippe Rigaux'
+author = u'Philippe Rigaux'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -128,6 +128,16 @@ html_theme = 'agogo'
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
 # documentation.
+
+
+html_theme_options = {
+    "headerbg": "#440909",
+     "linkcolor": "#440909",
+        "headercolor1": "#440909",
+           "headercolor2": "#440909"
+}
+
+
 #html_theme_options = {}
 
 # Add any paths that contain custom themes here, relative to this directory.
@@ -135,7 +145,7 @@ html_theme = 'agogo'
 
 # The name for this set of Sphinx documents.  If None, it defaults to
 # "<project> v<release> documentation".
-#html_title = None
+html_title = "Neuma User Guide"
 
 # A shorter title for the navigation bar.  Default is the same as html_title.
 #html_short_title = None
@@ -237,7 +247,7 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-  (master_doc, 'Scorelibappdoc.tex', u'Scorelib app. doc Documentation',
+  (master_doc, 'Scorelibappdoc.tex', u'Scorelib app. doc',
    u'Philippe et al.', 'manual'),
 ]
 
@@ -267,7 +277,7 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    (master_doc, 'scorelibappdoc', u'Scorelib app. doc Documentation',
+    (master_doc, 'scorelibappdoc', u'Scorelib app. doc',
      [author], 1)
 ]
 
@@ -281,7 +291,7 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-  (master_doc, 'Scorelibappdoc', u'Scorelib app. doc Documentation',
+  (master_doc, 'Scorelibappdoc', u'Scorelib app. doc',
    author, 'Scorelibappdoc', 'One line description of project.',
    'Miscellaneous'),
 ]

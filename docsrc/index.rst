@@ -6,13 +6,9 @@ Contents:
 .. toctree::
    :maxdepth: 2
 
-
   intro
-  data
-  utils
-  searching
-  analysis
-
+  dataorg
+  datamgt
 
 Indices and tables
 ==================

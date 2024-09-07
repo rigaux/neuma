@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Neuma developer documentation &#8212; Neuma dev. guide 1.0 documentation</title>
+    <title>Neuma User Guide &#8212; Neuma User Guide</title>
     <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="_static/agogo.css" />
     <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
@@ -19,7 +19,7 @@
     <div class="header-wrapper" role="banner">
       <div class="header">
         <div class="headertitle"><a
-          href="#">Neuma dev. guide 1.0 documentation</a></div>
+          href="#">Neuma User Guide</a></div>
         <div class="rel" role="navigation" aria-label="related navigation">
           <a href="intro.html" title="Introduction"
              accesskey="N">next</a> |
@@ -37,72 +37,47 @@
         <div class="bodywrapper">
           <div class="body" role="main">
             
-  <div class="section" id="neuma-developer-documentation">
-<h1>Neuma developer documentation<a class="headerlink" href="#neuma-developer-documentation" title="Permalink to this headline">¶</a></h1>
+  <div class="section" id="neuma-user-guide">
+<h1>Neuma User Guide<a class="headerlink" href="#neuma-user-guide" title="Permalink to this headline">¶</a></h1>
 <p>Contents:</p>
 <div class="toctree-wrapper compound">
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="intro.html">Introduction</a></li>
-<li class="toctree-l1"><a class="reference internal" href="install.html">Installation</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="install.html#environment">Environment</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="install.html#python-django">Python/Django</a></li>
-<li class="toctree-l3"><a class="reference internal" href="install.html#postgres">Postgres</a></li>
-<li class="toctree-l3"><a class="reference internal" href="install.html#elasticsearch">ElasticSearch</a></li>
-<li class="toctree-l3"><a class="reference internal" href="install.html#redit">Redit</a></li>
-<li class="toctree-l3"><a class="reference internal" href="install.html#celery">Celery</a></li>
-<li class="toctree-l3"><a class="reference internal" href="install.html#neuma-setup">Neuma setup</a></li>
-<li class="toctree-l3"><a class="reference internal" href="install.html#does-it-work">Does it work?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="dataorg.html">Data organization</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="dataorg.html#main-principles">Main principles</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="dataorg.html#corpus-and-opus">Corpus and opus</a></li>
+<li class="toctree-l3"><a class="reference internal" href="dataorg.html#managing-references">Managing references</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="dataorg.html#the-corpus-object">The Corpus object</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="dataorg.html#the-hierarchy-of-corpuses">The hierarchy of corpuses</a></li>
+<li class="toctree-l3"><a class="reference internal" href="dataorg.html#containers">Containers</a></li>
+<li class="toctree-l3"><a class="reference internal" href="dataorg.html#folders">Folders</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="dataorg.html#the-opus-object">The Opus object</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="dataorg.html#metadata">Metadata</a></li>
+<li class="toctree-l3"><a class="reference internal" href="dataorg.html#score">Score</a></li>
+<li class="toctree-l3"><a class="reference internal" href="dataorg.html#sources">Sources</a></li>
+<li class="toctree-l3"><a class="reference internal" href="dataorg.html#features">Features</a></li>
+<li class="toctree-l3"><a class="reference internal" href="dataorg.html#annotations">Annotations</a></li>
 </ul>
 </li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="data.html">Data management</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="data.html#managing-corpuses">Managing corpuses</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="data.html#editing-corpuses">Editing corpuses</a></li>
-<li class="toctree-l3"><a class="reference internal" href="data.html#access-rights-on-corpuses">Access rights on corpuses</a></li>
-<li class="toctree-l3"><a class="reference internal" href="data.html#commands-on-corpuses">Commands on corpuses</a></li>
+<li class="toctree-l1"><a class="reference internal" href="datamgt.html">Data management</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="datamgt.html#managing-corpuses">Managing corpuses</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="datamgt.html#editing-corpuses">Editing corpuses</a></li>
+<li class="toctree-l3"><a class="reference internal" href="datamgt.html#access-rights-on-corpuses">Access rights on corpuses</a></li>
+<li class="toctree-l3"><a class="reference internal" href="datamgt.html#commands-on-corpuses">Commands on corpuses</a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="data.html#managing-opuses">Managing opuses</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="data.html#upload-files">Upload files</a></li>
-<li class="toctree-l3"><a class="reference internal" href="data.html#inserting-upload-files">Inserting upload files</a></li>
-<li class="toctree-l3"><a class="reference internal" href="data.html#importing-opuses">Importing opuses</a></li>
+<li class="toctree-l2"><a class="reference internal" href="datamgt.html#managing-opuses">Managing opuses</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="datamgt.html#upload-files">Upload files</a></li>
+<li class="toctree-l3"><a class="reference internal" href="datamgt.html#inserting-upload-files">Inserting upload files</a></li>
+<li class="toctree-l3"><a class="reference internal" href="datamgt.html#importing-opuses">Importing opuses</a></li>
 </ul>
 </li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="utils.html">Utilities</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="utils.html#translation">Translation</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="utils.html#creation">Creation</a></li>
-<li class="toctree-l3"><a class="reference internal" href="utils.html#updates">Updates</a></li>
-</ul>
-</li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="searching.html">Searching Neuma collections</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="searching.html#elasticsearch">ElasticSearch</a></li>
-<li class="toctree-l2"><a class="reference internal" href="searching.html#searching">Searching</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="searching.html#exact-search">Exact search</a></li>
-<li class="toctree-l3"><a class="reference internal" href="searching.html#melodic-search">Melodic search</a></li>
-<li class="toctree-l3"><a class="reference internal" href="searching.html#rythmic-search">Rythmic search</a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="searching.html#ranking">Ranking</a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="analysis.html">Analysis</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="analysis.html#analytic-models">Analytic models</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="analysis.html#defining-analytic-models">Defining analytic models</a></li>
-<li class="toctree-l3"><a class="reference internal" href="analysis.html#annotations">Annotations</a></li>
-<li class="toctree-l3"><a class="reference internal" href="analysis.html#cookbook">Cookbook</a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="analysis.html#similarity-measures">Similarity measures</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="analysis.html#measures">Measures</a></li>
-<li class="toctree-l3"><a class="reference internal" href="analysis.html#building-a-measure-matrix">Building a measure matrix</a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="analysis.html#clustering">Clustering</a></li>
 </ul>
 </li>
 </ul>
@@ -127,11 +102,8 @@
           <h3>Table of Contents</h3>
           <ul>
 <li class="toctree-l1"><a class="reference internal" href="intro.html">Introduction</a></li>
-<li class="toctree-l1"><a class="reference internal" href="install.html">Installation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="data.html">Data management</a></li>
-<li class="toctree-l1"><a class="reference internal" href="utils.html">Utilities</a></li>
-<li class="toctree-l1"><a class="reference internal" href="searching.html">Searching Neuma collections</a></li>
-<li class="toctree-l1"><a class="reference internal" href="analysis.html">Analysis</a></li>
+<li class="toctree-l1"><a class="reference internal" href="dataorg.html">Data organization</a></li>
+<li class="toctree-l1"><a class="reference internal" href="datamgt.html">Data management</a></li>
 </ul>
 
           <div role="search">
@@ -166,7 +138,7 @@
         <div class="right">
           
     <div class="footer" role="contentinfo">
-        &#169; Copyright 2016-2021 Philippe et al..
+        &#169; Copyright 2016-2024 Philippe Rigaux.
       Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.2.0.
     </div>
         </div>

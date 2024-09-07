@@ -4,9 +4,8 @@
 <html>
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17: http://docutils.sourceforge.net/" />
-
-    <title>Data organization &#8212; Neuma User Guide</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Data management &#8212; Neuma User Guide</title>
     <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="_static/agogo.css" />
     <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
@@ -15,18 +14,15 @@
     <script src="_static/doctools.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="Utilities" href="utils.html" />
-    <link rel="prev" title="Introduction" href="intro.html" /> 
+    <link rel="prev" title="Data organization" href="dataorg.html" /> 
   </head><body>
     <div class="header-wrapper" role="banner">
       <div class="header">
         <div class="headertitle"><a
           href="index.html">Neuma User Guide</a></div>
         <div class="rel" role="navigation" aria-label="related navigation">
-          <a href="intro.html" title="Introduction"
+          <a href="dataorg.html" title="Data organization"
              accesskey="P">previous</a> |
-          <a href="utils.html" title="Utilities"
-             accesskey="N">next</a> |
           <a href="genindex.html" title="General Index"
              accesskey="I">index</a>
         </div>
@@ -41,85 +37,15 @@
         <div class="bodywrapper">
           <div class="body" role="main">
             
-  <section id="data-organization">
-<span id="chap-data"></span><h1>Data organization<a class="headerlink" href="#data-organization" title="Permalink to this headline">¶</a></h1>
-<p>The main objects managed in Neuma are <em>corpus(es)</em> and <em>opus(es)</em>. They
-implement a data organization comparable to the classical
-concepts of <em>folders</em> and <em>files</em> in a computer. A <em>corpus</em>
-is a container. Its content consists of either opuses or (sub)corpuses,
-or both. An <em>opus</em> is a musical work, such as, e.g., The Goldberg variations
-or The New World Symphony. Thus, data in Neuma is essentially
-a hierarchy,  rooted at as pseudo-corpus named <em>all</em>, where internal nodes
-are corpuses, and leaves are opuses. Both corpuses
-and opus are described by textual meta-data.</p>
-<p>A third, important type of object is called <em>Source</em>. A source is
-any digital document that represents an information about an opus.
-A source is typically a file that encodes the music in a format such as
-MusicXML or MEI. A source can also be an audio file, and textbook, an
-external document that refers to the opus, etc.</p>
-<p>Finally, an opus can be annotated. Annotations express a statement
-(the <em>body</em>) about an opus or one of its sources (the <em>target</em>).</p>
-<p>Let’s now explain these concepts in details.</p>
-<section id="corpus-and-opus">
-<h2>Corpus and Opus<a class="headerlink" href="#corpus-and-opus" title="Permalink to this headline">¶</a></h2>
-<p>As explained above, a corpus is a contained, whereas an opus
-gathers a set of information about a musical work. In Neuma, objects
-of both types receive a unique and immutable reference when they are
-created. Since this reference is essential for further data
-management tasks, this is the first aspect to address.</p>
-<section id="managing-references">
-<h3>Managing references<a class="headerlink" href="#managing-references" title="Permalink to this headline">¶</a></h3>
-<p>Each object, whether <em>corpus</em> or <em>opus</em>, is identified by a unique Neuma <em>reference</em>.
-A reference
-represents a path from the top-level corpus to the object,
-and takes the following form:</p>
-<blockquote>
-<div><div class="highlight-text notranslate"><div class="highlight"><pre><span></span>ref1:ref2:...:refN
-</pre></div>
-</div>
-</div></blockquote>
-<p>Each <em>refi</em> is the <em>local</em> reference. The first <em>n-1</em> references are local <em>corpus</em> reference (since
-internal nodes of the hierarchy consist of corpuses). The last refence is either a corpus local
-reference of an opus local reference, depending of the object referred to.</p>
-<p>For instance,</p>
-<blockquote>
-<div><blockquote>
-<div><ul class="simple">
-<li><p>the corpus <em>Composers</em>, with local reference <code class="docutils literal notranslate"><span class="pre">composers</span></code>, located
-below the top-level corpus, has also <code class="docutils literal notranslate"><span class="pre">composers</span></code> as its global reference;</p></li>
-<li><p>the corpus <em>Monteverdi</em>, with local reference <code class="docutils literal notranslate"><span class="pre">monteverdi</span></code>, located
-below the <em>Composers</em> corpus, has <code class="docutils literal notranslate"><span class="pre">composers:monteverdi</span></code> as its global reference;</p></li>
-<li><p>the opus <em>Madrigal XII</em>,  with local reference <code class="docutils literal notranslate"><span class="pre">madrigal12</span></code>, located
-below the <em>Monteverdi</em> corpus, has <code class="docutils literal notranslate"><span class="pre">composers:monteverdi:madrigal12</span></code> as its global reference.</p></li>
-</ul>
-</div></blockquote>
-<p>(Global) reference are therefore quite similar to  absolute paths in a file system. Although the
-choice of reference string is free, a good practice is to use short identifier, un lowercase,
-without special characters.</p>
-</div></blockquote>
-<p>Initially, Neuma proposes the root corpus, and a few pre-defined corpuses (children of the root)
-for specific
-activities. You can access to the root page by clicking the “Collection” link, choosing “All”.
-You should obtain the result of Figure <a class="reference internal" href="#initialcorpus"><span class="std std-ref">The root (initial) corpus</span></a>.</p>
-<figure class="align-center" id="id1">
-<span id="initialcorpus"></span><a class="reference internal image-reference" href="_images/initialCorpus.png"><img alt="_images/initialCorpus.png" src="_images/initialCorpus.png" style="width: 90%;" /></a>
-<figcaption>
-<p><span class="caption-number">Fig. 1 </span><span class="caption-text">The root (initial) corpus</span><a class="headerlink" href="#id1" title="Permalink to this image">¶</a></p>
-</figcaption>
-</figure>
-<p>Note the “Management” tab: as a super user, you can add sub-corpuses to any corpus, and import
-opuses in a corpus. Let us explain both operations in turn.</p>
-</section>
-</section>
-<section id="managing-corpuses">
+  <div class="section" id="data-management">
+<span id="chap-datamgt"></span><h1>Data management<a class="headerlink" href="#data-management" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="managing-corpuses">
 <h2>Managing corpuses<a class="headerlink" href="#managing-corpuses" title="Permalink to this headline">¶</a></h2>
 <p>By clicking to the “Management”, one obtain the forms shown on Figure <a class="reference internal" href="#managecorpus"><span class="std std-ref">Managing a corpus and its sub-corpuses</span></a>.</p>
-<figure class="align-center" id="id2">
+<div class="figure align-center" id="id1">
 <span id="managecorpus"></span><a class="reference internal image-reference" href="_images/manageCorpus.png"><img alt="_images/manageCorpus.png" src="_images/manageCorpus.png" style="width: 90%;" /></a>
-<figcaption>
-<p><span class="caption-number">Fig. 2 </span><span class="caption-text">Managing a corpus and its sub-corpuses</span><a class="headerlink" href="#id2" title="Permalink to this image">¶</a></p>
-</figcaption>
-</figure>
+<p class="caption"><span class="caption-number">Fig. 7 </span><span class="caption-text">Managing a corpus and its sub-corpuses</span><a class="headerlink" href="#id1" title="Permalink to this image">¶</a></p>
+</div>
 <p>The following actions are
 proposed</p>
 <blockquote>
@@ -130,17 +56,15 @@ proposed</p>
 <li><p>Importing a zip file</p></li>
 </ul>
 </div></blockquote>
-<section id="editing-corpuses">
+<div class="section" id="editing-corpuses">
 <h3>Editing corpuses<a class="headerlink" href="#editing-corpuses" title="Permalink to this headline">¶</a></h3>
 <p>The <em>Edit corpus</em> form is shown on Figure <a class="reference internal" href="#editcorpus"><span class="std std-ref">Corpus form</span></a>. Note that it is automatically
 produced by Django from the schema. This form can be used for creating and
 editing (modifying) corpuses.</p>
-<figure class="align-center" id="id3">
+<div class="figure align-center" id="id2">
 <span id="editcorpus"></span><a class="reference internal image-reference" href="_images/editCorpus.png"><img alt="_images/editCorpus.png" src="_images/editCorpus.png" style="width: 90%;" /></a>
-<figcaption>
-<p><span class="caption-number">Fig. 3 </span><span class="caption-text">Corpus form</span><a class="headerlink" href="#id3" title="Permalink to this image">¶</a></p>
-</figcaption>
-</figure>
+<p class="caption"><span class="caption-number">Fig. 8 </span><span class="caption-text">Corpus form</span><a class="headerlink" href="#id2" title="Permalink to this image">¶</a></p>
+</div>
 <p>Fields:</p>
 <blockquote>
 <div><ul class="simple">
@@ -161,28 +85,24 @@ navigation and searches in Neuma.</p></li>
 <li><p>The cover is an image that illustrates the corpus.</p></li>
 </ul>
 </div></blockquote>
-</section>
-<section id="access-rights-on-corpuses">
+</div>
+<div class="section" id="access-rights-on-corpuses">
 <h3>Access rights on corpuses<a class="headerlink" href="#access-rights-on-corpuses" title="Permalink to this headline">¶</a></h3>
 <p>Neuma is implemented with the Django framework, which proposes an automatically
 generated interface for administrating data. Among these administration tasks,
 <em>access rights management</em> is used to protect corpuses and opuses.</p>
 <p>In the admin page of a corpus, a link located in the top-right corner gives
 access to the permissions form. Links are defined per user: first choose the
-user as shown on Figure  <a class="reference internal" href="#droits-specif-user"><span class="std std-numref">Fig. 4</span></a>.</p>
-<figure class="align-center" id="id4">
+user as shown on Figure  <a class="reference internal" href="#droits-specif-user"><span class="std std-numref">Fig. 9</span></a>.</p>
+<div class="figure align-center" id="id3">
 <span id="droits-specif-user"></span><a class="reference internal image-reference" href="_images/droits_specif_user.png"><img alt="_images/droits_specif_user.png" src="_images/droits_specif_user.png" style="width: 100%;" /></a>
-<figcaption>
-<p><span class="caption-number">Fig. 4 </span><span class="caption-text">Choosing the user for permissions</span><a class="headerlink" href="#id4" title="Permalink to this image">¶</a></p>
-</figcaption>
-</figure>
-<p>One obtains the form of Figure <a class="reference internal" href="#droits-specif"><span class="std std-numref">Fig. 5</span></a>.</p>
-<figure class="align-center" id="id5">
+<p class="caption"><span class="caption-number">Fig. 9 </span><span class="caption-text">Choosing the user for permissions</span><a class="headerlink" href="#id3" title="Permalink to this image">¶</a></p>
+</div>
+<p>One obtains the form of Figure <a class="reference internal" href="#droits-specif"><span class="std std-numref">Fig. 10</span></a>.</p>
+<div class="figure align-center" id="id4">
 <span id="droits-specif"></span><a class="reference internal image-reference" href="_images/droits_specif.png"><img alt="_images/droits_specif.png" src="_images/droits_specif.png" style="width: 100%;" /></a>
-<figcaption>
-<p><span class="caption-number">Fig. 5 </span><span class="caption-text">Access rights form</span><a class="headerlink" href="#id5" title="Permalink to this image">¶</a></p>
-</figcaption>
-</figure>
+<p class="caption"><span class="caption-number">Fig. 10 </span><span class="caption-text">Access rights form</span><a class="headerlink" href="#id4" title="Permalink to this image">¶</a></p>
+</div>
 <p>The following rights can be given to the user:</p>
 <blockquote>
 <div><ul class="simple">
@@ -196,21 +116,21 @@ the public corpuses are, by definition, acessible (in read mode) for everybody.<
 </li>
 </ul>
 </div></blockquote>
-</section>
-<section id="commands-on-corpuses">
+</div>
+<div class="section" id="commands-on-corpuses">
 <h3>Commands on corpuses<a class="headerlink" href="#commands-on-corpuses" title="Permalink to this headline">¶</a></h3>
 <p>A set of Django commands is available on the command line to apply actions to either a
 corpus (and its set of opera) or to a single corpus.</p>
 <p>All these command can be run from the <code class="docutils literal notranslate"><span class="pre">scorelib</span></code> root directory via the `` manage.py`` script.
 The general syntax is:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python3 manage.py &lt;command_name&gt; &lt;options&gt;
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python3<span class="w"> </span>manage.py<span class="w"> </span>&lt;command_name&gt;<span class="w"> </span>&lt;options&gt;
 </pre></div>
 </div>
 <p>For corpuses, the command is <code class="docutils literal notranslate"><span class="pre">scan_corpus</span></code>. It always take an option <code class="docutils literal notranslate"><span class="pre">-c</span></code> with the reference
 of the corpus
 (for instance <code class="docutils literal notranslate"><span class="pre">composers:monteverdi</span></code>) and a <code class="docutils literal notranslate"><span class="pre">-a</span></code> action with the specific action to carry out.
 For instance the following command builds and index for the psautiers corpus.</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python3 manage.py scan_corpus -c psautiers -a index
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python3<span class="w"> </span>manage.py<span class="w"> </span>scan_corpus<span class="w"> </span>-c<span class="w"> </span>psautiers<span class="w"> </span>-a<span class="w"> </span>index
 </pre></div>
 </div>
 <p>Here is the list of available actions:</p>
@@ -220,7 +140,7 @@ For instance the following command builds and index for the psautiers corpus.</p
 <dt><code class="docutils literal notranslate"><span class="pre">mei</span></code>: this action converts the MusicXML file of each opus to an MEI file.</dt><dd><p>The MEI XSLT conversion stylesheet is used and taken from the <code class="docutils literal notranslate"><span class="pre">scripts</span></code> directory.  See
 the github repository for details:
 <a class="reference external" href="https://github.com/music-encoding/encoding-tools/releases/tag/v3.0.0">https://github.com/music-encoding/encoding-tools/releases/tag/v3.0.0</a></p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python3 manage.py scan_corpus -c &lt;corpus_ref&gt; -a mei
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python3<span class="w"> </span>manage.py<span class="w"> </span>scan_corpus<span class="w"> </span>-c<span class="w"> </span>&lt;corpus_ref&gt;<span class="w"> </span>-a<span class="w"> </span>mei
 </pre></div>
 </div>
 </dd>
@@ -229,15 +149,15 @@ the github repository for details:
 <li><p><code class="docutils literal notranslate"><span class="pre">index</span></code>: this actions extracts descriptors from each opus of a corpus, and
 stores these descriptors in the <code class="docutils literal notranslate"><span class="pre">Descriptor</span></code> table. Descriptors are then sent
 to ElasticSearch</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python3 manage.py scan_corpus -c &lt;corpus_ref&gt; -a index
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python3<span class="w"> </span>manage.py<span class="w"> </span>scan_corpus<span class="w"> </span>-c<span class="w"> </span>&lt;corpus_ref&gt;<span class="w"> </span>-a<span class="w"> </span>index
 </pre></div>
 </div>
 </li>
 </ul>
 </div></blockquote>
-</section>
-</section>
-<section id="managing-opuses">
+</div>
+</div>
+<div class="section" id="managing-opuses">
 <h2>Managing opuses<a class="headerlink" href="#managing-opuses" title="Permalink to this headline">¶</a></h2>
 <p>Like corpuses, opuses cn be edited via the Django admin form. This form can be accessed, for
 connected users with access rights, thanks to a small pen displayed left of the opus title.</p>
@@ -256,7 +176,7 @@ for compressed MusicXML, and ‘mei’ for MEI.</p>
 <code class="docutils literal notranslate"><span class="pre">bwv333.xml</span></code> for the MusicXML file of choral BWV333, and <code class="docutils literal notranslate"><span class="pre">bwv333.json</span></code> for metadata.
 The Json file is optional: if absent, the import procedure attempts to extract metadata from
 the XML file.</p>
-<section id="upload-files">
+<div class="section" id="upload-files">
 <h3>Upload files<a class="headerlink" href="#upload-files" title="Permalink to this headline">¶</a></h3>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
@@ -284,28 +204,28 @@ if order is important. For instance,
 but the latter  appears <em>after</em> <code class="docutils literal notranslate"><span class="pre">opus_12</span></code>. Use padding 0 to obtain a correct sorting,
 such as <code class="docutils literal notranslate"><span class="pre">opus_01</span></code>,
 <code class="docutils literal notranslate"><span class="pre">opus_02</span></code>, <cite>òpus_12`</cite> (in case two  positions are enough).</p>
-</section>
-<section id="inserting-upload-files">
+</div>
+<div class="section" id="inserting-upload-files">
 <h3>Inserting upload files<a class="headerlink" href="#inserting-upload-files" title="Permalink to this headline">¶</a></h3>
 <p>In the <em>Management</em> tab of a corpus, a form allows to upload a zip file. You must supply
 a sort description of the Zip content, and the Zip file itself.</p>
 <p>Once uploaded, Zip files appear in a list, left of the <em>Management</em> tab. Note the ID of a
 file which is required to trigger its insertion.</p>
 <p>The Django admin form gives additional access to upload files (deletion, replacement, etc.)</p>
-</section>
-<section id="importing-opuses">
+</div>
+<div class="section" id="importing-opuses">
 <h3>Importing opuses<a class="headerlink" href="#importing-opuses" title="Permalink to this headline">¶</a></h3>
 <p>In order to bulkload the content of a ZIP file, run the following command:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python3 manage.py import_zip -u &lt;upload_id&gt;
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python3<span class="w"> </span>manage.py<span class="w"> </span>import_zip<span class="w"> </span>-u<span class="w"> </span>&lt;upload_id&gt;
 </pre></div>
 </div>
 <p>This function can be run in asynchronous mode with:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python3 manage.py import_zip -u &lt;upload_id&gt; -a <span class="m">1</span>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python3<span class="w"> </span>manage.py<span class="w"> </span>import_zip<span class="w"> </span>-u<span class="w"> </span>&lt;upload_id&gt;<span class="w"> </span>-a<span class="w"> </span><span class="m">1</span>
 </pre></div>
 </div>
-</section>
-</section>
-</section>
+</div>
+</div>
+</div>
 
 
             <div class="clearer"></div>
@@ -318,11 +238,8 @@ file which is required to trigger its insertion.</p>
           <h3>Table of Contents</h3>
           <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="intro.html">Introduction</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">Data organization</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#corpus-and-opus">Corpus and Opus</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#managing-references">Managing references</a></li>
-</ul>
-</li>
+<li class="toctree-l1"><a class="reference internal" href="dataorg.html">Data organization</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Data management</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#managing-corpuses">Managing corpuses</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#editing-corpuses">Editing corpuses</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#access-rights-on-corpuses">Access rights on corpuses</a></li>
@@ -337,9 +254,6 @@ file which is required to trigger its insertion.</p>
 </li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="utils.html">Utilities</a></li>
-<li class="toctree-l1"><a class="reference internal" href="searching.html">Searching Neuma collections</a></li>
-<li class="toctree-l1"><a class="reference internal" href="analysis.html">Analysis</a></li>
 </ul>
 
           <div role="search">
@@ -359,16 +273,14 @@ file which is required to trigger its insertion.</p>
       <div class="footer">
         <div class="left">
           <div role="navigation" aria-label="related navigaton">
-            <a href="intro.html" title="Introduction"
+            <a href="dataorg.html" title="Data organization"
               >previous</a> |
-            <a href="utils.html" title="Utilities"
-              >next</a> |
             <a href="genindex.html" title="General Index"
               >index</a>
           </div>
           <div role="note" aria-label="source link">
               <br/>
-              <a href="_sources/data.rst.txt"
+              <a href="_sources/datamgt.rst.txt"
                 rel="nofollow">Show Source</a>
           </div>
         </div>
@@ -377,7 +289,7 @@ file which is required to trigger its insertion.</p>
           
     <div class="footer" role="contentinfo">
         &#169; Copyright 2016-2024 Philippe Rigaux.
-      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.0.1.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.2.0.
     </div>
         </div>
         <div class="clearer"></div>
