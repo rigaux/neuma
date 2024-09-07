@@ -1,5 +1,5 @@
-Neuma developer documentation
-=============================
+Neuma User Guide
+================
 
 Contents:
 
@@ -8,15 +8,10 @@ Contents:
 
 
   intro
-  install
   data
   utils
   searching
   analysis
-
-.. automodule:: transcription.models
-   :members:
-
 
 
 Indices and tables
