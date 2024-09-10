@@ -44,8 +44,8 @@
 <span id="chap-dataorg"></span><h1>Data organization<a class="headerlink" href="#data-organization" title="Permalink to this headline">¶</a></h1>
 <div class="section" id="main-principles">
 <h2>Main principles<a class="headerlink" href="#main-principles" title="Permalink to this headline">¶</a></h2>
-<div class="section" id="corpus-and-opus">
-<h3>Corpus and opus<a class="headerlink" href="#corpus-and-opus" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="the-hierarchy-of-corpuses-and-opuses">
+<h3>The hierarchy of corpuses and opuses<a class="headerlink" href="#the-hierarchy-of-corpuses-and-opuses" title="Permalink to this headline">¶</a></h3>
 <p>The main objects managed in Neuma are <em>corpus(es)</em> and <em>opus(es)</em>. They
 implement a data organization comparable to the classical
 concepts of <em>directoris</em> and <em>files</em> in a computer. A <em>corpus</em>
@@ -55,9 +55,9 @@ An <em>opus</em> is a musical work, such as, e.g., The Goldberg variations
 or The New World Symphony. Thus, data in Neuma is essentially
 a hierarchy,  rooted at as pseudo-corpus named <em>all</em>, where internal nodes
 are corpuses, and leaves are opuses. <a class="reference internal" href="#dataorg"><span class="std std-numref">Fig. 1</span></a> illustrates the structure.</p>
-<div class="figure align-center" id="id3">
+<div class="figure align-center" id="id1">
 <span id="dataorg"></span><a class="reference internal image-reference" href="_images/dataorg.png"><img alt="_images/dataorg.png" src="_images/dataorg.png" style="width: 90%;" /></a>
-<p class="caption"><span class="caption-number">Fig. 1 </span><span class="caption-text">Data organization in Neuma</span><a class="headerlink" href="#id3" title="Permalink to this image">¶</a></p>
+<p class="caption"><span class="caption-number">Fig. 1 </span><span class="caption-text">Data organization in Neuma</span><a class="headerlink" href="#id1" title="Permalink to this image">¶</a></p>
 </div>
 <p>Both corpuses and opuses are described by textual meta-data, along
 with several other data items, e.g. typically files.</p>
@@ -79,9 +79,9 @@ MusicXML or MEI. A source can also be an audio file, an image, atextbook, an
 external document that refers to the opus, etc (<a class="reference internal" href="#opus-org"><span class="std std-numref">Fig. 2</span></a>).</p>
 <p>Finally, an opus can be annotated. Annotations express a statement
 (the <em>body</em>) about an opus or one of its sources (the <em>target</em>).</p>
-<div class="figure align-center" id="id4">
+<div class="figure align-center" id="id2">
 <span id="opus-org"></span><a class="reference internal image-reference" href="_images/opus_org.png"><img alt="_images/opus_org.png" src="_images/opus_org.png" style="width: 90%;" /></a>
-<p class="caption"><span class="caption-number">Fig. 2 </span><span class="caption-text">Structure of an Opus</span><a class="headerlink" href="#id4" title="Permalink to this image">¶</a></p>
+<p class="caption"><span class="caption-number">Fig. 2 </span><span class="caption-text">Structure of an Opus</span><a class="headerlink" href="#id2" title="Permalink to this image">¶</a></p>
 </div>
 <p>In Neuma, Corpus and Opus objects
 receive a unique and immutable reference when they are
@@ -143,6 +143,48 @@ should follow the same pattern.</p></li>
 </div></blockquote>
 <p>Let’s now explain these concepts in details.</p>
 </div>
+<div class="section" id="access-rights">
+<h3>Access rights<a class="headerlink" href="#access-rights" title="Permalink to this headline">¶</a></h3>
+<p>Access rights operate at the corpus level. They
+can be split in <em>viewing</em> and <em>editing</em> rights.</p>
+<blockquote>
+<div><ul class="simple">
+<li><p><em>Viewing</em> is the bright to inspect all the information
+covered by the corpus, including its opuses</p></li>
+<li><p><em>Editing</em> means  both creation, and modification (which includes the right to
+add opuses to a corpus), but not deletion.</p></li>
+</ul>
+</div></blockquote>
+<p>Access rights on opuses are the same as those of their corpus.</p>
+<p>Any user that accesses a corpus has a <em>role</em> which determines
+her/his access rights on the corpus.
+Neuma recognizes four roles: <em>anonymous</em> (not connected),
+<em>visitor</em>, <em>editor</em> and <em>administrator</em>. In addition, access rights depend
+on the <em>visibility</em> status of each corpus. This status
+can take two values:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p><em>public</em>. A public corpus can be seen by all Neuma users, including
+anonymous (non connnected) users.</p></li>
+<li><p><em>private</em>. A private corpus can only be seen by users who have been granted
+a <em>visitor</em> privilege.</p></li>
+</ul>
+</div></blockquote>
+<p>Access rights depend  on both this status and on user’s role.
+The rules are  the following:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>Anonymous users can <em>see</em> public corpuses, but cannot edit them ; they do not
+see private corpuses.</p></li>
+<li><p>A connected user can can <em>see</em> public corpuses.</p></li>
+<li><p>Administrators can <em>edit</em> <em>all</em> corpuses</p></li>
+<li><p>A connected user who is granted a <em>visitor</em> role on a private corpus can see this corpus</p></li>
+<li><p>A connected user who is granted an <em>editor</em> role on a private corpus can edit this corpus</p></li>
+</ul>
+</div></blockquote>
+<p>User management is operated by administrators and is not described
+in the present documentation.</p>
+</div>
 </div>
 <div class="section" id="the-corpus-object">
 <h2>The Corpus object<a class="headerlink" href="#the-corpus-object" title="Permalink to this headline">¶</a></h2>
@@ -152,9 +194,9 @@ should follow the same pattern.</p></li>
 (children of the root) for generic
 categories of musical works. They are shown on the welcome page of Neuma
 (<a class="reference internal" href="#initialcorpus"><span class="std std-numref">Fig. 3</span></a>).</p>
-<div class="figure align-center" id="id5">
+<div class="figure align-center" id="id3">
 <span id="initialcorpus"></span><a class="reference internal image-reference" href="_images/initialCorpus.png"><img alt="_images/initialCorpus.png" src="_images/initialCorpus.png" style="width: 90%;" /></a>
-<p class="caption"><span class="caption-number">Fig. 3 </span><span class="caption-text">The root (initial) corpus</span><a class="headerlink" href="#id5" title="Permalink to this image">¶</a></p>
+<p class="caption"><span class="caption-number">Fig. 3 </span><span class="caption-text">The root (initial) corpus</span><a class="headerlink" href="#id3" title="Permalink to this image">¶</a></p>
 </div>
 <p>By clicking on a corpus’s icon, one obtain a page that
 details the corpus content.
@@ -168,9 +210,9 @@ is shown at <a class="reference external" href="http://neuma.huma-num.fr/home/co
 of a <em>container</em>, e.g., a corpus that contains
 sub-corpus. Examine <a class="reference internal" href="#exploringcorpus"><span class="std std-numref">Fig. 4</span></a> below,
 showing the page dedicated to corpus <code class="docutils literal notranslate"><span class="pre">all:composers</span></code>.</p>
-<div class="figure align-center" id="id6">
+<div class="figure align-center" id="id4">
 <span id="exploringcorpus"></span><a class="reference internal image-reference" href="_images/exploringCorpus.png"><img alt="_images/exploringCorpus.png" src="_images/exploringCorpus.png" style="width: 90%;" /></a>
-<p class="caption"><span class="caption-number">Fig. 4 </span><span class="caption-text">A corpus with sub-corpuses</span><a class="headerlink" href="#id6" title="Permalink to this image">¶</a></p>
+<p class="caption"><span class="caption-number">Fig. 4 </span><span class="caption-text">A corpus with sub-corpuses</span><a class="headerlink" href="#id4" title="Permalink to this image">¶</a></p>
 </div>
 <p>Each corpus consists first of some general informations:</p>
 <blockquote>
@@ -189,12 +231,12 @@ on the parent’s icon, one can move up one level in the hierarchy.</p>
 <div class="section" id="folders">
 <h3>Folders<a class="headerlink" href="#folders" title="Permalink to this headline">¶</a></h3>
 <p>It turns out that <code class="docutils literal notranslate"><span class="pre">all:composers</span></code> consists only of sub-corpuses,
-one for each composer. For a <a href="#id1"><span class="problematic" id="id2">*</span></a>folder, a corpus consisting of opuses, the page
+one for each composer. For a <em>folder</em>, a corpus consisting of opuses, the page
 presents a list with a music score incipit (<a class="reference internal" href="#exploringcorpus"><span class="std std-numref">Fig. 4</span></a>, showing
 the first opuses of corpus <code class="docutils literal notranslate"><span class="pre">all:airs:cdc</span></code>).</p>
-<div class="figure align-center" id="id7">
+<div class="figure align-center" id="id5">
 <span id="exploringcorpus2"></span><a class="reference internal image-reference" href="_images/exploringCorpus2.png"><img alt="_images/exploringCorpus2.png" src="_images/exploringCorpus2.png" style="width: 90%;" /></a>
-<p class="caption"><span class="caption-number">Fig. 5 </span><span class="caption-text">A corpus with opuses</span><a class="headerlink" href="#id7" title="Permalink to this image">¶</a></p>
+<p class="caption"><span class="caption-number">Fig. 5 </span><span class="caption-text">A corpus with opuses</span><a class="headerlink" href="#id5" title="Permalink to this image">¶</a></p>
 </div>
 <p>Each opus in the list is shown with a title, the composer (if known)
 and the corpus it belongs to. By clicking of the title, one can access
@@ -207,9 +249,9 @@ to the page that details the opus.</p>
 including  <em>digital score</em> in XML format (MusicXML or MEI).
 <a class="reference internal" href="#opus-page"><span class="std std-numref">Fig. 6</span></a> shows how this information is displayed in the
 web page dedicated to an opus.</p>
-<div class="figure align-center" id="id8">
+<div class="figure align-center" id="id6">
 <span id="opus-page"></span><a class="reference internal image-reference" href="_images/opus_page.png"><img alt="_images/opus_page.png" src="_images/opus_page.png" style="width: 90%;" /></a>
-<p class="caption"><span class="caption-number">Fig. 6 </span><span class="caption-text">A page showing an Opus</span><a class="headerlink" href="#id8" title="Permalink to this image">¶</a></p>
+<p class="caption"><span class="caption-number">Fig. 6 </span><span class="caption-text">A page showing an Opus</span><a class="headerlink" href="#id6" title="Permalink to this image">¶</a></p>
 </div>
 <div class="section" id="metadata">
 <h3>Metadata<a class="headerlink" href="#metadata" title="Permalink to this headline">¶</a></h3>
@@ -287,8 +329,9 @@ as sources. In addition, here is a non limitative list of source examples:</p>
 <li class="toctree-l1"><a class="reference internal" href="intro.html">Introduction</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Data organization</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#main-principles">Main principles</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#corpus-and-opus">Corpus and opus</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#the-hierarchy-of-corpuses-and-opuses">The hierarchy of corpuses and opuses</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#managing-references">Managing references</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#access-rights">Access rights</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#the-corpus-object">The Corpus object</a><ul>

@@ -10,8 +10,8 @@ Data organization
 Main principles
 ***************
 
-Corpus and opus
-===============
+The hierarchy of corpuses and opuses
+====================================
 
 The main objects managed in Neuma are *corpus(es)* and *opus(es)*. They 
 implement a data organization comparable to the classical
@@ -114,6 +114,46 @@ recommended:
 
 Let's now explain these concepts in details.
 
+Access rights
+=============
+
+Access rights operate at the corpus level. They
+can be split in *viewing* and *editing* rights.
+
+  - *Viewing* is the bright to inspect all the information
+    covered by the corpus, including its opuses
+  - *Editing* means  both creation, and modification (which includes the right to 
+    add opuses to a corpus), but not deletion.
+
+Access rights on opuses are the same as those of their corpus. 
+
+Any user that accesses a corpus has a *role* which determines 
+her/his access rights on the corpus. 
+Neuma recognizes four roles: *anonymous* (not connected), 
+*visitor*, *editor* and *administrator*. In addition, access rights depend
+on the *visibility* status of each corpus. This status
+can take two values:
+
+  - *public*. A public corpus can be seen by all Neuma users, including
+    anonymous (non connnected) users. 
+  - *private*. A private corpus can only be seen by users who have been granted
+    a *visitor* privilege.
+
+Access rights depend  on both this status and on user's role.
+The rules are  the following:
+
+  - Anonymous users can *see* public corpuses, but cannot edit them ; they do not 
+    see private corpuses.
+  - A connected user can can *see* public corpuses.
+  - Administrators can *edit* *all* corpuses
+  - A connected user who is granted a *visitor* role on a private corpus can see this corpus
+  - A connected user who is granted an *editor* role on a private corpus can edit this corpus
+  
+User management is operated by administrators and is not described 
+in the present documentation.
+
+
+
 *****************
 The Corpus object
 *****************
@@ -170,7 +210,7 @@ Folders
 =======
 
 It turns out that ``all:composers`` consists only of sub-corpuses,
-one for each composer. For a *folder, a corpus consisting of opuses, the page 
+one for each composer. For a *folder*, a corpus consisting of opuses, the page 
 presents a list with a music score incipit (:numref:`exploringCorpus`, showing
 the first opuses of corpus ``all:airs:cdc``).
 
