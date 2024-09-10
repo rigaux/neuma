@@ -4,11 +4,15 @@
 Data management
 ###############
 
+Data management tasks are reserved to the administrators or
+to users with an ``editor`` role. 
+
 *****************
 Managing corpuses
 *****************
 
-By clicking to the "Management", one obtain the forms shown on Figure :ref:`manageCorpus`. 
+By clicking to the "Management" tab, one obtain the forms shown on  
+:numref:`manageCorpus`. 
 
 .. _manageCorpus:
 .. figure:: ./figures/manageCorpus.png       
@@ -28,8 +32,8 @@ proposed
 Editing corpuses
 ================
 
-The *Edit corpus* form is shown on Figure :ref:`editCorpus`. Note that it is automatically 
-produced by Django from the schema. This form can be used for creating and 
+The *Edit corpus* form is shown on :numref:`editCorpus`. 
+This form can be used for creating and 
 editing (modifying) corpuses.
 
 .. _editCorpus:
@@ -46,7 +50,7 @@ Fields:
  - description
  - short description (a few lines) 
  - ``isPublic``: a corpus can be either *Public* (not access restrictions) or *Private*. In the
-    latter case it is shown only to users with access grants.
+   latter case it is shown only to users with access grants.
  - Parent corpus: each corpus has a unique parent. Choose the parent from the list
  - Reference code: this is the *global* reference code, for instance ``composers:bach:chorals``
    for the ``chorals`` corpus, child of ``bach``, itself child of ``composers``. **Be very careful**
@@ -54,89 +58,11 @@ Fields:
    navigation and searches in Neuma.
  - The cover is an image that illustrates the corpus.
 
-Access rights on corpuses
-=========================
-
-Neuma is implemented with the Django framework, which proposes an automatically
-generated interface for administrating data. Among these administration tasks, 
-*access rights management* is used to protect corpuses and opuses.
-
-In the admin page of a corpus, a link located in the top-right corner gives
-access to the permissions form. Links are defined per user: first choose the
-user as shown on Figure  :numref:`droits_specif_user`. 
-
-.. _droits_specif_user:
-.. figure:: ./figures/droits_specif_user.png
-   :width: 100%
-   :align: center
-   
-   Choosing the user for permissions
-   
-One obtains the form of Figure :numref:`droits_specif`. 
-
-.. _droits_specif:
-.. figure:: ./figures/droits_specif.png
-   :width: 100%
-   :align: center
-   
-   Access rights form
-
-The following rights can be given to the user:
- 
- - *Read*: allows to inspect the corpus. This is only relevant for non-public corpuses, 
-   the public corpuses are, by definition, acessible (in read mode) for everybody. 
- - *Write*: rights to modify a corpus, add sub-corpuses and import opuses. 
- - *Delete*: there is no function to delete a corpus from the Neuma interface. This right is therefore
-    ignored.
-    
-Commands on corpuses
-====================
-
-A set of Django commands is available on the command line to apply actions to either a
-corpus (and its set of opera) or to a single corpus. 
-
-All these command can be run from the ``scorelib`` root directory via the `` manage.py`` script. 
-The general syntax is:
-
-.. code-block:: bash
-
-    python3 manage.py <command_name> <options>
-
-For corpuses, the command is ``scan_corpus``. It always take an option ``-c`` with the reference 
-of the corpus
-(for instance ``composers:monteverdi``) and a ``-a`` action with the specific action to carry out.
-For instance the following command builds and index for the psautiers corpus.
-
-.. code-block:: bash
-
-    python3 manage.py scan_corpus -c psautiers -a index
-
-Here is the list of available actions:
-
-
-  - ``mei``: this action converts the MusicXML file of each opus to an MEI file.
-     The MEI XSLT conversion stylesheet is used and taken from the ``scripts`` directory.  See 
-     the github repository for details: 
-     https://github.com/music-encoding/encoding-tools/releases/tag/v3.0.0
-
-     .. code-block:: bash
-   
-          python3 manage.py scan_corpus -c <corpus_ref> -a mei
-      
-  - ``index``: this actions extracts descriptors from each opus of a corpus, and 
-    stores these descriptors in the ``Descriptor`` table. Descriptors are then sent
-    to ElasticSearch 
-
-    .. code-block:: bash
-   
-        python3 manage.py scan_corpus -c <corpus_ref> -a index
-      
-
 ***************
 Managing opuses
 ***************
 
-Like corpuses, opuses cn be edited via the Django admin form. This form can be accessed, for
+Like corpuses, opuses can be edited via the Django admin form. This form can be accessed, for
 connected users with access rights, thanks to a small pen displayed left of the opus title.
 
 However, in general opuses are managed in batches. The main procedure consists in importing
