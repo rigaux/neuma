@@ -145,26 +145,26 @@ For a given opus with reference ``xyz``, those files are respectively named
      - a file ``opB.xml`` containing the MusicXML default score for opA
    
    By compressing the directory ``corp``, you obtain a ``corp.zip`` file
-   ready to be inserted in and existing corpus of Neuma.
+   ready to be inserted in an existing corpus of Neuma.
  
 **Be careful with  references**: the directory name (without extension)
-defines the corpus local referece, and the file names (without extension)
+defines the corpus local reference, and the file names (without extension)
 define the local reference of an opus inside its corpus. 
 
 .. admonition:: Example
 
     If one imports the  corpus ``corp``  in a parent corpus with global reference
     ``all:parent``, the global reference of the new corpus is ``all:parent::corp``,
-    and thetwo  opuses get the respective global references ``all:parent::corp:opA`` and ``all:parent::corp:opB``.
+    and the two  opuses get the respective global references ``all:parent::corp:opA`` and ``all:parent::corp:opB``.
 
 Opus references cannot be modified after import.  **Use a consistent naming scheme,
 in lowercase, as short as possible**. Note that opuses are sorted
 on their (local) reference whenever a corpus is displayed. This must be anticipated
 if order is important. For instance,  
-``opus_1``  appears before ``opus_2`` in alphanumeric order, ,
+``opus_1``  appears before ``opus_2`` in alphanumeric order,
 but the latter  appears *after* ``opus_12``. Use padding 0 to obtain a correct sorting,
 such as ``opus_01``,
-``opus_02``, `òpus_12`` (in case two  positions are enough).
+``opus_02``, ``opus_12`` (in case two  positions are enough).
 
 Format of metadate JSON files
 =============================
