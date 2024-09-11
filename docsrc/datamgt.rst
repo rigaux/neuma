@@ -5,14 +5,19 @@ Data management
 ###############
 
 Data management tasks are reserved to the administrators or
-to users with an ``editor`` role. 
+to users with an ``editor`` role on the corpus. They can be performed
+either via web forms, or by exporting/importing files. 
 
-*****************
-Managing corpuses
-*****************
+*********************
+Form-based management
+*********************
 
-By clicking to the "Management" tab, one obtain the forms shown on  
-:numref:`manageCorpus`. 
+The "management" tab
+====================
+
+A user with editor rights on a corpus can access to the corpus management 
+function via a "Management" tab. By clicking to this tab, 
+one obtains the forms shown on   :numref:`manageCorpus`. 
 
 .. _manageCorpus:
 .. figure:: ./figures/manageCorpus.png       
@@ -21,13 +26,13 @@ By clicking to the "Management" tab, one obtain the forms shown on
    
         Managing a corpus and its sub-corpuses
 
-The following actions are 
-proposed
+The following actions are  proposed
 
-  - Editing the corpus, to change its description
+  - Editing the corpus, to change or complete its description
   - Adding a sub-corpus
   - Adding a zip file containing a list of opuses to import in the corpus
   - Importing a zip file
+  - Exporting the corpus content as a zip file
   
 Editing corpuses
 ================
@@ -58,46 +63,99 @@ Fields:
    navigation and searches in Neuma.
  - The cover is an image that illustrates the corpus.
 
-***************
-Managing opuses
-***************
+Adding a sub-corpus
+===================
 
-Like corpuses, opuses can be edited via the Django admin form. This form can be accessed, for
-connected users with access rights, thanks to a small pen displayed left of the opus title.
+A sub-corpus is added with the form shown on :numref:`add_sub_corpus`. All
+the fields are mandatory, and in particular an image that serves to illustrate the corpus.
 
-However, in general opuses are managed in batches. The main procedure consists in importing
-(and exporting) Zip files containing opuses contents. 
+.. _add_sub_corpus:
+.. figure:: ./figures/add_sub_corpus.png       
+        :width: 90%
+        :align: center
+   
+        Adding a sub-corpus
 
-For data exchanges, all infos related to an opus are gathered in two files
-
- - The score, either a MusicXML (and its compressed variant) or MEI 
- - (Optional) metadata sotred in a Json file.
- 
-For XML files (scores), three extensions are accepted:  'xml' for MusicXML, 'mxl' 
-for compressed MusicXML, and 'mei' for MEI.
-     
-Both files are named accoding to the (local) reference of the opus, for instance 
-``bwv333.xml`` for the MusicXML file of choral BWV333, and ``bwv333.json`` for metadata.
-The Json file is optional: if absent, the import procedure attempts to extract metadata from
-the XML file. 
-
-Upload files
-============
-
-.. note:: In the ``data`` directory of Neuma, you will find that Zip files ready to be imported.
-
-For import/export, opuses are gathered in Zip files. In order to create such a file, proceed as follows
-
-  - create a directory (its name is not important), say ``myImport``;
-  - put the opuses files in this directory. It is essential to respect the naming
-    rules explained above. 
-  - compress the directory as a zip file, e.g., ``myImport.zip``.
+If the new corpus is not *public*, access rights must be 
+specified by an administrator.
     
-**Be careful with opus references**: the file names (without extension)
-define the local reference of an opus inside its corpus. if, for instance,
-one imports in a corpus ``psautiers:godeau1656``, then a file 
-``mynopus.xml`` will be imported in the corpus with (globl) reference 
-``psautiers:godeau1656:monopus``.
+
+Adding an Opus
+==============
+
+An Opus can be added via a form. However, the preferred method is to
+load a set of opuses via a Zip file.
+
+Upload a ZIP file
+=================
+
+In the *Management* tab of a corpus, a form allows to upload a zip file. You must supply
+a sort description of the Zip content, and the Zip file itself. 
+
+Once uploaded, Zip files appear in a list, left of the *Management* tab. Note the ID of a
+file which is required to trigger its insertion.
+See the next section for instructions regarding the organization and format.
+
+       
+*******************
+Importing/exporting
+*******************
+
+In general opuses are managed in batches. The main procedure consists in importing
+(and exporting) Zip files (called "neumazip" from now on) 
+containing opuses contents. Actually such zip files
+can contain full subsets of the Neuma collection, including a hierarchy of corpuses.
+
+
+.. note:: Several examples of neumazips are available on demand.
+
+Organization of neumazips
+=========================
+
+The organization of neumazips containing corpus/sub-corpuses/opuses is similar to
+that  on your computer, where *directories* play the role of corpuses, and
+*files* the role of opuses. The local reference of the corpus is the directory name,
+and the files in the directory contain the opuses' description. 
+
+The metadata of the corpus is stored in a JSON file named ``corpus.json``, and
+there
+are actually *at least* two files for each opus:
+
+
+ - A MusicXML (and its compressed variant) or MEI file containing the default score
+ - A JSON file containing the metadata.
+
+ 
+.. note:: For XML files (scores), three extensions are accepted:  'xml' for MusicXML, 'mxl' 
+   for compressed MusicXML, and 'mei' for MEI.
+
+For a given opus with reference ``xyz``, those files are respectively named
+``xyz.xml`` (the extension might be ``mxl`` or ``mei``) and ``xyz.json``.
+
+.. admonition:: Example
+
+   Assume a corpus with reference ``corp`` and two opuses, with 
+   respective references ``opA`` and ``opB``. On your computer, it
+   corresponds to a directory named ``corp`` with the following files:
+   
+     - a JSON file ``corpus.json`` containing corpus metadata 
+     - a file ``opA.json`` containing opA metadata 
+     - a file ``opA.xml`` containing the MusicXML default score for opA
+     - a file ``opB.json`` containing opA metadata 
+     - a file ``opB.xml`` containing the MusicXML default score for opA
+   
+   By compressing the directory ``corp``, you obtain a ``corp.zip`` file
+   ready to be inserted in and existing corpus of Neuma.
+ 
+**Be careful with  references**: the directory name (without extension)
+defines the corpus local referece, and the file names (without extension)
+define the local reference of an opus inside its corpus. 
+
+.. admonition:: Example
+
+    If one imports the  corpus ``corp``  in a parent corpus with global reference
+    ``all:parent``, the global reference of the new corpus is ``all:parent::corp``,
+    and thetwo  opuses get the respective global references ``all:parent::corp:opA`` and ``all:parent::corp:opB``.
 
 Opus references cannot be modified after import.  **Use a consistent naming scheme,
 in lowercase, as short as possible**. Note that opuses are sorted
@@ -108,28 +166,5 @@ but the latter  appears *after* ``opus_12``. Use padding 0 to obtain a correct s
 such as ``opus_01``,
 ``opus_02``, `òpus_12`` (in case two  positions are enough).
 
-Inserting upload files
-======================
-
-In the *Management* tab of a corpus, a form allows to upload a zip file. You must supply
-a sort description of the Zip content, and the Zip file itself. 
-
-Once uploaded, Zip files appear in a list, left of the *Management* tab. Note the ID of a
-file which is required to trigger its insertion.
-
-The Django admin form gives additional access to upload files (deletion, replacement, etc.)
-
-Importing opuses
-================
-
-In order to bulkload the content of a ZIP file, run the following command:
-
-.. code-block:: bash
-
-    python3 manage.py import_zip -u <upload_id>
- 
-This function can be run in asynchronous mode with:
-
-.. code-block:: bash
-
-    python3 manage.py import_zip -u <upload_id> -a 1
+Format of metadate JSON files
+=============================

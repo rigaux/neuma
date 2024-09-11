@@ -487,9 +487,44 @@ class OpusView(NeumaView):
 			return  self.render_to_response(context)
 
 
+
+class OpusEditView(NeumaView):
+	""" Create and edit an Opus"""
+	
+	def get_context_data(self, **kwargs):
+		# Call the parent method
+		context = super(CorpusEditView, self).get_context_data(**kwargs)
+
+		# Get the corpus
+		corpus_ref = self.kwargs['corpus_ref']
+		parent = Corpus.objects.get(ref=corpus_ref)
+		# For access rights checking
+		context["corpus"] = parent 
+		return context
+
+	def get(self, request, **kwargs):
+		context = self.get_context_data(**kwargs)
+		context['corpus_form']  = CorpusForm()
+		return render(request, "home/corpus_edit.html", context=context)
+
+	def post(self, request, **kwargs):
+		context = self.get_context_data(**kwargs)
+		
+		context['corpus_form']  = CorpusForm(request.POST,  request.FILES)
+		if context['corpus_form'].is_valid():
+				child = context['corpus_form'].save(commit=False)
+				local_ref = request.POST['ref']
+				parent_ref = self.kwargs['corpus_ref']
+				child.parent =  Corpus.objects.get(ref=parent_ref)
+				child.ref= Corpus.make_ref_from_local_and_parent(local_ref, parent_ref)
+				child.save()
+		return render(request, "home/corpus_edit.html", context=context)
+
+
 def add_opus (request, corpus_ref):
 	""" Form to add an opus"""
 	
+	context = {}
 	context["corpus"] = Corpus.objects.get(ref=corpus_ref)
 	OpusForm.corpus_ref = context["corpus"].ref
 	if request.method == "POST":
