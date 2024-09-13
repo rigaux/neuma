@@ -124,7 +124,9 @@ containing opuses contents. Actually such zip files
 can contain full subsets of the Neuma collection, including a hierarchy of corpuses.</p>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
-<p>Several examples of neumazips are available on demand.</p>
+<p>You can download an example of a neumazip at
+<a class="reference external" href="http://neuma.huma-num.fr/static/sample.zip">http://neuma.huma-num.fr/static/sample.zip</a>. It contains a few opus from
+Camille Saint-Saëns.</p>
 </div>
 <div class="section" id="organization-of-neumazips">
 <h3>Organization of neumazips<a class="headerlink" href="#organization-of-neumazips" title="Permalink to this headline">¶</a></h3>
@@ -132,9 +134,10 @@ can contain full subsets of the Neuma collection, including a hierarchy of corpu
 that  on your computer, where <em>directories</em> play the role of corpuses, and
 <em>files</em> the role of opuses. The local reference of the corpus is the directory name,
 and the files in the directory contain the opuses’ description.</p>
-<p>The metadata of the corpus is stored in a JSON file named <code class="docutils literal notranslate"><span class="pre">corpus.json</span></code>, and
-there
-are actually <em>at least</em> two files for each opus:</p>
+<p>The metadata of the corpus is stored in a JSON file named <code class="docutils literal notranslate"><span class="pre">corpus.json</span></code>. There
+must also be an image file named <code class="docutils literal notranslate"><span class="pre">cover.jpg</span></code>.</p>
+<p>Now, for each opus,
+there are actually <em>at least</em> two files:</p>
 <blockquote>
 <div><ul class="simple">
 <li><p>A MusicXML (and its compressed variant) or MEI file containing the default score</p></li>
@@ -156,6 +159,7 @@ corresponds to a directory named <code class="docutils literal notranslate"><spa
 <blockquote>
 <div><ul class="simple">
 <li><p>a JSON file <code class="docutils literal notranslate"><span class="pre">corpus.json</span></code> containing corpus metadata</p></li>
+<li><p>A JPEG fil <code class="docutils literal notranslate"><span class="pre">cover.jpg</span></code> which contains the icon of the corpus</p></li>
 <li><p>a file <code class="docutils literal notranslate"><span class="pre">opA.json</span></code> containing opA metadata</p></li>
 <li><p>a file <code class="docutils literal notranslate"><span class="pre">opA.xml</span></code> containing the MusicXML default score for opA</p></li>
 <li><p>a file <code class="docutils literal notranslate"><span class="pre">opB.json</span></code> containing opA metadata</p></li>
@@ -163,29 +167,77 @@ corresponds to a directory named <code class="docutils literal notranslate"><spa
 </ul>
 </div></blockquote>
 <p>By compressing the directory <code class="docutils literal notranslate"><span class="pre">corp</span></code>, you obtain a <code class="docutils literal notranslate"><span class="pre">corp.zip</span></code> file
-ready to be inserted in and existing corpus of Neuma.</p>
+ready to be inserted in an existing corpus of Neuma.</p>
 </div>
 <p><strong>Be careful with  references</strong>: the directory name (without extension)
-defines the corpus local referece, and the file names (without extension)
+defines the corpus local reference, and the file names (without extension)
 define the local reference of an opus inside its corpus.</p>
 <div class="admonition-example admonition">
 <p class="admonition-title">Example</p>
 <p>If one imports the  corpus <code class="docutils literal notranslate"><span class="pre">corp</span></code>  in a parent corpus with global reference
 <code class="docutils literal notranslate"><span class="pre">all:parent</span></code>, the global reference of the new corpus is <code class="docutils literal notranslate"><span class="pre">all:parent::corp</span></code>,
-and thetwo  opuses get the respective global references <code class="docutils literal notranslate"><span class="pre">all:parent::corp:opA</span></code> and <code class="docutils literal notranslate"><span class="pre">all:parent::corp:opB</span></code>.</p>
+and the two  opuses get the respective global references <code class="docutils literal notranslate"><span class="pre">all:parent::corp:opA</span></code> and <code class="docutils literal notranslate"><span class="pre">all:parent::corp:opB</span></code>.</p>
 </div>
 <p>Opus references cannot be modified after import.  <strong>Use a consistent naming scheme,
 in lowercase, as short as possible</strong>. Note that opuses are sorted
 on their (local) reference whenever a corpus is displayed. This must be anticipated
 if order is important. For instance,
-<code class="docutils literal notranslate"><span class="pre">opus_1</span></code>  appears before <code class="docutils literal notranslate"><span class="pre">opus_2</span></code> in alphanumeric order, ,
-but the latter  appears <em>after</em> <code class="docutils literal notranslate"><span class="pre">opus_12</span></code>. Use padding 0 to obtain a correct sorting,
-such as <code class="docutils literal notranslate"><span class="pre">opus_01</span></code>,
-<code class="docutils literal notranslate"><span class="pre">opus_02</span></code>, <cite>òpus_12`</cite> (in case two  positions are enough).</p>
+<code class="docutils literal notranslate"><span class="pre">opus_1</span></code>  appears before <code class="docutils literal notranslate"><span class="pre">opus_2</span></code> in alphanumeric order,
+but the latter  appears <em>after</em> <code class="docutils literal notranslate"><span class="pre">opus_12</span></code>. Use padding with ‘0’
+to obtain a correct sorting, such as <code class="docutils literal notranslate"><span class="pre">opus_01</span></code>,
+<code class="docutils literal notranslate"><span class="pre">opus_02</span></code>, <code class="docutils literal notranslate"><span class="pre">opus_12</span></code> (in case two  positions are enough).</p>
 </div>
-<div class="section" id="format-of-metadate-json-files">
-<h3>Format of metadate JSON files<a class="headerlink" href="#format-of-metadate-json-files" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="format-of-metadata-json-files">
+<h3>Format of metadata JSON files<a class="headerlink" href="#format-of-metadata-json-files" title="Permalink to this headline">¶</a></h3>
+<p>The metadata of a corpus is given in a JSON file named <code class="docutils literal notranslate"><span class="pre">corpus.json</span></code>. It
+minimal content is as follows (taking as an example the Saint-Saëns sample file):</p>
+<div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="w"> </span><span class="p">{</span>
+<span class="w">       </span><span class="nt">&quot;ref&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;sample&quot;</span><span class="p">,</span>
+<span class="w">       </span><span class="nt">&quot;title&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Œuvres de Saint-Saëns&quot;</span><span class="p">,</span>
+<span class="w">       </span><span class="nt">&quot;short_title&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Saint-Saëns&quot;</span><span class="p">,</span>
+<span class="w">       </span><span class="nt">&quot;description&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Sélection d&#39;œuvres de Saint-Saëns&quot;</span><span class="p">,</span>
+<span class="w">       </span><span class="nt">&quot;short_description&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Sélection d&#39;œuvres de Saint-Saëns&quot;</span><span class="p">,</span>
+<span class="w">       </span><span class="nt">&quot;is_public&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span>
+<span class="p">}</span>
+</pre></div>
 </div>
+<p>This constitutes the few metadata that will be used to create the corpus. You
+can provide a minimal information: once created, the corpus can be edited with
+the web form.</p>
+<p>If you unzip <code class="docutils literal notranslate"><span class="pre">sample.zip</span></code>, you will also find the following list
+of JSON files <code class="docutils literal notranslate"><span class="pre">C006_0.json</span></code>, <code class="docutils literal notranslate"><span class="pre">C009_0.json</span></code>, <code class="docutils literal notranslate"><span class="pre">C035_0.json</span></code> and <code class="docutils literal notranslate"><span class="pre">C079_0.json</span></code>
+(each file also comes with a MEI companion).</p>
+<p>The minimal content of an opus JSON file is the following:</p>
+<div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+<span class="w">        </span><span class="nt">&quot;local_ref&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;C006_0&quot;</span><span class="p">,</span>
+<span class="w">        </span><span class="nt">&quot;title&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;[Dans les coins bleus]&quot;</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>where <code class="docutils literal notranslate"><span class="pre">local_ref</span></code> is the local reference of the opus.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Actually, the <code class="docutils literal notranslate"><span class="pre">local_ref</span></code> is optional. The import process
+will take the name of file (without extension) as the opus reference.</p>
+</div>
+<p>The definition of an extended format for opus metadata is in progress.</p>
+</div>
+<div class="section" id="uploading-files">
+<h3>Uploading files<a class="headerlink" href="#uploading-files" title="Permalink to this headline">¶</a></h3>
+<p>The neumazip containing a corpus content must be uploaded in the <em>parent</em>
+of the corpus to create.  In order to import the  corpus <code class="docutils literal notranslate"><span class="pre">corp</span></code>
+in corpus <code class="docutils literal notranslate"><span class="pre">all:parent</span></code>, upload your neumazip in <code class="docutils literal notranslate"><span class="pre">all:parent</span></code>
+using the form in the <em>Management</em> tab. The content
+of the neumazip will then be imported as a sub-corpus of``all:parent`.</p>
+<div class="admonition important">
+<p class="admonition-title">Important</p>
+<p>If the sub-corpus already exists, its is <em>not</em> replaced. Opuses
+that do not already exist are simply added to the existing corpus.</p>
+</div>
+</div>
+</div>
+<div class="section" id="managing-sources">
+<h2>Managing sources<a class="headerlink" href="#managing-sources" title="Permalink to this headline">¶</a></h2>
 </div>
 </div>
 
@@ -212,9 +264,11 @@ such as <code class="docutils literal notranslate"><span class="pre">opus_01</sp
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#importing-exporting">Importing/exporting</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#organization-of-neumazips">Organization of neumazips</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#format-of-metadate-json-files">Format of metadate JSON files</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#format-of-metadata-json-files">Format of metadata JSON files</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#uploading-files">Uploading files</a></li>
 </ul>
 </li>
+<li class="toctree-l2"><a class="reference internal" href="#managing-sources">Managing sources</a></li>
 </ul>
 </li>
 </ul>

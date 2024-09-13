@@ -53,13 +53,6 @@ class CorpusView(NeumaView):
 	def get(self, request, **kwargs):
 		context = self.get_context_data(**kwargs)
 
-		# default result (or empty block?)
-		default_result_path = "static/scoreqldefault.xml"
-		with open(default_result_path,  "r", encoding='utf8') as defaultFile:
-			result = defaultFile.read()
-
-		context["results"] = result
-
 		# Are we in search mode
 		if request.session["search_context"].in_search_mode():
 			url = reverse('home:search', args=(), kwargs={})
@@ -202,13 +195,6 @@ let $score1v1 := $j[1]/music/*[1]\\n let $score2v1 := $j[2]/music/*[1]\\n return
 
 		# print ("Search context now = " + self.request.session["search_context"].ref)
 		return context
-
-
-def export_opus_as_zip (request, opus_ref):
-	""" Export the list of files of this opus"""
- 
-	return  HttpResponse("TODO")
-
 
 def show_licence (request, licence_code):
 	""" Show a licence"""

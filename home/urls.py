@@ -33,7 +33,6 @@ urlpatterns = [
     path('corpus/<str:corpus_ref>/', CorpusView.as_view(template_name="home/corpus.html"), name='corpus'),
     re_path(r'^show_licence/(?P<licence_code>.+)/$', views.show_licence , name='show_licence'),
     re_path(r'^opus/(?P<opus_ref>.+)/_edit/$', views.edit_opus , name='edit_opus'),
-	re_path(r'^opus/(?P<opus_ref>.+)/_export_zip/$', views.export_opus_as_zip , name='opus_export_zip'),
 	  re_path(r'^opus/(?P<opus_ref>.+)/$', OpusView.as_view(template_name="home/opus.html"), name='opus'),
     re_path(r'^zoom/(?P<score_url>.+)/$', NeumaView.as_view(template_name="home/zoom.html"), name='zoom'),
     re_path(r'^search', SearchView.as_view(template_name="home/search.html"), name='search'),

@@ -210,7 +210,7 @@ var tabNames = [
  
 </template>
 
-    {%if  opus.musicxml  %}
+    {%if  opus.mei  %}
  
 <script>
 	  var vrvOptions = {
@@ -236,6 +236,7 @@ var tabNames = [
 	 });
 </script>
 
+
 <display-verovio-score opus_ref="{{opus.ref}}" mei_url="{{opus_file_url}}">
 </display-verovio-score>
 
@@ -246,12 +247,6 @@ var tabNames = [
 					trans 'Download' %}</span>
 		</a></li>
 	</ul>
-	{% if opus.png %} 
-	  <img src="{{opus.png.url}}" alt="{{opus.title}}" />
-	 {% else %}
-	 <p>No image</p>
-	{% endif %} 
-	
  
 	{% endif %}
 	

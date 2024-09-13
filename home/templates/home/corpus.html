@@ -281,9 +281,8 @@ var tabNames = [{"tabId": "tab1", "divId": "subcorpus"},
         <li>   <a
         href="{% url 'home:corpus_export_zip'  corpus.ref %}"
         title="">{% trans 'Export this corpus as a zip file' %}
-      </a> (<a
-        href="{% url 'home:corpus_export_zip'  corpus.ref %}?mode=jsonld"
-        title=""> JSON-LD mode</a>)</li>
+      </a> 
+      </li>
         <li>   <a
         href="{% url 'home:create_corpus_child' corpus.ref %}"
         title="">{% trans 'Create a sub-corpus' %}

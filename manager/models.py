@@ -432,17 +432,14 @@ class Corpus(models.Model):
 		zf = zipfile.ZipFile(s, "w")
 	
 		# Add a JSON file with meta data
-		if mode == "jsonld":
-			zf.writestr("corpus.json", json.dumps(self.to_jsonld()))
-		else:
-			zf.writestr("corpus.json", json.dumps(self.to_json()))
-			# Write the cover file
-			if self.cover is not None:
-				try:
-					with open (self.cover.path, "r") as coverfile:
-						zf.writestr("cover.jpg", self.cover.read())
-				except Exception as ex:
-					print ("Cannot read the cover file ?" + str(ex))
+		zf.writestr("corpus.json", json.dumps(self.to_json(), ensure_ascii=False))
+		# Write the cover file
+		if self.cover is not None:
+			try:
+				with open (self.cover.path, "r") as coverfile:
+					zf.writestr("cover.jpg", self.cover.read())
+			except Exception as ex:
+				print ("Cannot read the cover file ?" + str(ex))
 			
 		# Add the zip files of the children
 		for child in self.get_direct_children():
@@ -489,40 +486,12 @@ class Corpus(models.Model):
 				opus.add_meta(OpusMeta.MK_COMPOSER, self.composer.dbpedia_uri)
 				opus.save()
 			# Add a JSON file with meta data
-			if mode == "jsonld":
-				opus_json = json.dumps(opus.to_jsonld())
-			else:
-				opus_json = json.dumps(opus.to_json(request))
+			opus_json = json.dumps(opus.to_json(request), ensure_ascii=False)
 			zf.writestr(opus.local_ref() + ".json", opus_json)
 		zf.close()
 		
 		return s
 
-	def to_jsonld (self):
-		ontos = {"scorelib": settings.SCORELIB_ONTOLOGY_URI}
-		jsonld = JsonLD (ontos)
-		
-		jsonld.add_type("scorelib", "Collection")
-		jsonld.add_type("scorelib", "Opus")
-		jsonld.add_type("scorelib", "Score")
-		
-		dict_corpus = {"@id": self.ref, 
-			    "@type": "Collection",
-				"hasCollectionTitle": self.title,
-				"hasCollectionCopyright": self.copyright
-				}
-		if self.licence is not None:
-			dict_corpus["hasLicence"] = self.licence.code
-		if self.parent is not None:
-			dict_corpus["isInCollection"] = self.parent.ref
-			
-		tab_opus = []
-		for opus in self.get_opera():
-			tab_opus.append(opus.to_jsonld())
-
-		has_opus = {"hasOpus": tab_opus}
-		return jsonld.get_context() | dict_corpus #| has_opus 
-	
 	@staticmethod
 	def import_from_zip(zfile, parent_corpus, zip_name):
 		''' Import a corpus from a Neuma zip export. If necessary, the
@@ -911,12 +880,14 @@ class Opus(models.Model):
 
 		"""
 		# The id can be named id or _id
-		if ("ref" in dict_opus.keys()):
+		if ("local_ref" in dict_opus.keys()):
+			self.ref = Corpus.make_ref_from_local_and_parent(dict_opus["local_ref"].strip(), corpus.ref)
+		elif ("ref" in dict_opus.keys()):
 			self.ref = Corpus.make_ref_from_local_and_parent(dict_opus["ref"].strip(), corpus.ref)
 		elif ("_ref" in dict_opus.keys()):
 			self.ref = Corpus.make_ref_from_local_and_parent(dict_opus["_ref"].strip(), corpus.ref)
 		else:
-			raise  KeyError('Missing ref field in an Opus dictionary')
+			logger.warning('Missing ref field in an Opus dictionary. Keeping the default ref...')
 
 		self.corpus = corpus
 		self.title = dict_opus["title"]
@@ -1124,15 +1095,7 @@ class Opus(models.Model):
 		abs_url = request.build_absolute_uri("/")[:-1]
 		opusmeta = self.to_serializable(abs_url)
 		return opusmeta.to_json()
-	
-
-	def to_jsonld (self):
 		
-		my_url = "http://neuma.huma-num.fr/"
-		
-		opusmeta = self.to_serializable(my_url)
-		return opusmeta.to_jsonld()
-	
 	def create_source_with_file(self, source_ref, source_type_code,
 							url, file_path=None, 
 							file_name=None, file_mode="r"):
