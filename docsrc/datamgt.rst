@@ -108,7 +108,7 @@ can contain full subsets of the Neuma collection, including a hierarchy of corpu
 
 
 .. note:: You can download an example of a neumazip at 
-          http://neuma.huma-num.fr/static/sample.zip. It contains a few opus from
+          https://neuma.huma-num.fr/static/sample.zip. It contains a few opus from
           Camille Saint-Saëns.
 
 
