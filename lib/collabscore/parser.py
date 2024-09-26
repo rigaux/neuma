@@ -490,7 +490,7 @@ class OmrScore:
 						if header.clef is not None:
 							clef_staff = header.clef.get_notation_clef()
 							clef_position = part.get_duration()
-							logger.info (f'Clef {clef_staff} found on staff {header.no_staff} at measure {current_measure_no}, position {clef_position}')
+							logger.info (f'Clef {clef_staff} found on staff {header.no_staff} with id {clef_staff.id} at measure {current_measure_no}, position {clef_position}')
 							part.set_current_clef (clef_staff, mnf_staff.number_in_part, clef_position)
 							# Annotate this symbol
 							annotation = annot_mod.Annotation.create_annot_from_xml_to_image(
@@ -499,9 +499,12 @@ class OmrScore:
 							score.add_annotation (annotation)
 						if header.time_signature is not None:
 							new_time_signature = header.time_signature.get_notation_object()
-							logger.info (f'Time signature  {new_time_signature} found on staff {header.no_staff} at measure {current_measure_no}')
+							logger.info (f'Time signature  {new_time_signature} with id {new_time_signature.id} found on staff {header.no_staff} at measure {current_measure_no}')
 							# Setting the TS at the score level propagates to all parts
-							score.set_current_time_signature (new_time_signature)			
+							# We do not do that anymore because it makes a copy
+							# of the time signature and looses the id.
+							# There might be a pb if the staff has no heading time signature
+							#score.set_current_time_signature (new_time_signature)			
 							# We assign the TS specifically to the current parts: the id is preserved
 							part.set_current_time_signature (new_time_signature)			
 							# Annotate the key with its region

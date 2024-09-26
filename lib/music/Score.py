@@ -149,6 +149,7 @@ class Score:
 		self.current_time_signature = ts
 		# We propagate to all parts
 		for part in self.get_parts():
+			# WARNING: if we do that we loose the id of the time signature
 			part.set_current_time_signature(ts.copy())
 			
 	def get_current_time_signature(self):
@@ -713,7 +714,7 @@ class Measure:
 		if 	self.initial_ts is not None:
 			self.m21_measure.remove(self.initial_ts.m21_time_signature)
 			self.add_time_signature(new_time_signature)
-		
+			
 	def add_key_signature(self, key_signature):
 		self.initial_ks = key_signature
 		self.m21_measure.insert(0,  key_signature.m21_key_signature)
