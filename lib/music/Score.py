@@ -435,14 +435,25 @@ class Part:
 			for staff_part in self.staff_group: 
 				staff_part.set_current_key_signature(key)
 				
-	def set_current_time_signature (self, ts):
+	def set_current_time_signature (self, ts, no_staff=1):
 		self.current_time_signature = ts
 		if self.current_measure is not None:
 			self.current_measure.replace_time_signature(ts)
 		
 		if self.part_type == Part.GROUP_PART:
-			for staff_part in self.staff_group: 
-				staff_part.set_current_time_signature(ts)
+			subpart = self.get_part_staff (no_staff)
+			#print (f"Setting time signature with id {ts.id} to staff {no_staff}")
+			subpart.set_current_time_signature(ts)
+			
+			## TRICK ! In MusicXML there is only one time signature for both staves.
+			## The id of the second one is lost, and we cannot therefore find
+			## the related association. Hence the trick: we concatenate
+			## in the first TS the ids of all the symbol found on the score
+			if no_staff == 2:
+				first_staff_part = self.get_part_staff (1)
+				first_staff_ts = first_staff_part.current_measure.initial_ts 
+				first_staff_ts.id = f"{first_staff_ts.id}--{ts.id}"
+				first_staff_ts.m21_time_signature.id = first_staff_ts.id
 
 	def get_clef_at_pos (self, position=0):
 		# Find, in the stream of clef, the clef valid at the given pos

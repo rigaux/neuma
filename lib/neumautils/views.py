@@ -103,5 +103,6 @@ class NeumaView(TemplateView):
         # Add some useful constant (we could use a context processor - maybe)
         context = super(NeumaView, self).get_context_data(**kwargs)
         context['NEUMA_URL'] = settings.NEUMA_URL
+        context["page_title"] = "Neuma Digital Library -- V3"
         return context
 

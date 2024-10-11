@@ -506,7 +506,7 @@ class OmrScore:
 							# There might be a pb if the staff has no heading time signature
 							#score.set_current_time_signature (new_time_signature)			
 							# We assign the TS specifically to the current parts: the id is preserved
-							part.set_current_time_signature (new_time_signature)			
+							part.set_current_time_signature (new_time_signature, mnf_staff.number_in_part)			
 							# Annotate the key with its region
 							if header.time_signature.region is not None:
 								annotation = annot_mod.Annotation.create_annot_from_xml_to_image(

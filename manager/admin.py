@@ -3,7 +3,7 @@ from django.contrib import admin
 from mptt.admin import MPTTModelAdmin
 
 from guardian.admin import GuardedModelAdmin
-from .models import Corpus, Opus, OpusMeta, Upload,  AnalyticModel, SimMatrix, Bookmark
+from .models import Corpus, Opus, OpusMeta, Upload,  AnalyticModel, Bookmark
 from .models import AnalyticConcept, Annotation, Resource, Descriptor,  Licence, Person
 from .models import SourceType, OpusSource, OpusDiff
 
@@ -48,7 +48,6 @@ admin.site.register(SourceType)
 admin.site.register(OpusSource,OpusSourceAdmin)
 admin.site.register(Annotation)
 admin.site.register(Resource)
-admin.site.register(SimMatrix)
 admin.site.register(Descriptor)
 admin.site.register(Licence)
 admin.site.register(Person)

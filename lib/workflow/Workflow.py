@@ -1,7 +1,7 @@
 
 import zipfile, os.path, io, json, sys, shutil
 
-from manager.models import Corpus, Opus, Descriptor, Patterns, OpusMeta, OpusSource, OpusDiff
+from manager.models import Corpus, Opus, Descriptor, OpusMeta, OpusSource
 import os
 import re
 import subprocess

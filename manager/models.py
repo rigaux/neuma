@@ -1324,39 +1324,6 @@ class OpusMeta(models.Model):
 	class Meta:
 		db_table = "OpusMeta"
 
-class Patterns(models.Model):
-
-	'''
-	#TODO TIANGE: IS it necessary to store in postgres?
-
-	Patterns class is used for storing the statistical information of patterns appeared in the dataset.
-	
-	pattern_dict stores the occurrence number of every pattern within the dataset/corpus/opus,
-	so that the most frequent patterns existing in the dataset/corpus/opus could be found.
-	'''
-
-	opus = models.ForeignKey(Opus,on_delete=models.CASCADE)
-	part = models.CharField(max_length=30)
-	voice = models.CharField(max_length=30)
-
-	#content_type: melodic, diatonic or rhythmic
-	content_type = models.CharField(max_length=30)
-	value = models.TextField()
-
-	#A dictionary of melodic patterns
-	mel_pattern_dict = dict()
-	#A dictionary of diatonic patterns
-	dia_pattern_dict = dict()
-	#A dictionary of rhythmic patterns
-	rhy_pattern_dict = dict()
-
-	class Meta:
-		db_table = "Patterns"
-
-	def __str__(self):
-		return self.content_type + " " + str(self.opus.ref) + " " + str(self.opus.corpus)
-		#Apart from corpus, we can also get title, composer using opus information
-
 class Descriptor(models.Model):
 	'''A descriptor is a textual representation for some musical feature, used for full text indexing'''
 	opus = models.ForeignKey(Opus,on_delete=models.CASCADE)
@@ -1403,7 +1370,7 @@ class OpusSource (models.Model):
 	source_type = models.ForeignKey(SourceType,on_delete=models.PROTECT)
 	url = models.CharField(max_length=255,blank=True,null=True)
 	# A set of operations applied to the source file. Example: post-OMR processing
-	operations = models.JSONField(blank=True,default=[])
+	operations = models.JSONField(blank=True,default=dict)
 	creation_timestamp = models.DateTimeField('Created', auto_now_add=True)
 	update_timestamp = models.DateTimeField('Updated', auto_now=True)
 
@@ -1496,66 +1463,6 @@ class Audio (models.Model):
 
 	def __str__(self):  # __unicode__ on Python 2
 		return "(" + self.opus.ref + ") " + self.filename
-
-
-class SimMeasure(models.Model):
-	code = models.CharField(max_length=255,unique=True)
-
-	def __init__(self, *args, **kwargs):
-		super(SimMeasure, self).__init__(*args, **kwargs)
-
-	class Meta:
-		db_table = "SimMeasure"
-		
-	def __str__(self):
-		return  self.code 
-
-
-class SimMatrix(models.Model):
-	sim_measure = models.ForeignKey(SimMeasure,on_delete=models.CASCADE)
-	opus1 = models.ForeignKey(Opus, related_name="%(app_label)s_%(class)s_opus1",on_delete=models.CASCADE)
-	opus2 = models.ForeignKey(Opus, related_name="%(app_label)s_%(class)s_opus2",on_delete=models.CASCADE)
-	value = models.FloatField()
-
-	def __init__(self, *args, **kwargs):
-		super(SimMatrix, self).__init__(*args, **kwargs)
-
-	class Meta:
-		db_table = "SimMatrix"
-
-
-class Kmeans(models.Model):
-	tag = models.CharField(max_length=255,unique=True)
-	corpus = models.ForeignKey(Corpus,on_delete=models.PROTECT)
-	group = models.IntegerField()
-	measure = models.ForeignKey(SimMeasure,on_delete=models.PROTECT)
-
-	class Meta:
-		db_table = "Kmeans"
-
-
-class Histogram(object):
-	''' Represents an histogram, ready to be displayed on stat page '''
-	def __init__(self,data,labels,title,labelling_closure=None):
-		self.data = data
-		self.labels = labels
-		self.title = title
-		if labelling_closure:
-			self.labelling_closure = labelling_closure
-		else:
-			self.labelling_closure = lambda x:str(x)
-
-		# Color is completely pseudo-randomly generated.
-		# Hopefully the result is not that bad.
-		# We can still add salt to change them.
-		self.color = md5(str(self.title).encode('utf-8')).hexdigest()[0:6]
-
-	def generate_uid(self):
-		return self.title+str(uuid.uuid4())
-
-
-class UnknownSimMeasure(Exception):
-	pass
 
 
 class AnalyticModel(models.Model):
@@ -1702,8 +1609,9 @@ class Annotation(models.Model):
 			return
 		
 		# Create the target
-		wtarget = webannot.target
+		wtarget = webannot.target		
 		wtselector = wtarget.resource.selector
+
 		target = Resource(source=wtarget.resource.source, selector_type=wtselector.type,
 					selector_conforms_to=wtselector.conforms_to, selector_value=wtselector.value)
 		target.save()

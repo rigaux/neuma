@@ -22,7 +22,7 @@ from django.core.files.base import ContentFile
 import requests
 
 import lxml.etree as etree
-from manager.models import Corpus, Opus, Upload, Bookmark, SimMeasure, Licence, Annotation, AnalyticModel, AnalyticConcept, OpusDiff
+from manager.models import Corpus, Opus, Upload, Bookmark, Licence, Annotation, AnalyticModel, AnalyticConcept, OpusDiff
 from music import *
 
 from neumasearch.IndexWrapper import IndexWrapper
@@ -86,6 +86,10 @@ class CorpusView(NeumaView):
 		# Get the corpus
 		corpus_ref = self.kwargs['corpus_ref']
 		corpus = Corpus.objects.get(ref=corpus_ref)
+
+		# Set the HTML page title to the corpus title		
+		context["page_title"] = corpus.short_title
+
 		# Load the corpus opera and children
 		nb_opera = corpus.get_nb_opera()
 		nb_children = corpus.get_nb_children()
@@ -123,75 +127,8 @@ class CorpusView(NeumaView):
 		context['neuma_url'] = settings.NEUMA_URL
 		context['class_number_range'] = range(5,11)
 
-		# Get the measure for which neighbors must be shown
-		if 'sim_measure' in self.request.GET and 'nb_class' in self.request.GET:
-			context['measure'] = self.request.GET['sim_measure']
-			context['nbclass'] = int(self.request.GET['nb_class'])
-			context['current_tab'] =  2
-		else:
-			# Default
-			context['measure'] = 'pitches'
-			context['nbclass'] = 8
-
-		if not context['nbclass'] in range(5,11):
-			context['nbclass'] = 8
-
-		# We need all the measures eto choose
-		context['measures'] = SimMeasure.objects.all()
-
-		measure = SimMeasure.objects.get(code=context['measure'])
-
-	   # Add upload files
+		# Add upload files
 		context['uploads'] = corpus.upload_set.all()
-
-		# Get a matrix for some measure
-		context['matrix_pitches'] = corpus.get_matrix_data(measure)
-
-		context['medoids'] = list(map(
-			lambda x:(x.title,x.get_score().get_all_voices()[0].get_histogram(measure)),
-			corpus.get_medoids(measure,int(context['nbclass']))
-		))
-
-		#
-		# Philippe: does not work when no connection
-		#
-
-		s = requests.session()
-		mappingsreq = "http://cchum-kvm-scorelibneuma.in2p3.fr/ScoreQL/rest/mapping"
-		try:
-			mappings = s.get(mappingsreq)
-			xmlmappings = ET.fromstring(mappings.text)
-			mappinglist = []
-
-			for child in xmlmappings:
-			   mappinglist.append(child.attrib['corpus'])
-			   context["mappings"] = mappinglist
-		except:
-			pass
-
-		try:
-			functionsreq = "http://cchum-kvm-scorelibneuma.in2p3.fr/ScoreQL/rest/query/functions"
-			functions = s.get(functionsreq)
-			xmlfunctions = ET.fromstring(functions.text)
-			functionslist = []
-			exclude = ["loggerBaseXError","projectByNum","main","Score"]
-			for func in xmlfunctions:
-			   if func.attrib["name"] not in exclude:
-				   functionslist.append(func.attrib["name"])
-			functionslist.append("Score") # ce n'est pas propre, à enlever de exclude ci-dessus
-			context["functions"] = sorted(functionslist, key=lambda s: s.lower())
-		except:
-			pass
-
-		#templates
-		incipitTemplate = """import module namespace s = \"fr.cnam.vertigo.scoreql.ScoreQL\";\\n"""
-		templates = { "1st voice (default query)": incipitTemplate + """let $j := for $i in fn:collection(\"ScoreMView\")/score[contains(@id, \"Neuma:"""+ corpus_ref + """\")]\\nreturn $i\\nreturn s:Score(\"1st voice\", $j[1]/music/*[1])""",
-					"trimMeasure" : incipitTemplate + """ let $j := fn:collection(\"ScoreMView\")/score[contains(@id, \"Neuma:""" + corpus_ref + """\")]\\n
-let $l := for $i in $j[1]/music/*	return s:trim($i,0,2) \\n return s:Score("TrimMeasure", ($l))""",
-					 "mergeScores" : incipitTemplate + """let $j := fn:collection(\"ScoreMView\")/score[contains(@id, \"Neuma:""" + corpus_ref + """\")]\\n
-let $score1v1 := $j[1]/music/*[1]\\n let $score2v1 := $j[2]/music/*[1]\\n return s:Score("MergeScore", ($score1v1, $score2v1))""",
-		}
-		context["templates"] = templates
 
 		# print ("Search context now = " + self.request.session["search_context"].ref)
 		return context
@@ -297,6 +234,9 @@ class OpusView(NeumaView):
 		# Initialize context
 		context = super(OpusView, self).get_context_data(**kwargs)
 
+		# Set the HTML page title to the corpus title		
+		context["page_title"] = opus.title
+
 		# Record the opus as the contextual one
 		self.request.session["search_context"].ref = opus.ref
 		self.request.session["search_context"].type = settings.OPUS_TYPE
@@ -395,22 +335,6 @@ class OpusView(NeumaView):
 		# get meta values 
 		context["meta_values"] = opus.get_metas()
 		
-		# Get the measure for which neighbors must be shown
-		if 'sim_measure' in self.request.GET:
-			context['measure'] = self.request.GET['sim_measure']
-			# We show the second tab
-			context['tab'] = 2
-		else:
-			# Default
-			context['measure'] = 'pitches'
-		# We need all the measures eto choose
-		context['measures'] = SimMeasure.objects.all()
-		
-		measure = SimMeasure.objects.get(code=context['measure'])
-
-		context['neighbors'] = []
-		context['neighbor_voices'] = list()
-
 		# Add the analytic models
 		context['analytic_models'] = AnalyticModel.objects.all()
 		context['analytic_concepts'] = AnalyticConcept.objects.all()
