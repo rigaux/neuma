@@ -1370,7 +1370,7 @@ class OpusSource (models.Model):
 	source_type = models.ForeignKey(SourceType,on_delete=models.PROTECT)
 	url = models.CharField(max_length=255,blank=True,null=True)
 	# A set of operations applied to the source file. Example: post-OMR processing
-	operations = models.JSONField(blank=True,default=dict)
+	operations = models.JSONField(blank=True,default=list)
 	creation_timestamp = models.DateTimeField('Created', auto_now_add=True)
 	update_timestamp = models.DateTimeField('Updated', auto_now=True)
 
@@ -1412,6 +1412,30 @@ class OpusSource (models.Model):
 		
 				
 		return output
+
+	def apply_editions(self, editions=[]):
+		"""
+		  Produces a MusicXML file from the DMOS file, after applying editions
+		"""
+
+		if not (self.ref == source_mod.OpusSource.IIIF_REF):
+			raise Exception ("Can  only apply editions to an IIIF source ")
+		if self.source_file:
+			dmos_data = json.loads(self.source_file.read())
+		else:
+			raise Exception ("This IIIF does not have a DMOS file")		
+		editions_to_apply = []
+		for json_edition in editions:
+				editions_to_apply.append (Edition.from_json(json_edition))
+
+		omr_score = OmrScore ("", dmos_data, {}, editions_to_apply)
+		#score = omr_score.get_score()
+	
+		# Store the MusicXML file in the opus
+		print ("Replace XML file")
+		mxml_file = "/tmp/" + shortuuid.uuid() + ".xml"
+		omr_score.write_as_musicxml (mxml_file)
+		return mxml_file
 
 class Bookmark(models.Model):
 	'''Record accesses from user to opera'''

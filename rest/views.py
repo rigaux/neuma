@@ -540,6 +540,98 @@ class SourceManifest(APIView):
 
 			#return JSONResponse({"status": "ko", "message": f"No manifest for  source {source_ref}"})
 
+
+@extend_schema(operation_id="SourceApplyEditions")
+class SourceApplyEditions(APIView):
+	
+	"""
+	 Apply a list of editions, sent in a JSON file, to a source. The
+	 service returns the MusicXML file
+	 
+	"""
+	serializer_class = SourceSerializer
+	
+	def get_queryset(self):
+		opus_ref = self.kwargs['full_neuma_ref']
+		source_ref = self.kwargs['source_ref']
+		opus, object_type = get_object_from_neuma_ref(opus_ref)
+		return OpusSource.objects.filter(opus=opus, ref=source_ref)
+
+	def get_object(self, full_neuma_ref, source_ref):
+		try:
+			opus, object_type = get_object_from_neuma_ref(full_neuma_ref)
+			return OpusSource.objects.get(opus=opus, ref=source_ref)
+		except OpusSource.DoesNotExist:
+			raise Http404
+
+	@extend_schema(operation_id="SourceEditionsGet")
+	def get(self, request, full_neuma_ref, source_ref):
+		source = self.get_object(full_neuma_ref, source_ref)
+		xml_file_name = source.apply_editions(request.data)
+		
+		with open(xml_file_name, "r") as f:
+			content = f.read()
+			resp = FileResponse(content) 
+			resp['Content-type'] = "text/xml"  # source.source_type.mime_type
+			#resp["Content-Disposition"] = f"attachment; filename={file_name}"
+			resp['Access-Control-Allow-Origin'] = '*'
+			resp['Access-Control-Allow-Credentials'] = "true"
+			resp['Access-Control-Allow-Methods'] = 'GET, OPTIONS'
+			resp['Access-Control-Allow-Headers'] = 'Access-Control-Allow-Headers, Origin, Accept, ' \
+                                'X-Requested-With, Content-Type, Access-Control-Request-Method,' \
+                              ' Access-Control-Request-Headers, credentials'	
+			return resp
+
+@extend_schema(operation_id="SourceEditions")
+class SourceEditions(APIView):
+	
+	"""
+	 Return the JSON editions of a source
+	 
+	"""
+	serializer_class = SourceSerializer
+	
+	def get_queryset(self):
+		opus_ref = self.kwargs['full_neuma_ref']
+		source_ref = self.kwargs['source_ref']
+		opus, object_type = get_object_from_neuma_ref(opus_ref)
+		return OpusSource.objects.filter(opus=opus, ref=source_ref)
+
+	def get_object(self, full_neuma_ref, source_ref):
+		try:
+			opus, object_type = get_object_from_neuma_ref(full_neuma_ref)
+			return OpusSource.objects.get(opus=opus, ref=source_ref)
+		except OpusSource.DoesNotExist:
+			raise Http404
+
+	@extend_schema(operation_id="SourceEditionsGet")
+	def get(self, request, full_neuma_ref, source_ref):
+		source = self.get_object(full_neuma_ref, source_ref)
+		return JSONResponse (source.operations)
+
+	@extend_schema(operation_id="SourceEditionsPut")
+	def put(self, request, full_neuma_ref, source_ref):
+		source = self.get_object(full_neuma_ref, source_ref)
+		# In the case of PUT , we replace the editions
+		source.operations = request.data
+		source.save()
+		serializer = MessageSerializer({"message": f"Editions replaced for source {source.ref} in opus {full_neuma_ref}"})
+		return JSONResponse(serializer.data)	
+
+	@extend_schema(operation_id="SourceEditionsPost")
+	def post(self, request, full_neuma_ref, source_ref):
+		source = self.get_object(full_neuma_ref, source_ref)
+		print (f"Reception de {request.data}")
+			
+		editions_json = request.data
+		for edition in editions_json:
+			print (f"Received key {edition['name']}")
+		# In the case of POST , we append the received list of editions to 
+		source.operations = source.operations +  request.data
+		source.save()
+		serializer = MessageSerializer({"message": f"Editions updated for source {source.ref} in opus {full_neuma_ref}"})
+		return JSONResponse(serializer.data)	
+
 class SourceFile (APIView):
 	"""
 	 Return the file  of a source

@@ -26,14 +26,18 @@ urlpatterns = [
     ################
     # POST a source file to a source
     #re_path(r'collections/(?P<full_neuma_ref>(.*))/_sources/(?P<source_ref>[-\w]+)/_file/$',views.handle_source_file_request, name='handle_source_file_request'),
+	# GET, PUT or POST the JSON file of editions on this source
+	path(r'collections/<str:full_neuma_ref>/_sources/<str:source_ref>/_editions/',views.SourceEditions.as_view(), name='handle_source_editions_request'),
+	# Apply a list of editions to the source
+	path(r'collections/<str:full_neuma_ref>/_sources/<str:source_ref>/_apply_editions/',views.SourceApplyEditions.as_view(), name='handle_source_editions_request'),
 	# GET or POST a file of a source
-	re_path(r'collections/(?P<full_neuma_ref>(.*))/_sources/(?P<source_ref>[-\w]+)/_file/$',views.SourceFile.as_view(), name='handle_source_manifest_request'),
+	path(r'collections/<str:full_neuma_ref>/_sources/<str:source_ref>/_file/',views.SourceFile.as_view(), name='handle_source_manifest_request'),
 	# GET the manifest of a source
-	re_path(r'collections/(?P<full_neuma_ref>(.*))/_sources/(?P<source_ref>[-\w]+)/_manifest/$',views.SourceManifest.as_view(), name='handle_source_manifest_request'),
+	path(r'collections/<str:full_neuma_ref>/_sources/<str:source_ref>/_manifest/',views.SourceManifest.as_view(), name='handle_source_manifest_request'),
     # GET a source description, or POST an update on a source
-    re_path(r'collections/(?P<full_neuma_ref>(.*))/_sources/(?P<source_ref>[-\w]+)/$',views.Source.as_view(), name='handle_source_request'),
+    path(r'collections/<str:full_neuma_ref>/_sources/<str:source_ref>/',views.Source.as_view(), name='handle_source_request'),
     # PUT a new source or GET the list of sources of an Opuss
-    re_path('collections/(?P<full_neuma_ref>(.*))/_sources/',views.SourceList.as_view(), name='handle_sources_list_request'),
+    path('collections/<str:full_neuma_ref>/_sources/',views.SourceList.as_view(), name='handle_sources_list_request'),
     ################
     # ANNOTATIONS
     ################
