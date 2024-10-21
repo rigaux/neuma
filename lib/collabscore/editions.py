@@ -57,9 +57,6 @@ class Edition:
 		elif self.name == Edition.ASSIGN_PART_TO_STAFF:
 			# Assign a part to a staff
 			self.assign_staff_to_part (omr_score)
-		elif self.name == Edition.REPLACE_CLEF:
-			# Replace a clef 
-			self.replace_clef (omr_score)
 		elif self.name == Edition.MOVE_OBJECT_TO_STAFF:
 			# Assign an object to a staff. Done in the MusicXML file
 			self.move_object_to_staff (mxml_file)

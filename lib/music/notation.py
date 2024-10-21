@@ -188,7 +188,8 @@ class Clef:
 		
 	@staticmethod 
 	def decode_from_dmos (dmos_code, dmos_height, dmos_id=None):
-		#print ("Decode " + dmos_code)
+		if dmos_id == "clef_1223_1710":
+			print ("Decode " + dmos_code)
 		if dmos_code == Clef.DMOS_TREBLE_CLEF:
 			return Clef (Clef.TREBLE_CLEF, dmos_id)
 		elif dmos_code == Clef.DMOS_BASS_CLEF:

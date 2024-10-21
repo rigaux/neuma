@@ -1429,7 +1429,6 @@ class OpusSource (models.Model):
 				editions_to_apply.append (Edition.from_json(json_edition))
 
 		omr_score = OmrScore ("", dmos_data, {}, editions_to_apply)
-		#score = omr_score.get_score()
 	
 		# Store the MusicXML file in the opus
 		print ("Replace XML file")

@@ -21,6 +21,7 @@ import lib.music.constants as constants_mod
 import lib.music.source as source_mod
 
 from .constants import *
+from .editions import Edition
 from lib.music.source import Manifest
 
 # Get an instance of a logger
@@ -225,13 +226,13 @@ class OmrScore:
 										"collabscore")
 		# Edit operations applied to the score before parsing
 		self.editions = []
-		for op in editions:
-			self.editions.append (op)
-
 		# Editions to apply during parsing (ex: replace a clef)
 		self.parse_time_editions = []
 		# Editions to apply to the outptu MusicXML
 		self.post_editions = []
+		# We add the editions received in parameter
+		for op in editions:
+			self.add_edition (op)
 		
 		# Decode the DMOS input as Python objects
 		self.pages = []
@@ -332,7 +333,7 @@ class OmrScore:
 		if edition.name in Edition.POST_EDITION_CODES:
 			self.post_editions.append (edition)
 		elif edition.name in Edition.PARSE_TIME_EDITION_CODES:
-			self.pre_editions.append (edition)
+			self.parse_time_editions.append (edition)
 		elif edition.name in Edition.PRE_EDITION_CODES:
 			self.editions.append (edition)
 		else: 
@@ -355,7 +356,13 @@ class OmrScore:
 		score.current_key_signature = self.initial_key_signature
 		logger.info (f'Initial key signature set to {self.initial_key_signature}')
 		score.current_time_signature = self.initial_time_signature
-
+		
+		# Create a dictionnary indexed on the element id, referring
+		# to the editions that must be applied
+		clef_replacements = {}
+		for edition in self.parse_time_editions:
+			if edition.name == Edition.REPLACE_CLEF:
+				clef_replacements[edition.params["id"]] = edition.params["values"]
 		# 
 		# The manifest tells us the parts of the score: we create them
 		for src_part in self.manifest.get_parts():
@@ -503,6 +510,11 @@ class OmrScore:
 									constants_mod.IREGION_MEASURE_STAFF_CONCEPT)
 							score.add_annotation (annotation)
 						if header.clef is not None:
+							if header.clef.id in clef_replacements.keys():
+								replace = clef_replacements[header.clef.id]
+								print (f"Clef {header.clef.id} must be replaced with {replace['label']}")
+								header.clef.replace_values (replace["label"], replace["line"])
+							print (f"Appel a get_notation_clef pour  {header.clef.id} {header.clef.symbol}")
 							clef_staff = header.clef.get_notation_clef()
 							clef_position = part.get_duration()
 							logger.info (f'Clef {clef_staff} found on staff {header.no_staff} with id {clef_staff.id} at measure {current_measure_no}, position {clef_position}')
@@ -1099,6 +1111,11 @@ class Clef:
 
 		self.symbol =  Symbol (json_clef["symbol"])
 		self.height  = json_clef["height"]
+		
+	def replace_values (self, label, height):
+		self.symbol.label = label
+		self.height  = height
+		print (f"Apres update : {self.symbol.label} {self.height}")
 		
 	def get_notation_clef(self):
 		# Decode the DMOS infos
