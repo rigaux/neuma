@@ -4,6 +4,15 @@ Constants used by the score model
 
 '''
 
+
+"""
+Separators
+"""
+NEUMA_SEPARATOR = ":"
+# The following is use to combine several ids in a single xml:id field
+# The double dass seems to be the only accepted symbol that survives through successive conversions...
+ID_SEPARATOR = "--"
+
 """
  For annotations
  """

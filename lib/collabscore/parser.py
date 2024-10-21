@@ -223,12 +223,14 @@ class OmrScore:
 		self.creator = annot_mod.Creator ("collabscore", 
 										annot_mod.Creator.SOFTWARE_TYPE, 
 										"collabscore")
-		# Edit operations applied to the score 
+		# Edit operations applied to the score before parsing
 		self.editions = []
 		for op in editions:
 			self.editions.append (op)
 
-		# Editions to apply to the outpu MusicXML
+		# Editions to apply during parsing (ex: replace a clef)
+		self.parse_time_editions = []
+		# Editions to apply to the outptu MusicXML
 		self.post_editions = []
 		
 		# Decode the DMOS input as Python objects
@@ -322,6 +324,19 @@ class OmrScore:
 		for edition in self.editions:
 			edition.apply_to(self)
 		
+
+	def add_edition(self, edition):
+		'''
+		  Adds an edition to the score. 
+		'''
+		if edition.name in Edition.POST_EDITION_CODES:
+			self.post_editions.append (edition)
+		elif edition.name in Edition.PARSE_TIME_EDITION_CODES:
+			self.pre_editions.append (edition)
+		elif edition.name in Edition.PRE_EDITION_CODES:
+			self.editions.append (edition)
+		else: 
+			raise parser_mod.CScoreParserError (f"Attempt to add an invalid editing operation  : {edition.name}" )
 
 	def get_score(self):
 		'''
@@ -517,7 +532,7 @@ class OmrScore:
 							key_sign = header.key_signature.get_notation_object()
 							logger.info (f'Key signature {key_sign} found on staff {header.no_staff} at measure {current_measure_no}')
 							# The key signature impacts all subsequent events on the staff
-							part.set_current_key_signature (key_sign)
+							part.set_current_key_signature (key_sign, mnf_staff.number_in_part)
 							# We will display the key signature at the beginning
 							# of the current measure
 							measure_for_part.replace_key_signature (key_sign)

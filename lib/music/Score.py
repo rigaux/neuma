@@ -9,6 +9,7 @@ import verovio
 from .Voice import Voice
 from . import notation
 from . import events
+from .constants import ID_SEPARATOR
 
 logging.basicConfig(level=logging.WARNING)
 logger = logging.getLogger(__name__)
@@ -429,11 +430,22 @@ class Part:
 		else:
 			return self.m21_part.duration.quarterLength
 	
-	def set_current_key_signature (self, key):
+	def set_current_key_signature (self, key,no_staff=1):
 		self.current_key_signature = key
 		if self.part_type == Part.GROUP_PART:
-			for staff_part in self.staff_group: 
-				staff_part.set_current_key_signature(key)
+			subpart = self.get_part_staff (no_staff)
+			#print (f"Setting time signature with id {ts.id} to staff {no_staff}")
+			subpart.set_current_key_signature(key)
+			
+			## TRICK ! In MusicXML there is only one  signature for both staves.
+			## The id of the second one is lost, and we cannot therefore find
+			## the related association. Hence the trick: we concatenate
+			## in the first KS the ids of all the symbol found on the score
+			if no_staff == 2:
+				first_staff_part = self.get_part_staff (1)
+				first_staff_ks = first_staff_part.current_measure.initial_ks 
+				first_staff_ks.id = f"{first_staff_ks.id}{ID_SEPARATOR}{key.id}"
+				first_staff_ks.m21_key_signature.id = first_staff_ks.id
 				
 	def set_current_time_signature (self, ts, no_staff=1):
 		self.current_time_signature = ts
@@ -443,16 +455,12 @@ class Part:
 		if self.part_type == Part.GROUP_PART:
 			subpart = self.get_part_staff (no_staff)
 			#print (f"Setting time signature with id {ts.id} to staff {no_staff}")
-			subpart.set_current_time_signature(ts)
-			
-			## TRICK ! In MusicXML there is only one time signature for both staves.
-			## The id of the second one is lost, and we cannot therefore find
-			## the related association. Hence the trick: we concatenate
-			## in the first TS the ids of all the symbol found on the score
+			subpart.set_current_time_signature(ts)			
+			## TRICK ! See the comment in set_key_signature
 			if no_staff == 2:
 				first_staff_part = self.get_part_staff (1)
 				first_staff_ts = first_staff_part.current_measure.initial_ts 
-				first_staff_ts.id = f"{first_staff_ts.id}--{ts.id}"
+				first_staff_ts.id = f"{first_staff_ts.id}{ID_SEPARATOR}{ts.id}"
 				first_staff_ts.m21_time_signature.id = first_staff_ts.id
 
 	def get_clef_at_pos (self, position=0):

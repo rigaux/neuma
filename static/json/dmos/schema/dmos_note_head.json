@@ -5,6 +5,7 @@
   "description": "A note head on a staff, with an optional accidental", 
   "type": "object",
   "properties": {
+    "id" : {"description": "Id of the head symbol", "type": "string"},
      "head_symbol": {"description": "Noire, blanche, etc.", "$ref": "dmos_symbol.json"},
      "no_staff": {"description": "Numéro de portée", "type": "integer"},
      "height": {"description": "Hauteur de la note sur la portée", "type": "integer"},

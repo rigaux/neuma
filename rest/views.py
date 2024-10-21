@@ -564,8 +564,7 @@ class SourceApplyEditions(APIView):
 		except OpusSource.DoesNotExist:
 			raise Http404
 
-	@extend_schema(operation_id="SourceEditionsGet")
-	def get(self, request, full_neuma_ref, source_ref):
+	def post(self, request, full_neuma_ref, source_ref):
 		source = self.get_object(full_neuma_ref, source_ref)
 		xml_file_name = source.apply_editions(request.data)
 		

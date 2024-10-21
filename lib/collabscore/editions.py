@@ -18,10 +18,20 @@ class Edition:
 	DESCRIBE_PART = "describe_part"
 	ASSIGN_PART_TO_STAFF = "assign_staff_to_part"
 	MOVE_OBJECT_TO_STAFF = "move_object_to_staff"
+	REPLACE_CLEF = "replace_clef"
+
+	
 	CLEAN_BEAM = "clean_beam"
 	
 	EDITION_CODES = [MERGE_PARTS,DESCRIBE_PART,ASSIGN_PART_TO_STAFF,
-					MOVE_OBJECT_TO_STAFF,CLEAN_BEAM]
+					REPLACE_CLEF, MOVE_OBJECT_TO_STAFF,CLEAN_BEAM]
+	
+	# List of editions that apply at parser initialization
+	PRE_EDITION_CODES = [MERGE_PARTS,DESCRIBE_PART,ASSIGN_PART_TO_STAFF]
+	# List of editions that apply at parsing time
+	PARSE_TIME_EDITION_CODES = [REPLACE_CLEF]
+	# List of editions that apply to the XML output
+	POST_EDITION_CODES = [MOVE_OBJECT_TO_STAFF]
 	
 	def __init__(self, name, params={}, target=None) :
 		if name not in Edition.EDITION_CODES:
@@ -47,6 +57,9 @@ class Edition:
 		elif self.name == Edition.ASSIGN_PART_TO_STAFF:
 			# Assign a part to a staff
 			self.assign_staff_to_part (omr_score)
+		elif self.name == Edition.REPLACE_CLEF:
+			# Replace a clef 
+			self.replace_clef (omr_score)
 		elif self.name == Edition.MOVE_OBJECT_TO_STAFF:
 			# Assign an object to a staff. Done in the MusicXML file
 			self.move_object_to_staff (mxml_file)
@@ -80,6 +93,12 @@ class Edition:
 			part.abbreviation = self.params["values"]["abbreviation"]
 		if "instrument" in self.params["values"].keys():
 			part.instrument = self.params["values"]["instrument"]
+
+	def replace_clef(self, omr_score):
+		# Get the first part: we merge everything there
+		id_clef = self.params["id"]
+		self.params["values"]["label"]
+		self.params["values"]["line"]
 
 	def assign_staff_to_part(self, omr_score):
 		''' The parameters are: 
