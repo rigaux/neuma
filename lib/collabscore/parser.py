@@ -512,9 +512,7 @@ class OmrScore:
 						if header.clef is not None:
 							if header.clef.id in clef_replacements.keys():
 								replace = clef_replacements[header.clef.id]
-								print (f"Clef {header.clef.id} must be replaced with {replace['label']}")
-								header.clef.replace_values (replace["label"], replace["line"])
-							print (f"Appel a get_notation_clef pour  {header.clef.id} {header.clef.symbol}")
+								header.clef.overwrite (replace["label"], replace["line"])
 							clef_staff = header.clef.get_notation_clef()
 							clef_position = part.get_duration()
 							logger.info (f'Clef {clef_staff} found on staff {header.no_staff} with id {clef_staff.id} at measure {current_measure_no}, position {clef_position}')
@@ -828,8 +826,8 @@ class OmrScore:
 		self.get_score().write_as_musicxml (out_file)
 		
 		print ("\n\nApplying post-editions to the MusicXML file\n")
-		for ed in self.post_editions:
-			ed.apply_to(self, out_file)
+		Edition.apply_editions_to_file (self.post_editions, out_file)
+
 			
 	def write_as_mei(self, mxml_file, out_file):
 		self.get_score().write_as_mei (mxml_file, out_file)
@@ -1112,17 +1110,15 @@ class Clef:
 		self.symbol =  Symbol (json_clef["symbol"])
 		self.height  = json_clef["height"]
 		
-	def replace_values (self, label, height):
+	def overwrite (self, label, height):
 		self.symbol.label = label
 		self.height  = height
-		print (f"Apres update : {self.symbol.label} {self.height}")
 		
 	def get_notation_clef(self):
 		# Decode the DMOS infos
 		return score_notation.Clef.decode_from_dmos(self.symbol.label, 
 													self.height,
 													self.id)
-
 
 class TimeSignature:
 	"""

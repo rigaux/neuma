@@ -130,7 +130,7 @@ class Edition:
 					else:
 						parser_mod.logger.warning(f"Part {part.id} assigned to staff {staff_id} in system {system.number} page {page.number}")
 
-	def move_object_to_staff(self, xml_file):
+	def move_object_to_staff(self, mxml_doc):
 		''' The parameters are: the staff id, and the object id (a note, a rest, a clef...)
 			This is a post-xml correction...
 		'''
@@ -139,7 +139,6 @@ class Edition:
 		staff_no = self.params["staff_no"]
 		direction = self.params["direction"]
 		
-		mxml_doc = ET.parse(xml_file)
 		object = mxml_doc.find(f".//*[@id = '{object_id}']")
 		if object is not None:
 			# Note: staves in MusicXML are numbered internally
@@ -156,16 +155,30 @@ class Edition:
 				staff_no = 2
 			parser_mod.logger.info(f"Moving {direction} object {object_id} to staff {staff_no}")
 			staff.text = f"{staff_no}"
-			mxml_doc.write (xml_file)
 		else:
 			parser_mod.logger.warning(f"Unable to find object {object_id} that should be moved to staff {staff_no}")
 		
 		return 
 	
-	def clean_beam (self, xml_file):
+	@staticmethod
+	def apply_editions_to_file(post_editions, xml_file):
+		# All post editions apply to the MusicXML file
+		mxml_doc = ET.parse(xml_file)
+		
+		for ed in post_editions:
+			if ed.name == Edition.MOVE_OBJECT_TO_STAFF:
+				# Assign an object to a staff. Done in the MusicXML file
+				ed.move_object_to_staff (mxml_doc)
+			elif ed.name == Edition.CLEAN_BEAM:
+				# Assign an object to a staff. Done in the MusicXML file
+				ed.clean_beam (mxml_doc)
+	
+		# Write it back
+		mxml_doc.write (xml_file)
+
+	def clean_beam (self, mxml_doc):
 		parser_mod.logger.info(f"Cleaning pseudo-beams")
 		
-		mxml_doc = ET.parse(xml_file)
 		notes = mxml_doc.findall(f".//note")
 		for note in notes:
 			beams = note.findall("beam")
@@ -173,7 +186,6 @@ class Edition:
 				if int(beam.get("number")) == PSEUDO_BEAM_ID:
 					#print (f"Removing pseudo Beam {beam}")
 					note.remove(beam)
-		mxml_doc.write (xml_file)
 	
 	def to_json (self):
 		return {"name": self.name,
