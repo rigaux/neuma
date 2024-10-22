@@ -150,11 +150,13 @@ class Clef:
 	# DMOS encoding of clefs
 	DMOS_TREBLE_CLEF="G"
 	DMOS_BASS_CLEF="F"
-	DMOS_UT_CLEF="U"
+	DMOS_UT_CLEF="C"
 
 	TREBLE_CLEF = m21.clef.TrebleClef
+	SOPRANO_CLEF = m21.clef.SopranoClef
+	MEZZO_CLEF = m21.clef.MezzoSopranoClef
 	ALTO_CLEF = m21.clef.AltoClef
-	TENOR_CLEF = m21.clef.AltoClef
+	TENOR_CLEF = m21.clef.TenorClef
 	BASS_CLEF = m21.clef.BassClef
 	NO_CLEF = m21.clef.NoClef
 	
@@ -167,6 +169,10 @@ class Clef:
 
 		if clef_code == self.TREBLE_CLEF:
 			self.m21_clef = m21.clef.TrebleClef()
+		elif clef_code == self.SOPRANO_CLEF:
+			self.m21_clef = m21.clef.SopranoClef()
+		elif clef_code == self.MEZZO_CLEF:
+			self.m21_clef = m21.clef.MezzoSopranoClef()
 		elif clef_code == self.ALTO_CLEF:
 			self.m21_clef = m21.clef.AltoClef()
 		elif clef_code == self.TENOR_CLEF:
@@ -192,6 +198,10 @@ class Clef:
 			return Clef (Clef.TREBLE_CLEF, dmos_id)
 		elif dmos_code == Clef.DMOS_BASS_CLEF:
 			return Clef (Clef.BASS_CLEF, dmos_id)
+		elif dmos_code == Clef.DMOS_UT_CLEF and dmos_height==1:
+			return Clef (Clef.SOPRANO_CLEF, dmos_id)
+		elif dmos_code == Clef.DMOS_UT_CLEF and dmos_height==2:
+			return Clef (Clef.MEZZO_CLEF, dmos_id)
 		elif dmos_code == Clef.DMOS_UT_CLEF and dmos_height==3:
 			return Clef (Clef.ALTO_CLEF, dmos_id)
 		elif dmos_code == Clef.DMOS_UT_CLEF and dmos_height==4:
