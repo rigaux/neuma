@@ -521,8 +521,8 @@ class OmrScore:
 							score.add_annotation (annotation)
 						if header.clef is not None:
 							if header.clef.id in self.replacements[Edition.REPLACE_CLEF].keys():
-								replace = self.replacements[Edition.REPLACE_CLEF][header.clef.id]
-								header.clef.overwrite (replace["label"], replace["line"])
+								replacement = self.replacements[Edition.REPLACE_CLEF][header.clef.id]
+								header.clef.overwrite (replacement)
 							clef_staff = header.clef.get_notation_clef()
 							clef_position = part.get_duration()
 							logger.info (f'Clef {clef_staff} found on staff {header.no_staff} with id {clef_staff.id} at measure {current_measure_no}, position {clef_position}')
@@ -534,8 +534,8 @@ class OmrScore:
 							score.add_annotation (annotation)
 						if header.time_signature is not None:
 							if header.time_signature.id in self.replacements[Edition.REPLACE_TIMESIGN].keys():
-								replace = self.replacements[Edition.REPLACE_TIMESIGN][header.time_signature.id]
-								header.time_signature.overwrite (replace["nb_sharps"], replace["nb_flats"])
+								replacement = self.replacements[Edition.REPLACE_TIMESIGN][header.time_signature.id]
+								header.time_signature.overwrite (replacement)
 							new_time_signature = header.time_signature.get_notation_object()
 							logger.info (f'Time signature  {new_time_signature} with id {new_time_signature.id} found on staff {header.no_staff} at measure {current_measure_no}')
 							# Setting the TS at the score level propagates to all parts
@@ -553,8 +553,8 @@ class OmrScore:
 								score.add_annotation (annotation)
 						if header.key_signature is not None:
 							if header.key_signature.id in self.replacements[Edition.REPLACE_KEYSIGN].keys():
-								replace = self.replacements[Edition.REPLACE_KEYSIGN][header.key_signature.id]
-								header.key_signature.overwrite (replace["nb_sharps"], replace["nb_flats"])
+								replacement = self.replacements[Edition.REPLACE_KEYSIGN][header.key_signature.id]
+								header.key_signature.overwrite (replacement)
 							key_sign = header.key_signature.get_notation_object()
 							logger.info (f'Key signature {key_sign} found on staff {header.no_staff} at measure {current_measure_no}')
 							# The key signature impacts all subsequent events on the staff
@@ -1130,9 +1130,9 @@ class Clef:
 		self.symbol =  Symbol (json_clef["symbol"])
 		self.height  = json_clef["height"]
 		
-	def overwrite (self, label, height):
-		self.symbol.label = label
-		self.height  = height
+	def overwrite (self, replacement):
+		self.symbol.label = replacement["label"]
+		self.height  = replacement["line"]
 		
 	def get_notation_clef(self):
 		# Decode the DMOS infos
@@ -1159,6 +1159,12 @@ class TimeSignature:
 			self.region = Region(json_time_sign["region"])
 		else:
 			self.region = None
+
+	def overwrite (self, replacement):
+		self.unit = replacement["unit"]
+		self.time = replacement["time"]
+		if "type" in replacement:
+			self.element  = replacement["type"]
 
 	def get_notation_object(self):
 		# Decode the DMOS infos
@@ -1206,7 +1212,13 @@ class KeySignature:
 										self.nb_flats(),
 										id_key=self.id)
 
-	def overwrite (self, nb_sharps, nb_flats):
+	def overwrite (self, replacement):
+		nb_sharps = nb_flats = 0
+		if "nb_sharps" in replacement.keys():
+			nb_sharps = replacement["nb_sharps"]
+		if "nb_flats" in replacement.keys():
+			nb_flats = replacement["nb_flats"]
+		
 		if nb_sharps == 0 and nb_flats == 0:
 			self.element = SHARP_SYMBOL
 			self.nb_alterations = 0

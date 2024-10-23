@@ -40,7 +40,7 @@ DURATION_SYMBOLS_LIST = NOTE_SYMBOLS_LIST + REST_SYMBOLS_LIST
 #SMB_G_CLEF = "G"
 #SMB_C_CLEF = "C"
 
-# Headss
+# Heads
 
 SMB_BLACK_HEAD = "blackhead"
 SMB_WHITE_HEAD = "whitehead"
