@@ -321,6 +321,12 @@ class OmrScore:
 		self.manifest.clean_pages_url()
 		self.manifest.get_first_music_page()
 		
+		# Create a double dictionary indexed on the edition target + element id, referring
+		# to the editions that must be applied at run time
+		self.replacements = {Edition.REPLACE_CLEF: {}, 
+					    Edition.REPLACE_KEYSIGN: {}, 
+					    Edition.REPLACE_TIMESIGN: {}}
+
 		# Apply editions related to the manifest
 		for edition in self.editions:
 			edition.apply_to(self)
@@ -357,12 +363,16 @@ class OmrScore:
 		logger.info (f'Initial key signature set to {self.initial_key_signature}')
 		score.current_time_signature = self.initial_time_signature
 		
-		# Create a dictionnary indexed on the element id, referring
-		# to the editions that must be applied
-		clef_replacements = {}
+		# Add run time edition
 		for edition in self.parse_time_editions:
-			if edition.name == Edition.REPLACE_CLEF:
-				clef_replacements[edition.params["id"]] = edition.params["values"]
+			if edition.name not in Edition.PARSE_TIME_EDITION_CODES:
+				raise parser_mod.CScoreParserError (f"Unknown editing operation  : {edition.name}. Ignored." )
+			else:
+				# One edition can apply to many graphical objets (eg keys/tsign).
+				# The ids of the graphical object are separated by ID_SEPARATOR
+				ids = edition.params["id"].split (constants_mod.ID_SEPARATOR)
+				for id in ids:
+					self.replacements[edition.name][id] = edition.params["values"]
 		# 
 		# The manifest tells us the parts of the score: we create them
 		for src_part in self.manifest.get_parts():
@@ -510,8 +520,8 @@ class OmrScore:
 									constants_mod.IREGION_MEASURE_STAFF_CONCEPT)
 							score.add_annotation (annotation)
 						if header.clef is not None:
-							if header.clef.id in clef_replacements.keys():
-								replace = clef_replacements[header.clef.id]
+							if header.clef.id in self.replacements[Edition.REPLACE_CLEF].keys():
+								replace = self.replacements[Edition.REPLACE_CLEF][header.clef.id]
 								header.clef.overwrite (replace["label"], replace["line"])
 							clef_staff = header.clef.get_notation_clef()
 							clef_position = part.get_duration()
@@ -523,6 +533,9 @@ class OmrScore:
 								page.page_url, header.clef.symbol.region.string_xyhw(), constants_mod.IREGION_SYMBOL_CONCEPT)
 							score.add_annotation (annotation)
 						if header.time_signature is not None:
+							if header.time_signature.id in self.replacements[Edition.REPLACE_TIMESIGN].keys():
+								replace = self.replacements[Edition.REPLACE_TIMESIGN][header.time_signature.id]
+								header.time_signature.overwrite (replace["nb_sharps"], replace["nb_flats"])
 							new_time_signature = header.time_signature.get_notation_object()
 							logger.info (f'Time signature  {new_time_signature} with id {new_time_signature.id} found on staff {header.no_staff} at measure {current_measure_no}')
 							# Setting the TS at the score level propagates to all parts
@@ -539,6 +552,9 @@ class OmrScore:
 									page.page_url, header.time_signature.region.string_xyhw(), constants_mod.IREGION_SYMBOL_CONCEPT)
 								score.add_annotation (annotation)
 						if header.key_signature is not None:
+							if header.key_signature.id in self.replacements[Edition.REPLACE_KEYSIGN].keys():
+								replace = self.replacements[Edition.REPLACE_KEYSIGN][header.key_signature.id]
+								header.key_signature.overwrite (replace["nb_sharps"], replace["nb_flats"])
 							key_sign = header.key_signature.get_notation_object()
 							logger.info (f'Key signature {key_sign} found on staff {header.no_staff} at measure {current_measure_no}')
 							# The key signature impacts all subsequent events on the staff
@@ -603,6 +619,7 @@ class OmrScore:
 										voice_part.append_decoration(decoration)
 									voice_part.append_event(event)
 							elif type_event == "clef":
+								
 								# The staff id is in the voice item
 								id_staff = item.no_staff_clef
 								mnf_staff = mnf_system.get_staff(id_staff)
@@ -799,6 +816,9 @@ class OmrScore:
 				logger.info (f'Adding rest {duration.get_value()} to staff {id_staff}.')
 		elif voice_item.clef_attr is not None:
 			#This is a clef change 
+			if voice_item.clef_attr.id in self.replacements[Edition.REPLACE_CLEF].keys():
+				replace = self.replacements[Edition.REPLACE_CLEF][voice_item.clef_attr.id]
+				voice_item.clef_attr.overwrite (replace["label"], replace["line"])
 			event = voice_item.clef_attr.get_notation_clef()
 			event_region = voice_item.clef_attr.symbol.region
 			return (event, event_region, "clef")
@@ -1186,6 +1206,17 @@ class KeySignature:
 										self.nb_flats(),
 										id_key=self.id)
 
+	def overwrite (self, nb_sharps, nb_flats):
+		if nb_sharps == 0 and nb_flats == 0:
+			self.element = SHARP_SYMBOL
+			self.nb_alterations = 0
+		elif nb_sharps > 0:
+			self.element = SHARP_SYMBOL
+			self.nb_alterations = nb_sharps
+		elif nb_sharps > 0:
+			self.element = FLAT_SYMBOL
+			self.nb_alterations = nb_flats
+			
 class Error:
 	"""
 		Representation of an error met during OMR

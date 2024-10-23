@@ -19,17 +19,20 @@ class Edition:
 	ASSIGN_PART_TO_STAFF = "assign_staff_to_part"
 	MOVE_OBJECT_TO_STAFF = "move_object_to_staff"
 	REPLACE_CLEF = "replace_clef"
+	REPLACE_TIMESIGN = "replace_timesign"
+	REPLACE_KEYSIGN = "replace_keysign"
 
-	
 	CLEAN_BEAM = "clean_beam"
 	
+	# All edition codes
 	EDITION_CODES = [MERGE_PARTS,DESCRIBE_PART,ASSIGN_PART_TO_STAFF,
-					REPLACE_CLEF, MOVE_OBJECT_TO_STAFF,CLEAN_BEAM]
+					REPLACE_CLEF, REPLACE_TIMESIGN,REPLACE_KEYSIGN,
+					MOVE_OBJECT_TO_STAFF,CLEAN_BEAM]
 	
 	# List of editions that apply at parser initialization
 	PRE_EDITION_CODES = [MERGE_PARTS,DESCRIBE_PART,ASSIGN_PART_TO_STAFF]
 	# List of editions that apply at parsing time
-	PARSE_TIME_EDITION_CODES = [REPLACE_CLEF]
+	PARSE_TIME_EDITION_CODES = [REPLACE_CLEF,REPLACE_KEYSIGN,REPLACE_TIMESIGN]
 	# List of editions that apply to the XML output
 	POST_EDITION_CODES = [MOVE_OBJECT_TO_STAFF]
 	
