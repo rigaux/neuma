@@ -1,6 +1,6 @@
 from django.core.management.base import BaseCommand, CommandError
 from django.conf import settings
-from manager.models import Corpus, Opus, Upload, SimMeasure, AnalyticModel
+from manager.models import Corpus, AnalyticModel
 from manager.models import AnalyticConcept, Licence, Person, SourceType
 from lib.workflow.Workflow import Workflow
 import string
@@ -105,15 +105,6 @@ class Command(BaseCommand):
 			collabscore.short_description = "CollabScore collections"
 			collabscore.is_public = False
 			collabscore.save()
-
-		# Similarity measures
-		for measure_code in settings.SIMILARITY_MEASURES:
-			try:
-				measure = SimMeasure.objects.get(code=measure_code)
-			except SimMeasure.DoesNotExist:
-				print ("Creating similarity measure '" + measure_code + "'")
-				measure = SimMeasure(code=measure_code)
-				measure.save()
 
 		# Load the palette file
 		static_dir = os.path.join(settings.BASE_DIR, "static")
