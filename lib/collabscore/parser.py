@@ -326,11 +326,12 @@ class OmrScore:
 		self.replacements = {Edition.REPLACE_CLEF: {}, 
 					    Edition.REPLACE_KEYSIGN: {}, 
 					    Edition.REPLACE_TIMESIGN: {}}
-
+		# Dictionary of objects to remove
+		self.removals = {}
+		
 		# Apply editions related to the manifest
 		for edition in self.editions:
 			edition.apply_to(self)
-		
 
 	def add_edition(self, edition):
 		'''
@@ -343,7 +344,7 @@ class OmrScore:
 		elif edition.name in Edition.PRE_EDITION_CODES:
 			self.editions.append (edition)
 		else: 
-			raise parser_mod.CScoreParserError (f"Attempt to add an invalid editing operation  : {edition.name}" )
+			raise CScoreParserError (f"Attempt to add an invalid editing operation  : {edition.name}" )
 
 	def get_score(self):
 		'''
@@ -367,6 +368,8 @@ class OmrScore:
 		for edition in self.parse_time_editions:
 			if edition.name not in Edition.PARSE_TIME_EDITION_CODES:
 				raise parser_mod.CScoreParserError (f"Unknown editing operation  : {edition.name}. Ignored." )
+			elif edition.name == Edition.REMOVE_OBJECT:
+				self.removals[edition.params["id"]] = edition.params
 			else:
 				# One edition can apply to many graphical objets (eg keys/tsign).
 				# The ids of the graphical object are separated by ID_SEPARATOR
@@ -511,7 +514,7 @@ class OmrScore:
 						id_part = mnf_staff.get_part_id()
 						part = score.get_part (id_part)
 						measure_for_part = part.get_measure_from_staff(mnf_staff.number_in_part)
-						
+												
 						if header.region is not None:
 							# Record the region of the measure for the current staff
 							annotation = annot_mod.Annotation.create_annot_from_xml_to_image(
@@ -519,7 +522,7 @@ class OmrScore:
 									page.page_url, header.region.string_xyhw(), 
 									constants_mod.IREGION_MEASURE_STAFF_CONCEPT)
 							score.add_annotation (annotation)
-						if header.clef is not None:
+						if header.clef is not None and not (header.clef.id in self.removals):
 							if header.clef.id in self.replacements[Edition.REPLACE_CLEF].keys():
 								replacement = self.replacements[Edition.REPLACE_CLEF][header.clef.id]
 								header.clef.overwrite (replacement)
@@ -532,7 +535,9 @@ class OmrScore:
 								self.creator, self.uri, header.clef.id, 
 								page.page_url, header.clef.symbol.region.string_xyhw(), constants_mod.IREGION_SYMBOL_CONCEPT)
 							score.add_annotation (annotation)
-						if header.time_signature is not None:
+						elif  header.clef is not None and header.clef.id in self.removals:
+							logger.info (f"Clef {header.clef.id} has been removed")
+						if header.time_signature is not None and not (header.time_signature.id in self.removals):
 							if header.time_signature.id in self.replacements[Edition.REPLACE_TIMESIGN].keys():
 								replacement = self.replacements[Edition.REPLACE_TIMESIGN][header.time_signature.id]
 								header.time_signature.overwrite (replacement)
@@ -551,7 +556,9 @@ class OmrScore:
 									self.creator, self.uri, header.time_signature.id, 
 									page.page_url, header.time_signature.region.string_xyhw(), constants_mod.IREGION_SYMBOL_CONCEPT)
 								score.add_annotation (annotation)
-						if header.key_signature is not None:
+						elif  header.time_signature is not None and header.time_signature.id in self.removals:
+							logger.info (f"Time signature {header.time_signature.id} has been removed")			
+						if header.key_signature is not None and not (header.key_signature.id in self.removals):
 							if header.key_signature.id in self.replacements[Edition.REPLACE_KEYSIGN].keys():
 								replacement = self.replacements[Edition.REPLACE_KEYSIGN][header.key_signature.id]
 								header.key_signature.overwrite (replacement)
@@ -567,7 +574,8 @@ class OmrScore:
 									self.creator, self.uri, header.key_signature.id, 
 									page.page_url, header.key_signature.region.string_xyhw(), constants_mod.IREGION_SYMBOL_CONCEPT)
 								score.add_annotation (annotation)
-			
+						elif  header.key_signature is not None and header.key_signature.id in self.removals:
+							logger.info (f"Key signature {header.key_signature.id} has been removed")
 					# Now we scan the voices
 					for voice in measure.voices:
 						current_part = score.get_part(voice.id_part)
