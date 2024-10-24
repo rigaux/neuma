@@ -847,6 +847,7 @@ class OmrScore:
 		
 		print ("\n\nApplying post-editions to the MusicXML file\n")
 		Edition.apply_editions_to_file (self.post_editions, out_file)
+		print ("\nPost-editions done\n")
 
 			
 	def write_as_mei(self, mxml_file, out_file):
@@ -1225,7 +1226,7 @@ class KeySignature:
 		elif nb_sharps > 0:
 			self.element = SHARP_SYMBOL
 			self.nb_alterations = nb_sharps
-		elif nb_sharps > 0:
+		elif nb_flats > 0:
 			self.element = FLAT_SYMBOL
 			self.nb_alterations = nb_flats
 			
