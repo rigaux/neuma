@@ -1212,7 +1212,8 @@ class Opus(models.Model):
 			# Store the manifest 
 			for source in self.opussource_set.all ():
 				if source.ref == source_mod.OpusSource.IIIF_REF:
-					print ("Save the manifest")
+					source.manifest.id = source.full_ref()
+					print (f"Save the manifest with id {source.manifest.id}")
 					source.manifest = ContentFile(json.dumps(omr_score.manifest.to_json()), name="manifest.json")
 					source.save()
 		
@@ -1401,6 +1402,9 @@ class OpusSource (models.Model):
 			source_dict.has_manifest =  True			
 		return source_dict
 
+	def full_ref(self):
+		return self.opus.ref + '_sources/' + self.ref 
+	
 	def to_json(self, request):
 		"""
 		  Produces a JSON representation (useful for REST services)
