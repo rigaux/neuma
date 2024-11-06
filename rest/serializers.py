@@ -18,6 +18,12 @@ PAGE_TYPE = "ScorePage"
 
 
 """
+  For login
+"""		 
+class LoginSerializer(serializers.Serializer):
+	data = serializers.CharField()
+
+"""
   For simple services that return a message
 """		 
 class MessageSerializer(serializers.Serializer):
@@ -136,7 +142,14 @@ class SourceSerializer(serializers.ModelSerializer):
 		source_dict = instance.to_serializable("abs_url")
 		return source_dict.to_json()
 
-		 
+
+class EditionsSerializer(serializers.Serializer):
+	"""
+		Serialization of editions on sources
+	"""
+	name = serializers.CharField(default="noop")
+	params = serializers.CharField()
+
 class ArcIdxCorpusSerializer(serializers.Serializer):
 	id = serializers.CharField(source="ref")
 	name = serializers.CharField(source="title")

@@ -30,6 +30,10 @@ from rest_framework.decorators import api_view
 from rest_framework.views import APIView
 from rest_framework import mixins
 from rest_framework import generics
+
+from rest_framework.authtoken.views import ObtainAuthToken
+from rest_framework.authtoken.models import Token
+
 from django.http import Http404
 
 from rest_framework.response import Response
@@ -66,12 +70,14 @@ from manager.models import (
 )
 
 from .serializers import (
+	LoginSerializer,
 	MessageSerializer,
 	ModelSerializer,
 	ConceptSerializer,
 	CorpusSerializer,
 	OpusSerializer,
 	SourceSerializer,
+	EditionsSerializer,
 	AnnotationStatsSerializer,
 	AnnotationSerializer,
 	ModelStatsSerializer,
@@ -127,6 +133,22 @@ class JSONResponse(HttpResponse):
              Services implementation
 '''
 
+class CustomAuthToken(ObtainAuthToken):
+	#serializer_class = LoginSerializer
+
+	@extend_schema(operation_id="Login")
+	def post(self, request):
+		serializer = self.serializer_class(data=request.data,
+                                           context={'request': request})
+		serializer.is_valid(raise_exception=True)
+		user = serializer.validated_data['user']
+		token, created = Token.objects.get_or_create(user=user)
+		return Response({
+			'token': token.key,
+            'user_id': user.pk,
+            'email': user.email
+        })
+		
 @extend_schema(operation_id="NeumaApi_v3",
 			 description="Welcome message to the Neuma REST API",
 			 responses=MessageSerializer)
@@ -540,8 +562,6 @@ class SourceManifest(APIView):
 
 			#return JSONResponse({"status": "ko", "message": f"No manifest for  source {source_ref}"})
 
-
-@extend_schema(operation_id="SourceApplyEditions")
 class SourceApplyEditions(APIView):
 	
 	"""
@@ -564,6 +584,7 @@ class SourceApplyEditions(APIView):
 		except OpusSource.DoesNotExist:
 			raise Http404
 
+	@extend_schema(operation_id="SourceApplyEditions")
 	def post(self, request, full_neuma_ref, source_ref):
 		source = self.get_object(full_neuma_ref, source_ref)
 		xml_file_name = source.apply_editions(request.data)
@@ -581,14 +602,13 @@ class SourceApplyEditions(APIView):
                               ' Access-Control-Request-Headers, credentials'	
 			return resp
 
-@extend_schema(operation_id="SourceEditions")
 class SourceEditions(APIView):
 	
 	"""
-	 Return the JSON editions of a source
-	 
+	 Operations on editions
 	"""
-	serializer_class = SourceSerializer
+	serializer_class = EditionsSerializer
+	#serializer_class = MessageSerializer
 	
 	def get_queryset(self):
 		opus_ref = self.kwargs['full_neuma_ref']
@@ -619,9 +639,8 @@ class SourceEditions(APIView):
 
 	@extend_schema(operation_id="SourceEditionsPost")
 	def post(self, request, full_neuma_ref, source_ref):
-		source = self.get_object(full_neuma_ref, source_ref)
-		print (f"Reception de {request.data}")
-			
+		#SourceEditions.serializer_class = MessageSerializer
+		source = self.get_object(full_neuma_ref, source_ref)			
 		editions_json = request.data
 		for edition in editions_json:
 			print (f"Received key {edition['name']}")
@@ -634,7 +653,6 @@ class SourceEditions(APIView):
 class SourceFile (APIView):
 	"""
 	 Return the file  of a source
-	 
 	"""
 	
 	def get_queryset(self):

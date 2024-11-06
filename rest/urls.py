@@ -4,12 +4,15 @@ from django.urls import  path, include, re_path
 
 from rest_framework import permissions
 from rest_framework.urlpatterns import format_suffix_patterns
+from rest_framework.authtoken.views import obtain_auth_token
 
 app_name="rest"
 
 urlpatterns = [
     # Welcome message
      path('', views.welcome, name='welcome'),
+    # To obtain a token
+    path('login/', views.CustomAuthToken.as_view()),
     ###############
     ## MISC SERVICE
     ###############
