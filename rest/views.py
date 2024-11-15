@@ -53,6 +53,7 @@ from lxml import etree
 
 # DMOS parser for validation
 from lib.collabscore.parser import CollabScoreParser, OmrScore
+from lib.collabscore.editions import Edition
 
 # Asynchronous tasks
 from home.tasks import parse_dmos
@@ -641,11 +642,16 @@ class SourceEditions(APIView):
 	def post(self, request, full_neuma_ref, source_ref):
 		#SourceEditions.serializer_class = MessageSerializer
 		source = self.get_object(full_neuma_ref, source_ref)			
-		editions_json = request.data
-		for edition in editions_json:
-			print (f"Received key {edition['name']}")
-		# In the case of POST , we append the received list of editions to 
-		source.operations = source.operations +  request.data
+		json_editions = request.data
+		# Check that the JSON does represent a valid edition
+		for json_edition in json_editions:
+			try:
+				valid_ed = Edition.from_json(json_edition)
+				source.add_edition(valid_ed)
+			except Exception as ex:
+				serializer = MessageSerializer({"status": "ko", "message": str(ex)})
+				return JSONResponse(serializer.data)	
+		
 		source.save()
 		serializer = MessageSerializer({"message": f"Editions updated for source {source.ref} in opus {full_neuma_ref}"})
 		return JSONResponse(serializer.data)	
@@ -951,8 +957,6 @@ class AnnotationCreate(APIView):
 								)
 		return JSONResponse(serializer.data)
 
-
-
 def annotation_to_rest(annotation):
 	"""
 	  Create the REST answer that describes an annotation
@@ -962,11 +966,9 @@ def annotation_to_rest(annotation):
 
 	return webannot.get_json_obj()
 
-
 #########################
 #### MISC SERVICES
 ########################
-
 
 @csrf_exempt
 @api_view(["GET"])

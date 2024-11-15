@@ -1440,6 +1440,20 @@ class OpusSource (models.Model):
 		omr_score.write_as_musicxml (mxml_file)
 		return mxml_file
 
+	def add_edition(self, edition):
+		""" 
+		  Add an edition to a list, or replace in case of redundancy
+		"""
+		
+		already_exists =False
+		for json_ed in self.operations:
+			ed = Edition.from_json(json_ed)
+			if edition.name == ed.name and edition.target==ed.target:
+				already_exists = True
+				# Check A
+		if not(already_exists):
+			self.operations.append(edition.to_json())
+
 class Bookmark(models.Model):
 	'''Record accesses from user to opera'''
 	opus = models.ForeignKey(Opus,on_delete=models.CASCADE)

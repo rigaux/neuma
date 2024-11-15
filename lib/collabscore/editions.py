@@ -37,18 +37,19 @@ class Edition:
 	# List of editions that apply to the XML output
 	POST_EDITION_CODES = [MOVE_OBJECT_TO_STAFF]
 	
-	def __init__(self, name, params={}, target=None) :
+	def __init__(self, name, target, params={}, edition_range=None) :
 		if name not in Edition.EDITION_CODES:
-			raise parser_mod.CScoreParserError (f"Invalid editing operation  : {name}" )
+			raise parser_mod.CScoreParserError (f"Invalid editing operation name : {name}" )
 
 		self.name  = name 
+		self.target = target
 		self.params = params
-		# Target of the operation: a range of pages / systems / measures
-		if target == None:
+		# Range of the operation: pages / systems / measures
+		if edition_range == None:
 			# Default range: everything is accepted
-			self.target =  Range() 
+			self.range =  Range() 
 		else:
-			self.target = target
+			self.range = edition_range
 		
 	def apply_to(self, omr_score, mxml_file=None):
 		parser_mod.logger.info (f"Apply edit operation {self.name}")
@@ -87,19 +88,13 @@ class Edition:
 
 	def describe_part(self, omr_score):
 		# Get the first part: we merge everything there
-		part = omr_score.manifest.get_part (self.params["part"])
-		if "name" in self.params["values"].keys():
-			part.name = self.params["values"]["name"]
-		if "abbreviation" in self.params["values"].keys():
-			part.abbreviation = self.params["values"]["abbreviation"]
-		if "instrument" in self.params["values"].keys():
-			part.instrument = self.params["values"]["instrument"]
-
-	def replace_clef(self, omr_score):
-		# Get the first part: we merge everything there
-		id_clef = self.params["id"]
-		self.params["values"]["label"]
-		self.params["values"]["line"]
+		part = omr_score.manifest.get_part (self.target)
+		if "name" in self.params.keys():
+			part.name = self.params["name"]
+		if "abbreviation" in self.params.keys():
+			part.abbreviation = self.params["abbreviation"]
+		if "instrument" in self.params.keys():
+			part.instrument = self.params["instrument"]
 
 	def assign_staff_to_part(self, omr_score):
 		''' The parameters are: 
@@ -108,7 +103,7 @@ class Edition:
 			Everywhere in the range: we assign the staff to the part
 		'''
 		#
-		part = omr_score.manifest.get_part (self.params["part"])
+		part = omr_score.manifest.get_part (self.target)
 		staff_id =  self.params["staff_id"]
 		# Loop on the staves in the target
 		for page in omr_score.manifest.pages:
@@ -139,7 +134,7 @@ class Edition:
 			This is a post-xml correction...
 		'''
 
-		object_id = self.params["object_id"]
+		object_id = self.target
 		staff_no = self.params["staff_no"]
 		direction = self.params["direction"]
 		
@@ -193,14 +188,15 @@ class Edition:
 	
 	def to_json (self):
 		return {"name": self.name,
+			    "target": self.target,
 			     "params": self.params
 			    }
 		
 	@staticmethod
 	def from_json (json_op):
-		return Edition(json_op["name"], json_op["params"])
+		return Edition(json_op["name"], json_op["target"], json_op["params"])
 
-
+				 
 class Range():
 	'''
 	   Defines the range of measures an edition applies to.

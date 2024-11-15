@@ -369,13 +369,13 @@ class OmrScore:
 			if edition.name not in Edition.PARSE_TIME_EDITION_CODES:
 				raise parser_mod.CScoreParserError (f"Unknown editing operation  : {edition.name}. Ignored." )
 			elif edition.name == Edition.REMOVE_OBJECT:
-				self.removals[edition.params["id"]] = edition.params
+				self.removals[edition.target] = edition.params
 			else:
 				# One edition can apply to many graphical objets (eg keys/tsign).
 				# The ids of the graphical object are separated by ID_SEPARATOR
-				ids = edition.params["id"].split (constants_mod.ID_SEPARATOR)
+				ids = edition.target.split (constants_mod.ID_SEPARATOR)
 				for id in ids:
-					self.replacements[edition.name][id] = edition.params["values"]
+					self.replacements[edition.name][id] = edition.params
 		# 
 		# The manifest tells us the parts of the score: we create them
 		for src_part in self.manifest.get_parts():
@@ -718,7 +718,7 @@ class OmrScore:
 		score.clean_voices() 
 	
 		# Remove in the XML file the pseudo-beam
-		self.post_editions.append( editions_mod.Edition (editions_mod.Edition.CLEAN_BEAM))
+		self.post_editions.append( editions_mod.Edition (editions_mod.Edition.CLEAN_BEAM, "score"))
 
 		self.score = score 			
 		return self.score
@@ -732,8 +732,8 @@ class OmrScore:
 				direction = "down"
 			logger.info  (f"Moving note {note.get_code()} direction {direction} ")
 			move = editions_mod.Edition (editions_mod.Edition.MOVE_OBJECT_TO_STAFF,
-										{"object_id": note.id, 
-										"staff_no": note.no_staff,
+										 note.id, 
+										{"staff_no": note.no_staff,
 										"direction": direction})
 			return move
 		else:
