@@ -1430,6 +1430,7 @@ class OpusSource (models.Model):
 			raise Exception ("This IIIF does not have a DMOS file")		
 		editions_to_apply = []
 		for json_edition in editions:
+				print (f"Applying edition {json_edition}")
 				editions_to_apply.append (Edition.from_json(json_edition))
 
 		omr_score = OmrScore ("", dmos_data, {}, editions_to_apply)
