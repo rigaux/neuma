@@ -531,10 +531,13 @@ class OmrScore:
 							logger.info (f'Clef {clef_staff} found on staff {header.no_staff} with id {clef_staff.id} at measure {current_measure_no}, position {clef_position}')
 							part.set_current_clef (clef_staff, mnf_staff.number_in_part, clef_position)
 							# Annotate this symbol
-							annotation = annot_mod.Annotation.create_annot_from_xml_to_image(
-								self.creator, self.uri, header.clef.id, 
-								page.page_url, header.clef.symbol.region.string_xyhw(), constants_mod.IREGION_SYMBOL_CONCEPT)
-							score.add_annotation (annotation)
+							if header.clef.id == None:
+								logger.error (f"Null XML ID for a clef. Ignored.")
+							else:
+								annotation = annot_mod.Annotation.create_annot_from_xml_to_image(
+									self.creator, self.uri, header.clef.id, 
+									page.page_url, header.clef.symbol.region.string_xyhw(), constants_mod.IREGION_SYMBOL_CONCEPT)
+								score.add_annotation (annotation)
 						elif  header.clef is not None and header.clef.id in self.removals:
 							logger.info (f"Clef {header.clef.id} has been removed")
 						if header.time_signature is not None and not (header.time_signature.id in self.removals):
@@ -551,11 +554,13 @@ class OmrScore:
 							# We assign the TS specifically to the current parts: the id is preserved
 							part.set_current_time_signature (new_time_signature, mnf_staff.number_in_part)			
 							# Annotate the key with its region
-							if header.time_signature.region is not None:
+							if header.time_signature.region is not None and header.time_signature.id is not None:
 								annotation = annot_mod.Annotation.create_annot_from_xml_to_image(
 									self.creator, self.uri, header.time_signature.id, 
 									page.page_url, header.time_signature.region.string_xyhw(), constants_mod.IREGION_SYMBOL_CONCEPT)
 								score.add_annotation (annotation)
+							else:
+								logger.error (f"Null regjoin or XML ID for a time signature. Ignored")
 						elif  header.time_signature is not None and header.time_signature.id in self.removals:
 							logger.info (f"Time signature {header.time_signature.id} has been removed")			
 						if header.key_signature is not None and not (header.key_signature.id in self.removals):
@@ -569,11 +574,13 @@ class OmrScore:
 							# We will display the key signature at the beginning
 							# of the current measure
 							measure_for_part.replace_key_signature (key_sign)
-							if header.key_signature.region is not None:
+							if header.key_signature.region is not None and header.key_signature.id is not  None:
 								annotation = annot_mod.Annotation.create_annot_from_xml_to_image(
 									self.creator, self.uri, header.key_signature.id, 
 									page.page_url, header.key_signature.region.string_xyhw(), constants_mod.IREGION_SYMBOL_CONCEPT)
 								score.add_annotation (annotation)
+							else:
+								logger.error (f"Null region or XML ID for a key signature. Ignored")
 						elif  header.key_signature is not None and header.key_signature.id in self.removals:
 							logger.info (f"Key signature {header.key_signature.id} has been removed")
 					# Now we scan the voices

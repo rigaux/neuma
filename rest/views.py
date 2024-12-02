@@ -588,9 +588,15 @@ class SourceApplyEditions(APIView):
 	@extend_schema(operation_id="SourceApplyEditions")
 	def post(self, request, full_neuma_ref, source_ref):
 		source = self.get_object(full_neuma_ref, source_ref)
-		xml_file_name = source.apply_editions(request.data)
-		
-		with open(xml_file_name, "r") as f:
+		tmp_src = source.apply_editions(request.data)
+						
+		if "format" in self.request.GET and self.request.GET["format"]=="json":
+			json_answer = {"desc": f"Editions applied to source {source_ref} of opus {full_neuma_ref}",
+						      "musicxml_path": tmp_src.source_file.url}
+			return JSONResponse (json_answer)
+
+		# We return the full XML file
+		with open(tmp_src.source_file.path, "r") as f:
 			content = f.read()
 			resp = FileResponse(content) 
 			resp['Content-type'] = "text/xml"  # source.source_type.mime_type

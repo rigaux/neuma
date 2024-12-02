@@ -21,6 +21,7 @@ class OpusSource:
 	IIIF_REF = "iiif"
 	MIDI_REF = "midi"
 	MUSICXML_REF = "musicxml"
+	TMP_REF = "tmp"
 		
 	def __init__(self, ref, source_type, mime_type, url):
 		self.ref = ref

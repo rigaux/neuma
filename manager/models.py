@@ -1427,7 +1427,7 @@ class OpusSource (models.Model):
 		if self.source_file:
 			dmos_data = json.loads(self.source_file.read())
 		else:
-			raise Exception ("This IIIF does not have a DMOS file")		
+			raise Exception ("This IIIF does not have a DMOS file")	
 		editions_to_apply = []
 		for json_edition in editions:
 				print (f"Applying edition {json_edition}")
@@ -1436,10 +1436,14 @@ class OpusSource (models.Model):
 		omr_score = OmrScore ("", dmos_data, {}, editions_to_apply)
 	
 		# Store the MusicXML file in the opus
-		print ("Replace XML file")
 		mxml_file = "/tmp/" + shortuuid.uuid() + ".xml"
 		omr_score.write_as_musicxml (mxml_file)
-		return mxml_file
+		
+		tmp_src = self.opus.create_source_with_file(source_mod.OpusSource.TMP_REF, 
+									SourceType.STYPE_MXML,
+							"", mxml_file, "tmp.xml")
+
+		return tmp_src
 
 	def add_edition(self, edition):
 		""" 
