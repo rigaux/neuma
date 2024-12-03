@@ -96,6 +96,13 @@ class TimeSignature:
 	def barDuration(self):
 		# Expected duration of a bar with this TS
 		return self.m21_time_signature.barDuration
+
+	def equals(self, other):
+		# Check if two time signatures are identical
+		if other.m21_time_signature == self.m21_time_signature:
+			return True
+		else:
+			return False
 	
 	def __str__ (self):
 		return f"({self.numer} / {self.denom})"
@@ -133,6 +140,13 @@ class KeySignature:
 			return self.m21_key_signature.accidentalByStep(pitch).name
 		else:
 			return score_events.Note.ALTER_NONE
+
+	def equals(self, other):
+		# Check if two key signatures are identical
+		if other.m21_key_signature == self.m21_key_signature:
+			return True
+		else:
+			return False
 
 	def copy (self):
 		# Make a copy of the current object

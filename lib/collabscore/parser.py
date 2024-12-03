@@ -209,6 +209,10 @@ class OmrScore:
 			Input: a validated JSON object. The method builds
 			a representation based on the Python classes
 		"""
+		"""config = { "log_level": "INFO", "page_min":1, "system_min":1,
+				"measure_min":1, "page_max": 1, "system_max":2,"measure_max": 999
+				}
+		"""
 		self.config = ParserConfig(config)
 		self.config.print()		
 
@@ -529,15 +533,18 @@ class OmrScore:
 							clef_staff = header.clef.get_notation_clef()
 							clef_position = part.get_duration()
 							logger.info (f'Clef {clef_staff} found on staff {header.no_staff} with id {clef_staff.id} at measure {current_measure_no}, position {clef_position}')
-							part.set_current_clef (clef_staff, mnf_staff.number_in_part, clef_position)
+							clef_changed = part.set_current_clef (clef_staff, mnf_staff.number_in_part, clef_position)
 							# Annotate this symbol
 							if header.clef.id == None:
 								logger.error (f"Null XML ID for a clef. Ignored.")
 							else:
-								annotation = annot_mod.Annotation.create_annot_from_xml_to_image(
-									self.creator, self.uri, header.clef.id, 
-									page.page_url, header.clef.symbol.region.string_xyhw(), constants_mod.IREGION_SYMBOL_CONCEPT)
-								score.add_annotation (annotation)
+								if clef_changed:
+									annotation = annot_mod.Annotation.create_annot_from_xml_to_image(
+										self.creator, self.uri, header.clef.id, 
+										page.page_url, header.clef.symbol.region.string_xyhw(), constants_mod.IREGION_SYMBOL_CONCEPT)
+									score.add_annotation (annotation)
+								else:
+									logger.info (f"No change of clef: ignored.")									
 						elif  header.clef is not None and header.clef.id in self.removals:
 							logger.info (f"Clef {header.clef.id} has been removed")
 						if header.time_signature is not None and not (header.time_signature.id in self.removals):
@@ -552,15 +559,18 @@ class OmrScore:
 							# There might be a pb if the staff has no heading time signature
 							#score.set_current_time_signature (new_time_signature)			
 							# We assign the TS specifically to the current parts: the id is preserved
-							part.set_current_time_signature (new_time_signature, mnf_staff.number_in_part)			
+							changed_ts = part.set_current_time_signature (new_time_signature, mnf_staff.number_in_part)			
 							# Annotate the key with its region
 							if header.time_signature.region is not None and header.time_signature.id is not None:
-								annotation = annot_mod.Annotation.create_annot_from_xml_to_image(
-									self.creator, self.uri, header.time_signature.id, 
-									page.page_url, header.time_signature.region.string_xyhw(), constants_mod.IREGION_SYMBOL_CONCEPT)
-								score.add_annotation (annotation)
+								if changed_ts:
+									annotation = annot_mod.Annotation.create_annot_from_xml_to_image(
+										self.creator, self.uri, header.time_signature.id, 
+										page.page_url, header.time_signature.region.string_xyhw(), constants_mod.IREGION_SYMBOL_CONCEPT)
+									score.add_annotation (annotation)
+								else:
+									logger.info (f"No change of time signature: ignored.")																		
 							else:
-								logger.error (f"Null regjoin or XML ID for a time signature. Ignored")
+								logger.error (f"Null region or XML ID for a time signature. Ignored")
 						elif  header.time_signature is not None and header.time_signature.id in self.removals:
 							logger.info (f"Time signature {header.time_signature.id} has been removed")			
 						if header.key_signature is not None and not (header.key_signature.id in self.removals):
@@ -570,17 +580,21 @@ class OmrScore:
 							key_sign = header.key_signature.get_notation_object()
 							logger.info (f'Key signature {key_sign} found on staff {header.no_staff} at measure {current_measure_no}')
 							# The key signature impacts all subsequent events on the staff
-							part.set_current_key_signature (key_sign, mnf_staff.number_in_part)
+							changed_key = part.set_current_key_signature (key_sign, mnf_staff.number_in_part)
 							# We will display the key signature at the beginning
 							# of the current measure
-							measure_for_part.replace_key_signature (key_sign)
-							if header.key_signature.region is not None and header.key_signature.id is not  None:
-								annotation = annot_mod.Annotation.create_annot_from_xml_to_image(
-									self.creator, self.uri, header.key_signature.id, 
-									page.page_url, header.key_signature.region.string_xyhw(), constants_mod.IREGION_SYMBOL_CONCEPT)
-								score.add_annotation (annotation)
+							if changed_key:
+								measure_for_part.replace_key_signature (key_sign)
+								if header.key_signature.region is not None and header.key_signature.id is not  None:
+									annotation = annot_mod.Annotation.create_annot_from_xml_to_image(
+										self.creator, self.uri, header.key_signature.id, 
+										page.page_url, header.key_signature.region.string_xyhw(), constants_mod.IREGION_SYMBOL_CONCEPT)
+									score.add_annotation (annotation)
+								else:
+									logger.error (f"Null region or XML ID for a key signature. Ignored")
 							else:
-								logger.error (f"Null region or XML ID for a key signature. Ignored")
+								logger.info (f"No change of key signature: ignored.")																		
+				
 						elif  header.key_signature is not None and header.key_signature.id in self.removals:
 							logger.info (f"Key signature {header.key_signature.id} has been removed")
 					# Now we scan the voices

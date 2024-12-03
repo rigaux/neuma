@@ -10,6 +10,7 @@ from .Voice import Voice
 from . import notation
 from . import events
 from .constants import ID_SEPARATOR
+from numpy.distutils.fcompiler import none
 
 logging.basicConfig(level=logging.WARNING)
 logger = logging.getLogger(__name__)
@@ -431,11 +432,20 @@ class Part:
 			return self.m21_part.duration.quarterLength
 	
 	def set_current_key_signature (self, key,no_staff=1):
-		self.current_key_signature = key
+		# Returns True is a change of key has been found
+		if self.current_key_signature is not None:
+			if self.current_key_signature.equals(key):
+				return False 
+			else:
+				self.current_key_signature = key
+				return True
+		else:		
+			self.current_key_signature = key
+			return True
 		if self.part_type == Part.GROUP_PART:
 			subpart = self.get_part_staff (no_staff)
 			#print (f"Setting time signature with id {ts.id} to staff {no_staff}")
-			subpart.set_current_key_signature(key)
+			changed_key = subpart.set_current_key_signature(key)
 			
 			## TRICK ! In MusicXML there is only one  signature for both staves.
 			## The id of the second one is lost, and we cannot therefore find
@@ -446,23 +456,33 @@ class Part:
 				first_staff_ks = first_staff_part.current_measure.initial_ks 
 				first_staff_ks.id = f"{first_staff_ks.id}{ID_SEPARATOR}{key.id}"
 				first_staff_ks.m21_key_signature.id = first_staff_ks.id
-				
+			return changed_key
+		
 	def set_current_time_signature (self, ts, no_staff=1):
 		self.current_time_signature = ts
 		if self.current_measure is not None:
-			self.current_measure.replace_time_signature(ts)
-		
+			if 	self.current_measure.initial_ts is not None:
+				if self.current_measure.initial_ts.equals(ts):
+					return False
+				else:
+					self.current_measure.replace_time_signature(ts)
+					return True
+			else:
+				# Strange: when should if happen ?
+				return False
+			
 		if self.part_type == Part.GROUP_PART:
 			subpart = self.get_part_staff (no_staff)
 			#print (f"Setting time signature with id {ts.id} to staff {no_staff}")
-			subpart.set_current_time_signature(ts)			
+			changed_ts = subpart.set_current_time_signature(ts)			
 			## TRICK ! See the comment in set_key_signature
 			if no_staff == 2:
 				first_staff_part = self.get_part_staff (1)
 				first_staff_ts = first_staff_part.current_measure.initial_ts 
 				first_staff_ts.id = f"{first_staff_ts.id}{ID_SEPARATOR}{ts.id}"
 				first_staff_ts.m21_time_signature.id = first_staff_ts.id
-
+			return changed_ts
+		
 	def get_clef_at_pos (self, position=0):
 		# Find, in the stream of clef, the clef valid at the given pos
 		clef = self.current_clefs[0]['clef']
