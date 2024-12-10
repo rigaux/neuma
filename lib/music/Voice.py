@@ -49,7 +49,7 @@ class Voice:
 		   Clean a voice for inconsistent data
 		"""
 		# Check that ties are consistent
-		self.remove_invalid_ties()
+		#self.remove_invalid_ties()
 
 		# Idem for beams
 		self.clean_beams()
@@ -89,7 +89,6 @@ class Voice:
 
 	def remove_hidden_events(self):
 		# We rebuild the voice without hidden events
-		old_stream = self.m21_stream
 		self.m21_stream = m21.stream.Voice(id=self.id)
 		
 		old_events = self.events
@@ -104,18 +103,22 @@ class Voice:
 		# Ensure that a voice duration does not exceeds bar duration
 		
 		# First remove hidden events
-		if self.get_duration() > bar_duration:
-			self.remove_hidden_events()
+		# Always done
+		#if self.get_duration() > bar_duration:
+		#	self.remove_hidden_events()
 		
 		# Not enough ? Remove the last events....
 		if self.get_duration() > bar_duration:
-			old_stream = self.m21_stream
+			score_mod.logger.warning (f"After removal of hiden events, voice {self.id} duration {self.get_duration()} still exceeds the {bar_duration}. Remove last events")
+			# Reinitialize the stream
 			self.m21_stream = m21.stream.Voice(id=self.id)
 			old_events = self.events
 			self.events = []
 			for event in old_events:
 				if self.get_duration() + event.get_duration() <= bar_duration:
 					self.append_event(event)
+				else:
+					score_mod.logger.warning (f"Event {event} must be removed")			
 	
 	def expand_to_bar_duration(self, bar_duration):
 		# Adding rests 			
@@ -250,7 +253,7 @@ class Voice:
 					if in_beam == False:
 						in_beam = True
 					else:
-						score_mod.logger.warning (f"Found two successive 'start' beams")
+						score_mod.logger.warning (f"Found two successive 'start' beams with event {e.id}")
 				elif e.beam.beam_type == "stop":
 					in_beam = False 
 			else:

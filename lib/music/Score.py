@@ -432,16 +432,6 @@ class Part:
 			return self.m21_part.duration.quarterLength
 	
 	def set_current_key_signature (self, key,no_staff=1):
-		# Returns True is a change of key has been found
-		if self.current_key_signature is not None:
-			if self.current_key_signature.equals(key):
-				return False 
-			else:
-				self.current_key_signature = key
-				return True
-		else:		
-			self.current_key_signature = key
-			return True
 		if self.part_type == Part.GROUP_PART:
 			subpart = self.get_part_staff (no_staff)
 			#print (f"Setting time signature with id {ts.id} to staff {no_staff}")
@@ -457,23 +447,35 @@ class Part:
 				first_staff_ks.id = f"{first_staff_ks.id}{ID_SEPARATOR}{key.id}"
 				first_staff_ks.m21_key_signature.id = first_staff_ks.id
 			return changed_key
+		else:
+			# Returns True is a change of key has been found
+			if self.current_key_signature is not None:
+				if self.current_key_signature.equals(key):
+					return False 
+				else:
+					self.current_key_signature = key
+					return True
+			else:		
+				self.current_key_signature = key
+				return True
+			
 		
 	def set_current_time_signature (self, ts, no_staff=1):
-		self.current_time_signature = ts
-		if self.current_measure is not None:
-			if 	self.current_measure.initial_ts is not None:
-				if self.current_measure.initial_ts.equals(ts):
-					return False
+		if not (self.part_type == Part.GROUP_PART):
+			self.current_time_signature = ts
+			if self.current_measure is not None:
+				if 	self.current_measure.initial_ts is not None:
+					if self.current_measure.initial_ts.equals(ts):
+						return False
+					else:
+						self.current_measure.replace_time_signature(ts)
+						return True
 				else:
-					self.current_measure.replace_time_signature(ts)
-					return True
-			else:
-				# Strange: when should if happen ?
-				return False
-			
-		if self.part_type == Part.GROUP_PART:
+					# Strange: when should if happen ?
+					logger.warning (f"Why is the initial signature of measure empty? Should not happen")
+					return False
+		else:
 			subpart = self.get_part_staff (no_staff)
-			#print (f"Setting time signature with id {ts.id} to staff {no_staff}")
 			changed_ts = subpart.set_current_time_signature(ts)			
 			## TRICK ! See the comment in set_key_signature
 			if no_staff == 2:
@@ -515,8 +517,6 @@ class Part:
 	def add_measure (self, measure_no):
 
 		measure = Measure(self, measure_no)
-		self.measures.append(measure)
-		self.current_measure = measure
 			
 		""" In case this is the first measure, we insert
 		   the current time signature (necessary when 
@@ -526,6 +526,9 @@ class Part:
 		if len(self.measures) == 0:
 			measure.add_time_signature(self.current_time_signature.copy())
 			measure.add_key_signature(self.current_key_signature.copy())
+
+		self.measures.append(measure)
+		self.current_measure = measure
 			
 		if not self.part_type == Part.GROUP_PART:
 			self.m21_part.append(measure.m21_measure)
@@ -644,7 +647,7 @@ class Part:
 
 	def check_measure_consistency(self):
 		for measure in	self.get_current_measures():
-			measure.check_consistency()	
+			measure.check_consistency(fix=True)	
 					
 	def aggregate_voices_from_measures(self):
 		"""
@@ -763,15 +766,16 @@ class Measure:
 		self.add_key_signature(new_key_signature)
 		
 	def add_voice (self, voice):
-		if voice.get_duration() > self.get_expected_duration():
+		'''if voice.get_duration() > self.get_expected_duration():
 			logger.warning (f"Duration error. In measure {self.no}, voice {voice.id} duration {voice.get_duration()} exceeds the expected duration {self.get_expected_duration()}.")
 			# Remove hidden events
+			# NB: this type of error is now examined in check_consistency 
 			voice.remove_hidden_events()
 			if voice.get_duration() > self.get_expected_duration():
 				logger.warning (f"After removal of hiden events, voice {voice.id} duration {voice.get_duration()} still exceeds the {self.get_expected_duration()}. Shrinking the voice")
 				# Still not enough
 				voice.shrink_to_bar_duration(self.get_expected_duration())
-
+		'''	
 		self.voices.append(voice)
 		self.m21_measure.insert (0, voice.m21_stream)
 		
@@ -809,13 +813,16 @@ class Measure:
 				# Trying to fix this. Easy when we just have to complete the voice
 				if fix:
 					if voice.m21_stream.duration.quarterLength < bar_duration:
-						logger.warning (f"Incomplete duration in measure {self.id}. Expected duration: {bar_duration}. Voice {voice.id} duration is {voice.get_duration()}")
-						voice.expand_to_bar_duration(bar_duration)
+						pass
+						# We don nothing: incomplete voices are accepted
+						#logger.warning (f"Incomplete duration in measure {self.id}. Time signature: {self.initial_ts} with expected duration: {bar_duration}. Voice {voice.id} duration is {voice.get_duration()}")
+						#voice.expand_to_bar_duration(bar_duration)
 					else:
 						logger.warning (f"Overduration in measure {self.id}. Expected duration: {bar_duration}. Voice {voice.id} duration is {voice.get_duration()}")
 						voice.shrink_to_bar_duration(bar_duration)
-					logger.warning (f"After fix, measure duration: {bar_duration}. Voice {voice.id} duration {voice.get_duration()}")
+					logger.warning (f"After fix, measure duration: {bar_duration}. Voice {voice.id} duration {voice.get_duration()} / {voice.m21_stream.duration}")
 
+		# Reinitialize the M21 content
 		self.m21_measure = m21.stream.Measure(id=self.id, number=self.no)
 		for voice in self.voices:
 			self.m21_measure.insert (0, voice.m21_stream)

@@ -103,7 +103,7 @@ class Event:
 			self.beam = score_notation.Beam()
 			self.m21_event.beams.append(self.beam.m21_beam)
 		else:
-			score_mod.logger.warning (f"Trying to start a beam ({beam_id}) on a rest")
+			score_mod.logger.warning (f"Trying to start a beam ({beam_id}) on a rest for event {self.id}")
 	def continue_beam(self, beam_id=1):
 		if not self.is_rest():
 			score_mod.logger.info (f"Continue a beam : {beam_id}" )
@@ -111,7 +111,7 @@ class Event:
 			#self.m21_event.beams.append("continue")
 			self.m21_event.beams.append(self.beam.m21_beam)
 		else:
-			score_mod.logger.warning (f"Trying to continue a beam ({beam_id}) on a rest")
+			score_mod.logger.warning (f"Trying to continue a beam ({beam_id}) on a rest for event {self.id}")
 	def stop_beam(self, beam_id=1):
 		if not self.is_rest():
 			score_mod.logger.info (f"Stop a beam : {beam_id}" )
