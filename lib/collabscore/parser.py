@@ -723,13 +723,20 @@ class OmrScore:
 					logger.info("")
 					score.check_time_signatures()
 		
-					# Time to check the consistency of the measure
-					logger.info("")
-					logger.info("Checking consistency of measures")
-					logger.info("")
-					score.check_measure_consistency()
-					
-		# Aggrgate voices at the part level
+		# Time to check the consistency of the measure
+		logger.info("")
+		logger.info("Checking consistency of measures")
+		logger.info("")
+		list_removals = score.check_measure_consistency()			
+		'''A TESTER 
+		for removal in list_removals:
+			# Adding removed events to the post editions they
+			# must be reinserted in the XML file
+			self.post_editions.append( editions_mod.Edition (editions_mod.Edition.APPEND_OBJECTS, 
+																removal.target.id, {"voice": removal.voice, "events": removal.list_events}))
+		'''				
+						
+		# Aggregate voices at the part level
 		logger.info("")
 		logger.info("Create part voices from measure voices")
 		logger.info("")

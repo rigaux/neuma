@@ -89,7 +89,7 @@ class Voice:
 
 	def remove_hidden_events(self):
 		# We rebuild the voice without hidden events
-		self.m21_stream = m21.stream.Voice(id=self.id)
+		self.m21_stream.clear()
 		
 		old_events = self.events
 		self.events = []
@@ -107,18 +107,24 @@ class Voice:
 		#if self.get_duration() > bar_duration:
 		#	self.remove_hidden_events()
 		
+		removed_events = []
 		# Not enough ? Remove the last events....
 		if self.get_duration() > bar_duration:
-			score_mod.logger.warning (f"After removal of hiden events, voice {self.id} duration {self.get_duration()} still exceeds the {bar_duration}. Remove last events")
 			# Reinitialize the stream
-			self.m21_stream = m21.stream.Voice(id=self.id)
+			self.m21_stream.clear()
 			old_events = self.events
 			self.events = []
+			last_event_inserted = None
 			for event in old_events:
 				if self.get_duration() + event.get_duration() <= bar_duration:
 					self.append_event(event)
+					score_mod.logger.warning (f"Accepting event {event}")			
+					last_event_inserted = event
 				else:
-					score_mod.logger.warning (f"Event {event} must be removed")			
+					score_mod.logger.warning (f"Event {event} must be removed after {last_event_inserted}")			
+					removed_events.append(event)
+	
+		return VoiceFragment(self, last_event_inserted, removed_events)
 	
 	def expand_to_bar_duration(self, bar_duration):
 		# Adding rests 			
@@ -589,7 +595,17 @@ class Voice:
 
 	def disable_autobeam(self):
 		self.automatic_beaming = False 
-		
+
+class VoiceFragment():
+	'''
+	   Representation of a list of events to be appended after 
+	   an existing one
+	'''
+	def __init__(self, voice, target, list_events=[]) :
+		self.target  = target
+		self.voice = voice
+		self.list_events = list_events
+	
 # FIXME
 class IncompleteBarsError(Exception):
 	pass

@@ -302,8 +302,10 @@ class Score:
 			part.check_time_signatures(fix)
 
 	def check_measure_consistency(self):
+		list_removals = []
 		for part in self.parts:
-			part.check_measure_consistency()	
+			list_removals += part.check_measure_consistency()	
+		return list_removals
 
 	def aggregate_voices_from_measures(self):
 		for part in self.parts:
@@ -646,9 +648,11 @@ class Part:
 					measure.replace_time_signature (ts)
 
 	def check_measure_consistency(self):
+		list_removals = []
 		for measure in	self.get_current_measures():
-			measure.check_consistency(fix=True)	
-					
+			list_removals += measure.check_consistency(fix=True)	
+		return list_removals
+	
 	def aggregate_voices_from_measures(self):
 		"""
 			 This function attempts to connect the voices internal to the measures
@@ -766,16 +770,15 @@ class Measure:
 		self.add_key_signature(new_key_signature)
 		
 	def add_voice (self, voice):
-		'''if voice.get_duration() > self.get_expected_duration():
-			logger.warning (f"Duration error. In measure {self.no}, voice {voice.id} duration {voice.get_duration()} exceeds the expected duration {self.get_expected_duration()}.")
-			# Remove hidden events
-			# NB: this type of error is now examined in check_consistency 
-			voice.remove_hidden_events()
-			if voice.get_duration() > self.get_expected_duration():
-				logger.warning (f"After removal of hiden events, voice {voice.id} duration {voice.get_duration()} still exceeds the {self.get_expected_duration()}. Shrinking the voice")
-				# Still not enough
-				voice.shrink_to_bar_duration(self.get_expected_duration())
-		'''	
+		# Avoid inserting in the measure a voice larger than
+		# the measure duration. IMPORTANT: keep the code here,
+		# as it seems that it is too late even though we
+		# keep the poiter on the stream
+		#if voice.get_duration() > self.get_expected_duration():
+		#	logger.warning (f"Duration error. In measure {self.no}, voice {voice.id} duration {voice.get_duration()} exceeds the expected duration {self.get_expected_duration()}.")
+		#	voice.shrink_to_bar_duration(self.get_expected_duration())
+		#	logger.warning (f"After fix, measure duration: {self.get_expected_duration()}. Voice {voice.id} duration {voice.get_duration()} / {voice.m21_stream.duration}")
+
 		self.voices.append(voice)
 		self.m21_measure.insert (0, voice.m21_stream)
 		
@@ -804,29 +807,33 @@ class Measure:
 		   expected duration
 		 """
 		
+		# List of events removed 
+		list_removals = []
+		
 		# First get the time signature in effect
 		logger.info (f"Measure {self.id}. Expected duration: {self.initial_ts.barDuration().quarterLength}")
 		for voice in self.voices:
 			bar_duration = self.get_expected_duration()
-			#self.m21_measure.getElementsByClass(m21.stream.Voice):
-			if not (voice.m21_stream.duration == self.initial_ts.barDuration()):					
+			if voice.get_duration() > bar_duration:					
 				# Trying to fix this. Easy when we just have to complete the voice
 				if fix:
-					if voice.m21_stream.duration.quarterLength < bar_duration:
-						pass
-						# We don nothing: incomplete voices are accepted
-						#logger.warning (f"Incomplete duration in measure {self.id}. Time signature: {self.initial_ts} with expected duration: {bar_duration}. Voice {voice.id} duration is {voice.get_duration()}")
-						#voice.expand_to_bar_duration(bar_duration)
-					else:
-						logger.warning (f"Overduration in measure {self.id}. Expected duration: {bar_duration}. Voice {voice.id} duration is {voice.get_duration()}")
-						voice.shrink_to_bar_duration(bar_duration)
+					logger.warning (f"Overduration in measure {self.id}. Expected duration: {bar_duration}. Voice {voice.id} duration is {voice.get_duration()}")
+					list_removals.append(voice.shrink_to_bar_duration(bar_duration))
 					logger.warning (f"After fix, measure duration: {bar_duration}. Voice {voice.id} duration {voice.get_duration()} / {voice.m21_stream.duration}")
 
+				# We do nothing is the voice is included in the measure
+				# incomplete voices are accepted
+				#logger.warning (f"Incomplete duration in measure {self.id}. Time signature: {self.initial_ts} with expected duration: {bar_duration}. Voice {voice.id} duration is {voice.get_duration()}")
+				#voice.expand_to_bar_duration(bar_duration)
+
 		# Reinitialize the M21 content
-		self.m21_measure = m21.stream.Measure(id=self.id, number=self.no)
-		for voice in self.voices:
-			self.m21_measure.insert (0, voice.m21_stream)
-		logger.info  (f"Measure duration AFTER FIX: {self.get_duration()}")
+		# No need because we modified each voice internally
+		#self.m21_measure.clear() # = m21.stream.Measure(id=self.id, number=self.no)
+		#for voice in self.voices:
+		#	self.m21_measure.insert (0, voice.m21_stream)
+		#logger.info  (f"Measure duration AFTER FIX: {self.get_duration()}")
+
+		return list_removals
 
 	def get_duration(self):
 		# Returns the measure duration based on it metric

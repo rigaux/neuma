@@ -7,6 +7,9 @@ import lib.music.notation as score_notation
 
 import lib.music.Score as score_mod
 
+# for XML editions
+from lxml import etree
+
 '''
  Classes representing musical event (e.g., pairs (duratioin, value)
 '''
@@ -126,6 +129,10 @@ class Event:
 	
 	def add_decoration(self, decoration):
 		self.decorations.append(decoration)
+
+	def to_musicxml(self):
+		el = etree.Element('void')
+		return el
 
 	def __str__(self):
 		return f"Event {self.id}. Duration {self.duration}"
@@ -263,6 +270,18 @@ class Note (Event):
 		lyric = m21.note.Lyric(text=txt,number=nb)
 		self.m21_event.lyrics.append(lyric)
 		
+	def to_musicxml(self):
+		el = etree.Element('note')
+		el.set("id", self.id)
+		pitch = etree.SubElement(el, 'pitch')
+		step = etree.SubElement(pitch, 'step')
+		step.text = str(self.pitch_class)
+		octave = etree.SubElement(pitch, 'octave')
+		octave.text = str(self.octave)
+		duration = etree.SubElement(el, 'duration')
+		duration.text= '2520'
+
+		return el
 		
 	def __str__(self):
 		return f"Note {self.id}. {self.pitch_class}{self.octave}{self.alter}-{self.duration}"
@@ -295,7 +314,7 @@ class Chord (Event):
 			self.m21_event.tie = m21.tie.Tie('stop')
 
 		self.m21_event.duration = duration.m21_duration
-		self.m21_event.id = f'{Event.counter_context}c{Event.counter_event}'
+		self.m21_event.id = self.id
 
 		Event.counter_event += 1
 		self.no_staff = no_staff
@@ -328,6 +347,7 @@ class Chord (Event):
 				return False 
 		return True
 		
+
 	def __str__(self):
 		note_list = ""
 		for note in self.notes:
@@ -345,7 +365,7 @@ class Rest (Event):
 
 		self.m21_event = m21.note.Rest()
 		self.m21_event.duration = duration.m21_duration
-		self.m21_event.id = f'{Event.counter_context}r{Event.counter_event}'
+		self.m21_event.id = self.id
 		Event.counter_event += 1
 		self.no_staff = no_staff
 		return
@@ -356,6 +376,17 @@ class Rest (Event):
 		return True
 	def get_no_staff(self):
 		return self.no_staff
+		
+	def to_musicxml(self):
+		el = etree.Element('note')
+		el.set("id", self.id)
+		etree.SubElement(el, 'rest')
+		duration = etree.SubElement(el, 'duration')
+		duration.text= '2520'
+		return el
+
+	def __str__(self):
+		return f"Rest {self.id}-{self.duration}"
 
 
 class Decoration():

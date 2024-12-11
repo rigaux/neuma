@@ -3,8 +3,7 @@ import lib.collabscore.parser as parser_mod
 PSEUDO_BEAM_ID = 99999
 
 # for XML editions
-import xml.etree.ElementTree as ET
-
+from lxml import etree
 '''
   Edit operations applied to a score. Designed to be combined
   with an optical recognition step
@@ -22,20 +21,20 @@ class Edition:
 	REPLACE_TIMESIGN = "replace_timesign"
 	REPLACE_KEYSIGN = "replace_keysign"
 	REMOVE_OBJECT = "remove_object"
-
+	APPEND_OBJECTS="append_objects"
 	CLEAN_BEAM = "clean_beam"
 	
 	# All edition codes
 	EDITION_CODES = [MERGE_PARTS,DESCRIBE_PART,ASSIGN_PART_TO_STAFF,
 					REPLACE_CLEF, REPLACE_TIMESIGN,REPLACE_KEYSIGN,REMOVE_OBJECT,
-					MOVE_OBJECT_TO_STAFF,CLEAN_BEAM]
+					MOVE_OBJECT_TO_STAFF,CLEAN_BEAM,APPEND_OBJECTS]
 	
 	# List of editions that apply at parser initialization
 	PRE_EDITION_CODES = [MERGE_PARTS,DESCRIBE_PART,ASSIGN_PART_TO_STAFF]
 	# List of editions that apply at parsing time
 	PARSE_TIME_EDITION_CODES = [REPLACE_CLEF,REPLACE_KEYSIGN,REPLACE_TIMESIGN,REMOVE_OBJECT]
 	# List of editions that apply to the XML output
-	POST_EDITION_CODES = [MOVE_OBJECT_TO_STAFF]
+	POST_EDITION_CODES = [MOVE_OBJECT_TO_STAFF,APPEND_OBJECTS]
 	
 	def __init__(self, name, target, params={}, edition_range=None) :
 		if name not in Edition.EDITION_CODES:
@@ -158,11 +157,39 @@ class Edition:
 			parser_mod.logger.warning(f"Unable to find object {object_id} that should be moved to staff {staff_no}")
 		
 		return 
-	
+
+	def append_objects(self, mxml_doc):
+		''' 
+		    Objects have been removed from a voice
+		    after conversion. We reinsert them directly in the file
+		'''
+		object_id = self.target
+		list_events = self.params["events"]		
+		voice = self.params["voice"]		
+
+		print (f"APPEND AFTER id {object_id}")
+		target = mxml_doc.find(f".//*[@id = '{object_id}']")
+		if target is not None:
+			parent = target.getparent()
+			#print(f"Object found " + str(etree.tostring(target)))
+			for removed in list_events:
+				print (f"\t\tAppend object {removed.id} after {target.get('id')}")
+				musicxml_el = removed.to_musicxml()
+				v = etree.SubElement(musicxml_el, 'voice')
+				v.text = str(voice.id)
+				self.insert_after(parent, target, musicxml_el)
+				target = musicxml_el
+		else:
+			print (f"Event {object_id} not found in the file")
+
+		
+	def insert_after(self, parent, element, new_element):
+		parent.insert(parent.index(element)+1, new_element)
+
 	@staticmethod
 	def apply_editions_to_file(post_editions, xml_file):
 		# All post editions apply to the MusicXML file
-		mxml_doc = ET.parse(xml_file)
+		mxml_doc = etree.parse(xml_file)
 		
 		for ed in post_editions:
 			if ed.name == Edition.MOVE_OBJECT_TO_STAFF:
@@ -171,6 +198,8 @@ class Edition:
 			elif ed.name == Edition.CLEAN_BEAM:
 				# Assign an object to a staff. Done in the MusicXML file
 				ed.clean_beam (mxml_doc)
+			elif ed.name == Edition.APPEND_OBJECTS:
+				ed.append_objects (mxml_doc)
 	
 		# Write it back
 		mxml_doc.write (xml_file)
@@ -195,8 +224,8 @@ class Edition:
 	@staticmethod
 	def from_json (json_op):
 		return Edition(json_op["name"], json_op["target"], json_op["params"])
-
 				 
+	
 class Range():
 	'''
 	   Defines the range of measures an edition applies to.
