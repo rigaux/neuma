@@ -87,6 +87,11 @@ class Event:
 	def get_duration(self):
 		return self.duration.get_value()
 	
+	@staticmethod
+	def get_musicxml_duration(quarter_length, divisions):
+		# Concert a Music21 quarter length value to a music XML duration
+		return int(quarter_length * divisions)
+	
 	def set_visibility(self, visibility):
 		self.visible = visibility
 		if visibility == False:
@@ -130,9 +135,9 @@ class Event:
 	def add_decoration(self, decoration):
 		self.decorations.append(decoration)
 
-	def to_musicxml(self):
+	def to_musicxml(self, divisions):
 		el = etree.Element('void')
-		return el
+		return [el]
 
 	def __str__(self):
 		return f"Event {self.id}. Duration {self.duration}"
@@ -211,7 +216,9 @@ class Note (Event):
 	SD_DOWN = "down"
 	
 	def __init__(self, pitch_class, octave, duration,  alter=ALTER_NONE,
-				no_staff=UNDEFINED_STAFF, tied=False, stem_direction=None) :
+				no_staff=UNDEFINED_STAFF, tied=False, 
+				stem_direction=None,
+				note_type=None) :
 		super ().__init__(duration, tied)
 		
 		self.type = Event.TYPE_NOTE
@@ -225,6 +232,10 @@ class Note (Event):
 		self.m21_event.id = self.id
 		self.no_staff = no_staff
 		self.stem_direction = stem_direction
+		if note_type=="quaver":
+			# Caution
+			note_type="eighth"
+		self.note_type=note_type
 		
 		self.syllable = None 
 		
@@ -270,7 +281,7 @@ class Note (Event):
 		lyric = m21.note.Lyric(text=txt,number=nb)
 		self.m21_event.lyrics.append(lyric)
 		
-	def to_musicxml(self):
+	def to_musicxml(self,divisions=10080):
 		el = etree.Element('note')
 		el.set("id", self.id)
 		pitch = etree.SubElement(el, 'pitch')
@@ -279,9 +290,18 @@ class Note (Event):
 		octave = etree.SubElement(pitch, 'octave')
 		octave.text = str(self.octave)
 		duration = etree.SubElement(el, 'duration')
-		duration.text= '2520'
-
-		return el
+		duration.text= str(Event.get_musicxml_duration(self.duration.get_value(), divisions))
+		staff = etree.SubElement(el, 'staff')
+		staff.text = str(self.no_staff)
+		stem = etree.SubElement(el, 'stem')
+		stem.text = str(self.stem_direction)
+		note_type = etree.SubElement(el, 'type')
+		note_type.text = str(self.note_type)
+		if self.tied:
+			tie = etree.SubElement(el, 'tie')
+			tie["type"] = str(self.tie_type)
+			
+		return [el]
 		
 	def __str__(self):
 		return f"Note {self.id}. {self.pitch_class}{self.octave}{self.alter}-{self.duration}"
@@ -346,7 +366,17 @@ class Chord (Event):
 			if not (chord.contains_pitch(n)):
 				return False 
 		return True
-		
+				
+	def to_musicxml(self,divisions):
+		i_note = 1
+		els = []
+		for note in self.notes:
+			el = note.to_musicxml()
+			if i_note > 1:
+				etree.SubElement(el, 'chord')
+			i_note += 1
+			els.append(el)
+		return els
 
 	def __str__(self):
 		note_list = ""
@@ -377,13 +407,15 @@ class Rest (Event):
 	def get_no_staff(self):
 		return self.no_staff
 		
-	def to_musicxml(self):
+	def to_musicxml(self,divisions):
 		el = etree.Element('note')
 		el.set("id", self.id)
 		etree.SubElement(el, 'rest')
 		duration = etree.SubElement(el, 'duration')
-		duration.text= '2520'
-		return el
+		duration.text= str(Event.get_musicxml_duration(self.duration.get_value(), divisions))
+		staff = etree.SubElement(el, 'staff')
+		staff.text = str(self.no_staff)
+		return [el]
 
 	def __str__(self):
 		return f"Rest {self.id}-{self.duration}"

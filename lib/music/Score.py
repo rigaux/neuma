@@ -649,7 +649,7 @@ class Part:
 
 	def check_measure_consistency(self):
 		list_removals = []
-		for measure in	self.get_current_measures():
+		for measure in	self.measures:
 			list_removals += measure.check_consistency(fix=True)	
 		return list_removals
 	
@@ -818,7 +818,9 @@ class Measure:
 				# Trying to fix this. Easy when we just have to complete the voice
 				if fix:
 					logger.warning (f"Overduration in measure {self.id}. Expected duration: {bar_duration}. Voice {voice.id} duration is {voice.get_duration()}")
-					list_removals.append(voice.shrink_to_bar_duration(bar_duration))
+					removed_events = voice.shrink_to_bar_duration(bar_duration)
+					if removed_events is not None:
+						list_removals.append(removed_events)
 					logger.warning (f"After fix, measure duration: {bar_duration}. Voice {voice.id} duration {voice.get_duration()} / {voice.m21_stream.duration}")
 
 				# We do nothing is the voice is included in the measure

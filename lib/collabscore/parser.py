@@ -728,13 +728,13 @@ class OmrScore:
 		logger.info("Checking consistency of measures")
 		logger.info("")
 		list_removals = score.check_measure_consistency()			
-		'''A TESTER 
+		'''A TESTER '''
 		for removal in list_removals:
 			# Adding removed events to the post editions they
 			# must be reinserted in the XML file
 			self.post_editions.append( editions_mod.Edition (editions_mod.Edition.APPEND_OBJECTS, 
-																removal.target.id, {"voice": removal.voice, "events": removal.list_events}))
-		'''				
+																removal.target.id, {"events": removal.list_events}))
+					
 						
 		# Aggregate voices at the part level
 		logger.info("")
@@ -810,7 +810,9 @@ class OmrScore:
 
 					
 				note = score_events.Note(pitch_class, octave, duration, alter, 
-											mnf_staff.number_in_part, stem_direction=voice_item.direction)
+											mnf_staff.number_in_part, 
+											stem_direction=voice_item.direction,
+											note_type=voice_item.duration.note_type)
 				# Check ties
 				if head.tied and head.tied=="forward":
 					#print (f"Tied note {note} start with id {head.id_tie}")
@@ -1282,6 +1284,7 @@ class Duration:
 	def __init__(self, json_duration):
 		self.symbol = Symbol (json_duration["symbol"])
 		self.whole = False
+		self.note_type = self.symbol.label
 		
 		if self.symbol.label not  in DURATION_SYMBOLS_LIST:
 			raise CScoreParserError (f'Unknown symbol name: {self.symbol.label}')

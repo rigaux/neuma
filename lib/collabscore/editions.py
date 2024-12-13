@@ -158,27 +158,28 @@ class Edition:
 		
 		return 
 
-	def append_objects(self, mxml_doc):
+	def append_objects(self, mxml_doc, divisions):
 		''' 
 		    Objects have been removed from a voice
 		    after conversion. We reinsert them directly in the file
 		'''
 		object_id = self.target
 		list_events = self.params["events"]		
-		voice = self.params["voice"]		
 
-		print (f"APPEND AFTER id {object_id}")
 		target = mxml_doc.find(f".//*[@id = '{object_id}']")
 		if target is not None:
+			voice = target.find("./voice").text
+			print (f"APPEND AFTER id {object_id}. Voice={voice} Divisions={divisions}")
 			parent = target.getparent()
 			#print(f"Object found " + str(etree.tostring(target)))
 			for removed in list_events:
 				print (f"\t\tAppend object {removed.id} after {target.get('id')}")
-				musicxml_el = removed.to_musicxml()
-				v = etree.SubElement(musicxml_el, 'voice')
-				v.text = str(voice.id)
-				self.insert_after(parent, target, musicxml_el)
-				target = musicxml_el
+				musicxml_elements = removed.to_musicxml(divisions)
+				for el in musicxml_elements:
+					v = etree.SubElement(el, 'voice')
+					v.text = str(voice)
+					self.insert_after(parent, target, el)
+					target = el
 		else:
 			print (f"Event {object_id} not found in the file")
 
@@ -191,6 +192,10 @@ class Edition:
 		# All post editions apply to the MusicXML file
 		mxml_doc = etree.parse(xml_file)
 		
+		# Find the value of "divisions": used to determine XML duration
+		for division_node in mxml_doc.findall(f".//divisions"):
+			divisions = int(division_node.text)
+			
 		for ed in post_editions:
 			if ed.name == Edition.MOVE_OBJECT_TO_STAFF:
 				# Assign an object to a staff. Done in the MusicXML file
@@ -199,7 +204,7 @@ class Edition:
 				# Assign an object to a staff. Done in the MusicXML file
 				ed.clean_beam (mxml_doc)
 			elif ed.name == Edition.APPEND_OBJECTS:
-				ed.append_objects (mxml_doc)
+				ed.append_objects (mxml_doc, divisions)
 	
 		# Write it back
 		mxml_doc.write (xml_file)

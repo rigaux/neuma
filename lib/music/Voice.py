@@ -98,18 +98,25 @@ class Voice:
 		for event in old_events:
 			if event.visible:
 				self.append_event(event)
+				#score_mod.logger.warning (f"Accepting event {event.id}")
+			else:
+				score_mod.logger.warning (f"Removing event {event.id}")
 
 	def shrink_to_bar_duration(self, bar_duration):
 		# Ensure that a voice duration does not exceeds bar duration
 		
-		# First remove hidden events
-		# Always done
-		#if self.get_duration() > bar_duration:
-		#	self.remove_hidden_events()
 		
+		if self.get_duration() > bar_duration:
+			# First remove hidden events
+			score_mod.logger.warning (f"Removing hidden events")			
+			self.remove_hidden_events()
+
 		removed_events = []
 		# Not enough ? Remove the last events....
 		if self.get_duration() > bar_duration:
+			# First remove hidden events
+			self.remove_hidden_events()
+			
 			# Reinitialize the stream
 			self.m21_stream.clear()
 			old_events = self.events
@@ -118,13 +125,15 @@ class Voice:
 			for event in old_events:
 				if self.get_duration() + event.get_duration() <= bar_duration:
 					self.append_event(event)
-					score_mod.logger.warning (f"Accepting event {event}")			
+					#score_mod.logger.warning (f"Accepting event {event}")			
 					last_event_inserted = event
 				else:
 					score_mod.logger.warning (f"Event {event} must be removed after {last_event_inserted}")			
 					removed_events.append(event)
 	
-		return VoiceFragment(self, last_event_inserted, removed_events)
+			return VoiceFragment(self, last_event_inserted, removed_events)
+		else:
+			return None
 	
 	def expand_to_bar_duration(self, bar_duration):
 		# Adding rests 			
