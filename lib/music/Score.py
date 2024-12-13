@@ -5,6 +5,7 @@ import music21 as m21
 
 import verovio
 
+
 # Voice is a complex class defined in a separate file
 from .Voice import Voice
 from . import notation
@@ -12,7 +13,7 @@ from . import events
 from .constants import ID_SEPARATOR
 from numpy.distutils.fcompiler import none
 
-logging.basicConfig(level=logging.WARNING)
+logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
@@ -477,6 +478,10 @@ class Part:
 					logger.warning (f"Why is the initial signature of measure empty? Should not happen")
 					return False
 		else:
+			# Keep the current at the global part level: it
+			# is used to check the length of voices
+			self.current_time_signature = ts
+			# propagate it to the subpart
 			subpart = self.get_part_staff (no_staff)
 			changed_ts = subpart.set_current_time_signature(ts)			
 			## TRICK ! See the comment in set_key_signature
@@ -519,7 +524,7 @@ class Part:
 	def add_measure (self, measure_no):
 
 		measure = Measure(self, measure_no)
-			
+		logger.info (f"Adding a measure {measure_no} to part {self.id}")
 		""" In case this is the first measure, we insert
 		   the current time signature (necessary when 
 		    a part begins after the other, and the TS is implicit)
@@ -578,7 +583,7 @@ class Part:
 		if self.part_type == Part.GROUP_PART:
 			#  We determine the main staff
 			main_staff = voice.determine_main_staff()
-			# We add the voice to the part measure with this staff
+			# We add the voice to the part measure with this staff			
 			measure = self.get_measure_from_staff(main_staff)
 			measure.add_voice(voice)
 			
@@ -770,18 +775,8 @@ class Measure:
 		self.add_key_signature(new_key_signature)
 		
 	def add_voice (self, voice):
-		# Avoid inserting in the measure a voice larger than
-		# the measure duration. IMPORTANT: keep the code here,
-		# as it seems that it is too late even though we
-		# keep the poiter on the stream
-		#if voice.get_duration() > self.get_expected_duration():
-		#	logger.warning (f"Duration error. In measure {self.no}, voice {voice.id} duration {voice.get_duration()} exceeds the expected duration {self.get_expected_duration()}.")
-		#	voice.shrink_to_bar_duration(self.get_expected_duration())
-		#	logger.warning (f"After fix, measure duration: {self.get_expected_duration()}. Voice {voice.id} duration {voice.get_duration()} / {voice.m21_stream.duration}")
-
 		self.voices.append(voice)
 		self.m21_measure.insert (0, voice.m21_stream)
-		
 		# The absolute position of the voice is that of the measure
 		#voice.absolute_position = self.absolute_position
 		
@@ -811,29 +806,22 @@ class Measure:
 		list_removals = []
 		
 		# First get the time signature in effect
-		logger.info (f"Measure {self.id}. Expected duration: {self.initial_ts.barDuration().quarterLength}")
 		for voice in self.voices:
 			bar_duration = self.get_expected_duration()
 			if voice.get_duration() > bar_duration:					
 				# Trying to fix this. Easy when we just have to complete the voice
 				if fix:
-					logger.warning (f"Overduration in measure {self.id}. Expected duration: {bar_duration}. Voice {voice.id} duration is {voice.get_duration()}")
+					logging.warning (f"Overduration in measure {self.id}. Expected duration: {bar_duration}. Voice {voice.id} duration is {voice.get_duration()}")
 					removed_events = voice.shrink_to_bar_duration(bar_duration)
 					if removed_events is not None:
 						list_removals.append(removed_events)
-					logger.warning (f"After fix, measure duration: {bar_duration}. Voice {voice.id} duration {voice.get_duration()} / {voice.m21_stream.duration}")
+					logging.warning (f"After fix, measure duration: {bar_duration}. Voice {voice.id} duration {voice.get_duration()} / {voice.m21_stream.duration}")
 
 				# We do nothing is the voice is included in the measure
 				# incomplete voices are accepted
-				#logger.warning (f"Incomplete duration in measure {self.id}. Time signature: {self.initial_ts} with expected duration: {bar_duration}. Voice {voice.id} duration is {voice.get_duration()}")
-				#voice.expand_to_bar_duration(bar_duration)
-
-		# Reinitialize the M21 content
-		# No need because we modified each voice internally
-		#self.m21_measure.clear() # = m21.stream.Measure(id=self.id, number=self.no)
-		#for voice in self.voices:
-		#	self.m21_measure.insert (0, voice.m21_stream)
-		#logger.info  (f"Measure duration AFTER FIX: {self.get_duration()}")
+			#if voice.get_duration() < bar_duration:					
+			#	logger.warning (f"Incomplete duration in measure {self.id}. Time signature: {self.initial_ts} with expected duration: {bar_duration}. Voice {voice.id} duration is {voice.get_duration()}")
+			#	voice.expand_to_bar_duration(bar_duration)
 
 		return list_removals
 

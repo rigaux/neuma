@@ -732,9 +732,11 @@ class OmrScore:
 		for removal in list_removals:
 			# Adding removed events to the post editions they
 			# must be reinserted in the XML file
-			self.post_editions.append( editions_mod.Edition (editions_mod.Edition.APPEND_OBJECTS, 
+			if removal.target is not None:
+				self.post_editions.append( editions_mod.Edition (editions_mod.Edition.APPEND_OBJECTS, 
 																removal.target.id, {"events": removal.list_events}))
-					
+			else:
+				logger.warning (f"Unable to find a target for one of the removals")		
 						
 		# Aggregate voices at the part level
 		logger.info("")

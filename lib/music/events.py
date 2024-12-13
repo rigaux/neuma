@@ -299,7 +299,7 @@ class Note (Event):
 		note_type.text = str(self.note_type)
 		if self.tied:
 			tie = etree.SubElement(el, 'tie')
-			tie["type"] = str(self.tie_type)
+			tie.set("type", str(self.tie_type))
 			
 		return [el]
 		
@@ -371,7 +371,7 @@ class Chord (Event):
 		i_note = 1
 		els = []
 		for note in self.notes:
-			el = note.to_musicxml()
+			el = note.to_musicxml()[0]
 			if i_note > 1:
 				etree.SubElement(el, 'chord')
 			i_note += 1
