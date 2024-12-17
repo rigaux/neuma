@@ -364,9 +364,9 @@ class OmrScore:
 		
 		# Set initial context
 		logger.info (f"Initial time signature set to {self.initial_time_signature}")						
-		score.current_key_signature = self.initial_key_signature
+		score.set_initial_key_signature (self.initial_key_signature)
 		logger.info (f'Initial key signature set to {self.initial_key_signature}')
-		score.current_time_signature = self.initial_time_signature
+		score.set_initial_time_signature(self.initial_time_signature)
 		
 		# Add run time edition
 		for edition in self.parse_time_editions:
@@ -552,17 +552,12 @@ class OmrScore:
 								replacement = self.replacements[Edition.REPLACE_TIMESIGN][header.time_signature.id]
 								header.time_signature.overwrite (replacement)
 							new_time_signature = header.time_signature.get_notation_object()
-							# Setting the TS at the score level propagates to all parts
-							# We do not do that anymore because it makes a copy
-							# of the time signature and looses the id.
-							# There might be a pb if the staff has no heading time signature
-							#score.set_current_time_signature (new_time_signature)			
 							# We assign the TS specifically to the current parts: the id is preserved
 							changed_ts = part.set_current_time_signature (new_time_signature, mnf_staff.number_in_part)			
 							# Annotate the key with its region
 							if header.time_signature.region is not None and header.time_signature.id is not None:
 								if changed_ts:
-									logger.info (f'Time signature  {new_time_signature} with id {new_time_signature.id} found on staff {header.no_staff} at measure {current_measure_no}')
+									logger.info (f'New time signature  {new_time_signature} with id {new_time_signature.id} found on staff {header.no_staff} at measure {current_measure_no}')
 									annotation = annot_mod.Annotation.create_annot_from_xml_to_image(
 										self.creator, self.uri, header.time_signature.id, 
 										page.page_url, header.time_signature.region.string_xyhw(), constants_mod.IREGION_SYMBOL_CONCEPT)
@@ -583,8 +578,7 @@ class OmrScore:
 							# We will display the key signature at the beginning
 							# of the current measure
 							if changed_key:
-								logger.info (f'Key signature {key_sign} found on staff {header.no_staff} at measure {current_measure_no}')
-								measure_for_part.replace_key_signature (key_sign)
+								logger.info (f'New key signature {key_sign} found on staff {header.no_staff} at measure {current_measure_no}')
 								if header.key_signature.region is not None and header.key_signature.id is not  None:
 									annotation = annot_mod.Annotation.create_annot_from_xml_to_image(
 										self.creator, self.uri, header.key_signature.id, 
@@ -1125,6 +1119,11 @@ class Note:
 	"""
 	
 	def __init__(self, json_note):
+		if "id" in json_note:
+			self.id =  json_note["id"]
+		else:
+			self.id =  None
+			
 		self.tied  = "none"
 		self.id_tie = 0
 		self.alter = score_events.Note.ALTER_NONE

@@ -66,10 +66,9 @@ class Score:
 		self.pages = []
 		self.current_page = None
 
-		# During parsing, we maintain the current interpretation context 
-		# Useful when a part begins without explicit information
-		self.current_key_signature = notation.KeySignature() 
-		self.current_time_signature = notation.TimeSignature() 
+		# We need to know the initial signatures in case they are missing
+		self.initial_key_signature = notation.KeySignature() 
+		self.initial_time_signature = notation.TimeSignature() 
 
 		'''
 			Reset all counters
@@ -114,8 +113,11 @@ class Score:
 		""" Add a part to the main score or to the current page"""
 		
 		# The new part receives it initial key / time signature from the score
-		part.set_current_key_signature(self.current_key_signature)
 		part.set_current_time_signature(self.current_time_signature)
+		part.current_time_signature.set_by_default(f"default_ts")
+
+		part.set_current_key_signature(self.current_key_signature)
+		part.current_key_signature.set_by_default(f"default_ks")
 		
 		if not part.part_type == Part.STAFF_PART:
 			# Just a staff in a multi-staves part: do not put in the score
@@ -146,14 +148,12 @@ class Score:
 		self.current_page = page
 		self.m21_score.append(page.m21_page)
 		
-	def set_current_key_signature (self, key):
+	def set_initial_key_signature (self, key):
+		key.set_by_default("default_score_key")
 		self.current_key_signature = key
-	def set_current_time_signature (self, ts):
+	def set_initial_time_signature (self, ts):
+		ts.set_by_default("default_score_time")
 		self.current_time_signature = ts
-		# We propagate to all parts
-		for part in self.get_parts():
-			# WARNING: if we do that we loose the id of the time signature
-			part.set_current_time_signature(ts.copy())
 			
 	def get_current_time_signature(self):
 		return self.current_time_signature
@@ -453,35 +453,21 @@ class Part:
 		else:
 			# Returns True is a change of key has been found
 			if self.current_key_signature is not None:
-				if self.current_key_signature.equals(key):
+				if self.current_key_signature.equals(key) and not self.current_key_signature.is_by_default:
 					return False 
 				else:
 					self.current_key_signature = key
+					if self.current_measure is not None:
+						# Might be done during part initialization
+						self.current_measure.replace_key_signature(key)
 					return True
 			else:		
 				self.current_key_signature = key
 				return True
-			
 		
 	def set_current_time_signature (self, ts, no_staff=1):
-		if not (self.part_type == Part.GROUP_PART):
-			self.current_time_signature = ts
-			if self.current_measure is not None:
-				if 	self.current_measure.initial_ts is not None:
-					if self.current_measure.initial_ts.equals(ts):
-						return False
-					else:
-						self.current_measure.replace_time_signature(ts)
-						return True
-				else:
-					# Strange: when should if happen ?
-					logger.warning (f"Why is the initial signature of measure empty? Should not happen")
-					return False
-		else:
-			# Keep the current at the global part level: it
-			# is used to check the length of voices
-			self.current_time_signature = ts
-			# propagate it to the subpart
+		if self.part_type == Part.GROUP_PART:
+			# Propagate it to the subpart
 			subpart = self.get_part_staff (no_staff)
 			changed_ts = subpart.set_current_time_signature(ts)			
 			## TRICK ! See the comment in set_key_signature
@@ -490,7 +476,22 @@ class Part:
 				first_staff_ts = first_staff_part.current_measure.initial_ts 
 				first_staff_ts.id = f"{first_staff_ts.id}{ID_SEPARATOR}{ts.id}"
 				first_staff_ts.m21_time_signature.id = first_staff_ts.id
+
+			# Keep the current at the global part level: it
+			# is used to check the length of voices
+			if changed_ts:
+				self.current_time_signature = ts
+				
 			return changed_ts
+		else:
+			if self.current_time_signature.equals(ts) and not self.current_time_signature.is_by_default:
+				return False
+			else:
+				self.current_time_signature = ts
+				if self.current_measure is not None:
+					# Might be done during part initialization
+					self.current_measure.replace_time_signature(ts)
+				return True
 		
 	def get_clef_at_pos (self, position=0):
 		# Find, in the stream of clef, the clef valid at the given pos
@@ -531,8 +532,12 @@ class Part:
 		    Music21 seems clever enough to remove subsequent and equals signatures
 		"""
 		if len(self.measures) == 0:
-			measure.add_time_signature(self.current_time_signature.copy())
-			measure.add_key_signature(self.current_key_signature.copy())
+			default_ts = self.current_time_signature.copy()
+			default_ts.set_by_default(f"default_ts_{self.id}")
+			measure.add_time_signature(default_ts)
+			default_ks = self.current_key_signature.copy()
+			default_ks.set_by_default(f"default_ks_{self.id}")
+			measure.add_key_signature(default_ks)
 
 		self.measures.append(measure)
 		self.current_measure = measure

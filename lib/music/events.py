@@ -57,9 +57,13 @@ class Event:
 		Event.counter_context = new_context
 		Event.counter_event = 0
 		
-	def __init__(self, duration, tied=False) :
-		Event.counter_event += 1
-		self.id = f'{Event.counter_context}E{Event.counter_event}'
+	def __init__(self, duration, tied=False, id=None) :
+		if id is None:
+			Event.counter_event += 1
+			self.id = f'{Event.counter_context}E{Event.counter_event}'
+		else:
+			self.id = id
+			
 		self.duration = duration
 		self.m21_event = None 
 		self.type = Event.TYPE_NOTE
@@ -218,8 +222,9 @@ class Note (Event):
 	def __init__(self, pitch_class, octave, duration,  alter=ALTER_NONE,
 				no_staff=UNDEFINED_STAFF, tied=False, 
 				stem_direction=None,
-				note_type=None) :
-		super ().__init__(duration, tied)
+				note_type=None, 
+				id=None):
+		super ().__init__(duration, tied, id)
 		
 		self.type = Event.TYPE_NOTE
 		self.alter = alter
@@ -311,8 +316,8 @@ class Chord (Event):
 		Representation of a chord = a list of notes
 	"""
 	
-	def __init__(self,  duration, no_staff, notes) :
-		super ().__init__(duration)
+	def __init__(self,  duration, no_staff, notes,id=None) :
+		super ().__init__(duration,id)
 		self.type = Event.TYPE_CHORD
 		self.notes = notes
 		# Create the m21 representation: encode 
@@ -389,8 +394,8 @@ class Rest (Event):
 		Representation of a rest
 	"""
 	
-	def __init__(self,  duration, no_staff) :
-		super ().__init__(duration)
+	def __init__(self,  duration, no_staff,id=None) :
+		super ().__init__(duration,id)
 		self.type = Event.TYPE_REST
 
 		self.m21_event = m21.note.Rest()

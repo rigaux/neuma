@@ -168,18 +168,22 @@ class Edition:
 
 		target = mxml_doc.find(f".//*[@id = '{object_id}']")
 		if target is not None:
-			voice = target.find("./voice").text
-			print (f"APPEND AFTER id {object_id}. Voice={voice} Divisions={divisions}")
-			parent = target.getparent()
-			#print(f"Object found " + str(etree.tostring(target)))
-			for removed in list_events:
-				print (f"\t\tAppend object {removed.id} after {target.get('id')}")
-				musicxml_elements = removed.to_musicxml(divisions)
-				for el in musicxml_elements:
-					v = etree.SubElement(el, 'voice')
-					v.text = str(voice)
-					self.insert_after(parent, target, el)
-					target = el
+			voice_el = target.find("./voice")
+			if voice_el is not None:
+				voice = voice_el.text
+				print (f"APPEND AFTER id {object_id}. Voice={voice} Divisions={divisions}")
+				parent = target.getparent()
+				#print(f"Object found " + str(etree.tostring(target)))
+				for removed in list_events:
+					print (f"\t\tAppend object {removed.id} after {target.get('id')}")
+					musicxml_elements = removed.to_musicxml(divisions)
+					for el in musicxml_elements:
+						v = etree.SubElement(el, 'voice')
+						v.text = str(voice)
+						self.insert_after(parent, target, el)
+						target = el
+			else:
+				parser_mod.logger.warning(f"Unable to find the voice in element {object_id}. Ignored...")			
 		else:
 			print (f"Event {object_id} not found in the file")
 

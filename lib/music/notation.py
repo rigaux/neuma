@@ -69,11 +69,17 @@ class TimeSignature:
 		self.numer = numer
 		self.denom = denom
 		self.single_digit = False
+		self.is_by_default = False
+
 		# m21 duration is the float obtained from the fraction
 		self.m21_time_signature = m21.meter.TimeSignature('{}/{}'.format(self.numer, self.denom))
 		self.m21_time_signature.id = self.id
-		
-		
+
+	def set_by_default (self, default_id):
+		# Tells that the TS is by default and should be replaced
+		self.id = default_id
+		self.m21_time_signature.id = default_id
+		self.is_by_default = True
 
 	def symbolize(self):
 		# Display the TS as a symbole
@@ -99,7 +105,8 @@ class TimeSignature:
 
 	def equals(self, other):
 		# Check if two time signatures are identical
-		if other.m21_time_signature == self.m21_time_signature:
+		# Does not work? if other.m21_time_signature == self.m21_time_signature:
+		if other.denom == self.denom and other.numer==self.numer:
 			return True
 		else:
 			return False
@@ -118,6 +125,7 @@ class KeySignature:
 		self.nb_sharps = nb_sharps
 		self.nb_flats = nb_flats
 		self.nb_naturals = nb_naturals
+		self.is_by_default = False
 		
 		if nb_sharps > 0:
 			self.m21_key_signature = m21.key.KeySignature(nb_sharps)
@@ -134,6 +142,12 @@ class KeySignature:
 		self.m21_key_signature.id = self.id
 		
 
+	def set_by_default (self, default_id):
+		# Tells that the TS is by default and should be replaced
+		self.id = default_id
+		self.m21_key_signature.id = default_id
+		self.is_by_default = True
+		
 	# Layer over the music21 functions
 	def accidental_by_step(self, pitch):
 		if self.m21_key_signature.accidentalByStep(pitch) is not None:
