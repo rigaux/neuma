@@ -591,10 +591,11 @@ class OmrScore:
 				
 						elif  header.key_signature is not None and header.key_signature.id in self.removals:
 							logger.info (f"Key signature {header.key_signature.id} has been removed")
+
+					
 					# Now we scan the voices
 					for voice in measure.voices:
 						current_part = score.get_part(voice.id_part)
-
 						logger.info (f"")
 						logger.info (f'Process voice {voice.id} in part {current_part.id}')
 						
@@ -722,7 +723,6 @@ class OmrScore:
 					logger.info("Checking time signatures")
 					logger.info("")
 					score.check_time_signatures()
-		
 		# Time to check the consistency of the measure
 		logger.info("")
 		logger.info("Checking consistency of measures")

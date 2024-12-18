@@ -129,8 +129,8 @@ class Voice:
 					#score_mod.logger.warning (f"Accepting event {event}")			
 					last_event_inserted = event
 				else:
-					#list_removed_events += f"{event} / "
-					list_removed_events += f"{event.id} / "
+					list_removed_events += f"{event} / "
+					#list_removed_events += f"{event.id} / "
 					removed_events.append(event)
 			score_mod.logger.warning (f"The followig events are removed after {last_event_inserted}: {list_removed_events}")			
 					

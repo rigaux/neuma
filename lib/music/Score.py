@@ -481,6 +481,8 @@ class Part:
 			# is used to check the length of voices
 			if changed_ts:
 				self.current_time_signature = ts
+				if self.current_measure is not None:
+					self.current_measure.replace_time_signature(ts)
 				
 			return changed_ts
 		else:
