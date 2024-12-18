@@ -111,14 +111,14 @@ class Event:
 
 	def start_beam(self, beam_id=1):
 		if not self.is_rest():
-			score_mod.logger.info (f"Start a beam : {beam_id}" )
+			#score_mod.logger.info (f"Start a beam : {beam_id}" )
 			self.beam = score_notation.Beam()
 			self.m21_event.beams.append(self.beam.m21_beam)
 		else:
 			score_mod.logger.warning (f"Trying to start a beam ({beam_id}) on a rest for event {self.id}")
 	def continue_beam(self, beam_id=1):
 		if not self.is_rest():
-			score_mod.logger.info (f"Continue a beam : {beam_id}" )
+			#score_mod.logger.info (f"Continue a beam : {beam_id}" )
 			self.beam = score_notation.Beam("continue")
 			#self.m21_event.beams.append("continue")
 			self.m21_event.beams.append(self.beam.m21_beam)
@@ -126,7 +126,7 @@ class Event:
 			score_mod.logger.warning (f"Trying to continue a beam ({beam_id}) on a rest for event {self.id}")
 	def stop_beam(self, beam_id=1):
 		if not self.is_rest():
-			score_mod.logger.info (f"Stop a beam : {beam_id}" )
+			#score_mod.logger.info (f"Stop a beam : {beam_id}" )
 			self.beam = score_notation.Beam("stop")
 			#self.m21_event.beams.append("stop")
 			self.m21_event.beams.append(self.beam.m21_beam)
@@ -394,8 +394,8 @@ class Rest (Event):
 		Representation of a rest
 	"""
 	
-	def __init__(self,  duration, no_staff,id=None) :
-		super ().__init__(duration,id)
+	def __init__(self,  duration, no_staff, id=None) :
+		super ().__init__(duration, id)
 		self.type = Event.TYPE_REST
 
 		self.m21_event = m21.note.Rest()

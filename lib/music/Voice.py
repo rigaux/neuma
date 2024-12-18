@@ -122,15 +122,19 @@ class Voice:
 			old_events = self.events
 			self.events = []
 			last_event_inserted = None
+			list_removed_events = ""
 			for event in old_events:
 				if self.get_duration() + event.get_duration() <= bar_duration:
 					self.append_event(event)
 					#score_mod.logger.warning (f"Accepting event {event}")			
 					last_event_inserted = event
 				else:
-					score_mod.logger.warning (f"Event {event} must be removed after {last_event_inserted}")			
+					#list_removed_events += f"{event} / "
+					list_removed_events += f"{event.id} / "
 					removed_events.append(event)
-	
+			score_mod.logger.warning (f"The followig events are removed after {last_event_inserted}: {list_removed_events}")			
+					
+			
 			return VoiceFragment(self, last_event_inserted, removed_events)
 		else:
 			return None

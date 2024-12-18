@@ -661,22 +661,28 @@ class OmrScore:
 		
 							# Annotate this event if the region is known
 							if event_region is not None:
-								if event.is_chord():
-									# We do not know how to assign an id to a chord, so we annotate the notes
-									for note in event.notes:
-										# Same region for all notes....
+								if not(type_event == "clef"):
+									if event.is_chord():
+										# We do not know how to assign an id to a chord, so we annotate the notes
+										for note in event.notes:
+											# Same region for all notes....
+											annotation = annot_mod.Annotation.create_annot_from_xml_to_image(
+												self.creator, self.uri, note.id, 
+												self.score_image_url, event_region.string_xyhw(), 
+												constants_mod.IREGION_NOTE_CONCEPT)
+											score.add_annotation (annotation)
+									else:
 										annotation = annot_mod.Annotation.create_annot_from_xml_to_image(
-											self.creator, self.uri, note.id, 
+											self.creator, self.uri, event.id, 
 											self.score_image_url, event_region.string_xyhw(), 
 											constants_mod.IREGION_NOTE_CONCEPT)
 										score.add_annotation (annotation)
 								else:
 									annotation = annot_mod.Annotation.create_annot_from_xml_to_image(
-										self.creator, self.uri, event.id, 
-										self.score_image_url, event_region.string_xyhw(), 
-										constants_mod.IREGION_NOTE_CONCEPT)
+											self.creator, self.uri, event.id, 
+											self.score_image_url, event_region.string_xyhw(), 
+											constants_mod.IREGION_SYMBOL_CONCEPT)
 									score.add_annotation (annotation)
-								
 							
 							# Did we met errors ?
 							for error in item.errors:
@@ -808,7 +814,8 @@ class OmrScore:
 				note = score_events.Note(pitch_class, octave, duration, alter, 
 											mnf_staff.number_in_part, 
 											stem_direction=voice_item.direction,
-											note_type=voice_item.duration.note_type)
+											note_type=voice_item.duration.note_type,
+											id=head.id)
 				# Check ties
 				if head.tied and head.tied=="forward":
 					#print (f"Tied note {note} start with id {head.id_tie}")
@@ -845,7 +852,7 @@ class OmrScore:
 				#staff = voice.part.get_staff(mnf_staff.number_in_part)
 
 				id_staff = StaffHeader.make_id_staff(head.no_staff) # Will be used as the chord staff.
-				event = score_events.Rest(duration, mnf_staff.number_in_part)
+				event = score_events.Rest(duration, mnf_staff.number_in_part, id=head.id)
 				event.set_visibility(voice_item.rest_attr.visible)
 				logger.info (f'Adding rest {duration.get_value()} to staff {id_staff}.')
 		elif voice_item.clef_attr is not None:
