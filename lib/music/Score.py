@@ -439,6 +439,13 @@ class Part:
 			subpart = self.get_part_staff (no_staff)
 			#print (f"Setting time signature with id {ts.id} to staff {no_staff}")
 			changed_key = subpart.set_current_key_signature(key)
+
+			# Keep the current at the global part level: it
+			# is used to determine default alterations
+			if changed_key:
+				self.current_key_signature = key
+				if self.current_measure is not None:
+					self.current_measure.replace_key_signature(key)
 			
 			## TRICK ! In MusicXML there is only one  signature for both staves.
 			## The id of the second one is lost, and we cannot therefore find
