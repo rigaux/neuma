@@ -1180,6 +1180,10 @@ class Clef:
 	def overwrite (self, replacement):
 		self.symbol.label = replacement["label"]
 		self.height  = replacement["line"]
+		if "octave_change" in replacement:
+			self.octave_change =  replacement["octave_change"]
+		else:
+			self.octave_change = 0
 		
 	def get_notation_clef(self):
 		# Decode the DMOS infos

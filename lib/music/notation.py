@@ -181,6 +181,8 @@ class Clef:
 	DMOS_UT_CLEF="C"
 
 	TREBLE_CLEF = m21.clef.TrebleClef
+	TREBLE_8PLUS_CLEF = m21.clef.Treble8vbClef
+	TREBLE_8MIN_CLEF = m21.clef.Treble8vaClef
 	SOPRANO_CLEF = m21.clef.SopranoClef
 	MEZZO_CLEF = m21.clef.MezzoSopranoClef
 	ALTO_CLEF = m21.clef.AltoClef
@@ -197,6 +199,10 @@ class Clef:
 
 		if clef_code == self.TREBLE_CLEF:
 			self.m21_clef = m21.clef.TrebleClef()
+		elif clef_code == self.TREBLE_8PLUS_CLEF:
+			self.m21_clef = m21.clef.Treble8vbClef()
+		elif clef_code == self.TREBLE_8MIN_CLEF:
+			self.m21_clef = m21.clef.Treble8vaClef()
 		elif clef_code == self.SOPRANO_CLEF:
 			self.m21_clef = m21.clef.SopranoClef()
 		elif clef_code == self.MEZZO_CLEF:
@@ -221,9 +227,15 @@ class Clef:
 			return False
 		
 	@staticmethod 
-	def decode_from_dmos (dmos_code, dmos_height, dmos_id=None):
+	def decode_from_dmos (dmos_code, dmos_height, dmos_id=None,
+						  dmos_octave_change=0):
 		if dmos_code == Clef.DMOS_TREBLE_CLEF:
-			return Clef (Clef.TREBLE_CLEF, dmos_id)
+			if  dmos_octave_change ==0:
+				return Clef (Clef.TREBLE_CLEF, dmos_id)
+			elif  dmos_octave_change ==1:
+				return Clef (Clef.TREBLE_8PLUS_CLEF, dmos_id)
+			elif  dmos_octave_change == -1:
+				return Clef (Clef.TREBLE_8MIN_CLEF, dmos_id)
 		elif dmos_code == Clef.DMOS_BASS_CLEF:
 			return Clef (Clef.BASS_CLEF, dmos_id)
 		elif dmos_code == Clef.DMOS_UT_CLEF and dmos_height==1:
@@ -239,7 +251,6 @@ class Clef:
 			score_mod.logger.error('Unable to decode DMOS code for clef: ' + dmos_code 
 						+ " " + str(dmos_height))
 			return Clef (Clef.TREBLE_CLEF)
-
 
 	def decode_pitch (self, height):
 		''' 
