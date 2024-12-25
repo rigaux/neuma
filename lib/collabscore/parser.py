@@ -723,6 +723,16 @@ class OmrScore:
 					logger.info("Checking time signatures")
 					logger.info("")
 					score.check_time_signatures()
+
+		# Aggregate voices at the part level
+		logger.info("")
+		logger.info("Create part voices from measure voices")
+		logger.info("")
+		score.aggregate_voices_from_measures()
+		# Now clean the voice of possible inconsistencies. For
+		# instance ties that to not make sense
+		score.clean_voices() 
+
 		# Time to check the consistency of the measure
 		logger.info("")
 		logger.info("Checking consistency of measures")
@@ -738,14 +748,6 @@ class OmrScore:
 			else:
 				logger.warning (f"Unable to find a target for one of the removals")		
 						
-		# Aggregate voices at the part level
-		logger.info("")
-		logger.info("Create part voices from measure voices")
-		logger.info("")
-		score.aggregate_voices_from_measures()
-		# Now clean the voice of possible inconsistencies. For
-		# instance ties that to not make sense
-		score.clean_voices() 
 	
 		# Remove in the XML file the pseudo-beam
 		self.post_editions.append( editions_mod.Edition (editions_mod.Edition.CLEAN_BEAM, "score"))

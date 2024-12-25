@@ -305,6 +305,15 @@ class Note (Event):
 		if self.tied:
 			tie = etree.SubElement(el, 'tie')
 			tie.set("type", str(self.tie_type))
+		if self.beam:
+			beam = etree.SubElement(el, 'beam')
+			beam.set("number", str(self.beam.number))
+			if self.beam.beam_type == score_notation.Beam.START_BEAM:
+				beam.text = "begin"
+			elif self.beam.beam_type == score_notation.Beam.CONTINUE_BEAM:
+				beam.text = "continue"
+			elif self.beam.beam_type == score_notation.Beam.STOP_BEAM:
+				beam.text = "end"
 			
 		return [el]
 		
