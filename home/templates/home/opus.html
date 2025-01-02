@@ -129,11 +129,13 @@ var tabNames = [
                 <a target="_blank" href="{{source.url}}">Link to the source</a> |
             {% endif %} 
           {% if source.source_file %}
-           <a href="{{source.source_file.url}}">File: {{source.source_file.name}}</a>
+           <a href="{{source.source_file.url}}">File: {{source.ref}}</a>
           {% endif %}           
           {% if source.ref == 'iiif' %}
-              | <a href="{% url 'home:opus' opus.ref %}?convert_dmos=1">
-                           Convert DMOS file
+              | <a href="{% url 'home:iiif_viewer' source.id 'uv'  %}" target=”_blank”>
+                           View with Universal viewer 
+              | <a href="{% url 'home:iiif_viewer' source.id 'mirador'  %}" target=”_blank”>
+                           View with Mirador
         {% endif %}           
          {% if "change_corpus" in user_corpus_perms %}
            | <a href="{% url 'admin:manager_opussource_change' source.id %}">
@@ -323,7 +325,7 @@ function displaySource(src, type, target) {
            <a onclick="displaySource('{{source.source_file.url}}', 'mei', 'source2')" href="#">Show right</a>
          {% endif %}
          {% if source.url %}      
-           <a href="{% url 'home:IIIF' source.url %} " target="_blank" href="#">Show</a> |
+           <a href="{% url 'home:iiif_viewer' source.id 'mirador' %} " target="_blank" href="#">Show</a> |
          {% endif %} 
         {% if "change_corpus" in user_corpus_perms %}
         

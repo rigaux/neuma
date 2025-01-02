@@ -59,14 +59,8 @@ class Proxy:
 
 class Document:
 	
-	def __init__(self, identifier):
-		self.id = identifier
-		
-		# Try to get the manifest
-		req_url = "".join([GALLICA_BASEURL, self.id, '/manifest.json'])
-		r = requests.get(req_url)
-		r.raise_for_status()
-		self.manifest = r.json()
+	def __init__(self, manifest):
+		self.manifest = manifest
 		
 		# Nb of canvases. We assume a simple document whith only one sequence
 		self.nb_canvases = len (self.manifest["sequences"][0]["canvases"])

@@ -6,6 +6,8 @@ import json
 import jsonref
 import jsonschema
 
+import requests
+
 import zipfile
 import os
 import shortuuid
@@ -1196,26 +1198,47 @@ class Opus(models.Model):
 									SourceType.STYPE_MIDI,
 							"", midi_file, "score.midi", "rb")
 		
-			# Get the IIIF manifest for image infos
-			iiif_proxy = iiif_mod.Proxy(iiif_mod.GALLICA_BASEURL)
-			docid = iiif_mod.Proxy.decompose_gallica_ref(dmos_source.url)
-			try:
-				iiif_doc = iiif_proxy.get_document(docid)
-				print (f"Got the IIIF manifest. Nb canvases {iiif_doc.nb_canvases}")
-				images = iiif_doc.get_images()
-				for img in images:
-					print (f"Image {img.url}. Width {img.width}")
-				omr_score.manifest.add_image_info (images) 
-			except Exception as ex:
-				logger.error(str(ex))
-
-			# Store the manifest 
+			# Compute and store the score manifest in the IIIF source
+			iiif_source = None
 			for source in self.opussource_set.all ():
 				if source.ref == source_mod.OpusSource.IIIF_REF:
-					source.manifest.id = source.full_ref()
-					print (f"Save the manifest with id {source.manifest.id}")
-					source.manifest = ContentFile(json.dumps(omr_score.manifest.to_json()), name="manifest.json")
-					source.save()
+					iiif_source = source
+
+					
+			if iiif_source is None:
+				raise Exception (f"Unable to find the IIIF source in Opus {self.id} ")
+
+
+			# Get the IIIF manifest for image infos
+			if not (iiif_source.iiif_manifest):
+				# Special case: we know the Gallica URL, from which
+				# we can get the manifest
+				print (f"Get the IIIF manifest from Gallica")
+				# Take the manifest
+				docid = iiif_mod.Proxy.decompose_gallica_ref(iiif_source.url)
+				req_url = "".join([iiif_mod.GALLICA_BASEURL, docid, '/manifest.json'])
+				r = requests.get(req_url)
+				r.raise_for_status()
+				iiif_manifest = r.json()
+			else:
+				print (f"Take the manifest from the source")
+				with open(iiif_source.iiif_manifest.path, "r") as f:
+					iiif_manifest = f.read()
+
+			iiif_doc = iiif_mod.Document(iiif_manifest)
+			print (f"Got the IIIF manifest. Nb canvases {iiif_doc.nb_canvases}")
+			images = iiif_doc.get_images()
+			for img in images:
+				print (f"Image {img.url}. Width {img.width}")
+				
+				omr_score.manifest.add_image_info (images) 
+
+			iiif_source.manifest.id = iiif_source.full_ref()
+			print (f"Save the manifest with id {iiif_source.manifest.id}")
+			iiif_source.manifest = ContentFile(json.dumps(omr_score.manifest.to_json()), name="manifest.json")
+			iiif_source.iiif_manifest = ContentFile(json.dumps(iiif_manifest), name="iiif_manifest.json")
+
+			iiif_source.save()
 		
 			# Now we know the full url of the MEI document
 			score.uri = mei_source.source_file.url
@@ -1372,6 +1395,7 @@ class OpusSource (models.Model):
 	url = models.CharField(max_length=255,blank=True,null=True)
 	# A set of operations applied to the source file. Example: post-OMR processing
 	operations = models.JSONField(blank=True,default=list)
+	
 	creation_timestamp = models.DateTimeField('Created', auto_now_add=True)
 	update_timestamp = models.DateTimeField('Updated', auto_now=True)
 
@@ -1381,6 +1405,8 @@ class OpusSource (models.Model):
 		return 'sources/' + source_ref + '/' + filename
 	source_file = models.FileField(upload_to=upload_path,blank=True,null=True,storage=OverwriteStorage())
 	manifest = models.FileField(upload_to=upload_path,blank=True,null=True,storage=OverwriteStorage())
+	# For IIIF sources, we store locally the IIIF manifest
+	iiif_manifest = models.FileField(upload_to=upload_path,blank=True,null=True,storage=OverwriteStorage())
 
 	class Meta:
 		db_table = "OpusSource"	

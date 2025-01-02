@@ -107,7 +107,7 @@ class Manifest:
 	def add_image_info(self, images):
 		# Enrich the manifest with info coming from IIIF
 		for page in self.pages:
-			print (f"Searching for page {page.url}")
+			# print (f"Searching for page {page.url}")
 			for img in images:
 				if page.url == img.url:
 					page.width = img.width

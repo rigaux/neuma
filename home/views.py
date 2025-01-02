@@ -139,19 +139,18 @@ def show_licence (request, licence_code):
 	context["licence"] = Licence.objects.get(code=licence_code)
 	return render(request, 'home/show_licence.html', context)
 
-def iiif (request, iiif_ref):
+def iiif (request, iiif_id, viewer):
 	""" Display a viewer on a IIIF resource"""
 	
 	# Format attendu par Gallica
-	
-	# On ajoute iiif avant 'ark' et on concatène avec'manifest.json'
-	iiif_ref = str.replace (iiif_ref, "/ark", "/iiif/ark") + "/manifest.json"
-	print ("IIIF : " +  iiif_ref)
-	# https://gallica.bnf.fr/iiif/ark:/12148/bpt6k1174892k/manifest.json
-	context["iiif_ref"] = iiif_ref
-	return render(request, 'home/IIIF.html', context)
+	source = OpusSource.objects.get(id=iiif_id)
 
-
+	context = {"iiif_ref": source.iiif_manifest.url}
+	if viewer == "uv":
+		return render(request, 'home/univ-viewer.html', context)
+	else:
+		return render(request, 'home/mirador.html', context)
+		
 def export_corpus_as_zip (request, corpus_ref):
 	""" Export the list of XML files of this corpus"""
 	
