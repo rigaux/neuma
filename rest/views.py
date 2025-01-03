@@ -561,7 +561,36 @@ class SourceManifest(APIView):
 		else:
 			return Response(status=status.HTTP_404_NOT_FOUND)
 
-			#return JSONResponse({"status": "ko", "message": f"No manifest for  source {source_ref}"})
+
+@extend_schema(operation_id="SourceIIIFManifest")
+class SourceIIIFManifest(APIView):
+	
+	"""
+	 Return the JSON IIIF manifest of a source
+	 
+	"""
+	serializer_class = SourceSerializer
+	
+	def get_queryset(self):
+		opus_ref = self.kwargs['full_neuma_ref']
+		source_ref = self.kwargs['source_ref']
+		opus, object_type = get_object_from_neuma_ref(opus_ref)
+		return OpusSource.objects.filter(opus=opus, ref=source_ref)
+
+	def get_object(self, full_neuma_ref, source_ref):
+		try:
+			opus, object_type = get_object_from_neuma_ref(full_neuma_ref)
+			return OpusSource.objects.get(opus=opus, ref=source_ref)
+		except OpusSource.DoesNotExist:
+			raise Http404
+
+	def get(self, request, full_neuma_ref, source_ref, format=None):
+		source = self.get_object(full_neuma_ref, source_ref)
+		if source.iiif_manifest:
+			with open(source.iiif_manifest.path, "r") as f1:
+				return JSONResponse (json.loads(f1.read()))
+		else:
+			return Response(status=status.HTTP_404_NOT_FOUND)
 
 class SourceApplyEditions(APIView):
 	

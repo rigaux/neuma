@@ -138,7 +138,7 @@ class SourceSerializer(serializers.ModelSerializer):
 		fields = ['ref', 'source_type', 'url', 'description', 'source_file', 'manifest']
 
 	def to_representation(self, instance):
-		# Here, 'instance' is an Opus
+		# Here, 'instance' is an OpusSource
 		source_dict = instance.to_serializable("abs_url")
 		return source_dict.to_json()
 

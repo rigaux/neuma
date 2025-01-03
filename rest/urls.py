@@ -37,6 +37,8 @@ urlpatterns = [
 	path(r'collections/<str:full_neuma_ref>/_sources/<str:source_ref>/_file/',views.SourceFile.as_view(), name='handle_source_manifest_request'),
 	# GET the manifest of a source
 	path(r'collections/<str:full_neuma_ref>/_sources/<str:source_ref>/_manifest/',views.SourceManifest.as_view(), name='handle_source_manifest_request'),
+	# GET the IIIF manifest of a source
+	path(r'collections/<str:full_neuma_ref>/_sources/<str:source_ref>/_iiif_manifest/',views.SourceIIIFManifest.as_view(), name='handle_source_iiif_manifest_request'),
     # GET a source description, or POST an update on a source
     path(r'collections/<str:full_neuma_ref>/_sources/<str:source_ref>/',views.Source.as_view(), name='handle_source_request'),
     # PUT a new source or GET the list of sources of an Opuss

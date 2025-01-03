@@ -30,6 +30,7 @@ class OpusSource:
 		self.url  = url
 		self.file_path = None
 		self.has_manifest = False
+		self.has_iiif_manifest = False
 		self.description = ""
 		self.images = []
 
@@ -56,7 +57,9 @@ class OpusSource:
 			"mime_type": self.mime_type, 
 			"url": self.url,
 			"file_path": self.file_path,
-			"has_manifest": self.has_manifest}
+			"has_manifest": self.has_manifest,
+			"has_iiif_manifest": self.has_iiif_manifest,
+			}
 		
 		if self.ref == self.IIIF_REF and len(self.images) > 0:
 			source_dict["images"] = []

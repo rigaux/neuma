@@ -1426,6 +1426,8 @@ class OpusSource (models.Model):
 			source_dict.file_path =  self.source_file.url
 		if self.manifest:
 			source_dict.has_manifest =  True			
+		if self.iiif_manifest:
+			source_dict.has_iiif_manifest =  True	
 		return source_dict
 
 	def full_ref(self):
