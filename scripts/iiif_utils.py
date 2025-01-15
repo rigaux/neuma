@@ -10,20 +10,24 @@ import jsonref
 import json
 from jsonref import JsonRef
 
+from datetime import datetime
+
 from iiif_prezi.factory import ManifestFactory
+from iiif_prezi.loader import ManifestReader
 
 sys.path.append("..")
 from lib.collabscore.parser import CollabScoreParser, OmrScore
 
 import lib.music.source as source_mod
 
+#
+# Example: python3 iiif_utils.py -i ~/tmpdir/damoiselle/ -u https://deptfod.cnam.fr/ImageS/iiif/2 -p damoiselle -o . 
+#
+
 def main(argv=None):
 	""" 
 	IIIF manifests
 	"""
-
-	current_path = os.path.dirname(os.path.abspath(__file__))
-	out_dir = os.path.join(current_path, 'out')
 
 	# On accepte des arguments
 	parser = argparse.ArgumentParser(description='IIIF Manifest creation')
@@ -41,7 +45,7 @@ def main(argv=None):
 		output_dir = "/tmp"
 	else:
 		output_dir = args.output_dir
-		
+	
 	if args.path_to_images is None:
 		path_to_images = ""
 	else:
@@ -58,6 +62,7 @@ def main(argv=None):
 	if not os.path.exists(args.output_dir):
 		sys.exit ("Directory " + args.output_dir + "  does not exist. Please check.")
 
+	now = datetime.now()
 	print (f"Processing images from {args.input_dir}")	
 	jpegs=[]
 	for fname in os.listdir(args.input_dir):
@@ -83,9 +88,9 @@ def main(argv=None):
 	# 'error_on_warning' will make warnings into errors
 	fac.set_debug("warn") 
 	
-	manifest = fac.manifest(ident="identifier/manifest", label="Example Manifest")
-	manifest.set_metadata({"Date": "Some Date", "Location": "Some Location"})
-	manifest.description = "This is a longer description of the manifest"
+	manifest = fac.manifest(ident=args.url_prefix + "/" + path_to_images + "/manifest.json", label="Manifest")
+	manifest.set_metadata({"Date": now.strftime("%m/%d/%Y"), "Creator": "Neuma"})
+	manifest.description = ""
 	manifest.viewingDirection = "left-to-right"
 	i_jpg = 0
 	seq = manifest.sequence()  # unlabeled, anonymous sequence
@@ -93,14 +98,15 @@ def main(argv=None):
 	for jpg_name in jpegs:
 		i_jpg += 1
 		print (f"File {jpg_name}")
+		image_path = path_to_images + "%2F" + jpg_name
 	
 		# Create a canvas with uri slug of page-1, and label of Page 1
-		cvs = seq.canvas(ident="page-%s" % i_jpg, label="Page %s" % i_jpg)
+		cvs = seq.canvas(ident=f"{image_path}/info.json", label="Page %s" % i_jpg)
 		# Create an annotation on the Canvas
 		anno = cvs.annotation()
 
 		# Add Image: http://www.example.org/path/to/image/api/p1/full/full/0/native.jpg
-		img = anno.image(path_to_images + "%2F" + jpg_name, iiif=True)
+		img = anno.image(image_path, iiif=True)
 
 		# Set image height and width, and canvas to same dimensions
 		imagefile = os.path.join(args.input_dir, jpg_name)
@@ -110,7 +116,6 @@ def main(argv=None):
 		# img.set_hw_from_iiif()
 		cvs.height = img.height
 		cvs.width = img.width
-
 		
 	data = manifest.toString(compact=False)
 	output_file= os.path.join(args.output_dir, 'manifest.json')
@@ -118,5 +123,6 @@ def main(argv=None):
 	fh.write(data)
 	fh.close()
 	print(f"Manifest has been written to {output_file}")
+	
 if __name__ == "__main__":
 	main()

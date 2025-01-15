@@ -105,3 +105,6 @@ class Image:
 		
 	def id(self):
 		return self.value["@id"]
+	
+	def __str__(self):
+		return self.url

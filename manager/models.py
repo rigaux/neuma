@@ -1235,7 +1235,7 @@ class Opus(models.Model):
 
 			iiif_source.manifest.id = iiif_source.full_ref()
 			print (f"Save the manifest with id {iiif_source.manifest.id}")
-			iiif_source.manifest = ContentFile(json.dumps(omr_score.manifest.to_json()), name="manifest.json")
+			iiif_source.manifest = ContentFile(json.dumps(omr_score.manifest.to_json()), name="score_manifest.json")
 			iiif_source.iiif_manifest = ContentFile(json.dumps(iiif_manifest), name="iiif_manifest.json")
 
 			iiif_source.save()
