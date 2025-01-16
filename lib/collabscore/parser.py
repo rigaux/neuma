@@ -846,8 +846,10 @@ class OmrScore:
 				# A chord
 				logger.info (f'Adding a chord with {len(events)} notes.')
 				for event in events:
-					logger.info (f'\tNote {event.pitch_class}{event.octave}-{event.alter}, duration {event.duration.get_value()} to staff {id_staff} with current clef {current_clef}.')
-				event = score_events.Chord (duration, mnf_staff.number_in_part, events)
+					logger.info (f'\tNote {event.id} {event.pitch_class}{event.octave}-{event.alter}, duration {event.duration.get_value()} to staff {id_staff} with current clef {current_clef}.')
+					last_note_id = event.id
+				# MusicXML does not keep the chord id, so we identify it by the last note id to be able to find it in the XML encoding
+				event = score_events.Chord (duration, mnf_staff.number_in_part, events, id=last_note_id)
 				self.add_expression_to_event(events, event, head.articulations)
 		elif voice_item.rest_attr is not None:
 			# It is a rest

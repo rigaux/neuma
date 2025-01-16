@@ -325,7 +325,7 @@ class Chord (Event):
 		Representation of a chord = a list of notes
 	"""
 	
-	def __init__(self,  duration, no_staff, notes,id=None) :
+	def __init__(self,  duration, no_staff, notes, id=None) :
 		super ().__init__(duration, tied=False, id=id)
 		self.type = Event.TYPE_CHORD
 		self.notes = notes
