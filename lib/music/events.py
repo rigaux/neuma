@@ -420,7 +420,9 @@ class Rest (Event):
 		return True
 	def get_no_staff(self):
 		return self.no_staff
-		
+	def get_code(self):
+		return f"Rest {self.m21_event.duration.quarterLength}" 
+	
 	def to_musicxml(self,divisions):
 		el = etree.Element('note')
 		el.set("id", self.id)

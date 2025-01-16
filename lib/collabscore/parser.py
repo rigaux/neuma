@@ -709,7 +709,7 @@ class OmrScore:
 							# Searching for events outside the main staff
 							if current_part.part_type == score_model.Part.GROUP_PART:
 								for event in voice_part.events:
-									if event.is_note():
+									if event.is_note() or event.is_rest():
 										move = self.move_to_correct_staff(event, voice_part.main_staff)
 										if move is not None:
 											self.post_editions.append(move)
@@ -719,7 +719,7 @@ class OmrScore:
 											if move is not None:
 												self.post_editions.append(move)
 						else:
-							logger.warning (f"Found an empty voice {voice_part.id}. Ignored")
+							logger.warning (f"Found an empty voice {voice_part.id} in measure {measure_for_part.id} of part {current_part.id}. Ignored")
 											
 					# Checking consistency of time signatures
 					logger.info("")
@@ -765,7 +765,7 @@ class OmrScore:
 				direction = "up"
 			else:
 				direction = "down"
-			logger.info  (f"Moving note {note.get_code()} direction {direction} ")
+			logger.info  (f"Moving event {note.get_code()} direction {direction} ")
 			move = editions_mod.Edition (editions_mod.Edition.MOVE_OBJECT_TO_STAFF,
 										 note.id, 
 										{"staff_no": note.no_staff,
