@@ -228,41 +228,71 @@ class OmrScore:
 		self.creator = annot_mod.Creator ("collabscore", 
 										annot_mod.Creator.SOFTWARE_TYPE, 
 										"collabscore")
-		# Edit operations applied to the score before parsing
-		self.editions = []
-		# Editions to apply during parsing (ex: replace a clef)
-		self.parse_time_editions = []
-		# Editions to apply to the outptu MusicXML
+		# We keep the post editions that apply to the MusicXML output
 		self.post_editions = []
 		# We add the editions received in parameter
-		for op in editions:
-			self.add_edition (op)
+		for edition in editions:
+			if edition.name in Edition.POST_EDITION_CODES:
+				self.post_editions.append (edition)
 		
 		# Decode the DMOS input as Python objects
 		self.pages = []
+		no_page = 1
 		for json_page in self.json_data["pages"]:
+			json_page["no_page"] = no_page # Bug in DMOS
 			page = Page(json_page)							
 			self.pages.append(page)
+			no_page += 1
 
-		# Produce the manifest of the score
-		current_page_no = 0
-		current_measure_no = 0
-		# We need to initialize the interpretation context
+		# Compute global no for systems and measures
+		# Also, initialize the interpretation context
 		self.initial_key_signature = None
 		self.initial_time_signature = None
-		initial_measure = True 
-
-		self.manifest = Manifest(json_data["id"], json_data["score_image_url"])
+		current_system_no = 1
+		current_measure_no = 1
 		for page in self.pages:
-			current_system_no = 0
-			current_page_no += 1
-			# Create the manifest from the source
-			src_page = source_mod.MnfPage(page.page_url, current_page_no, 0, 0,
-										self.manifest)
 			for system in page.systems:
+				system.no_system_in_score = current_system_no
 				current_system_no += 1
-				current_system_measure_no = 0
-				src_system = source_mod.MnfSystem(current_system_no, src_page,
+				for measure in system.measures:
+					measure.no_measure_in_score = current_measure_no
+					if current_measure_no == 1:
+						for header in measure.headers:
+							# Identify the part, staff and measure, from the staff id
+							if header.time_signature is not None and self.initial_time_signature is None:
+								self.initial_time_signature = header.time_signature.get_notation_object()
+							if header.key_signature is not None and self.initial_key_signature is None:
+								self.initial_key_signature = header.key_signature.get_notation_object()
+					current_measure_no += 1
+		# Something wrong ?
+		if self.initial_key_signature is None:
+			# Whaouh, no key signature on the initial measure
+			self.initial_key_signature = score_notation.KeySignature()
+			logger.error (f"Missing key signature at the beginning of the score. Taking {self.initial_key_signature}")						
+		if self.initial_time_signature is None:
+			# Whaouh, no time signature on the initial measure
+			self.initial_time_signature = score_notation.TimeSignature()
+			logger.error (f"Missing time signature at the beginning of the score. Taking {self.initial_time_signature}")						
+					
+		# Produce the manifest of the score
+		self.manifest = self.create_manifest()
+				
+		# Apply editions to prepare the score production
+		self.apply_pre_editions(editions)
+
+		
+	def create_manifest(self):
+		"""
+		  The Manifest is a description of the source structure
+		  in pages / systems / measures and staves
+		"""
+		manifest = Manifest(self.id, self.uri)
+		for page in self.pages:
+			# Create the manifest from the source
+			src_page = source_mod.MnfPage(page.page_url, page.no_page, 0, 0,
+										manifest)
+			for system in page.systems:
+				src_system = source_mod.MnfSystem(system.no_system_in_page, src_page,
 												system.region.to_json())
 				src_page.add_system(src_system)
 				
@@ -270,13 +300,17 @@ class OmrScore:
 				for header in system.headers:
 					src_staff = source_mod.MnfStaff(header.no_staff, src_system)
 					src_system.add_staff(src_staff)
-					if self.manifest.part_exists (header.id_part):
+					if manifest.part_exists (header.id_part):
 						# This part has already been met
-						src_part = self.manifest.get_part (header.id_part)
+						src_part = manifest.get_part (header.id_part)
 					else:
 						# It is a new part 
 						src_part = source_mod.MnfPart(header.id_part, header.id_part, header.id_part) 
-						self.manifest.add_part(src_part)
+						manifest.add_part(src_part)
+					
+					# Did we get the name of the part ?
+					if header.part_name is not None and header.part_name != "":
+						src_part.name = header.part_name
 						
 					# Count the number of staves for the part
 					if header.id_part in count_staff_per_part.keys():
@@ -287,73 +321,178 @@ class OmrScore:
 					src_staff.add_part(header.id_part)
 					
 				for measure in system.measures:
-					current_measure_no += 1
-					current_system_measure_no += 1
-					src_measure = source_mod.MnfMeasure(current_measure_no, 
-													  current_system_measure_no,
+					src_measure = source_mod.MnfMeasure(measure.no_measure_in_score, 
+													  measure.no_measure_in_system,
 													  "", # So far we do not know the MEI id
 													  src_system,
 														measure.region.to_json())
 					src_system.add_measure(src_measure)
-					
-					# Search for an initial time and key signature in the
-					# initial measure header
-					if initial_measure:
-						for header in measure.headers:
-							# Identify the part, staff and measure, from the staff id
-							if header.time_signature is not None and self.initial_time_signature is None:
-								self.initial_time_signature = header.time_signature.get_notation_object()
-							if header.key_signature is not None and self.initial_key_signature is None:
-								self.initial_key_signature = header.key_signature.get_notation_object()
-
-						if self.initial_key_signature is None:
-							# Whaouh, no key signature on the initial measure
-							self.initial_key_signature = score_notation.KeySignature()
-							logger.error (f"Missing key signature at the beginning of the score. Taking {self.initial_key_signature}")						
-						if self.initial_time_signature is None:
-							# Whaouh, no time signature on the initial measure
-							self.initial_time_signature = score_notation.TimeSignature()
-							logger.error (f"Missing time signature at the beginning of the score. Taking {self.initial_time_signature}")						
-					initial_measure = False
-
-			self.manifest.add_page(src_page)
+			manifest.add_page(src_page)
 		
 		# Now we create the groups to detect parts that extend over several staves
-		self.manifest.create_groups()
-		
+		manifest.create_groups()
 		# Clean pages URL and find the first page of music
-		self.manifest.clean_pages_url()
-		self.manifest.get_first_music_page()
+		manifest.clean_pages_url()
+		manifest.get_first_music_page()
+		return manifest
 		
+	def apply_pre_editions(self, editions):
+		"""
+		  Most of the editions are applied to the DMOS input, before
+		  producing the score
+		"""
 		# Create a double dictionary indexed on the edition target + element id, referring
 		# to the editions that must be applied at run time
-		self.replacements = {Edition.REPLACE_CLEF: {}, 
+		replacements = {Edition.REPLACE_CLEF: {}, 
 					    Edition.REPLACE_KEYSIGN: {}, 
 					    Edition.REPLACE_TIMESIGN: {}}
 		# Dictionary of objects to remove
-		self.removals = {}
+		removals = {}
+
+		# We add the editions received in parameter
+		for edition in editions:
+			if edition.name in Edition.PARSE_TIME_EDITION_CODES:
+				if edition.name == Edition.REMOVE_OBJECT:
+					removals[edition.target] = edition.params
+				else:
+					# One edition can apply to many graphical objects (eg keys/tsign).
+					# The ids of the graphical object are separated by ID_SEPARATOR
+					ids = edition.target.split (constants_mod.ID_SEPARATOR)
+					for id in ids:
+						replacements[edition.name][id] = edition.params
+			elif edition.name in Edition.PRE_EDITION_CODES:
+				# Pre editions  concern pages  and staff layout are applied the manifest
+				edition.apply_to(self)
 		
-		# Apply editions related to the manifest
-		for edition in self.editions:
-			edition.apply_to(self)
+		# Finally we scan the structure decoded from DMOS, and apply editions
+		for page in self.pages:
+			#print (f"Apply editions to page {page}")
+			for system in page.systems:
+				#print (f"\tApply editions to system {system}")
+				for measure in system.measures: 
+					#print (f"\t\tApply editions to measure {measure}")
+					for header in measure.headers:
+						if header.clef is not None:
+							if header.clef.id in replacements[Edition.REPLACE_CLEF].keys():
+								replacement = replacements[Edition.REPLACE_CLEF][header.clef.id]
+								header.clef.overwrite (replacement)
+								logger.info (f"Clef {header.clef.id} has been replaced")
+							if header.clef.id in removals:
+								header.clef = None
+								logger.info (f"Clef {header.clef.id} has been removed")
 
-	def add_edition(self, edition):
-		'''
-		  Adds an edition to the score. 
-		'''
-		if edition.name in Edition.POST_EDITION_CODES:
-			self.post_editions.append (edition)
-		elif edition.name in Edition.PARSE_TIME_EDITION_CODES:
-			self.parse_time_editions.append (edition)
-		elif edition.name in Edition.PRE_EDITION_CODES:
-			self.editions.append (edition)
-		else: 
-			raise CScoreParserError (f"Attempt to add an invalid editing operation  : {edition.name}" )
+						if header.time_signature is not None:
+							if header.time_signature.id in replacements[Edition.REPLACE_TIMESIGN].keys():
+								replacement = replacements[Edition.REPLACE_TIMESIGN][header.time_signature.id]
+								header.time_signature.overwrite (replacement)
+							if header.time_signature.id in removals:
+								header.time_signature = None
+								logger.info (f"Time signature {header.time_signature.id} has been removed")			
+								
+						if header.key_signature is not None:
+							if header.key_signature.id in replacements[Edition.REPLACE_KEYSIGN].keys():
+								replacement = replacements[Edition.REPLACE_KEYSIGN][header.key_signature.id]
+								header.key_signature.overwrite (replacement)
+							if  header.key_signature.id in removals:
+								header.key_signature = None
+								logger.info (f"Key signature {header.key_signature.id} has been removed")
 
+					for voice  in measure.voices: 
+						for item in voice.items: 
+							if item.clef_attr is not None:
+								#This is a clef change 
+								if item.clef_attr.id in replacements[Edition.REPLACE_CLEF].keys():
+									logger.info (f"Voice clef {item.clef_attr.id} has been replaced")
+									replace = replacements[Edition.REPLACE_CLEF][voice_item.clef_attr.id]
+									item.clef_attr.overwrite (replace["label"], replace["line"])
+									logger.info (f"Voice clef {item.clef_attr.id} has been replaced")
+								if item.clef_attr.id in removals:
+									item.clef_attr = None
+									logger.info (f"Voice clef {item.clef_attr.id} has been removed")
+	
+	def produce_annotations (self, score):
+		"""
+		  Scan the DMOS structure and produce regions and errors annotations
+		"""
+		for page in self.pages:
+			for system in page.systems:
+				# Annotate the region of the whole system
+				annotation = annot_mod.Annotation.create_annot_from_xml_to_image(
+							self.creator, self.uri, f"P{page.no_page}-S{system.no_system_in_page}", 
+							page.page_url, system.region.string_xyhw(), 
+							constants_mod.IREGION_SYSTEM_CONCEPT)
+				score.add_annotation (annotation)
+
+				for staff_header in system.headers:
+					if staff_header.region is not None:
+						# Record the region of the staff in the system
+						annotation = annot_mod.Annotation.create_annot_from_xml_to_image(
+									self.creator, self.uri, f"P{page.no_page}-S{system.no_system_in_page}-{staff_header.no_staff}", 
+									page.page_url, staff_header.region.string_xyhw(), 
+									constants_mod.IREGION_STAFF_CONCEPT)
+						score.add_annotation (annotation)
+
+				for measure in system.measures: 
+					# Annotate this measure
+					annotation = annot_mod.Annotation.create_annot_from_xml_to_image(
+							self.creator, self.uri, f"P{page.no_page}-S{system.no_system_in_page}-M{measure.no_measure_in_system}", 
+							page.page_url, measure.region.string_xyhw(), 
+							constants_mod.IREGION_MEASURE_CONCEPT)
+					score.add_annotation (annotation)
+
+					for header in measure.headers:
+						if header.region is not None:
+							# Record the region of the measure for the current staff
+							annotation = annot_mod.Annotation.create_annot_from_xml_to_image(
+									self.creator, self.uri, measure.no_measure_in_score, 
+									page.page_url, header.region.string_xyhw(), 
+									constants_mod.IREGION_MEASURE_STAFF_CONCEPT)
+							score.add_annotation (annotation)
+					for voice  in measure.voices: 
+						for voice_item in voice.items: 
+							# The symbol in the duration contains the region of the event
+							event_region = voice_item.duration.symbol.region
+
+							if voice_item.note_attr is not None or voice_item.rest_attr is not None:
+								if voice_item.note_attr  is not None:
+									heads = voice_item.note_attr.heads
+								else:
+									heads = voice_item.rest_attr.heads
+								for head in heads:
+									event_id = head.id
+									# Same region for all notes....
+									if event_region is not None:
+										annotation = annot_mod.Annotation.create_annot_from_xml_to_image(
+											self.creator, self.uri, event_id, 
+											self.score_image_url, event_region.string_xyhw(), 
+											constants_mod.IREGION_NOTE_CONCEPT)
+										score.add_annotation (annotation)
+									#else:
+									#	score_model.logger.warning (f"No region for an event. Probably a non visible rest")
+							elif voice_item.clef_attr is not None:
+								event_region = voice_item.clef_attr.symbol.region
+								#This is a clef change 
+								annotation = annot_mod.Annotation.create_annot_from_xml_to_image(
+											self.creator, self.uri, voice_item.clef_attr.id, 
+											self.score_image_url, event_region.string_xyhw(), 
+											constants_mod.IREGION_SYMBOL_CONCEPT)
+								score.add_annotation (annotation)
+
+							# Did we met errors ?
+							for error in voice_item.errors:
+								if error.message in constants_mod.LIST_OMR_ERRORS.keys():
+									annotation = annot_mod.Annotation.create_annot_from_error (
+										self.creator, self.uri, event_id, constants_mod.LIST_OMR_ERRORS[error.message], 
+										error.message)
+									score.add_annotation (annotation)
+								else:
+									score_model.logger.warning (f"Unknown error code : {error.message}")
+				
 	def get_score(self):
 		'''
 			Builds a score (instance of our score model) from the Omerized document
 		'''		
+		
 		# Create an OMR score (with layout)
 		if self.score != None:
 			print ("The score has already been computed. We return the version in cache")
@@ -368,19 +507,9 @@ class OmrScore:
 		logger.info (f'Initial key signature set to {self.initial_key_signature}')
 		score.set_initial_time_signature(self.initial_time_signature)
 		
-		# Add run time edition
-		for edition in self.parse_time_editions:
-			if edition.name not in Edition.PARSE_TIME_EDITION_CODES:
-				raise parser_mod.CScoreParserError (f"Unknown editing operation  : {edition.name}. Ignored." )
-			elif edition.name == Edition.REMOVE_OBJECT:
-				self.removals[edition.target] = edition.params
-			else:
-				# One edition can apply to many graphical objets (eg keys/tsign).
-				# The ids of the graphical object are separated by ID_SEPARATOR
-				ids = edition.target.split (constants_mod.ID_SEPARATOR)
-				for id in ids:
-					self.replacements[edition.name][id] = edition.params
-		# 
+		# Produce annotations that can be determined now
+		self.produce_annotations(score)
+
 		# The manifest tells us the parts of the score: we create them
 		for src_part in self.manifest.get_parts():
 			# Parts are identified by the part id + staff id. In general
@@ -417,94 +546,58 @@ class OmrScore:
 		logger.info (f"== End of score structure creation. Scanning pages ===")
 
 		# Main scan: we fill the parts with measures
-		current_page_no = 0
 		current_measure_no = 0
 		
-		for json_page in self.json_data["pages"]:
-			current_page_no += 1
-			current_system_no = 0
-			if not self.config.in_range (current_page_no):
+		for page in self.pages:
+			if not self.config.in_range (page.no_page):
 				continue
 			
-			page = Page(json_page)							
-
 			logger.info (f"")
-			logger.info (f'** Process page {current_page_no}')
+			logger.info (f'** Process page {page.no_page}')
 
 			# Get the page from the manifest
-			mnf_page = self.manifest.get_page(current_page_no)
+			mnf_page = self.manifest.get_page(page.no_page)
 			
-			#print (f"Processing page {current_page_no}")
+			#print (f"Processing page {page.no_page}")
 			page_begins = True
-			
 			for system in page.systems:
 				system_begins = True
-				current_system_no += 1
-				current_system_measure_no = 0
-				if not self.config.in_range (current_page_no, current_system_no):
+				if not self.config.in_range (page.no_page, system.no_system_in_page):
 					continue
 
 				logger.info (f"")
-				logger.info (f'*** Process system {current_system_no}')
+				logger.info (f'*** Process system {system.no_system_in_page}')
 
 				# Get the system from the manifest
-				mnf_system = mnf_page.get_system(current_system_no)
+				mnf_system = mnf_page.get_system(system.no_system_in_page)
 
-				# Annotate the region of the whole system
-				annotation = annot_mod.Annotation.create_annot_from_xml_to_image(
-							self.creator, self.uri, f"P{current_page_no}-S{current_system_no}", 
-							page.page_url, system.region.string_xyhw(), 
-							constants_mod.IREGION_SYSTEM_CONCEPT)
-				score.add_annotation (annotation)
-
-				for staff_header in system.headers:
-					if staff_header.region is not None:
-						# Record the region of the staff in the system
-						annotation = annot_mod.Annotation.create_annot_from_xml_to_image(
-									self.creator, self.uri, f"P{current_page_no}-S{current_system_no}-{staff_header.no_staff}", 
-									page.page_url, staff_header.region.string_xyhw(), 
-									constants_mod.IREGION_STAFF_CONCEPT)
-						score.add_annotation (annotation)
-				
 				# Now, for the current system, we know the parts and the staves for 
 				# each part, initialized with their time signatures
 				# We scan the measures. DMOS gives us a measure for all the parts of the system. 
 				# We add one measure to each part.
-				
 				for measure in system.measures:
 					current_measure_no += 1
-					current_system_measure_no += 1
-					if not self.config.in_range (current_page_no, current_system_no, current_system_measure_no):
+					if not self.config.in_range (page.no_page, system.no_system_in_page, measure.no_measure_in_system):
 						logger.info (f'Skipping measure {current_measure_no}')
 						continue
 				
 					logger.info (f"")
 					logger.info (f'***** Process measure {current_measure_no}, to be inserted at position {score.duration().quarterLength}')
 
-					# Get the measure from the manifest
-					mnf_measure = mnf_system.get_measure(current_system_measure_no)
-
 					# Accidentals are reset at the beginning of measures
 					score.reset_accidentals()
 					
-					# Annotate this measure
-					annotation = annot_mod.Annotation.create_annot_from_xml_to_image(
-							self.creator, self.uri, f"P{current_page_no}-S{current_system_no}-M{current_measure_no}", 
-							page.page_url, measure.region.string_xyhw(), 
-							constants_mod.IREGION_MEASURE_CONCEPT)
-					score.add_annotation (annotation)
-
 					# Create a new measure for each part
 					for part in score.get_parts():
 						logger.info (f"Adding measure {current_measure_no} to part {part.id}")
 						part.add_measure (current_measure_no)
 
 						# Adding page and system breaks
-						if 	page_begins and current_page_no > 1:
+						if 	page_begins and page.no_page > 1:
 							part.add_page_break()
 							page_begins = False
 							system_begins = False
-						elif system_begins and current_system_no > 1:
+						elif system_begins and system.no_system_in_page > 1:
 							## Add a system break
 							part.add_system_break()
 							system_begins = False
@@ -517,19 +610,9 @@ class OmrScore:
 						mnf_staff = mnf_system.get_staff(header.no_staff)
 						id_part = mnf_staff.get_part_id()
 						part = score.get_part (id_part)
-						measure_for_part = part.get_measure_from_staff(mnf_staff.number_in_part)
-												
-						if header.region is not None:
-							# Record the region of the measure for the current staff
-							annotation = annot_mod.Annotation.create_annot_from_xml_to_image(
-									self.creator, self.uri, measure_for_part.id, 
-									page.page_url, header.region.string_xyhw(), 
-									constants_mod.IREGION_MEASURE_STAFF_CONCEPT)
-							score.add_annotation (annotation)
-						if header.clef is not None and not (header.clef.id in self.removals):
-							if header.clef.id in self.replacements[Edition.REPLACE_CLEF].keys():
-								replacement = self.replacements[Edition.REPLACE_CLEF][header.clef.id]
-								header.clef.overwrite (replacement)
+						measure_for_part = part.get_measure_from_staff(mnf_staff.number_in_part)				
+
+						if header.clef is not None:
 							clef_staff = header.clef.get_notation_clef()
 							clef_position = part.get_duration()
 							clef_changed = part.set_current_clef (clef_staff, mnf_staff.number_in_part, clef_position)
@@ -545,12 +628,8 @@ class OmrScore:
 									score.add_annotation (annotation)
 								else:
 									logger.info (f"Clef {clef_staff} found on staff {header.no_staff} without change. Ignored.")									
-						elif  header.clef is not None and header.clef.id in self.removals:
-							logger.info (f"Clef {header.clef.id} has been removed")
-						if header.time_signature is not None and not (header.time_signature.id in self.removals):
-							if header.time_signature.id in self.replacements[Edition.REPLACE_TIMESIGN].keys():
-								replacement = self.replacements[Edition.REPLACE_TIMESIGN][header.time_signature.id]
-								header.time_signature.overwrite (replacement)
+
+						if header.time_signature is not None:
 							new_time_signature = header.time_signature.get_notation_object()
 							# We assign the TS specifically to the current parts: the id is preserved
 							changed_ts = part.set_current_time_signature (new_time_signature, mnf_staff.number_in_part)			
@@ -566,12 +645,8 @@ class OmrScore:
 									logger.info (f'Time signature  {new_time_signature} with id {new_time_signature.id} found on staff {header.no_staff} at measure {current_measure_no} without change. Ignored.')
 							else:
 								logger.error (f"Null region or XML ID for a time signature. Ignored")
-						elif  header.time_signature is not None and header.time_signature.id in self.removals:
-							logger.info (f"Time signature {header.time_signature.id} has been removed")			
-						if header.key_signature is not None and not (header.key_signature.id in self.removals):
-							if header.key_signature.id in self.replacements[Edition.REPLACE_KEYSIGN].keys():
-								replacement = self.replacements[Edition.REPLACE_KEYSIGN][header.key_signature.id]
-								header.key_signature.overwrite (replacement)
+
+						if header.key_signature is not None:
 							key_sign = header.key_signature.get_notation_object()
 							# The key signature impacts all subsequent events on the staff
 							changed_key = part.set_current_key_signature (key_sign, mnf_staff.number_in_part)
@@ -588,10 +663,6 @@ class OmrScore:
 									logger.error (f"Null region or XML ID for a key signature. Ignored")
 							else:
 								logger.info (f'Key signature {key_sign} found on staff {header.no_staff} at measure {current_measure_no} without change. Ignored.')
-				
-						elif  header.key_signature is not None and header.key_signature.id in self.removals:
-							logger.info (f"Key signature {header.key_signature.id} has been removed")
-
 					
 					# Now we scan the voices
 					for voice in measure.voices:
@@ -601,7 +672,7 @@ class OmrScore:
 						
 						# Reset the event counter
 						score_events.Event.reset_counter(
-							f'F{current_page_no}{voice.id_part}M{current_measure_no}{voice.id}')
+							f'F{page.no_page}{voice.id_part}M{current_measure_no}{voice.id}')
 
 						# Create the voice
 						voice_part = voice_model.Voice(part=current_part,voice_id=voice.id)
@@ -650,51 +721,9 @@ class OmrScore:
 								# We found a clef change
 								logger.info (f"Clef {event} found on staff {id_staff} with id {event.id} at position {clef_position}")
 								current_part.set_current_clef (event, mnf_staff.number_in_part, clef_position)
-								# Annotate this symbol
-								if event_region is not None:
-									logger.info (f"Annotate this new clef")
-									annotation = annot_mod.Annotation.create_annot_from_xml_to_image(
-										self.creator, self.uri, event.id, 
-										page.page_url, event_region.string_xyhw(), constants_mod.IREGION_SYMBOL_CONCEPT)
-									score.add_annotation (annotation)
 							else:
 								logger.error (f'Unknown event type {type_event} for voice {voice.id}')
-		
-							# Annotate this event if the region is known
-							if event_region is not None:
-								if not(type_event == "clef"):
-									if event.is_chord():
-										# We do not know how to assign an id to a chord, so we annotate the notes
-										for note in event.notes:
-											# Same region for all notes....
-											annotation = annot_mod.Annotation.create_annot_from_xml_to_image(
-												self.creator, self.uri, note.id, 
-												self.score_image_url, event_region.string_xyhw(), 
-												constants_mod.IREGION_NOTE_CONCEPT)
-											score.add_annotation (annotation)
-									else:
-										annotation = annot_mod.Annotation.create_annot_from_xml_to_image(
-											self.creator, self.uri, event.id, 
-											self.score_image_url, event_region.string_xyhw(), 
-											constants_mod.IREGION_NOTE_CONCEPT)
-										score.add_annotation (annotation)
-								else:
-									annotation = annot_mod.Annotation.create_annot_from_xml_to_image(
-											self.creator, self.uri, event.id, 
-											self.score_image_url, event_region.string_xyhw(), 
-											constants_mod.IREGION_SYMBOL_CONCEPT)
-									score.add_annotation (annotation)
-							
-							# Did we met errors ?
-							for error in item.errors:
-								if error.message in constants_mod.LIST_OMR_ERRORS.keys():
-									annotation = annot_mod.Annotation.create_annot_from_error (
-										self.creator, self.uri, event.id, constants_mod.LIST_OMR_ERRORS[error.message], 
-										error.message)
-									score.add_annotation (annotation)
-								else:
-									score_model.logger.warning (f"Unknown error code : {error.message}")
-								
+										
 						# End of items for this measure. Close any pending beam
 						if current_beam != None:
 							#print (f"Stop beam {current_beam}")
@@ -741,7 +770,7 @@ class OmrScore:
 		logger.info("Checking consistency of measures")
 		logger.info("")
 		list_removals = score.check_measure_consistency()			
-		'''A TESTER '''
+
 		for removal in list_removals:
 			# Adding removed events to the post editions they
 			# must be reinserted in the XML file
@@ -749,30 +778,13 @@ class OmrScore:
 				self.post_editions.append( editions_mod.Edition (editions_mod.Edition.APPEND_OBJECTS, 
 																removal.target.id, {"events": removal.list_events}))
 			else:
-				logger.warning (f"Unable to find a target for one of the removals")		
-						
+				logger.warning (f"Unable to find a target for one of the removals")			
 	
 		# Remove in the XML file the pseudo-beam
 		self.post_editions.append( editions_mod.Edition (editions_mod.Edition.CLEAN_BEAM, "score"))
 
 		self.score = score 			
 		return self.score
-
-	def move_to_correct_staff(self, note, main_staff):
-		# Register an edition to move a note to its correct staff
-		if note.no_staff != main_staff:
-			if note.no_staff < main_staff:
-				direction = "up"
-			else:
-				direction = "down"
-			logger.info  (f"Moving event {note.get_code()} direction {direction} ")
-			move = editions_mod.Edition (editions_mod.Edition.MOVE_OBJECT_TO_STAFF,
-										 note.id, 
-										{"staff_no": note.no_staff,
-										"direction": direction})
-			return move
-		else:
-			return None
 
 	def decode_event(self, mnf_system, voice, voice_item):
 		'''
@@ -814,8 +826,7 @@ class OmrScore:
 						alter = staff.accidentals[pitch_class]
 					else: 
 						alter = voice.part.get_current_key_signature().accidental_by_step(pitch_class)
-
-					
+			
 				note = score_events.Note(pitch_class, octave, duration, alter, 
 											mnf_staff.number_in_part, 
 											stem_direction=voice_item.direction,
@@ -864,9 +875,6 @@ class OmrScore:
 				logger.info (f'Adding rest {duration.get_value()} to staff {id_staff}.')
 		elif voice_item.clef_attr is not None:
 			#This is a clef change 
-			if voice_item.clef_attr.id in self.replacements[Edition.REPLACE_CLEF].keys():
-				replace = self.replacements[Edition.REPLACE_CLEF][voice_item.clef_attr.id]
-				voice_item.clef_attr.overwrite (replace["label"], replace["line"])
 			event = voice_item.clef_attr.get_notation_clef()
 			event_region = voice_item.clef_attr.symbol.region
 			return (event, event_region, "clef")
@@ -875,6 +883,22 @@ class OmrScore:
 			raise CScoreParserError ("A voice event with unknown type has been met")
 		
 		return (event, event_region, "event")
+
+	def move_to_correct_staff(self, note, main_staff):
+		# Register an edition to move a note to its correct staff
+		if note.no_staff != main_staff:
+			if note.no_staff < main_staff:
+				direction = "up"
+			else:
+				direction = "down"
+			logger.info  (f"Moving event {note.get_code()} direction {direction} ")
+			move = editions_mod.Edition (editions_mod.Edition.MOVE_OBJECT_TO_STAFF,
+										 note.id, 
+										{"staff_no": note.no_staff,
+										"direction": direction})
+			return move
+		else:
+			return None
 
 	def add_expression_to_event(self, events, event, articulations):
 		for json_art in articulations:
@@ -1003,30 +1027,45 @@ class Page:
 
 		self.no_page = json_page["no_page"]
 		self.systems=[]
+		
+		i_system=1
 		for json_system in json_page["systems"]:
 			self.systems.append(System(json_system))
 
+	def __str__(self):
+		return f"{self.no_page}"
+	
 class System:
 	"""
-		An sytem containing measures
+		A system containing measures
 	"""
 	
 	def __init__(self, json_system):
 		self.id = json_system["id"]
+		self.no_system_in_page = self.id
+		self.no_system_in_score = None
 		self.region = Region (json_system["region"])
 		self.headers = []
 		for json_header in json_system["headers"]:
 			self.headers.append(StaffHeader(json_header))
 		self.measures = []
+		i_measure_in_system = 1
 		for json_measure in json_system["measures"]:
-			self.measures.append(Measure(json_measure))
+			self.measures.append(Measure(json_measure, i_measure_in_system))
+			i_measure_in_system += 1
+
+	def __str__(self):
+		return f"{self.no_system_in_page} in page -- {self.no_system_in_score} in score"
 
 class Measure:
 	"""
 		An measure containing voices
 	"""
 	
-	def __init__(self, json_measure):
+	def __init__(self, json_measure, i_measure_in_system):
+		self.no_measure_in_system = i_measure_in_system
+		self.no_measure_in_score = None
+
 		if "region" in json_measure:
 			self.region = Region (json_measure["region"])
 		self.headers =[]
@@ -1035,6 +1074,9 @@ class Measure:
 		self.voices =[]
 		for json_voice in json_measure["voices"]:
 			self.voices.append(Voice(json_voice))
+
+	def __str__(self):
+		return f"{self.no_measure_in_system} in system - {self.no_measure_in_score} in score"
 
 class Voice:
 	"""
@@ -1050,6 +1092,9 @@ class Voice:
 		self.items = []
 		for json_item in json_voice["elements"]:
 			self.items.append(VoiceItem (json_item))
+
+	def __str__(self):
+		return f"{self.id}"
 			
 		
 class VoiceItem:
@@ -1079,14 +1124,18 @@ class VoiceItem:
 		self.direction = None
 		if "direction" in json_voice_item:
 			self.direction = json_voice_item["direction"]
+			self.type = "Direction"
 		if "att_note" in json_voice_item:
 			self.note_attr = NoteAttr (json_voice_item["att_note"])
+			self.type= "Note or chord"
 		if "att_rest" in json_voice_item:
 			# NB: using the same type for note heads and rest heads
 			self.rest_attr = NoteAttr (json_voice_item["att_rest"])
+			self.type="Note"
 		if "att_clef" in json_voice_item:
 			self.clef_attr  = Clef (json_voice_item["att_clef"])
 			self.no_staff_clef = StaffHeader.make_id_staff(json_voice_item["att_clef"]["no_staff"])
+			self.type="Clef"
 		self.errors = []
 		if "errors" in json_voice_item:
 			for json_error in json_voice_item["errors"]:
@@ -1137,7 +1186,6 @@ class Note:
 			self.id =  json_note["id"]
 		else:
 			self.id =  None
-			
 		self.tied  = "none"
 		self.id_tie = 0
 		self.alter = score_events.Note.ALTER_NONE
@@ -1359,6 +1407,10 @@ class StaffHeader:
 	def __init__(self, json_system_header):
 		self.id_part = StaffHeader.make_id_part (json_system_header["id_part"])
 		self.no_staff = StaffHeader.make_id_staff( json_system_header['no_staff'])
+		if "name" in json_system_header:
+			self.part_name = json_system_header["name"]
+		else:
+			self.part_name = None
 		if "first_bar" in json_system_header:
 			self.first_bar = Segment(json_system_header["first_bar"])
 		else:
@@ -1387,15 +1439,26 @@ class MeasureHeader:
 		self.clef = None 
 		self.key_signature = None 
 		self.time_signature = None 
+		self.type= "Unknown"
+		self.id_elem = None 
 		
 		if "region" in json_measure_header:
 			self.region = Region (json_measure_header["region"])
 		if "clef" in json_measure_header:
 			self.clef = Clef(json_measure_header["clef"])
+			self.type = "Clef"
+			self.id_elem = self.clef.id 
 		if "key_signature" in json_measure_header:
 			self.key_signature = KeySignature(json_measure_header["key_signature"])
+			self.type = "Key signature"
+			self.id_elem = self.key_signature.id 
 		if "time_signature" in json_measure_header:
 			self.time_signature  = TimeSignature(json_measure_header["time_signature"])
+			self.type = "Time signature"
+			self.id_elem = self.time_signature.id 
+
+	def __str__(self):
+		return f"{self.type} {self.id_elem}"
 
 class CScoreParserError(Exception):
 	def __init__(self, *args):
