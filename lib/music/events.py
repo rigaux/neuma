@@ -326,7 +326,7 @@ class Chord (Event):
 	"""
 	
 	def __init__(self,  duration, no_staff, notes,id=None) :
-		super ().__init__(duration,id)
+		super ().__init__(duration, tied=False, id=id)
 		self.type = Event.TYPE_CHORD
 		self.notes = notes
 		# Create the m21 representation: encode 
@@ -404,7 +404,7 @@ class Rest (Event):
 	"""
 	
 	def __init__(self,  duration, no_staff, id=None) :
-		super ().__init__(duration, id)
+		super ().__init__(duration, tied=False, id=id)
 		self.type = Event.TYPE_REST
 
 		self.m21_event = m21.note.Rest()

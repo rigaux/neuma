@@ -181,7 +181,7 @@ class Clef:
 	# DMOS encoding of clefs
 	DMOS_TREBLE_CLEF="G"
 	DMOS_BASS_CLEF="F"
-	DMOS_UT_CLEF="C"
+	DMOS_UT_CLEF="U"
 
 	TREBLE_CLEF = m21.clef.TrebleClef
 	TREBLE_8PLUS_CLEF = m21.clef.Treble8vbClef
@@ -190,6 +190,7 @@ class Clef:
 	MEZZO_CLEF = m21.clef.MezzoSopranoClef
 	ALTO_CLEF = m21.clef.AltoClef
 	TENOR_CLEF = m21.clef.TenorClef
+	BARITONE_CLEF = m21.clef.CBaritoneClef
 	BASS_CLEF = m21.clef.BassClef
 	NO_CLEF = m21.clef.NoClef
 	
@@ -214,6 +215,8 @@ class Clef:
 			self.m21_clef = m21.clef.AltoClef()
 		elif clef_code == self.TENOR_CLEF:
 			self.m21_clef = m21.clef.TenorClef()
+		elif clef_code == self.BARITONE_CLEF:
+			self.m21_clef = m21.clef.CBaritoneClef()
 		elif clef_code == self.BASS_CLEF:
 			self.m21_clef = m21.clef.BassClef()
 		elif clef_code == self.NO_CLEF:
@@ -249,10 +252,11 @@ class Clef:
 			return Clef (Clef.ALTO_CLEF, dmos_id)
 		elif dmos_code == Clef.DMOS_UT_CLEF and dmos_height==4:
 			return Clef (Clef.TENOR_CLEF, dmos_id)
+		elif dmos_code == Clef.DMOS_UT_CLEF and dmos_height==5:
+			return Clef (Clef.BARITONE_CLEF, dmos_id)
 		else:
 			# Should not happen
-			score_mod.logger.error('Unable to decode DMOS code for clef: ' + dmos_code 
-						+ " " + str(dmos_height))
+			score_mod.logger.error(f"Unable to decode DMOS code for clef: {dmos_code}/{dmos_height}, id: {dmos_id}. Replaced by treble clef.")
 			return Clef (Clef.TREBLE_CLEF)
 
 	def decode_pitch (self, height):

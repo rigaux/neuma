@@ -132,7 +132,7 @@ class Voice:
 					list_removed_events += f"{event} / "
 					#list_removed_events += f"{event.id} / "
 					removed_events.append(event)
-			score_mod.logger.warning (f"The followig events are removed after {last_event_inserted}: {list_removed_events}")			
+			score_mod.logger.warning (f"The following events are removed after {last_event_inserted}: {list_removed_events}")			
 					
 			
 			return VoiceFragment(self, last_event_inserted, removed_events)

@@ -42,5 +42,12 @@ XML_MEASURE_CONCEPT = "measure-xml"
 XML_NOTE_CONCEPT = "note-xml"
 
 # Concepts for the AM_OMR_ERROR annotation
-OMR_ERROR_UNKNOWN_SYMBOL = "unknown-symbol"
-OMR_ERROR_INCONSISTENT_NOTATION = "inconsistent-notation"
+OMR_LOW_DURATION = "lowDurErr"
+OMR_HIGH_DURATION = "supDurErr"
+OMR_LOW_CONFIDENCE = "lowConfidenceErr"
+
+LIST_OMR_ERRORS = {
+	OMR_LOW_DURATION: "The analyzed duration of voice element seems too low", 
+	OMR_HIGH_DURATION: "The analyzed duration of voice element seems too high", 
+	OMR_LOW_CONFIDENCE: "Low confidence during symbol recognition"
+}

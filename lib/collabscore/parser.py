@@ -687,10 +687,13 @@ class OmrScore:
 							
 							# Did we met errors ?
 							for error in item.errors:
-								annotation = annot_mod.Annotation.create_annot_from_error (
-									self.creator, self.uri, event.id, error.message, 
-									constants_mod.OMR_ERROR_UNKNOWN_SYMBOL)
-								score.add_annotation (annotation)
+								if error.message in constants_mod.LIST_OMR_ERRORS.keys():
+									annotation = annot_mod.Annotation.create_annot_from_error (
+										self.creator, self.uri, event.id, constants_mod.LIST_OMR_ERRORS[error.message], 
+										error.message)
+									score.add_annotation (annotation)
+								else:
+									score_model.logger.warning (f"Unknown error code : {error.message}")
 								
 						# End of items for this measure. Close any pending beam
 						if current_beam != None:
@@ -1178,6 +1181,10 @@ class Clef:
 
 		self.symbol =  Symbol (json_clef["symbol"])
 		self.height  = json_clef["height"]
+		self.error = []
+		if "errors" in json_clef:
+			for json_error in json_clef["errors"]:
+				self.errors.append(Error (json_error))
 		
 	def overwrite (self, replacement):
 		self.symbol.label = replacement["label"]
@@ -1289,6 +1296,10 @@ class Error:
 	
 	def __init__(self, json_error):
 		self.message =   json_error["message"]
+		if "confidence" in json_error:
+			self.confidence = json_error["confidence"]
+		else:
+			self.confidence = None
 
 class Duration:
 	"""

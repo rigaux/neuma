@@ -10,22 +10,30 @@
 
     <!-- Tree of concepts -->
     <concepts>
- 	  <concept id="unknown-symbol">
-			<code>unknown-symbol</code>
-			<name>Unknown symbol met</name>
-			<description>
+ 	  <concept id="lowDurErr">
+			<code>lowDurErr</code>
+			<name>Low duration error</name>
+			<description>The analyzed duration of voice element seems too low
 			</description>
 			 <color name="metadata1"/>
             <icon name="spade"/>  
-		</concept>
-			<concept id="inconsistent-notation">
-			<code>inconsistent-notation</code>
-			<name>Sth inconsistent </name>
-			<description>
+	</concept>
+			<concept id="supDurErr">
+			<code>supDurErr</code>
+			<name>High duration error</name>
+			<description>The analyzed duration of voice element seems too high
 			</description>s
 			 <color name="metadata2"/>
             <icon name="spade"/>  
-		</concept>
+	</concept>
+			<concept id="lowConfidenceErr">
+			<code>lowConfidenceErr</code>
+			<name>Low recognition confidence</name>
+			<description>Low confidence during symbol recognition
+			</description>
+			 <color name="metadata3"/>
+            <icon name="spade"/>  
+	</concept>
 
     </concepts>
 </analytic_model>
