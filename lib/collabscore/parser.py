@@ -448,45 +448,57 @@ class OmrScore:
 									page.page_url, header.region.string_xyhw(), 
 									constants_mod.IREGION_MEASURE_STAFF_CONCEPT)
 							score.add_annotation (annotation)
+						if header.clef is not None:
+							for error in header.clef.errors:
+								score.add_annotation (annot_mod.Annotation.create_from_error (
+										self.creator, self.uri, header.clef.id, error.message))
+						if header.time_signature is not None:
+							for error in header.time_signature.errors:
+								score.add_annotation (annot_mod.Annotation.create_from_error (
+										self.creator, self.uri, header.time_signature.id, error.message))
+						if header.key_signature is not None:
+							for error in header.key_signature.errors:
+								score.add_annotation (annot_mod.Annotation.create_from_error (
+										self.creator, self.uri, header.key_signature.id, error.message))
+						
 					for voice  in measure.voices: 
 						for voice_item in voice.items: 
-							# The symbol in the duration contains the region of the event
-							event_region = voice_item.duration.symbol.region
-
 							if voice_item.note_attr is not None or voice_item.rest_attr is not None:
 								if voice_item.note_attr  is not None:
 									heads = voice_item.note_attr.heads
 								else:
 									heads = voice_item.rest_attr.heads
 								for head in heads:
-									event_id = head.id
-									# Same region for all notes....
-									if event_region is not None:
+									if head.head_symbol.region is not None:
 										annotation = annot_mod.Annotation.create_annot_from_xml_to_image(
-											self.creator, self.uri, event_id, 
-											self.score_image_url, event_region.string_xyhw(), 
+											self.creator, self.uri, head.id, 
+											self.score_image_url, head.head_symbol.region.string_xyhw(), 
 											constants_mod.IREGION_NOTE_CONCEPT)
 										score.add_annotation (annotation)
+									# Did we met errors at the voice item level ?
+									for error in voice_item.errors:
+										score.add_annotation (annot_mod.Annotation.create_from_error (
+											self.creator, self.uri, head.id, error.message))
+									# Clear the errors to avoid attaching them to each head
+									voice_item.errors = []
+									# Did we met errors at the head level ?
+									for error in voice_item.errors:
+										score.add_annotation (annot_mod.Annotation.create_from_error (
+											self.creator, self.uri, head.id, error.message))
 									#else:
 									#	score_model.logger.warning (f"No region for an event. Probably a non visible rest")
 							elif voice_item.clef_attr is not None:
-								event_region = voice_item.clef_attr.symbol.region
+								clef_region = voice_item.clef_attr.symbol.region
 								#This is a clef change 
 								annotation = annot_mod.Annotation.create_annot_from_xml_to_image(
 											self.creator, self.uri, voice_item.clef_attr.id, 
-											self.score_image_url, event_region.string_xyhw(), 
+											self.score_image_url, clef_region.string_xyhw(), 
 											constants_mod.IREGION_SYMBOL_CONCEPT)
 								score.add_annotation (annotation)
+								for error in voice_item.clef_attr.errors:
+									score.add_annotation (annot_mod.Annotation.create_from_error (
+											self.creator, self.uri, voice_item.clef_attr.id, error.message))
 
-							# Did we met errors ?
-							for error in voice_item.errors:
-								if error.message in constants_mod.LIST_OMR_ERRORS.keys():
-									annotation = annot_mod.Annotation.create_annot_from_error (
-										self.creator, self.uri, event_id, constants_mod.LIST_OMR_ERRORS[error.message], 
-										error.message)
-									score.add_annotation (annotation)
-								else:
-									score_model.logger.warning (f"Unknown error code : {error.message}")
 				
 	def get_score(self):
 		'''
@@ -1231,7 +1243,7 @@ class Clef:
 
 		self.symbol =  Symbol (json_clef["symbol"])
 		self.height  = json_clef["height"]
-		self.error = []
+		self.errors = []
 		if "errors" in json_clef:
 			for json_error in json_clef["errors"]:
 				self.errors.append(Error (json_error))
@@ -1269,6 +1281,10 @@ class TimeSignature:
 			self.region = Region(json_time_sign["region"])
 		else:
 			self.region = None
+		self.errors = []
+		if "errors" in json_time_sign:
+			for json_error in json_time_sign["errors"]:
+				self.errors.append(Error (json_error))
 
 	def overwrite (self, replacement):
 		self.unit = replacement["unit"]
@@ -1305,6 +1321,10 @@ class KeySignature:
 			self.region = Region(json_key_sign["region"])
 		else:
 			self.region = None
+		self.errors = []
+		if "errors" in json_key_sign:
+			for json_error in json_key_sign["errors"]:
+				self.errors.append(Error (json_error))
 		
 	def nb_sharps(self):
 		if self.element == SHARP_SYMBOL:

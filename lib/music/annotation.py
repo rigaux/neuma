@@ -9,6 +9,8 @@
 import datetime
 from .constants import *
 
+import lib.music.Score as score_mod
+from numpy.distutils.fcompiler import none
 
 class Annotation:
 	'''
@@ -150,16 +152,23 @@ class Annotation:
 							datetime.datetime.now(), datetime.datetime.now())
 
 	@staticmethod 
-	def create_annot_from_error (creator, doc_url, xml_id, message, annot_concept):
+	def create_from_error (creator, doc_url, xml_id, annot_concept):
 		''' 
 			An annotation that links an XML element to an image region
 		'''
-		target = Annotation.create_target_for_annotation(doc_url, xml_id)
-		body = TextualBody(message)
-		return Annotation(Annotation.get_new_id(), creator, target, body, 
+		
+		if annot_concept in LIST_OMR_ERRORS.keys():
+			print (f"Add annotation {annot_concept} on element {xml_id}")
+
+			target = Annotation.create_target_for_annotation(doc_url, xml_id)
+			body = TextualBody(LIST_OMR_ERRORS[annot_concept])
+			return Annotation(Annotation.get_new_id(), creator, target, body, 
 							AM_OMR_ERROR, annot_concept, 
 							Annotation.MOTIVATION_QUESTIONING,
 							datetime.datetime.now(), datetime.datetime.now())
+		else:
+			score_mod.logger.warning (f"Unknown concept {annot_concept}. Not annotation created")
+			return None 
 
 # Define the restricted list of possible motivations
 MOTIVATION_OPTIONS = (

@@ -1220,23 +1220,22 @@ class Opus(models.Model):
 				r = requests.get(req_url)
 				r.raise_for_status()
 				iiif_manifest = r.json()
+				iiif_source.iiif_manifest = ContentFile(json.dumps(iiif_manifest), name="iiif_manifest.json")
 			else:
 				print (f"Take the manifest from the source")
+				
 				with open(iiif_source.iiif_manifest.path, "r") as f:
-					iiif_manifest = f.read()
-
-			iiif_doc = iiif_mod.Document(iiif_manifest)
+					iiif_doc = iiif_mod.Document(json.load(f))
+			
 			print (f"Got the IIIF manifest. Nb canvases {iiif_doc.nb_canvases}")
 			images = iiif_doc.get_images()
 			for img in images:
-				print (f"Image {img.url}. Width {img.width}")
-				
+				print (f"Image {img.url}. Width {img.width}")				
 				omr_score.manifest.add_image_info (images) 
 
 			iiif_source.manifest.id = iiif_source.full_ref()
 			print (f"Save the manifest with id {iiif_source.manifest.id}")
 			iiif_source.manifest = ContentFile(json.dumps(omr_score.manifest.to_json()), name="score_manifest.json")
-			iiif_source.iiif_manifest = ContentFile(json.dumps(iiif_manifest), name="iiif_manifest.json")
 
 			iiif_source.save()
 		

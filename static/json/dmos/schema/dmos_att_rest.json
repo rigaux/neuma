@@ -6,8 +6,7 @@
   "type": "object",
   "properties": {
     "nb_heads": {"description": "Nb heads", "type": "integer"},
-    "heads": {"type": "array", "items": { "$ref": "dmos_note_head.json" }, "minItems": 1},
-     "errors": {"type": "array", "items": { "$ref": "dmos_error.json" }}
+    "heads": {"type": "array", "items": { "$ref": "dmos_note_head.json" }, "minItems": 1}
   },
    "required": ["nb_heads", "heads"],
   "additionalProperties": false

@@ -293,7 +293,8 @@ class Score:
 	#	return score.chordify()
 	
 	def add_annotation(self, annotation):
-		self.annotations.append(annotation)
+		if annotation is not None:
+			self.annotations.append(annotation)
 		
 	def check_time_signatures(self, fix=True):
 		"""

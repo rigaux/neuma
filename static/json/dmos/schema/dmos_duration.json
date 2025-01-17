@@ -4,10 +4,10 @@
   "title": "A duration is given by its graphic constituents: a symbol (quaver),  a nb of points and the tuplet factor",
   "type": "object",
   "properties": {
-     "symbol": {"$ref": "dmos_symbol.json"},
+     "label":{"description": "Code of the duration: whole, half, etc.", "type": "string"},
      "nb_points": {"description": "Nb of points. Default 0", "type": "integer"},
      "tuplet": {"description": "Factor of the tuplet the symbol belongs to. Default 1", "type": "integer"}
      },
-   "required": [ "symbol"],
+   "required": [ "label"],
   "additionalProperties": false
 }
