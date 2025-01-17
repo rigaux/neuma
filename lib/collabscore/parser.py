@@ -275,12 +275,13 @@ class OmrScore:
 			logger.error (f"Missing time signature at the beginning of the score. Taking {self.initial_time_signature}")						
 					
 		# Produce the manifest of the score
+		print ("\nCompute the score manifest")
 		self.manifest = self.create_manifest()
 				
 		# Apply editions to prepare the score production
+		print ("\nApply pre-editions")
 		self.apply_pre_editions(editions)
 
-		
 	def create_manifest(self):
 		"""
 		  The Manifest is a description of the source structure
@@ -345,7 +346,8 @@ class OmrScore:
 		# to the editions that must be applied at run time
 		replacements = {Edition.REPLACE_CLEF: {}, 
 					    Edition.REPLACE_KEYSIGN: {}, 
-					    Edition.REPLACE_TIMESIGN: {}}
+					    Edition.REPLACE_TIMESIGN: {},
+					    Edition.REPLACE_MUSIC_ELEMENT: {}}
 		# Dictionary of objects to remove
 		removals = {}
 
@@ -399,13 +401,24 @@ class OmrScore:
 
 					for voice  in measure.voices: 
 						for item in voice.items: 
+							if item.note_attr is not None or item.rest_attr is not None:
+								if item.note_attr is not None:
+									heads = item.note_attr.heads
+								else:
+									heads = item.rest_attr.heads
+								for head in heads:
+									if head.id in replacements[Edition.REPLACE_MUSIC_ELEMENT].keys():
+										print (f"Element {head.id} must be updated")
+										head.overwrite (replacements[Edition.REPLACE_MUSIC_ELEMENT][head.id])
+										item.duration.overwrite (replacements[Edition.REPLACE_MUSIC_ELEMENT][head.id])
+									if head.id in removals:
+										print ("To be implemented: removal of note head. Line 413 parser")
 							if item.clef_attr is not None:
 								#This is a clef change 
 								if item.clef_attr.id in replacements[Edition.REPLACE_CLEF].keys():
 									logger.info (f"Voice clef {item.clef_attr.id} has been replaced")
 									replace = replacements[Edition.REPLACE_CLEF][voice_item.clef_attr.id]
 									item.clef_attr.overwrite (replace["label"], replace["line"])
-									logger.info (f"Voice clef {item.clef_attr.id} has been replaced")
 								if item.clef_attr.id in removals:
 									item.clef_attr = None
 									logger.info (f"Voice clef {item.clef_attr.id} has been removed")
@@ -520,6 +533,7 @@ class OmrScore:
 		score.set_initial_time_signature(self.initial_time_signature)
 		
 		# Produce annotations that can be determined now
+		print ("Producing annotations")
 		self.produce_annotations(score)
 
 		# The manifest tells us the parts of the score: we create them
@@ -926,10 +940,13 @@ class OmrScore:
 				event.add_decoration(dynamic)
 
 	def write_as_musicxml(self, out_file):
-		print ("Writing as MusicXML")
-		self.get_score().write_as_musicxml (out_file)
+		print ("\nCreate the score from JSON input")
+		score = self.get_score()
 		
-		print ("\n\nApplying post-editions to the MusicXML file\n")
+		print ("\nWriting as MusicXML")
+		score.write_as_musicxml (out_file)
+		
+		print ("\nApplying post-editions to the MusicXML file\n")
 		Edition.apply_editions_to_file (self.post_editions, out_file)
 		print ("\nPost-editions done\n")
 
@@ -1201,7 +1218,10 @@ class Note:
 		self.tied  = "none"
 		self.id_tie = 0
 		self.alter = score_events.Note.ALTER_NONE
-
+		
+		# A request can be made to change an alteration. Default 0
+		#self.alter_change = 0
+		
 		self.head_symbol =  Symbol (json_note["head_symbol"])
 		self.no_staff  = json_note["no_staff"]
 		self.height  = json_note["height"]
@@ -1229,6 +1249,25 @@ class Note:
 
 	def add_articulation(self, placement, json_art):
 		self.articulations.append({"placement": placement, "label": json_art["label"]})
+
+	def overwrite (self, edition):
+		# Apply an edition to the note head
+		if "pitch_change" in edition:
+			print (f"Head pitch must be moved {edition['pitch_change']} steps")
+			self.height += edition['pitch_change']
+		if "alter" in edition:
+			print (f"Head pitch alteration must be  {edition['alter']}")
+			alter = edition['alter']
+			if alter == -1:
+				self.alter = score_events.Note.ALTER_FLAT
+			elif alter == -2:
+				self.alter = score_events.Note.ALTER_DOUBLE_FLAT
+			elif alter == 1:
+				self.alter = score_events.Note.ALTER_SHARP
+			elif alter == 2:
+				self.alter = score_events.Note.ALTER_DOUBLE_SHARP
+			elif alter == 0:
+				self.alter = score_events.Note.ALTER_NATURAL
 
 class Clef:
 	"""
@@ -1381,8 +1420,19 @@ class Duration:
 		self.whole = False
 		self.note_type = self.symbol.label
 		
+		self.nb_points = 0
+		if "nb_points" in json_duration:
+			self.nb_points = json_duration["nb_points"]
+		self.decode_dmos_input()
+		
+	def decode_dmos_input(self):
 		if self.symbol.label not  in DURATION_SYMBOLS_LIST:
 			raise CScoreParserError (f'Unknown symbol name: {self.symbol.label}')
+
+		# Sanity : we merge possible values for eighth notes
+		if self.symbol.label == SMB_8TH_NOTE_SYN:
+			self.symbol.label = SMB_8TH_NOTE
+			
 		if self.symbol.label == SMB_WHOLE_NOTE or self.symbol.label == SMB_WHOLE_REST:
 			self.whole = True
 			self.numer, self.denom =   4, 1
@@ -1397,9 +1447,6 @@ class Duration:
 		elif self.symbol.label == SMB_32TH_NOTE or self.symbol.label == SMB_32TH_REST:
 			self.numer, self.denom =   1, 8
 
-		self.nb_points = 0
-		if "nb_points" in json_duration:
-			self.nb_points = json_duration["nb_points"]
 		if self.nb_points == 1:
 			rational_fraction = Fraction (self.numer * 1.5 /  self.denom)
 			self.numer, self.denom = rational_fraction.numerator, rational_fraction.denominator
@@ -1408,7 +1455,10 @@ class Duration:
 			rational_fraction = Fraction (self.numer * 1.75 / self.denom)
 			self.numer, self.denom = rational_fraction.numerator, rational_fraction.denominator
 
-
+	def overwrite (self, edition):
+		if "duration" in edition:
+			self.symbol.label = edition['duration']
+		self.decode_dmos_input()
 
 class TupletInfo:
 	"""

@@ -181,7 +181,8 @@ class Clef:
 	# DMOS encoding of clefs
 	DMOS_TREBLE_CLEF="G"
 	DMOS_BASS_CLEF="F"
-	DMOS_UT_CLEF="U"
+	DMOS_UT_CLEF="C"
+	DMOS_UT_CLEF_SYN="U"
 
 	TREBLE_CLEF = m21.clef.TrebleClef
 	TREBLE_8PLUS_CLEF = m21.clef.Treble8vbClef
@@ -235,6 +236,12 @@ class Clef:
 	@staticmethod 
 	def decode_from_dmos (dmos_code, dmos_height, dmos_id=None,
 						  dmos_octave_change=0):
+		
+		# Safety : both "U" and "C" are accepted for C cle.
+		# We harmonize to the later
+		if dmos_code == Clef.DMOS_UT_CLEF_SYN:
+			dmos_code = Clef.DMOS_UT_CLEF
+			
 		if dmos_code == Clef.DMOS_TREBLE_CLEF:
 			if  dmos_octave_change ==0:
 				return Clef (Clef.TREBLE_CLEF, dmos_id)
