@@ -1210,7 +1210,7 @@ class Opus(models.Model):
 
 
 			# Get the IIIF manifest for image infos
-			if not (iiif_source.iiif_manifest):
+			if not (iiif_source.iiif_manifest) or iiif_source.iiif_manifest == {}:
 				# Special case: we know the Gallica URL, from which
 				# we can get the manifest
 				print (f"Get the IIIF manifest from Gallica")
@@ -1220,6 +1220,7 @@ class Opus(models.Model):
 				r = requests.get(req_url)
 				r.raise_for_status()
 				iiif_manifest = r.json()
+				iiif_doc = iiif_mod.Document(iiif_manifest)
 				iiif_source.iiif_manifest = ContentFile(json.dumps(iiif_manifest), name="iiif_manifest.json")
 			else:
 				print (f"Take the manifest from the source")
