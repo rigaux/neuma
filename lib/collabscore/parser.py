@@ -712,12 +712,12 @@ class OmrScore:
 						for item in voice.items:
 							# Duration exception: in case of "whole" note, depends 
 							# on the time signature
-							if item.duration.whole:
+							if item.duration is not None and item.duration.whole:
 								# A la blanche (4) ou autre (3/1, 3/2, 6/8, etc)
 								item.duration.numer =  4* current_part.get_current_time_signature().numer 
 								item.duration.denom = current_part.get_current_time_signature().denom
 							# Decode the event
-							(event, event_region, type_event) = self.decode_event(mnf_system, voice_part, item) 
+							(event, type_event) = self.decode_event(mnf_system, voice_part, item) 
 							# Manage beams
 							if current_beam != item.beam_id:
 								if current_beam != None:
@@ -817,15 +817,13 @@ class OmrScore:
 			Produce an event (from our score model) and its region by decoding the OMR input
 		'''
 		
-		# Duration of the event: the DMOS encoding is 1 from whole note, 2 for half, etc.
-		# Our encoding (music21) is 1 for quarter note. Hence the computation
-		duration = score_events.Duration(voice_item.duration.numer * voice_item.tuplet_info.num_base, 
+		if voice_item.duration is not None:	
+			# Duration of the event (note, rest or chord): the DMOS encoding is 1 from whole note, 2 for half, etc.
+			# Our encoding (music21) is 1 for quarter note. Hence the computation
+			duration = score_events.Duration(voice_item.duration.numer * voice_item.tuplet_info.num_base, 
 										voice_item.duration.denom * voice_item.tuplet_info.num)
-		
-		# The symbol in the duration contains the region of the event
-		#  We accept events without region, to simplify the JSON notation
-		event_region = voice_item.duration.symbol.region
-
+		else:
+			duration = None # Must be a clef
 		if voice_item.note_attr is not None:
 			# It can be a note or a chord
 			events = []
@@ -902,13 +900,12 @@ class OmrScore:
 		elif voice_item.clef_attr is not None:
 			#This is a clef change 
 			event = voice_item.clef_attr.get_notation_clef()
-			event_region = voice_item.clef_attr.symbol.region
-			return (event, event_region, "clef")
+			return (event, "clef")
 		else:
 			logger.error ("A voice event with unknown type has been met")
 			raise CScoreParserError ("A voice event with unknown type has been met")
 		
-		return (event, event_region, "event")
+		return (event, "event")
 
 	def move_to_correct_staff(self, note, main_staff):
 		# Register an edition to move a note to its correct staff
@@ -1140,7 +1137,13 @@ class VoiceItem:
 		self.tuplet_info  =  TupletInfo ({"num":1, "numbase": 1})
 		self.numbase = 1
 		
-		self.duration = Duration (json_voice_item["duration"])
+		if "duration" in json_voice_item:
+			self.duration = Duration (json_voice_item["duration"])
+		else:
+			# Must be a clef
+			if not ("att_clef" in json_voice_item):
+				raise CScoreParserError ("A voice item is not a clef and does not have a duration")
+			self.duration = None
 		if "no_group" in json_voice_item:
 			no_group = json_voice_item["no_group"]
 			# Assume that 0 is a no-value
@@ -1420,35 +1423,40 @@ class Duration:
 	"""
 
 	def __init__(self, json_duration):
-		self.symbol = Symbol (json_duration["symbol"])
 		self.whole = False
-		self.note_type = self.symbol.label
-		
+		if "symbol" in json_duration:
+			#
+			# OLD FORMAT: TO REMOVE WHEN OBSOLETE
+			self.symbol = Symbol (json_duration["symbol"])
+			self.note_type = self.symbol["symbol"]
+		else:
+			self.note_type = json_duration["label"]
+
 		self.nb_points = 0
 		if "nb_points" in json_duration:
 			self.nb_points = json_duration["nb_points"]
 		self.decode_dmos_input()
 		
 	def decode_dmos_input(self):
-		if self.symbol.label not  in DURATION_SYMBOLS_LIST:
-			raise CScoreParserError (f'Unknown symbol name: {self.symbol.label}')
+		if self.note_type not  in DURATION_SYMBOLS_LIST:
+			raise CScoreParserError (f'Unknown symbol name: {self.note_type}')
 
 		# Sanity : we merge possible values for eighth notes
-		if self.symbol.label == SMB_8TH_NOTE_SYN:
-			self.symbol.label = SMB_8TH_NOTE
+		if self.note_type == SMB_8TH_NOTE_SYN:
+			self.note_type = SMB_8TH_NOTE
 			
-		if self.symbol.label == SMB_WHOLE_NOTE or self.symbol.label == SMB_WHOLE_REST:
+		if self.note_type == SMB_WHOLE_NOTE or self.note_type == SMB_WHOLE_REST:
 			self.whole = True
 			self.numer, self.denom =   4, 1
-		elif self.symbol.label == SMB_HALF_NOTE or self.symbol.label == SMB_HALF_REST:
+		elif self.note_type == SMB_HALF_NOTE or self.note_type == SMB_HALF_REST:
 			self.numer, self.denom =   2, 1
-		elif self.symbol.label == SMB_QUARTER_NOTE or self.symbol.label == SMB_QUARTER_REST:
+		elif self.note_type == SMB_QUARTER_NOTE or self.note_type == SMB_QUARTER_REST:
 			self.numer, self.denom =   1, 1
-		elif self.symbol.label == SMB_8TH_NOTE or self.symbol.label == SMB_8TH_REST:
+		elif self.note_type == SMB_8TH_NOTE or self.note_type == SMB_8TH_REST:
 			self.numer, self.denom =   1, 2
-		elif self.symbol.label == SMB_16TH_NOTE or self.symbol.label == SMB_16TH_REST:
+		elif self.note_type == SMB_16TH_NOTE or self.note_type== SMB_16TH_REST:
 			self.numer, self.denom =   1, 4
-		elif self.symbol.label == SMB_32TH_NOTE or self.symbol.label == SMB_32TH_REST:
+		elif self.note_type == SMB_32TH_NOTE or self.note_type == SMB_32TH_REST:
 			self.numer, self.denom =   1, 8
 
 		if self.nb_points == 1:
