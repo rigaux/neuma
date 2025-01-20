@@ -1428,7 +1428,7 @@ class Duration:
 			#
 			# OLD FORMAT: TO REMOVE WHEN OBSOLETE
 			self.symbol = Symbol (json_duration["symbol"])
-			self.note_type = self.symbol["symbol"]
+			self.note_type = self.symbol.label
 		else:
 			self.note_type = json_duration["label"]
 
