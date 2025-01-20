@@ -1268,6 +1268,10 @@ class Note:
 				self.alter = score_events.Note.ALTER_DOUBLE_SHARP
 			elif alter == 0:
 				self.alter = score_events.Note.ALTER_NATURAL
+		if "duration" in edition:
+			print (f"Change duration to  {edition['duration']}")
+		if "dots" in edition:
+			print (f"Add {edition['dots']} dots")
 
 class Clef:
 	"""
@@ -1458,6 +1462,8 @@ class Duration:
 	def overwrite (self, edition):
 		if "duration" in edition:
 			self.symbol.label = edition['duration']
+		if "dots" in edition:
+			self.nb_points = edition['dots']
 		self.decode_dmos_input()
 
 class TupletInfo:
