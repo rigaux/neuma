@@ -88,6 +88,10 @@ class Score:
 		else:
 			self.m21_score = m21.stream.Score(id='mainScore')
 			
+		instr =  m21.instrument.Alto()
+		instr.partId = "cocu"
+		self.m21_score.insert(0, instr)
+
 		self.m21_score.metadata = m21.metadata.Metadata()
 		
 		self.m21_score.metadata.title = title
@@ -341,8 +345,9 @@ class Part:
 				m21_group.append(part_staff.m21_part)
 			self.m21_part = m21.layout.StaffGroup(m21_group, 
 								 name=name, abbreviation=abbreviation,
-								 symbol='brace')
+								 symbol='brace',id=id_part)
 			self.staff_group = group
+			
 			
 			# This part has several staves. They are numbered from 1 to ...
 			#for i_staff in range(1, len(m21_group)+1):
@@ -402,6 +407,19 @@ class Part:
 		else:
 			return f"{id_part}-{no_staff}"
 
+	def set_instrument(self, instr_name, instr_abbrev):
+		# The instrument gives informations about the part, 
+		# and in particular its id (which must be the 'partId' attribute) 
+		instr =  m21.instrument.Piano()
+		instr.partId = self.id
+		instr.instrumentName = instr_name
+		instr.instrumentAbbreviation = instr_abbrev
+		
+		if self.part_type==Part.GROUP_PART:
+			self.staff_group[0].m21_part.insert(0, instr)
+		else: 
+			self.m21_part.insert(0, instr)
+			
 	def reset_accidentals (self):
 		# Used to forget that we ever met an accidental on this staff
 		if self.part_type==Part.GROUP_PART:
@@ -448,42 +466,37 @@ class Part:
 				if self.current_measure is not None:
 					self.current_measure.replace_key_signature(key)
 			
-			## TRICK ! In MusicXML there is only one  signature for both staves.
-			## The id of the second one is lost, and we cannot therefore find
-			## the related association. Hence the trick: we concatenate
-			## in the first KS the ids of all the symbol found on the score
-			if no_staff == 2:
-				first_staff_part = self.get_part_staff (1)
-				first_staff_ks = first_staff_part.current_measure.initial_ks 
-				first_staff_ks.id = f"{first_staff_ks.id}{ID_SEPARATOR}{key.id}"
-				first_staff_ks.m21_key_signature.id = first_staff_ks.id
+				## TRICK ! In MusicXML there is only one  signature for both staves.
+				## The id of the second one is lost, and we cannot therefore find
+				## the related association. Hence the trick: we concatenate
+				## in the first KS the ids of all the symbol found on the score
+				if no_staff == 2:
+					first_staff_part = self.get_part_staff (1)
+					first_staff_ks = first_staff_part.current_measure.initial_ks 
+					first_staff_ks.id = f"{first_staff_ks.id}{ID_SEPARATOR}{key.id}"
+					first_staff_ks.m21_key_signature.id = first_staff_ks.id
+
 			return changed_key
 		else:
 			# Returns True is a change of key has been found
-			if self.current_key_signature is not None:
-				if self.current_key_signature.equals(key) and not self.current_key_signature.is_by_default:
-					return False 
-				else:
-					self.current_key_signature = key
-					if self.current_measure is not None:
+			#if self.current_key_signature is not None:
+			if self.current_key_signature.equals(key) and not self.current_key_signature.is_by_default:
+				return False 
+			else:
+				self.current_key_signature = key
+				if self.current_measure is not None:
 						# Might be done during part initialization
 						self.current_measure.replace_key_signature(key)
-					return True
-			else:		
-				self.current_key_signature = key
 				return True
+			#else:		
+			#	self.current_key_signature = key
+			#	return True
 		
 	def set_current_time_signature (self, ts, no_staff=1):
 		if self.part_type == Part.GROUP_PART:
 			# Propagate it to the subpart
 			subpart = self.get_part_staff (no_staff)
 			changed_ts = subpart.set_current_time_signature(ts)			
-			## TRICK ! See the comment in set_key_signature
-			if no_staff == 2:
-				first_staff_part = self.get_part_staff (1)
-				first_staff_ts = first_staff_part.current_measure.initial_ts 
-				first_staff_ts.id = f"{first_staff_ts.id}{ID_SEPARATOR}{ts.id}"
-				first_staff_ts.m21_time_signature.id = first_staff_ts.id
 
 			# Keep the current at the global part level: it
 			# is used to check the length of voices
@@ -492,6 +505,12 @@ class Part:
 				if self.current_measure is not None:
 					self.current_measure.replace_time_signature(ts)
 				
+				## TRICK ! See the comment in set_key_signature
+				if no_staff == 2:
+					first_staff_part = self.get_part_staff (1)
+					first_staff_ts = first_staff_part.current_measure.initial_ts 
+					first_staff_ts.id = f"{first_staff_ts.id}{ID_SEPARATOR}{ts.id}"
+					first_staff_ts.m21_time_signature.id = first_staff_ts.id
 			return changed_ts
 		else:
 			if self.current_time_signature.equals(ts) and not self.current_time_signature.is_by_default:
@@ -755,7 +774,7 @@ class Measure:
 		self.id = f'm{no_measure}-{Measure.sequence_measure}' 
 		self.m21_measure = m21.stream.Measure(id=self.id, number=no_measure)
 		self.m21_measure.style.absoluteX = 23
-		
+
 		# Absolute position of the measure. Initialized with the current part position
 		self.absolute_position = part.get_duration()
 		

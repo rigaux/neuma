@@ -544,6 +544,8 @@ class OmrScore:
 				id_part_staff = score_model.Part.make_part_id(src_part.id)
 				part = score_model.Part(id_part=id_part_staff, name=src_part.name, 
 												abbreviation=src_part.abbreviation)
+				
+				part.set_instrument (src_part.name,src_part.abbreviation)
 				score.add_part(part)			
 				logger.info (f"Add a single-staff part {id_part_staff}")
 			else:
@@ -557,6 +559,7 @@ class OmrScore:
 												abbreviation=src_part.abbreviation,
 												part_type=score_model.Part.STAFF_PART, 
 												no_staff=i_staff)
+					
 					logger.info (f"Add a staff part {id_part_staff} in a part group")
 					staff_group.append(part_staff)
 					score.add_part(part_staff)
@@ -565,6 +568,7 @@ class OmrScore:
 												abbreviation=src_part.abbreviation,
 												part_type=score_model.Part.GROUP_PART, 
 												group=staff_group)
+				part_group.set_instrument (src_part.name, src_part.abbreviation)
 				logger.info (f"Add a part group {src_part.id} with {i_staff} staff-parts")
 				score.add_part(part_group)
 	
@@ -1510,7 +1514,7 @@ class StaffHeader:
 	
 	@staticmethod
 	def make_id_part (id_part):
-		return f"Part{id_part}"
+		return f"part{id_part}"
 	
 class MeasureHeader:
 	"""
