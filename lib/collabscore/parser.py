@@ -503,11 +503,12 @@ class OmrScore:
 							elif voice_item.clef_attr is not None:
 								clef_region = voice_item.clef_attr.symbol.region
 								#This is a clef change 
-								annotation = annot_mod.Annotation.create_annot_from_xml_to_image(
+								if clef_region is not None:
+									annotation = annot_mod.Annotation.create_annot_from_xml_to_image(
 											self.creator, self.uri, voice_item.clef_attr.id, 
 											self.score_image_url, clef_region.string_xyhw(), 
 											constants_mod.IREGION_SYMBOL_CONCEPT)
-								score.add_annotation (annotation)
+									score.add_annotation (annotation)
 								for error in voice_item.clef_attr.errors:
 									score.add_annotation (annot_mod.Annotation.create_from_error (
 											self.creator, self.uri, voice_item.clef_attr.id, error.message))
@@ -1473,7 +1474,7 @@ class Duration:
 
 	def overwrite (self, edition):
 		if "duration" in edition:
-			self.symbol.label = edition['duration']
+			self.note_type = edition['duration']
 		if "dots" in edition:
 			self.nb_points = edition['dots']
 		self.decode_dmos_input()
