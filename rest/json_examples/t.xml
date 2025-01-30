@@ -8,7 +8,7 @@
     <creator type="composer"/>
     <rights>CollabScore project</rights>
     <encoding>
-      <encoding-date>2025-01-20</encoding-date>
+      <encoding-date>2025-01-30</encoding-date>
       <software>music21 v.9.1.0</software>
       <software>DMOS/Collabscore OMR</software>
     </encoding>
@@ -20,17 +20,33 @@
     </scaling>
   </defaults>
   <part-list>
-    <score-part id="Pf257bd92bce74f19402e554ac001514f">
+    <score-part id="part2">
       <part-name>CHANT</part-name>
-      <part-abbreviation>Part2</part-abbreviation>
+      <part-abbreviation>part2</part-abbreviation>
+      <score-instrument id="I56e2d16e0828fcba6c80dd5a022f8a50">
+        <instrument-name>CHANT</instrument-name>
+        <instrument-abbreviation>part2</instrument-abbreviation>
+      </score-instrument>
+      <midi-instrument id="I56e2d16e0828fcba6c80dd5a022f8a50">
+        <midi-channel>1</midi-channel>
+        <midi-program>1</midi-program>
+      </midi-instrument>
     </score-part>
-    <score-part id="P6b1e6bd6108e7716925feeeda4d8eda7">
+    <score-part id="part1">
       <part-name>PIANO</part-name>
-      <part-abbreviation>Part1</part-abbreviation>
+      <part-abbreviation>part1</part-abbreviation>
+      <score-instrument id="I41f383827fe4df83c0a93a749a0dd611">
+        <instrument-name>PIANO</instrument-name>
+        <instrument-abbreviation>part1</instrument-abbreviation>
+      </score-instrument>
+      <midi-instrument id="I41f383827fe4df83c0a93a749a0dd611">
+        <midi-channel>2</midi-channel>
+        <midi-program>1</midi-program>
+      </midi-instrument>
     </score-part>
   </part-list>
   <!--=========================== Part 1 ===========================-->
-  <part id="Pf257bd92bce74f19402e554ac001514f">
+  <part id="part2">
     <!--========================= Measure 1 ==========================-->
     <measure id="m1-1" implicit="no" number="1">
       <attributes>
@@ -59,16 +75,21 @@
         <duration>5040</duration>
         <type>eighth</type>
       </note>
+      <direction placement="above">
+        <direction-type>
+          <dynamics default-x="-36" default-y="-80">
+            <p/>
+          </dynamics>
+        </direction-type>
+        <sound dynamics="44"/>
+      </direction>
       <note id="nh_2055_1816">
         <pitch>
-          <step>F</step>
-          <alter>1</alter>
+          <step>G</step>
           <octave>4</octave>
         </pitch>
-        <duration>15120</duration>
-        <type>quarter</type>
-        <dot/>
-        <accidental>sharp</accidental>
+        <duration>5040</duration>
+        <type>eighth</type>
         <stem>up</stem>
         <lyric name="1" number="1">
           <syllabic>single</syllabic>
@@ -130,6 +151,33 @@
         <lyric name="1" number="1">
           <syllabic>begin</syllabic>
           <text>par</text>
+        </lyric>
+      </note>
+      <note id="nh_2755_1783">
+        <pitch>
+          <step>B</step>
+          <alter>-1</alter>
+          <octave>4</octave>
+        </pitch>
+        <duration>5040</duration>
+        <type>eighth</type>
+        <stem>down</stem>
+        <lyric name="1" number="1">
+          <syllabic>begin</syllabic>
+          <text>se</text>
+        </lyric>
+      </note>
+      <note id="nh_2871_1767">
+        <pitch>
+          <step>C</step>
+          <octave>5</octave>
+        </pitch>
+        <duration>5040</duration>
+        <type>eighth</type>
+        <stem>down</stem>
+        <lyric name="1" number="1">
+          <syllabic>single</syllabic>
+          <text>m&#233;s</text>
         </lyric>
       </note>
     </measure>
@@ -3027,12 +3075,12 @@
     </measure>
   </part>
   <!--=========================== Part 2 ===========================-->
-  <part id="P6b1e6bd6108e7716925feeeda4d8eda7">
+  <part id="part1">
     <!--========================= Measure 1 ==========================-->
     <measure id="m1-3" implicit="no" number="1">
       <attributes>
         <divisions>10080</divisions>
-        <key id="ks_1315_2117--ks_1319_2479--ks_997_3672--ks_993_4871--ks_787_1697--ks_788_2794--ks_790_3892--ks_795_5028--ks_915_1671">
+        <key id="ks_1315_2117--ks_1319_2479">
           <fifths>-2</fifths>
         </key>
         <time id="ts_1378_2172--ts_1381_2507" symbol="common">
@@ -3044,7 +3092,7 @@
           <sign>G</sign>
           <line>2</line>
         </clef>
-        <clef id="clef_1228_2480" number="2">
+        <clef number="2">
           <sign>F</sign>
           <line>4</line>
         </clef>
@@ -3292,7 +3340,10 @@
         <staff>2</staff>
         </note>
       <note id="rest_2197_2505">
-        <rest/>
+        <pitch>
+          <step>F</step>
+          <octave>3</octave>
+        </pitch>
         <duration>10080</duration>
         <voice>2</voice>
         <type>quarter</type>
@@ -6173,7 +6224,7 @@
         <stem>down</stem>
         <staff>1</staff>
         </note>
-      <note id="F2Part1M224E1" print-object="no" print-spacing="yes">
+      <note id="F2part1M224E1" print-object="no" print-spacing="yes">
         <rest/>
         <duration>10080</duration>
         <voice>4</voice>
@@ -6487,7 +6538,7 @@
     <!--========================= Measure 26 =========================-->
     <measure id="m26-103" implicit="no" number="26">
       <attributes>
-        <key id="ks_2213_1272--ks_2216_1658--ks_912_2770--ks_911_3879--ks_918_4990--ks_730_1624--ks_741_2725--ks_751_3832--ks_764_4941">
+        <key id="ks_2213_1272--ks_2216_1658">
           <fifths>1</fifths>
         </key>
       </attributes>
@@ -6700,28 +6751,28 @@
       <backup>
         <duration>40320</duration>
       </backup>
-      <note id="F3Part1M274E1" print-object="no" print-spacing="yes">
+      <note id="F3part1M274E1" print-object="no" print-spacing="yes">
         <rest/>
         <duration>5040</duration>
         <voice>4</voice>
         <type>eighth</type>
         <staff>1</staff>
       </note>
-      <note id="F3Part1M274E3" print-object="no" print-spacing="yes">
+      <note id="F3part1M274E3" print-object="no" print-spacing="yes">
         <rest/>
         <duration>5040</duration>
         <voice>4</voice>
         <type>eighth</type>
         <staff>1</staff>
       </note>
-      <note id="F3Part1M274E5" print-object="no" print-spacing="yes">
+      <note id="F3part1M274E5" print-object="no" print-spacing="yes">
         <rest/>
         <duration>5040</duration>
         <voice>4</voice>
         <type>eighth</type>
         <staff>1</staff>
       </note>
-      <note id="F3Part1M274E7" print-object="no" print-spacing="yes">
+      <note id="F3part1M274E7" print-object="no" print-spacing="yes">
         <rest/>
         <duration>5040</duration>
         <voice>4</voice>
@@ -8334,14 +8385,14 @@
           <tied type="stop"/>
         </notations>
       </note>
-      <note id="F3Part1M344E1" print-object="no" print-spacing="yes">
+      <note id="F3part1M344E1" print-object="no" print-spacing="yes">
         <rest/>
         <duration>5040</duration>
         <voice>4</voice>
         <type>eighth</type>
         <staff>1</staff>
       </note>
-      <note id="F3Part1M344E3" print-object="no" print-spacing="yes">
+      <note id="F3part1M344E3" print-object="no" print-spacing="yes">
         <rest/>
         <duration>5040</duration>
         <voice>4</voice>
@@ -8471,42 +8522,42 @@
         <stem>down</stem>
         <staff>1</staff>
         </note>
-      <note id="F3Part1M354E1" print-object="no" print-spacing="yes">
+      <note id="F3part1M354E1" print-object="no" print-spacing="yes">
         <rest/>
         <duration>5040</duration>
         <voice>4</voice>
         <type>eighth</type>
         <staff>1</staff>
       </note>
-      <note id="F3Part1M354E3" print-object="no" print-spacing="yes">
+      <note id="F3part1M354E3" print-object="no" print-spacing="yes">
         <rest/>
         <duration>5040</duration>
         <voice>4</voice>
         <type>eighth</type>
         <staff>1</staff>
       </note>
-      <note id="F3Part1M354E5" print-object="no" print-spacing="yes">
+      <note id="F3part1M354E5" print-object="no" print-spacing="yes">
         <rest/>
         <duration>5040</duration>
         <voice>4</voice>
         <type>eighth</type>
         <staff>1</staff>
       </note>
-      <note id="F3Part1M354E7" print-object="no" print-spacing="yes">
+      <note id="F3part1M354E7" print-object="no" print-spacing="yes">
         <rest/>
         <duration>5040</duration>
         <voice>4</voice>
         <type>eighth</type>
         <staff>1</staff>
       </note>
-      <note id="F3Part1M354E9" print-object="no" print-spacing="yes">
+      <note id="F3part1M354E9" print-object="no" print-spacing="yes">
         <rest/>
         <duration>5040</duration>
         <voice>4</voice>
         <type>eighth</type>
         <staff>1</staff>
       </note>
-      <note id="F3Part1M354E11" print-object="no" print-spacing="yes">
+      <note id="F3part1M354E11" print-object="no" print-spacing="yes">
         <rest/>
         <duration>5040</duration>
         <voice>4</voice>
@@ -8913,28 +8964,28 @@
       <backup>
         <duration>40320</duration>
       </backup>
-      <note id="F3Part1M374E1" print-object="no" print-spacing="yes">
+      <note id="F3part1M374E1" print-object="no" print-spacing="yes">
         <rest/>
         <duration>5040</duration>
         <voice>4</voice>
         <type>eighth</type>
         <staff>1</staff>
       </note>
-      <note id="F3Part1M374E3" print-object="no" print-spacing="yes">
+      <note id="F3part1M374E3" print-object="no" print-spacing="yes">
         <rest/>
         <duration>5040</duration>
         <voice>4</voice>
         <type>eighth</type>
         <staff>1</staff>
       </note>
-      <note id="F3Part1M374E5" print-object="no" print-spacing="yes">
+      <note id="F3part1M374E5" print-object="no" print-spacing="yes">
         <rest/>
         <duration>5040</duration>
         <voice>4</voice>
         <type>eighth</type>
         <staff>1</staff>
       </note>
-      <note id="F3Part1M374E7" print-object="no" print-spacing="yes">
+      <note id="F3part1M374E7" print-object="no" print-spacing="yes">
         <rest/>
         <duration>5040</duration>
         <voice>4</voice>
@@ -9428,28 +9479,28 @@
       <backup>
         <duration>40320</duration>
       </backup>
-      <note id="F4Part1M404E1" print-object="no" print-spacing="yes">
+      <note id="F4part1M404E1" print-object="no" print-spacing="yes">
         <rest/>
         <duration>5040</duration>
         <voice>4</voice>
         <type>eighth</type>
         <staff>1</staff>
       </note>
-      <note id="F4Part1M404E3" print-object="no" print-spacing="yes">
+      <note id="F4part1M404E3" print-object="no" print-spacing="yes">
         <rest/>
         <duration>5040</duration>
         <voice>4</voice>
         <type>eighth</type>
         <staff>1</staff>
       </note>
-      <note id="F4Part1M404E5" print-object="no" print-spacing="yes">
+      <note id="F4part1M404E5" print-object="no" print-spacing="yes">
         <rest/>
         <duration>5040</duration>
         <voice>4</voice>
         <type>eighth</type>
         <staff>1</staff>
       </note>
-      <note id="F4Part1M404E7" print-object="no" print-spacing="yes">
+      <note id="F4part1M404E7" print-object="no" print-spacing="yes">
         <rest/>
         <duration>5040</duration>
         <voice>4</voice>

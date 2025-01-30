@@ -361,6 +361,7 @@ class OmrScore:
 					# The ids of the graphical object are separated by ID_SEPARATOR
 					ids = edition.target.split (constants_mod.ID_SEPARATOR)
 					for id in ids:
+						print (f"Add edition for object {id}")
 						replacements[edition.name][id] = edition.params
 			elif edition.name in Edition.PRE_EDITION_CODES:
 				# Pre editions  concern pages  and staff layout are applied the manifest
@@ -411,6 +412,20 @@ class OmrScore:
 										print (f"Element {head.id} must be updated")
 										head.overwrite (replacements[Edition.REPLACE_MUSIC_ELEMENT][head.id])
 										item.duration.overwrite (replacements[Edition.REPLACE_MUSIC_ELEMENT][head.id])
+										if "switch" in replacements[Edition.REPLACE_MUSIC_ELEMENT][head.id]:
+											if item.note_attr is not None:
+												print (f"Note {head.id} becomes a rest")
+												# A note becomes a rest
+												item.rest_attr = item.note_attr
+												item.note_attr = None
+											else:
+												print (f"Rest {head.id} becomes a note")
+												# A rest becomes a note. We give an impossible height, that
+												# will be adjusted based on the Clef (not known yet)
+												head.height = 999
+												item.note_attr = item.rest_attr
+												item.rest_attr = None
+												
 									if head.id in removals:
 										print ("To be implemented: removal of note head. Line 413 parser")
 							if item.clef_attr is not None:
@@ -840,7 +855,10 @@ class OmrScore:
 				staff = voice.part.get_part_staff(mnf_staff.number_in_part)
 				event_position = voice.absolute_position + voice.get_duration()
 				current_clef = staff.get_clef_at_pos(event_position)
-
+				# Special: if a rest has been changed in note, we do not know
+				# the height which has been set to 999 during replacement.
+				if head.height == 999:
+					head.height = current_clef.default_height
 				# The head position gives the position of the note on the staff
 				(pitch_class, octave)  = current_clef.decode_pitch (head.height)
 			
@@ -1276,8 +1294,6 @@ class Note:
 				self.alter = score_events.Note.ALTER_DOUBLE_SHARP
 			elif alter == 0:
 				self.alter = score_events.Note.ALTER_NATURAL
-		if "duration" in edition:
-			print (f"Change duration to  {edition['duration']}")
 		if "dots" in edition:
 			print (f"Add {edition['dots']} dots")
 

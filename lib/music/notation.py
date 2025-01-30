@@ -11,7 +11,6 @@ from lxml import etree
  Classes representing music notation elements
 '''
 
-
 class Staff:
 	'''
 		Staff = space where a set of voices from a part (or more?) 
@@ -201,25 +200,35 @@ class Clef:
 		else:
 			# Id provided
 			self.id = id
+			# The following is used to insert a note on a staff with a height that needs to be adjusted
+			self.default_height = 5
 
 		if clef_code == self.TREBLE_CLEF:
 			self.m21_clef = m21.clef.TrebleClef()
+			self.default_height = 5
 		elif clef_code == self.TREBLE_8PLUS_CLEF:
 			self.m21_clef = m21.clef.Treble8vbClef()
+			self.default_height = 5
 		elif clef_code == self.TREBLE_8MIN_CLEF:
 			self.m21_clef = m21.clef.Treble8vaClef()
+			self.default_height = 5
 		elif clef_code == self.SOPRANO_CLEF:
 			self.m21_clef = m21.clef.SopranoClef()
+			self.default_height = 0
 		elif clef_code == self.MEZZO_CLEF:
 			self.m21_clef = m21.clef.MezzoSopranoClef()
+			self.default_height = 2
 		elif clef_code == self.ALTO_CLEF:
 			self.m21_clef = m21.clef.AltoClef()
+			self.default_height = 4
 		elif clef_code == self.TENOR_CLEF:
 			self.m21_clef = m21.clef.TenorClef()
 		elif clef_code == self.BARITONE_CLEF:
+			self.default_height = 6
 			self.m21_clef = m21.clef.CBaritoneClef()
 		elif clef_code == self.BASS_CLEF:
 			self.m21_clef = m21.clef.BassClef()
+			self.default_height = 6
 		elif clef_code == self.NO_CLEF:
 			self.m21_clef = m21.clef.NoClef()
 		self.m21_clef.id = self.id
