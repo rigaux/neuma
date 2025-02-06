@@ -214,6 +214,25 @@ class Edition:
 		# Write it back
 		mxml_doc.write (xml_file)
 
+	@staticmethod
+	def add_edition_to_list(editions, edition):
+		""" 
+		  Add an edition to a list, or replace in case of redundancy
+		"""
+		
+		already_exists =False
+		for ed in editions:
+			if edition.name == ed.name and edition.target==ed.target:
+				already_exists = True
+				# Maybe we can UPDATE the current edition. TO DO
+
+		if not(already_exists):
+			editions.append(edition)
+		else:
+			print (f"Edition {edition.name} already exists for target {edition.target}")
+		
+		return editions
+
 	def clean_beam (self, mxml_doc):
 		parser_mod.logger.info(f"Cleaning pseudo-beams")
 		

@@ -1441,11 +1441,29 @@ class OpusSource (models.Model):
 		abs_url = request.build_absolute_uri("/")[:-1]
 		src_dict = self.to_serializable(abs_url)
 		output = src_dict.to_json()
-		
-				
 		return output
 
-	def apply_editions(self, editions=[]):
+	def decode_editions(self):
+		# Decode the list of JSON editions as a list of objects
+		editions = []
+		for json_ed in self.operations:
+			editions.append(Edition.from_json(json_ed))
+		return editions
+
+	def add_editions(self, new_editions):
+		# We start from the current list of editions
+		current_editions = self.decode_editions()
+		# We add the new edition (allows to find duplicates)
+		for edition in new_editions:
+			editions_to_apply = Edition.add_edition_to_list(current_editions,edition)
+		# We serialize to JSON
+		json_editions = []
+		for ed in editions_to_apply:
+			json_editions.append (ed.to_json())
+		self.operations = json_editions
+		self.save()
+		
+	def apply_editions(self, new_editions=[]):
 		"""
 		  Produces a MusicXML file from the DMOS file, after applying editions
 		"""
@@ -1456,10 +1474,12 @@ class OpusSource (models.Model):
 			dmos_data = json.loads(self.source_file.read())
 		else:
 			raise Exception ("This IIIF does not have a DMOS file")	
-		editions_to_apply = []
-		for json_edition in editions:
-				print (f"Applying edition {json_edition}")
-				editions_to_apply.append (Edition.from_json(json_edition))
+		
+		# We start from the current list of editions
+		current_editions = self.decode_editions()
+		# We add each of the received list of editions
+		for edition in new_editions:
+			editions_to_apply = Edition.add_edition_to_list(current_editions, edition)
 
 		omr_score = OmrScore ("", dmos_data, {}, editions_to_apply)
 	
@@ -1467,25 +1487,12 @@ class OpusSource (models.Model):
 		mxml_file = "/tmp/" + shortuuid.uuid() + ".xml"
 		omr_score.write_as_musicxml (mxml_file)
 		
+		# Return a temporary source, it can be the result a the REST service
 		tmp_src = self.opus.create_source_with_file(source_mod.OpusSource.TMP_REF, 
 									SourceType.STYPE_MXML,
 							"", mxml_file, "tmp.xml")
 
 		return tmp_src
-
-	def add_edition(self, edition):
-		""" 
-		  Add an edition to a list, or replace in case of redundancy
-		"""
-		
-		already_exists =False
-		for json_ed in self.operations:
-			ed = Edition.from_json(json_ed)
-			if edition.name == ed.name and edition.target==ed.target:
-				already_exists = True
-				# Check A
-		if not(already_exists):
-			self.operations.append(edition.to_json())
 
 class Bookmark(models.Model):
 	'''Record accesses from user to opera'''

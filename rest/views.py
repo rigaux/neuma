@@ -617,7 +617,13 @@ class SourceApplyEditions(APIView):
 	@extend_schema(operation_id="SourceApplyEditions")
 	def post(self, request, full_neuma_ref, source_ref):
 		source = self.get_object(full_neuma_ref, source_ref)
-		tmp_src = source.apply_editions(request.data)
+		# Decode the JSON array
+		new_editions = []
+		for json_edition in request.data:
+			new_editions = Edition.add_edition_to_list(new_editions, 		
+									Edition.from_json(json_edition))
+
+		tmp_src = source.apply_editions(new_editions)
 						
 		if "format" in self.request.GET and self.request.GET["format"]=="json":
 			json_answer = {"desc": f"Editions applied to source {source_ref} of opus {full_neuma_ref}",
@@ -676,17 +682,17 @@ class SourceEditions(APIView):
 	@extend_schema(operation_id="SourceEditionsPost")
 	def post(self, request, full_neuma_ref, source_ref):
 		#SourceEditions.serializer_class = MessageSerializer
-		source = self.get_object(full_neuma_ref, source_ref)			
-		json_editions = request.data
-		# Check that the JSON does represent a valid edition
-		for json_edition in json_editions:
+		source = self.get_object(full_neuma_ref, source_ref)
+		# Create a list of Edition objects from the JSON array
+		new_editions = []
+		for json_edition in request.data:
 			try:
-				valid_ed = Edition.from_json(json_edition)
-				source.add_edition(valid_ed)
+				new_editions = Edition.add_edition_to_list(new_editions, 		
+											Edition.from_json(json_edition))
 			except Exception as ex:
 				serializer = MessageSerializer({"status": "ko", "message": str(ex)})
 				return JSONResponse(serializer.data)	
-		
+		source.add_editions(new_editions)
 		source.save()
 		serializer = MessageSerializer({"message": f"Editions updated for source {source.ref} in opus {full_neuma_ref}"})
 		return JSONResponse(serializer.data)	
