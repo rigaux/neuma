@@ -1,8 +1,5 @@
 <?xml version="1.0" encoding="utf-8" ?>
 
-<?xml-stylesheet href="html_style.xsl" type="text/xsl"?>
-
-
 <analytic_model id="omr-error">
     <name>OMR error model</name>
     <description>Errors returned by the OMR process
@@ -13,7 +10,7 @@
  	  <concept id="lowDurErr">
 			<code>lowDurErr</code>
 			<name>Low duration error</name>
-			<description>The analyzed duration of voice element seems too low
+			<description>L'élément de voix reconnu semble trop court
 			</description>
 			 <color name="metadata1"/>
             <icon name="spade"/>  
@@ -21,15 +18,15 @@
 			<concept id="supDurErr">
 			<code>supDurErr</code>
 			<name>High duration error</name>
-			<description>The analyzed duration of voice element seems too high
-			</description>s
+			<description>L'élément de voix reconnu semble trop long
+			</description>
 			 <color name="metadata2"/>
             <icon name="spade"/>  
 	</concept>
 			<concept id="lowConfidenceErr">
 			<code>lowConfidenceErr</code>
 			<name>Low recognition confidence</name>
-			<description>Low confidence during symbol recognition
+			<description>Le symbole a été détecté avec un faible score de confiance
 			</description>
 			 <color name="metadata3"/>
             <icon name="spade"/>  
@@ -37,7 +34,7 @@
 	<concept id="timeInconsistencySystemErr">
 			<code>timeInconsistencySystemErr</code>
 			<name>Time inconsistency on system</name>
-			<description>The detected time signature is not consistent on the system
+			<description>La signature temporelle est incohérente sur l'ensemble des portées du système
 			</description>
 			 <color name="metadata4"/>
             <icon name="spade"/>  
@@ -45,7 +42,7 @@
 	<concept id="keyInconsistencySystemErr">
 			<code>keyInconsistencySystemErr</code>
 			<name>Key inconsistency on system</name>
-			<description>The detected key is not consistent on the system
+			<description>L'armure est incohérente sur l'ensemble des portées du système
 			</description>
 			 <color name="engraving1"/>
             <icon name="spade"/>  
@@ -53,7 +50,7 @@
 	<concept id="durationErr">
 			<code>durationErr</code>
 			<name>Voice duration</name>
-			<description>The voice may not have the correct duration
+			<description>Vérifier la durée de la voix
 			</description>
 			 <color name="engraving2"/>
             <icon name="spade"/>  
