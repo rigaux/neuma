@@ -361,7 +361,7 @@ class OmrScore:
 					# The ids of the graphical object are separated by ID_SEPARATOR
 					ids = edition.target.split (constants_mod.ID_SEPARATOR)
 					for id in ids:
-						print (f"Add edition for object {id}")
+						logger.info (f"Add edition {edition} for object {id}")
 						replacements[edition.name][id] = edition.params
 			elif edition.name in Edition.PRE_EDITION_CODES:
 				# Pre editions  concern pages  and staff layout are applied the manifest
@@ -409,17 +409,16 @@ class OmrScore:
 									heads = item.rest_attr.heads
 								for head in heads:
 									if head.id in replacements[Edition.REPLACE_MUSIC_ELEMENT].keys():
-										print (f"Element {head.id} must be updated")
 										head.overwrite (replacements[Edition.REPLACE_MUSIC_ELEMENT][head.id])
 										item.duration.overwrite (replacements[Edition.REPLACE_MUSIC_ELEMENT][head.id])
 										if "switch" in replacements[Edition.REPLACE_MUSIC_ELEMENT][head.id]:
 											if item.note_attr is not None:
-												print (f"Note {head.id} becomes a rest")
+												#print (f"Note {head.id} becomes a rest")
 												# A note becomes a rest
 												item.rest_attr = item.note_attr
 												item.note_attr = None
 											else:
-												print (f"Rest {head.id} becomes a note")
+												#print (f"Rest {head.id} becomes a note")
 												# A rest becomes a note. We give an impossible height, that
 												# will be adjusted based on the Clef (not known yet)
 												head.height = 999
@@ -432,8 +431,8 @@ class OmrScore:
 								#This is a clef change 
 								if item.clef_attr.id in replacements[Edition.REPLACE_CLEF].keys():
 									logger.info (f"Voice clef {item.clef_attr.id} has been replaced")
-									replace = replacements[Edition.REPLACE_CLEF][voice_item.clef_attr.id]
-									item.clef_attr.overwrite (replace["label"], replace["line"])
+									replace = replacements[Edition.REPLACE_CLEF][item.clef_attr.id]
+									item.clef_attr.overwrite (replace)
 								if item.clef_attr.id in removals:
 									item.clef_attr = None
 									logger.info (f"Voice clef {item.clef_attr.id} has been removed")
@@ -1294,8 +1293,6 @@ class Note:
 				self.alter = score_events.Note.ALTER_DOUBLE_SHARP
 			elif alter == 0:
 				self.alter = score_events.Note.ALTER_NATURAL
-		if "dots" in edition:
-			print (f"Add {edition['dots']} dots")
 
 class Clef:
 	"""
@@ -1489,10 +1486,14 @@ class Duration:
 			self.numer, self.denom = rational_fraction.numerator, rational_fraction.denominator
 
 	def overwrite (self, edition):
+		print (f"Received edition {edition}")
 		if "duration" in edition:
 			self.note_type = edition['duration']
 		if "dots" in edition:
 			self.nb_points = edition['dots']
+		else:
+			# By default, the number of dots is 0
+			self.nb_points = 0
 		self.decode_dmos_input()
 
 class TupletInfo:

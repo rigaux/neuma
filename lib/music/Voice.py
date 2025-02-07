@@ -333,7 +333,7 @@ class Voice:
 					if not (e.same_pitch(group[0])):
 						# We found a mistake
 						valid_tie = False
-						score_mod.logger.warning (f"Invalid tie: found an event {e} in a tie starting with {group[0]}")
+						#score_mod.logger.warning (f"Invalid tie: found an event {e} in a tie starting with {group[0]}")
 			
 				if not valid_tie:
 					# Probably a slur: we add it
@@ -341,7 +341,7 @@ class Voice:
 					for e in group:
 						events.append(e)
 					# Does not work very well		
-					self.part.add_slur(events)
+					#self.part.add_slur(events)
 				else:
 					pass
 					#print (f"This tie is valid!!")

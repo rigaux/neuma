@@ -249,8 +249,11 @@ class Edition:
 			    "target": self.target,
 			     "params": self.params
 			    }
-		
+	
+	def __str__(self):
+		return f"Edition (name:{self.name}, target: {self.target}, params: {self.params}"
 	@staticmethod
+	
 	def from_json (json_op):
 		return Edition(json_op["name"], json_op["target"], json_op["params"])
 				 

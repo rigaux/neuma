@@ -620,8 +620,13 @@ class SourceApplyEditions(APIView):
 		# Decode the JSON array
 		new_editions = []
 		for json_edition in request.data:
-			new_editions = Edition.add_edition_to_list(new_editions, 		
+			try:
+				new_editions = Edition.add_edition_to_list(new_editions, 		
 									Edition.from_json(json_edition))
+			except Exception as ex:
+				print (f"Invalid edition  {json_edition}. Cannot proceed")
+				serializer = MessageSerializer({"message": f"Invalid edition  {json_edition}. Cannot proceed"})
+				return JSONResponse(serializer.data)	
 
 		tmp_src = source.apply_editions(new_editions)
 						
