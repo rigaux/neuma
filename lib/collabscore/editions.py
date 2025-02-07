@@ -87,7 +87,7 @@ class Edition:
 			omr_score.manifest.create_groups()
 
 	def describe_part(self, omr_score):
-		# Get the first part: we merge everything there
+		# Get the part
 		part = omr_score.manifest.get_part (self.target)
 		if "name" in self.params.keys():
 			part.name = self.params["name"]

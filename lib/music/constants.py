@@ -44,14 +44,15 @@ XML_NOTE_CONCEPT = "note-xml"
 # Concepts for the AM_OMR_ERROR annotation
 OMR_LOW_DURATION = "lowDurErr"
 OMR_HIGH_DURATION = "supDurErr"
+OMR_VOICE_DURATION = "durationErr"
 OMR_LOW_CONFIDENCE = "lowConfidenceErr"
 OMR_TSIGN_INCONSISTENCY = "timeInconsistencySystemErr"
 OMR_KSIGN_INCONSISTENCY = "keyInconsistencySystemErr"
-
 LIST_OMR_ERRORS = {
-	OMR_LOW_DURATION: "The analyzed duration of voice element seems too low", 
-	OMR_HIGH_DURATION: "The analyzed duration of voice element seems too high", 
-	OMR_LOW_CONFIDENCE: "Low confidence during symbol recognition",
-	OMR_TSIGN_INCONSISTENCY: "The detected time signature is not consistent on the system",
-	OMR_KSIGN_INCONSISTENCY: "The detected key is not consistent on the system"
+	OMR_LOW_DURATION: "L'élément de voix reconnu semble trop court", 
+	OMR_HIGH_DURATION: "L'élément de voix reconnu semble trop long", 
+	OMR_LOW_CONFIDENCE: "Le symbole a été détecté avec un faible score de confiance",
+	OMR_TSIGN_INCONSISTENCY: "La signature temporelle est incohérente sur l'ensemble des portées du système",
+	OMR_KSIGN_INCONSISTENCY: "L'armure est incohérente sur l'ensemble des portées du système",
+	OMR_VOICE_DURATION: "Vérifier la durée de la voix"
 }
