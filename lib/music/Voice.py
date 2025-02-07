@@ -49,7 +49,7 @@ class Voice:
 		   Clean a voice for inconsistent data
 		"""
 		# Check that ties are consistent
-		#self.remove_invalid_ties()
+		self.remove_invalid_ties()
 
 		# Idem for beams
 		self.clean_beams()
