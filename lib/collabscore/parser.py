@@ -426,7 +426,8 @@ class OmrScore:
 												item.rest_attr = None
 												
 									if head.id in removals:
-										print ("To be implemented: removal of note head. Line 413 parser")
+										logger.info (f"Note head {head.id}  is removed")
+										heads.remove(head)
 							if item.clef_attr is not None:
 								#This is a clef change 
 								if item.clef_attr.id in replacements[Edition.REPLACE_CLEF].keys():
@@ -737,6 +738,11 @@ class OmrScore:
 								item.duration.denom = current_part.get_current_time_signature().denom
 							# Decode the event
 							(event, type_event) = self.decode_event(mnf_system, voice_part, item) 
+							
+							if event is None:
+								# We met an event without head: probably removed
+								continue
+							
 							# Manage beams
 							if current_beam != item.beam_id:
 								if current_beam != None:
@@ -899,7 +905,7 @@ class OmrScore:
 				for syl in voice_item.note_attr.syllables:
 					event.add_syllable(syl["text"],nb=i_verse,dashed=syl["followed_by_dash"])
 					i_verse += 1
-			else:
+			elif len(events) > 1:
 				# A chord
 				logger.info (f'Adding a chord with {len(events)} notes.')
 				for event in events:
@@ -908,13 +914,17 @@ class OmrScore:
 				# MusicXML does not keep the chord id, so we identify it by the last note id to be able to find it in the XML encoding
 				event = score_events.Chord (duration, mnf_staff.number_in_part, events, id=last_note_id)
 				self.add_expression_to_event(events, event, head.articulations)
+			else:
+				# Case of an event with no head: probably a removed event
+				event = None
 		elif voice_item.rest_attr is not None:
 			# It is a rest
+			# Case of an event with no head: probably a removed event
+			event = None
 			for head in voice_item.rest_attr.heads:
 				id_staff = StaffHeader.make_id_staff(head.no_staff) # Will be used as the chord staff.
 				mnf_staff = mnf_system.get_staff(id_staff)
 				#staff = voice.part.get_staff(mnf_staff.number_in_part)
-
 				id_staff = StaffHeader.make_id_staff(head.no_staff) # Will be used as the chord staff.
 				event = score_events.Rest(duration, mnf_staff.number_in_part, id=head.id)
 				event.set_visibility(voice_item.rest_attr.visible)

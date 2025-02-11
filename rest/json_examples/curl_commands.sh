@@ -6,6 +6,14 @@
 curl -u collabscore:collabscore -X POST http://localhost:8000/rest/collections/all%3Acollabscore%3Asaintsaens-ref%3AC006_0/_sources/iiif/_apply_editions/ \
 -d @replace_music_el.json  -H "Content-Type: application/json" > t.xml
 
+# Deux opérations
+curl -u collabscore:collabscore -X POST http://localhost:8000/rest/collections/all%3Acollabscore%3Asaintsaens-ref%3AC006_0/_sources/iiif/_apply_editions/ \
+-d @remove_and_edit.json  -H "Content-Type: application/json" > t.xml
+
+# Suppression d'une tête de note
+curl -u collabscore:collabscore -X POST http://localhost:8000/rest/collections/all%3Acollabscore%3Asaintsaens-ref%3AC006_0/_sources/iiif/_apply_editions/ \
+-d @remove_note_head.json  -H "Content-Type: application/json" > t.xml
+
 
 curl -u collabscore:collabscore -X POST http://localhost:8000/rest/collections/all%3Acollabscore%3Asaintsaens-ref%3AC006_0/_sources/iiif/_apply_editions/ \
 -d @switch_note_rest.json  -H "Content-Type: application/json" > t.xml
