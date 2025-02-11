@@ -381,24 +381,24 @@ class OmrScore:
 								header.clef.overwrite (replacement)
 								logger.info (f"Clef {header.clef.id} has been replaced")
 							if header.clef.id in removals:
-								header.clef = None
 								logger.info (f"Clef {header.clef.id} has been removed")
+								header.clef = None
 
 						if header.time_signature is not None:
 							if header.time_signature.id in replacements[Edition.REPLACE_TIMESIGN].keys():
 								replacement = replacements[Edition.REPLACE_TIMESIGN][header.time_signature.id]
 								header.time_signature.overwrite (replacement)
 							if header.time_signature.id in removals:
-								header.time_signature = None
 								logger.info (f"Time signature {header.time_signature.id} has been removed")			
+								header.time_signature = None
 								
 						if header.key_signature is not None:
 							if header.key_signature.id in replacements[Edition.REPLACE_KEYSIGN].keys():
 								replacement = replacements[Edition.REPLACE_KEYSIGN][header.key_signature.id]
 								header.key_signature.overwrite (replacement)
 							if  header.key_signature.id in removals:
-								header.key_signature = None
 								logger.info (f"Key signature {header.key_signature.id} has been removed")
+								header.key_signature = None
 
 					for voice  in measure.voices: 
 						for item in voice.items: 
