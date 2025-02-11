@@ -1452,10 +1452,10 @@ class OpusSource (models.Model):
 
 	def add_editions(self, new_editions):
 		# We start from the current list of editions
-		current_editions = self.decode_editions()
+		editions_to_apply = self.decode_editions()
 		# We add the new edition (allows to find duplicates)
 		for edition in new_editions:
-			editions_to_apply = Edition.add_edition_to_list(current_editions,edition)
+			editions_to_apply = Edition.add_edition_to_list(editions_to_apply,edition)
 		# We serialize to JSON
 		json_editions = []
 		for ed in editions_to_apply:
@@ -1476,10 +1476,10 @@ class OpusSource (models.Model):
 			raise Exception ("This IIIF does not have a DMOS file")	
 		
 		# We start from the current list of editions
-		current_editions = self.decode_editions()
+		editions_to_apply = self.decode_editions()
 		# We add each of the received list of editions
 		for edition in new_editions:
-			editions_to_apply = Edition.add_edition_to_list(current_editions, edition)
+			editions_to_apply = Edition.add_edition_to_list(editions_to_apply, edition)
 
 		omr_score = OmrScore ("", dmos_data, {}, editions_to_apply)
 	

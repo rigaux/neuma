@@ -21,25 +21,25 @@
   </defaults>
   <part-list>
     <score-part id="part2">
-      <part-name>CHANT</part-name>
-      <part-abbreviation>part2</part-abbreviation>
-      <score-instrument id="Ia54c0c778879844ec70aadeeaaa2ce22">
-        <instrument-name>CHANT</instrument-name>
-        <instrument-abbreviation>part2</instrument-abbreviation>
+      <part-name>T&#233;nor</part-name>
+      <part-abbreviation>T.</part-abbreviation>
+      <score-instrument id="I53d3478c934c16a00150ad83a10c3c37">
+        <instrument-name>T&#233;nor</instrument-name>
+        <instrument-abbreviation>T.</instrument-abbreviation>
       </score-instrument>
-      <midi-instrument id="Ia54c0c778879844ec70aadeeaaa2ce22">
+      <midi-instrument id="I53d3478c934c16a00150ad83a10c3c37">
         <midi-channel>1</midi-channel>
         <midi-program>1</midi-program>
       </midi-instrument>
     </score-part>
     <score-part id="part1">
-      <part-name>PIANO</part-name>
-      <part-abbreviation>part1</part-abbreviation>
-      <score-instrument id="I6917846dd4b37aa6e3450d79e916132e">
-        <instrument-name>PIANO</instrument-name>
-        <instrument-abbreviation>part1</instrument-abbreviation>
+      <part-name>Piano</part-name>
+      <part-abbreviation>p.</part-abbreviation>
+      <score-instrument id="I2b4dcf85a7f3704a495f64dfde1b96bc">
+        <instrument-name>Piano</instrument-name>
+        <instrument-abbreviation>p.</instrument-abbreviation>
       </score-instrument>
-      <midi-instrument id="I6917846dd4b37aa6e3450d79e916132e">
+      <midi-instrument id="I2b4dcf85a7f3704a495f64dfde1b96bc">
         <midi-channel>2</midi-channel>
         <midi-program>1</midi-program>
       </midi-instrument>
@@ -61,6 +61,7 @@
         <clef id="clef_1223_1710">
           <sign>G</sign>
           <line>2</line>
+          <clef-octave-change>-1</clef-octave-change>
         </clef>
       </attributes>
       <note id="rest_1657_1778">
@@ -75,10 +76,35 @@
         <duration>5040</duration>
         <type>eighth</type>
       </note>
+      <direction placement="above">
+        <direction-type>
+          <dynamics default-x="-36" default-y="-80">
+            <p/>
+          </dynamics>
+        </direction-type>
+        <sound dynamics="44"/>
+      </direction>
+      <note id="nh_2055_1816">
+        <pitch>
+          <step>G</step>
+          <octave>3</octave>
+        </pitch>
+        <duration>5040</duration>
+        <type>eighth</type>
+        <stem>up</stem>
+        <lyric name="1" number="1">
+          <syllabic>single</syllabic>
+          <text>Dans</text>
+        </lyric>
+        <lyric name="2" number="2">
+          <syllabic>single</syllabic>
+          <text>lento</text>
+        </lyric>
+      </note>
       <note id="nh_2187_1802">
         <pitch>
           <step>A</step>
-          <octave>4</octave>
+          <octave>3</octave>
         </pitch>
         <duration>5040</duration>
         <type>eighth</type>
@@ -92,7 +118,7 @@
         <pitch>
           <step>B</step>
           <alter>-1</alter>
-          <octave>4</octave>
+          <octave>3</octave>
         </pitch>
         <duration>5040</duration>
         <type>eighth</type>
@@ -105,7 +131,7 @@
       <note id="nh_2487_1799">
         <pitch>
           <step>A</step>
-          <octave>4</octave>
+          <octave>3</octave>
         </pitch>
         <duration>5040</duration>
         <type>eighth</type>
@@ -118,7 +144,7 @@
       <note id="nh_2641_1810">
         <pitch>
           <step>G</step>
-          <octave>4</octave>
+          <octave>3</octave>
         </pitch>
         <duration>5040</duration>
         <type>eighth</type>
@@ -132,7 +158,7 @@
         <pitch>
           <step>B</step>
           <alter>-1</alter>
-          <octave>4</octave>
+          <octave>3</octave>
         </pitch>
         <duration>5040</duration>
         <type>eighth</type>
@@ -145,7 +171,7 @@
       <note id="nh_2871_1767">
         <pitch>
           <step>C</step>
-          <octave>5</octave>
+          <octave>4</octave>
         </pitch>
         <duration>5040</duration>
         <type>eighth</type>
@@ -155,18 +181,13 @@
           <text>m&#233;s</text>
         </lyric>
       </note>
-      <note print-object="no" print-spacing="yes">
-        <rest/>
-        <duration>5040</duration>
-        <type>eighth</type>
-      </note>
     </measure>
     <!--========================= Measure 3 ==========================-->
     <measure id="m3-9" implicit="no" number="3">
       <note id="nh_3034_1749">
         <pitch>
           <step>D</step>
-          <octave>5</octave>
+          <octave>4</octave>
         </pitch>
         <duration>20160</duration>
         <type>half</type>
@@ -184,7 +205,7 @@
       <note id="nh_3543_1806">
         <pitch>
           <step>G</step>
-          <octave>4</octave>
+          <octave>3</octave>
         </pitch>
         <duration>5040</duration>
         <type>eighth</type>
@@ -197,7 +218,7 @@
       <note id="nh_3685_1793">
         <pitch>
           <step>A</step>
-          <octave>4</octave>
+          <octave>3</octave>
         </pitch>
         <duration>5040</duration>
         <type>eighth</type>
@@ -211,7 +232,7 @@
         <pitch>
           <step>B</step>
           <alter>-1</alter>
-          <octave>4</octave>
+          <octave>3</octave>
         </pitch>
         <duration>5040</duration>
         <type>eighth</type>
@@ -230,6 +251,10 @@
           <beats>2</beats>
           <beat-type>4</beat-type>
         </time>
+        <clef id="clef_909_2905">
+          <sign>G</sign>
+          <line>2</line>
+        </clef>
       </attributes>
       <note id="nh_1173_3013">
         <pitch>

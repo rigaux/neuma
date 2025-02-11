@@ -20,7 +20,7 @@ curl -u collabscore:collabscore -X POST http://localhost:8000/rest/collections/a
 
 
 # Clef
-curl -u collabscore:collabscore -X POST http://localhost:8000/rest/collections/all%3Acollabscore%3Asaintsaens-ref%3AC006_0/_sources/iiif/_editions/ \
+curl -u collabscore:collabscore -X POST http://localhost:8000/rest/collections/all%3Acollabscore%3Asaintsaens-ref%3AC006_0/_sources/iiif/_apply_editions/ \
 -d @eds_replace_clef.json  -H "Content-Type: application/json" > t.xml
 
 # Armure

@@ -1317,6 +1317,7 @@ class Clef:
 
 		self.symbol =  Symbol (json_clef["symbol"])
 		self.height  = json_clef["height"]
+		self.octave_change = 0
 		self.errors = []
 		if "errors" in json_clef:
 			for json_error in json_clef["errors"]:
@@ -1327,14 +1328,13 @@ class Clef:
 		self.height  = replacement["line"]
 		if "octave_change" in replacement:
 			self.octave_change =  replacement["octave_change"]
-		else:
-			self.octave_change = 0
-		
+		print (f"After overwrite label = {self.symbol.label} height= {self.height} octave={self.octave_change}")
 	def get_notation_clef(self):
 		# Decode the DMOS infos
 		return score_notation.Clef.decode_from_dmos(self.symbol.label, 
 													self.height,
-													self.id)
+													self.id,
+													self.octave_change)
 
 class TimeSignature:
 	"""
