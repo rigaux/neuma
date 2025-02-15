@@ -5,6 +5,9 @@ from fractions import Fraction
 
 import lib.music.notation as score_notation
 
+
+import lib.music.constants as score_constants
+
 import lib.music.Score as score_mod
 
 # for XML editions
@@ -57,7 +60,7 @@ class Event:
 		Event.counter_context = new_context
 		Event.counter_event = 0
 		
-	def __init__(self, duration, tied=False, id=None) :
+	def __init__(self, duration, tied=False, id=None, voice=None) :
 		if id is None:
 			Event.counter_event += 1
 			self.id = f'{Event.counter_context}E{Event.counter_event}'
@@ -80,6 +83,9 @@ class Event:
 		# A "decoration" is any object that can be inserted 
 		# in the music flow, at a position relative to the event
 		self.decorations = []
+		
+		# An event belongs to a voice
+		self.voice = voice
 		
 	def is_note(self):
 		return False
@@ -139,6 +145,14 @@ class Event:
 	def add_decoration(self, decoration):
 		self.decorations.append(decoration)
 
+	def set_color(self, i_color):
+		# Find the color in the palette
+		if i_color < 0 or i_color > len(score_constants.COLORS):
+			score_mod.logger.warning (f"Color index beyond range. Ignored.")
+			return 
+		else:
+			self.m21_event.style.color = score_constants.COLORS[i_color]
+		
 	def to_musicxml(self, divisions):
 		el = etree.Element('void')
 		return [el]
@@ -223,8 +237,9 @@ class Note (Event):
 				no_staff=UNDEFINED_STAFF, tied=False, 
 				stem_direction=None,
 				note_type=None, 
-				id=None):
-		super ().__init__(duration, tied, id)
+				id=None,
+				voice=None):
+		super ().__init__(duration, tied, id, voice)
 		
 		self.type = Event.TYPE_NOTE
 		self.alter = alter
@@ -246,6 +261,7 @@ class Note (Event):
 		
 		if stem_direction != None:
 			self.m21_event.stemDirection = stem_direction
+			
 		return
 	
 	def get_code(self):
@@ -294,6 +310,10 @@ class Note (Event):
 		step.text = str(self.pitch_class)
 		octave = etree.SubElement(pitch, 'octave')
 		octave.text = str(self.octave)
+		if self.voice is not None:
+			voice = etree.SubElement(el, 'voice')
+			voice.text = str(self.voice.id)
+			el.set("color", score_constants.COLORS[int(self.voice.id)])
 		duration = etree.SubElement(el, 'duration')
 		duration.text= str(Event.get_musicxml_duration(self.duration.get_value(), divisions))
 		staff = etree.SubElement(el, 'staff')
@@ -325,8 +345,8 @@ class Chord (Event):
 		Representation of a chord = a list of notes
 	"""
 	
-	def __init__(self,  duration, no_staff, notes, id=None) :
-		super ().__init__(duration, tied=False, id=id)
+	def __init__(self,  duration, no_staff, notes, id=None, voice=None) :
+		super ().__init__(duration, tied=False, id=id,voice=voice)
 		self.type = Event.TYPE_CHORD
 		self.notes = notes
 		# Create the m21 representation: encode 
@@ -360,7 +380,9 @@ class Chord (Event):
 		return True
 	def get_no_staff(self):
 		return self.no_staff
-
+	def set_color(self, i_color):
+		for note in self.notes:
+			note.set_color(i_color)
 	def contains_pitch (self, pitch):
 		# Param pitch is a note instance: we test if the pitch is in the chord
 		for n in self.notes:
@@ -403,8 +425,8 @@ class Rest (Event):
 		Representation of a rest
 	"""
 	
-	def __init__(self,  duration, no_staff, id=None) :
-		super ().__init__(duration, tied=False, id=id)
+	def __init__(self,  duration, no_staff, id=None, voice=None) :
+		super ().__init__(duration, tied=False, id=None, voice=None)
 		self.type = Event.TYPE_REST
 
 		self.m21_event = m21.note.Rest()
@@ -431,6 +453,11 @@ class Rest (Event):
 		duration.text= str(Event.get_musicxml_duration(self.duration.get_value(), divisions))
 		staff = etree.SubElement(el, 'staff')
 		staff.text = str(self.no_staff)
+		if self.voice is not None:
+			voice = etree.SubElement(el, 'voice')
+			voice.text = str(self.voice.id)
+			el.set("color", score_constants.COLORS[int(self.voice.id)])
+
 		return [el]
 
 	def __str__(self):

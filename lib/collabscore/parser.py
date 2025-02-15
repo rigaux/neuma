@@ -764,6 +764,7 @@ class OmrScore:
 									for decoration in event.decorations:
 										voice_part.append_decoration(decoration)
 									voice_part.append_event(event)
+									event.set_color(int(voice_part.id))
 							elif type_event == "clef":
 								# The staff id is in the voice item
 								id_staff = item.no_staff_clef
@@ -883,7 +884,9 @@ class OmrScore:
 											mnf_staff.number_in_part, 
 											stem_direction=voice_item.direction,
 											note_type=voice_item.duration.note_type,
-											id=head.id)
+											id=head.id,
+											voice=voice)
+				
 				# Check ties
 				if head.tied and head.tied=="forward":
 					#print (f"Tied note {note} start with id {head.id_tie}")
@@ -912,7 +915,7 @@ class OmrScore:
 					logger.info (f'\tNote {event.id} {event.pitch_class}{event.octave}-{event.alter}, duration {event.duration.get_value()} to staff {id_staff} with current clef {current_clef}.')
 					last_note_id = event.id
 				# MusicXML does not keep the chord id, so we identify it by the last note id to be able to find it in the XML encoding
-				event = score_events.Chord (duration, mnf_staff.number_in_part, events, id=last_note_id)
+				event = score_events.Chord (duration, mnf_staff.number_in_part, events, id=last_note_id, voice=voice)
 				self.add_expression_to_event(events, event, head.articulations)
 			else:
 				# Case of an event with no head: probably a removed event
@@ -926,7 +929,7 @@ class OmrScore:
 				mnf_staff = mnf_system.get_staff(id_staff)
 				#staff = voice.part.get_staff(mnf_staff.number_in_part)
 				id_staff = StaffHeader.make_id_staff(head.no_staff) # Will be used as the chord staff.
-				event = score_events.Rest(duration, mnf_staff.number_in_part, id=head.id)
+				event = score_events.Rest(duration, mnf_staff.number_in_part, id=head.id, voice=voice)
 				event.set_visibility(voice_item.rest_attr.visible)
 				logger.info (f'Adding rest {duration.get_value()} to staff {id_staff}.')
 		elif voice_item.clef_attr is not None:
