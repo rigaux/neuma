@@ -147,7 +147,7 @@ class Event:
 
 	def set_color(self, i_color):
 		# Find the color in the palette
-		if i_color < 0 or i_color > len(score_constants.COLORS):
+		if i_color < 0 or i_color >= len(score_constants.COLORS):
 			score_mod.logger.warning (f"Color index beyond range. Ignored.")
 			return 
 		else:
