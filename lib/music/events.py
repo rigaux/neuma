@@ -314,6 +314,7 @@ class Note (Event):
 			voice = etree.SubElement(el, 'voice')
 			voice.text = str(self.voice.id)
 			el.set("color", score_constants.COLORS[int(self.voice.id)])
+			#el.set("color", score_constants.COLORS[score_constants.INDEX_ERROR_COLOR])
 		duration = etree.SubElement(el, 'duration')
 		duration.text= str(Event.get_musicxml_duration(self.duration.get_value(), divisions))
 		staff = etree.SubElement(el, 'staff')
@@ -426,7 +427,7 @@ class Rest (Event):
 	"""
 	
 	def __init__(self,  duration, no_staff, id=None, voice=None) :
-		super ().__init__(duration, tied=False, id=None, voice=None)
+		super ().__init__(duration, tied=False, id=None, voice=voice)
 		self.type = Event.TYPE_REST
 
 		self.m21_event = m21.note.Rest()
@@ -457,6 +458,7 @@ class Rest (Event):
 			voice = etree.SubElement(el, 'voice')
 			voice.text = str(self.voice.id)
 			el.set("color", score_constants.COLORS[int(self.voice.id)])
+			#el.set("color", score_constants.COLORS[score_constants.INDEX_ERROR_COLOR])
 
 		return [el]
 

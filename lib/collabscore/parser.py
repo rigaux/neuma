@@ -741,6 +741,7 @@ class OmrScore:
 							
 							if event is None:
 								# We met an event without head: probably removed
+								logger.warning ("Found a None event. Probably no head.... ignored")
 								continue
 							
 							# Manage beams
@@ -927,11 +928,9 @@ class OmrScore:
 			for head in voice_item.rest_attr.heads:
 				id_staff = StaffHeader.make_id_staff(head.no_staff) # Will be used as the chord staff.
 				mnf_staff = mnf_system.get_staff(id_staff)
-				#staff = voice.part.get_staff(mnf_staff.number_in_part)
-				id_staff = StaffHeader.make_id_staff(head.no_staff) # Will be used as the chord staff.
 				event = score_events.Rest(duration, mnf_staff.number_in_part, id=head.id, voice=voice)
-				event.set_visibility(voice_item.rest_attr.visible)
-				logger.info (f'Adding rest {duration.get_value()} to staff {id_staff}.')
+				#event.set_visibility(voice_item.rest_attr.visible)
+				logger.info (f'Adding rest {event.id} with duration {duration.get_value()} to staff {id_staff}.')
 		elif voice_item.clef_attr is not None:
 			#This is a clef change 
 			event = voice_item.clef_attr.get_notation_clef()
@@ -975,7 +974,7 @@ class OmrScore:
 		print ("\nCreate the score from JSON input")
 		score = self.get_score()
 		
-		print ("\nWriting as MusicXML")
+		print (f"\nWriting as MusicXML in {out_file}")
 		score.write_as_musicxml (out_file)
 		
 		print ("\nApplying post-editions to the MusicXML file\n")
@@ -1331,7 +1330,7 @@ class Clef:
 		self.height  = replacement["line"]
 		if "octave_change" in replacement:
 			self.octave_change =  replacement["octave_change"]
-		print (f"After overwrite label = {self.symbol.label} height= {self.height} octave={self.octave_change}")
+
 	def get_notation_clef(self):
 		# Decode the DMOS infos
 		return score_notation.Clef.decode_from_dmos(self.symbol.label, 

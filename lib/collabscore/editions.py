@@ -138,7 +138,7 @@ class Edition:
 		staff_no = self.params["staff_no"]
 		direction = self.params["direction"]
 		
-		object = mxml_doc.find(f".//*[@id = '{object_id}']")
+		object = mxml_doc.find(f"//*[@id = '{object_id}']")
 		if object is not None:
 			# Note: staves in MusicXML are numbered internally
 			# to a part. So, if we move a note, it is either
@@ -152,10 +152,10 @@ class Edition:
 			else:
 				# staff_no = int(staff.text) + 1
 				staff_no = 2
-			parser_mod.logger.info(f"Moving {direction} object {object_id} to staff {staff_no}")
+			#parser_mod.logger.warning(f"Moving {direction} object '{object_id}' to staff {staff_no}")
 			staff.text = f"{staff_no}"
 		else:
-			parser_mod.logger.warning(f"Unable to find object {object_id} that should be moved to staff {staff_no}")
+			parser_mod.logger.warning(f"Unable to find object '{object_id}' that should be moved to staff {staff_no}")
 		
 		return 
 
@@ -169,22 +169,25 @@ class Edition:
 
 		target = mxml_doc.find(f".//*[@id = '{object_id}']")
 		if target is not None:
+			# If the part contains more than one voice, we want
+			# to reuse the MusicXML voice id of the target for removed elements
 			voice_el = target.find("./voice")
 			if voice_el is not None:
 				voice = voice_el.text
-				print (f"APPEND AFTER id {object_id}. Voice={voice} Divisions={divisions}")
-				parent = target.getparent()
-				#print(f"Object found " + str(etree.tostring(target)))
-				for removed in list_events:
-					print (f"\t\tAppend object {removed.id} after {target.get('id')}")
-					musicxml_elements = removed.to_musicxml(divisions)
-					for el in musicxml_elements:
+			else:
+				voice = None
+			parser_mod.logger.info (f"Append removed elements after object {object_id}. Divisions={divisions}")
+			parent = target.getparent()
+			#print(f"Object found " + str(etree.tostring(target)))
+			for removed in list_events:
+				parser_mod.logger.info (f"\t\tAppend object {removed.id}")
+				musicxml_elements = removed.to_musicxml(divisions)
+				for el in musicxml_elements:
+					if voice is not None:
 						v = etree.SubElement(el, 'voice')
 						v.text = str(voice)
-						self.insert_after(parent, target, el)
-						target = el
-			else:
-				parser_mod.logger.warning(f"Unable to find the voice in element {object_id}. Ignored...")			
+					self.insert_after(parent, target, el)
+					target = el
 		else:
 			print (f"Event {object_id} not found in the file")
 
@@ -195,12 +198,19 @@ class Edition:
 	@staticmethod
 	def apply_editions_to_file(post_editions, xml_file):
 		# All post editions apply to the MusicXML file
+		print (f"Open file {xml_file}")
 		mxml_doc = etree.parse(xml_file)
-		
+					
 		# Find the value of "divisions": used to determine XML duration
 		for division_node in mxml_doc.findall(f".//divisions"):
 			divisions = int(division_node.text)
 			
+		# First we reinsert objects 
+		for ed in post_editions:
+			if ed.name == Edition.APPEND_OBJECTS:
+				ed.append_objects (mxml_doc, divisions)
+
+		# Then we apply the other editions
 		for ed in post_editions:
 			if ed.name == Edition.MOVE_OBJECT_TO_STAFF:
 				# Assign an object to a staff. Done in the MusicXML file
@@ -208,8 +218,6 @@ class Edition:
 			elif ed.name == Edition.CLEAN_BEAM:
 				# Assign an object to a staff. Done in the MusicXML file
 				ed.clean_beam (mxml_doc)
-			elif ed.name == Edition.APPEND_OBJECTS:
-				ed.append_objects (mxml_doc, divisions)
 	
 		# Write it back
 		mxml_doc.write (xml_file)

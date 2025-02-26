@@ -845,17 +845,14 @@ class Measure:
 			if voice.get_duration() > bar_duration:					
 				# Trying to fix this. Easy when we just have to complete the voice
 				if fix:
-					logging.warning (f"Overduration in measure {self.id}. Expected duration: {bar_duration}. Voice {voice.id} duration is {voice.get_duration()}")
+					logging.info (f"Overduration in measure {self.id}. Expected duration: {bar_duration}. Voice {voice.id} duration is {voice.get_duration()}")
 					removed_events = voice.shrink_to_bar_duration(bar_duration)
 					if removed_events is not None:
 						list_removals.append(removed_events)
-					logging.warning (f"After fix, measure duration: {bar_duration}. Voice {voice.id} duration {voice.get_duration()} / {voice.m21_stream.duration}")
+					#logging.warning (f"After fix, measure duration: {bar_duration}. Voice {voice.id} duration {voice.get_duration()} / {voice.m21_stream.duration}")
 
 				# We do nothing is the voice is included in the measure
 				# incomplete voices are accepted
-			#if voice.get_duration() < bar_duration:					
-			#	logger.warning (f"Incomplete duration in measure {self.id}. Time signature: {self.initial_ts} with expected duration: {bar_duration}. Voice {voice.id} duration is {voice.get_duration()}")
-			#	voice.expand_to_bar_duration(bar_duration)
 
 		return list_removals
 

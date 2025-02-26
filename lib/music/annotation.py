@@ -158,7 +158,7 @@ class Annotation:
 		'''
 		
 		if annot_concept in LIST_OMR_ERRORS.keys():
-			print (f"Add annotation {annot_concept} on element {xml_id}")
+			score_mod.logger.info (f"Add annotation {annot_concept} on element {xml_id}")
 
 			target = Annotation.create_target_for_annotation(doc_url, xml_id)
 			body = TextualBody(LIST_OMR_ERRORS[annot_concept])

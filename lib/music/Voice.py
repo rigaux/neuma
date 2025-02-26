@@ -6,6 +6,7 @@ from fractions import Fraction
 
 import lib.music.Score as score_mod
 import lib.music.events as event_mod
+from lib.music.constants import *
 
 DURATION_UNIT = 16
 
@@ -105,17 +106,10 @@ class Voice:
 	def shrink_to_bar_duration(self, bar_duration):
 		# Ensure that a voice duration does not exceeds bar duration
 		
-		
-		if self.get_duration() > bar_duration:
-			# First remove hidden events
-			score_mod.logger.warning (f"Removing hidden events")			
-			self.remove_hidden_events()
-
 		removed_events = []
-		# Not enough ? Remove the last events....
 		if self.get_duration() > bar_duration:
 			# First remove hidden events
-			self.remove_hidden_events()
+			#self.remove_hidden_events()
 			
 			# Reinitialize the stream
 			self.m21_stream.clear()
@@ -132,9 +126,8 @@ class Voice:
 					list_removed_events += f"{event} / "
 					#list_removed_events += f"{event.id} / "
 					removed_events.append(event)
-			score_mod.logger.warning (f"The following events are removed after {last_event_inserted}: {list_removed_events}")			
-					
-			
+			score_mod.logger.info (f"The following events are removed after {last_event_inserted}: {list_removed_events}")			
+
 			return VoiceFragment(self, last_event_inserted, removed_events)
 		else:
 			return None
@@ -317,15 +310,17 @@ class Voice:
 			# A tie is valid if it follows the pattern start - [continue] - stop
 			if not (first_event.tie_type == "start"):
 				valid_tie = False
-				score_mod.logger.warning (f"The first event {group[0]} of a group has a non-start tie ({group[0].tie_type})")
+				score_mod.logger.info (f"The first event {group[0]} of a group has a non-start tie ({group[0].tie_type})")
+				#first_event.set_color(INDEX_ERROR_COLOR)
 			if not (last_event.tie_type == "stop"):
 				valid_tie = False
-				score_mod.logger.warning (f"The last event {group[0]} of a group has a non-stop tie")
+				score_mod.logger.info (f"The last event {group[0]} of a group has a non-stop tie")
+				#last_event.set_color(INDEX_ERROR_COLOR)
 			for i in range(len(group)):
 				e = group[i]
 				if i >= 1 and i < (len(group)-1) and not (e.tie_type =="continue"):
 					valid_tie = False
-					score_mod.logger.warning (f"A middle event {group[0]} of a group has a non-continue tie")
+					score_mod.logger.info (f"A middle event {group[0]} of a group has a non-continue tie")
 			
 			# a tie is valid if all the notes have the same pitch and octave
 			if valid_tie:
