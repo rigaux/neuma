@@ -500,7 +500,7 @@ class OmrScore:
 									if head.head_symbol.region is not None:
 										annotation = annot_mod.Annotation.create_annot_from_xml_to_image(
 											self.creator, self.uri, head.id, 
-											self.score_image_url, head.head_symbol.region.string_xyhw(), 
+											page.page_url, head.head_symbol.region.string_xyhw(), 
 											constants_mod.IREGION_NOTE_CONCEPT)
 										score.add_annotation (annotation)
 									# Did we met errors at the voice item level ?
