@@ -861,6 +861,8 @@ class Opus(models.Model):
 							description=source_dict["description"],
 							source_type=stype,
 							url=source_dict["url"])
+		except Exception as e:
+			print (f"Error when adding source {source_dict['ref']} to opus {self.ref}: {e}")
 		source.save()
 		return source
 
