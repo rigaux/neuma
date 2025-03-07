@@ -293,7 +293,7 @@ class IndexWrapper:
 											matching_ids.append(m_id)
 					opera.append({"opus": opus, "matching_ids": json.dumps(matching_ids), "distance": distance, "best_occurrence": str(best_occurrence)})
 			except Opus.DoesNotExist:
-				logger.warning (f"Opus {ref} found in ES but not in the DB")
+				logger.warning (f"Opus {hit['ref']} found in ES but not in the DB")
 		
 		# Sort results by score
 		if settings.ES_RANKED_SEARCH:
