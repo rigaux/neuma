@@ -71,11 +71,6 @@ class Score:
 		self.initial_time_signature = notation.TimeSignature() 
 
 		'''
-			Reset all counters
-		'''
-		Measure.sequence_measure = 0
-		
-		'''
 			We can store annotations on a score and any of its elemnts
 		'''
 		self.annotations = []
@@ -334,24 +329,21 @@ class Part:
 				   part_type=SINGLE_PART, group=[], no_staff=1) :
 		self.id = id_part
 		self.staff_group = [] # For parts with multiple PartStaff
-
-		# List of staves the part is displayed on
-		#self.staves = {}
+		self.parent_part = None # For staff parts
+		
 		
 		if part_type==Part.GROUP_PART:
 			#print (f"Creating a part group for part {id_part}")
 			m21_group = []
 			for part_staff in group:
 				m21_group.append(part_staff.m21_part)
+				# Set the parent
+				part_staff.parent_part = self
 			self.m21_part = m21.layout.StaffGroup(m21_group, 
 								 name=name, abbreviation=abbreviation,
 								 symbol='brace',id=id_part)
 			self.staff_group = group
 			
-			
-			# This part has several staves. They are numbered from 1 to ...
-			#for i_staff in range(1, len(m21_group)+1):
-			#	self.staves[i_staff] =  notation.Staff(i_staff)
 		elif part_type == Part.STAFF_PART:
 			#print (f"Creating a part Staff for part {id_part} and no staff {no_staff}")
 			self.m21_part = m21.stream.PartStaff(id=id_part)
@@ -553,8 +545,20 @@ class Part:
 
 	def add_measure (self, measure_no):
 
-		measure = Measure(self, measure_no)
-		logger.info (f"Adding a measure {measure_no} to part {self.id}")
+		if self.part_type == Part.STAFF_PART:
+			id_measure = Measure.make_measure_id(self.id, measure_no)
+		else:
+			# A part staff: the measure is identified wrt the parent part
+			if self.parent_part is not None:
+				id_measure = Measure.make_measure_id(self.parent_part.id, measure_no)
+			else:
+				print (f"Parent part is nULL for part {self.id} ??")
+				id_measure = Measure.make_measure_id(self.id, measure_no)
+				
+
+		measure = Measure(self, measure_no, id_measure)
+		
+		print (f"Adding a measure {measure.id} to part {self.id}")
 		""" In case this is the first measure, we insert
 		   the current time signature (necessary when 
 		    a part begins after the other, and the TS is implicit)
@@ -752,26 +756,25 @@ class Part:
 			#print (f"Cleaning voice {voice.id} in part {self.id}")
 			voice.clean()
 							
-	@staticmethod
-	def create_part_id (id_part):
-		# Create a string that identifies the part
-		return "Part" + str(id_part)
-
 
 class Measure:
 	"""
 		Representation of a measure, which belongs to a part
 	"""
-	
-	# Sequence for generating measure ids
-	sequence_measure = 0
-	
-	def __init__(self, part, no_measure) :
-		Measure.sequence_measure += 1
+
+	@staticmethod
+	def make_measure_id (id_part, no):
+		'''
+		  A measure (in the model) is identified by the measure number
+		  and the part it belongs to
+		'''
+		return f'm{no}-{id_part}' 
+
+	def __init__(self, part, no_measure, id) :
 		self.part = part
 		self.no = no_measure
 		self.voices = []
-		self.id = f'm{no_measure}-{Measure.sequence_measure}' 
+		self.id = id
 		self.m21_measure = m21.stream.Measure(id=self.id, number=no_measure)
 		self.m21_measure.style.absoluteX = 23
 

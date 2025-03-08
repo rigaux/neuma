@@ -442,8 +442,14 @@ class OmrScore:
 		"""
 		  Scan the DMOS structure and produce regions and errors annotations
 		"""
+		# We keep the measure id along the way
+		current_measure_no = 0
 		for page in self.pages:
+			# Get the page from the manifest
+			mnf_page = self.manifest.get_page(page.no_page)
 			for system in page.systems:
+				# Get the system from the manifest
+				mnf_system = mnf_page.get_system(system.no_system_in_page)
 				# Annotate the region of the whole system
 				annotation = annot_mod.Annotation.create_annot_from_xml_to_image(
 							self.creator, self.uri, f"P{page.no_page}-S{system.no_system_in_page}", 
@@ -461,18 +467,21 @@ class OmrScore:
 						score.add_annotation (annotation)
 
 				for measure in system.measures: 
+					current_measure_no += 1
 					# Annotate this measure
 					annotation = annot_mod.Annotation.create_annot_from_xml_to_image(
-							self.creator, self.uri, f"P{page.no_page}-S{system.no_system_in_page}-M{measure.no_measure_in_system}", 
+							self.creator, self.uri, f"m{current_measure_no}", 
 							page.page_url, measure.region.string_xyhw(), 
 							constants_mod.IREGION_MEASURE_CONCEPT)
 					score.add_annotation (annotation)
 
 					for header in measure.headers:
+						mnf_staff = mnf_system.get_staff(header.no_staff)
+						id_part = mnf_staff.get_part_id()
 						if header.region is not None:
 							# Record the region of the measure for the current staff
 							annotation = annot_mod.Annotation.create_annot_from_xml_to_image(
-									self.creator, self.uri, measure.no_measure_in_score, 
+									self.creator, self.uri, score_model.Measure.make_measure_id(id_part, current_measure_no), 
 									page.page_url, header.region.string_xyhw(), 
 									constants_mod.IREGION_MEASURE_STAFF_CONCEPT)
 							score.add_annotation (annotation)
@@ -636,6 +645,7 @@ class OmrScore:
 					# Create a new measure for each part
 					for part in score.get_parts():
 						logger.info (f"Adding measure {current_measure_no} to part {part.id}")
+						print (f"Adding measure {current_measure_no} to part {part.id}")
 						part.add_measure (current_measure_no)
 
 						# Adding page and system breaks
