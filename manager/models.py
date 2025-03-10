@@ -628,8 +628,6 @@ class Corpus(models.Model):
 									sfile_content = source_zip.read(fname)
 									print (f"Saving source file {fname}")
 									source.source_file.save(fname, ContentFile(sfile_content))
-									# In that case the URL is irrelevant
-									source.url=""
 									source.save()
 								if base == source.ref + "_mnf":
 									# The file contains the source manifest
@@ -1424,8 +1422,10 @@ class OpusSource (models.Model):
 			self.ref, self.source_type.code, self.source_type.mime_type, 
 			self.url)
 		source_dict.description = self.description
-		if self.source_file:
-			source_dict.file_path =  self.source_file.url
+		
+		# Why would we need a file path which is only valid locally?
+		#if self.source_file:
+		#	source_dict.file_path =  self.source_file.url
 		if self.manifest:
 			source_dict.has_manifest =  True			
 		if self.iiif_manifest:

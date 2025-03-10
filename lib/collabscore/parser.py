@@ -645,7 +645,6 @@ class OmrScore:
 					# Create a new measure for each part
 					for part in score.get_parts():
 						logger.info (f"Adding measure {current_measure_no} to part {part.id}")
-						print (f"Adding measure {current_measure_no} to part {part.id}")
 						part.add_measure (current_measure_no)
 
 						# Adding page and system breaks

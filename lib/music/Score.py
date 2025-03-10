@@ -545,20 +545,20 @@ class Part:
 
 	def add_measure (self, measure_no):
 
-		if self.part_type == Part.STAFF_PART:
-			id_measure = Measure.make_measure_id(self.id, measure_no)
+		if self.part_type == Part.GROUP_PART:
+			# This is the measure of the group. It is not exported but we give an id anyway
+			id_measure = Measure.make_measure_id(self.id + "-group", measure_no)
 		else:
-			# A part staff: the measure is identified wrt the parent part
-			if self.parent_part is not None:
-				id_measure = Measure.make_measure_id(self.parent_part.id, measure_no)
-			else:
-				print (f"Parent part is nULL for part {self.id} ??")
+			if self.parent_part is None:
+				# A single part, no pb
 				id_measure = Measure.make_measure_id(self.id, measure_no)
+			else:
+				# A part staff in a group: the measure is identified wrt the parent part
+				id_measure = Measure.make_measure_id(self.parent_part.id, measure_no)
 				
 
 		measure = Measure(self, measure_no, id_measure)
 		
-		print (f"Adding a measure {measure.id} to part {self.id}")
 		""" In case this is the first measure, we insert
 		   the current time signature (necessary when 
 		    a part begins after the other, and the TS is implicit)
