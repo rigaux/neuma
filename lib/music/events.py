@@ -2,12 +2,8 @@
 import music21 as m21
 
 from fractions import Fraction
-
 import lib.music.notation as score_notation
-
-
 import lib.music.constants as score_constants
-
 import lib.music.Score as score_mod
 
 # for XML editions
@@ -151,6 +147,8 @@ class Event:
 			score_mod.logger.warning (f"Color index {i_color} is  beyond range. Ignored.")
 			return 
 		else:
+			
+			#print (f"Using color {i_color}")
 			self.m21_event.style.color = score_constants.COLORS[i_color]
 		
 	def to_musicxml(self, divisions):

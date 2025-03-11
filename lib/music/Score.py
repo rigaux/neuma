@@ -383,7 +383,8 @@ class Part:
 		self.measures = []
 		self.current_measure = None
 
-		# List of voices 
+		# List of voices, and local counter for the voice 
+		self.reset_voice_counter()
 		self.voices = []
 		
 	@staticmethod
@@ -399,6 +400,12 @@ class Part:
 		else:
 			return f"{id_part}-{no_staff}"
 
+	def reset_voice_counter(self):
+		self.voice_counter = 0
+	def new_voice_counter(self):
+		self.voice_counter += 1
+		return self.voice_counter
+		
 	def set_instrument(self, instr_name, instr_abbrev):
 		# The instrument gives informations about the part, 
 		# and in particular its id (which must be the 'partId' attribute) 

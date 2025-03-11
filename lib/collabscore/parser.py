@@ -646,6 +646,7 @@ class OmrScore:
 					for part in score.get_parts():
 						logger.info (f"Adding measure {current_measure_no} to part {part.id}")
 						part.add_measure (current_measure_no)
+						part.reset_voice_counter()
 
 						# Adding page and system breaks
 						if 	page_begins and page.no_page > 1:
@@ -720,8 +721,11 @@ class OmrScore:
 								logger.info (f'Key signature {key_sign} found on staff {header.no_staff} at measure {current_measure_no} without change. Ignored.')
 					
 					# Now we scan the voices
+					
+					# Voices are numbered from 1 for 
 					for voice in measure.voices:
 						current_part = score.get_part(voice.id_part)
+						i_voice_for_part = current_part.new_voice_counter()
 						logger.info (f"")
 						logger.info (f'Process voice {voice.id} in part {current_part.id}')
 						
@@ -729,8 +733,8 @@ class OmrScore:
 						score_events.Event.reset_counter(
 							f'F{page.no_page}{voice.id_part}M{current_measure_no}{voice.id}')
 
-						# Create the voice
-						voice_part = voice_model.Voice(part=current_part,voice_id=voice.id)
+						# Create the voice (no more voice.id)
+						voice_part = voice_model.Voice(part=current_part,voice_id=str(i_voice_for_part))
 						voice_part.absolute_position = measure_for_part.absolute_position
 						# We disable automatic beaming
 						voice_part.automatic_beaming = False
@@ -774,7 +778,8 @@ class OmrScore:
 									for decoration in event.decorations:
 										voice_part.append_decoration(decoration)
 									voice_part.append_event(event)
-									event.set_color(int(voice_part.id))
+									# Note: color 0 is never used
+									event.set_color(int(voice_part.id) )
 							elif type_event == "clef":
 								# The staff id is in the voice item
 								id_staff = item.no_staff_clef
