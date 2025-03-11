@@ -1423,9 +1423,9 @@ class OpusSource (models.Model):
 			self.url)
 		source_dict.description = self.description
 		
-		# Why would we need a file path which is only valid locally?
-		#if self.source_file:
-		#	source_dict.file_path =  self.source_file.url
+		# We send the path in order to give a way to download the source file
+		if self.source_file:
+			source_dict.file_path =  self.source_file.url
 		if self.manifest:
 			source_dict.has_manifest =  True			
 		if self.iiif_manifest:

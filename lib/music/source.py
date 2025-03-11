@@ -28,7 +28,7 @@ class OpusSource:
 		self.source_type = source_type
 		self.mime_type = mime_type
 		self.url  = url
-		#self.file_path = None
+		self.file_path = None
 		self.has_manifest = False
 		self.has_iiif_manifest = False
 		self.description = ""
@@ -56,7 +56,7 @@ class OpusSource:
 			"source_type": self.source_type, 
 			"mime_type": self.mime_type, 
 			"url": self.url,
-			#"file_path": self.file_path,
+			"file_path": self.file_path,
 			"has_manifest": self.has_manifest,
 			"has_iiif_manifest": self.has_iiif_manifest,
 			}
