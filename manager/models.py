@@ -26,6 +26,7 @@ from django.urls import reverse
 from django.conf import settings
 
 
+from lib.music.constants import *
 from lib.music.Score import *
 from lib.music.jsonld import JsonLD
 
@@ -1203,11 +1204,9 @@ class Opus(models.Model):
 			for source in self.opussource_set.all ():
 				if source.ref == source_mod.OpusSource.IIIF_REF:
 					iiif_source = source
-
 					
 			if iiif_source is None:
 				raise Exception (f"Unable to find the IIIF source in Opus {self.id} ")
-
 
 			# Get the IIIF manifest for image infos
 			if not (iiif_source.iiif_manifest) or iiif_source.iiif_manifest == {}:
@@ -1237,7 +1236,6 @@ class Opus(models.Model):
 			iiif_source.manifest.id = iiif_source.full_ref()
 			print (f"Save the manifest with id {iiif_source.manifest.id}")
 			iiif_source.manifest = ContentFile(json.dumps(omr_score.manifest.to_json()), name="score_manifest.json")
-
 			iiif_source.save()
 		
 			# Now we know the full url of the MEI document
@@ -1245,13 +1243,14 @@ class Opus(models.Model):
 		else:
 			score.uri = "Undetermined: change the 'just_annotations' setting"
 
-		# <clean existing annotations
+		# Clean existing annotations for image-region model
 		for dba in Annotation.objects.filter(opus=self):
-			if dba.target is not None:
-				dba.target.delete()
-			if dba.body is not None:
-				dba.body.delete()
-			dba.delete()
+			if dba.analytic_concept.analytic_model.name == AM_IMAGE_REGION:
+				if dba.target is not None:
+					dba.target.delete()
+				if dba.body is not None:
+					dba.body.delete()
+				dba.delete()
 
 		print (f'Inserting annotations')
 		user_annot = User.objects.get(username=settings.COMPUTER_USER_NAME)

@@ -836,7 +836,7 @@ class AnnotationModelStats (APIView):
 		try:
 			db_model = AnalyticModel.objects.get(code=model_code)
 			# Return stats of the model annotations grouped by concept
-			total_annot = Annotation.objects.filter(opus=opus).count()
+			total_annot = Annotation.objects.filter(opus=opus).filter(analytic_concept__model=db_model).count()
 			concept_count = Annotation.objects.filter(opus=opus).filter(analytic_concept__model=db_model).values(
 				concept_code=F('analytic_concept__code')).annotate(count= Count('*'))				
 			details = []	
