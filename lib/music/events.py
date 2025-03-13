@@ -361,10 +361,11 @@ class Chord (Event):
 					
 		self.m21_event = m21.chord.Chord(m21_notes)
 		
-		if self.tie_type == "start":
-			self.m21_event.tie = m21.tie.Tie('start')
-		else:
-			self.m21_event.tie = m21.tie.Tie('stop')
+		if self.tied:
+			if self.tie_type == "start":
+				self.m21_event.tie = m21.tie.Tie('start')
+			else:
+				self.m21_event.tie = m21.tie.Tie('stop')
 
 		self.m21_event.duration = duration.m21_duration
 		self.m21_event.id = self.id

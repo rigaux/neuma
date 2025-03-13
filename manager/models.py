@@ -1245,7 +1245,7 @@ class Opus(models.Model):
 
 		# Clean existing annotations for image-region model
 		for dba in Annotation.objects.filter(opus=self):
-			if dba.analytic_concept.analytic_model.name == AM_IMAGE_REGION:
+			if dba.analytic_concept.model.name == AM_IMAGE_REGION:
 				if dba.target is not None:
 					dba.target.delete()
 				if dba.body is not None:

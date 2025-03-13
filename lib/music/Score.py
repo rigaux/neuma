@@ -371,7 +371,7 @@ class Part:
 		
 		# Sequence of clefs found in the part, at a given position
 		self.current_clefs = [
-			{"pos": -1, "clef": notation.Clef(notation.Clef.NO_CLEF)}
+			{"pos": -1, "clef": notation.Clef(notation.Clef.TREBLE_CLEF)}
 			]
 		
 		# List of accidentals met so far
@@ -578,7 +578,8 @@ class Part:
 			default_ks = self.current_key_signature.copy()
 			default_ks.set_by_default(f"default_ks_{self.id}")
 			measure.add_key_signature(default_ks)
-
+			
+			
 		self.measures.append(measure)
 		self.current_measure = measure
 			
