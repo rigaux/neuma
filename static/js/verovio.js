@@ -42,8 +42,10 @@ class DisplayVerovioScore extends HTMLElement {
     
     var vrv_options = {
 				scale : 35,
-				breaks: "encoded"
-		    	};
+				breaks: "encoded",
+				condense : 'auto',
+				condenseFirstPage : 1
+	};
 
 	// Create the Vevorio toolkit instance
 	this.vrvToolkit = new verovio.toolkit()

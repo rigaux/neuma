@@ -371,7 +371,7 @@ class Part:
 		
 		# Sequence of clefs found in the part, at a given position
 		self.current_clefs = [
-			{"pos": -1, "clef": notation.Clef(notation.Clef.TREBLE_CLEF)}
+			{"pos": -1, "clef": notation.Clef(notation.Clef.NO_CLEF)}
 			]
 		
 		# List of accidentals met so far
@@ -700,10 +700,20 @@ class Part:
 
 	def check_measure_consistency(self):
 		list_removals = []
-		for measure in	self.measures:
-			list_removals += measure.check_consistency(fix=True)	
+		if self.part_type==Part.GROUP_PART:
+			for part_staff in self.staff_group:
+				list_removals += part_staff.check_measure_consistency()
+		else:
+			for measure in	self.measures:
+				if  measure.no == 1 and measure.initial_clef is None:
+					logger.warning (f"Measure 1 in part {self.id} has no initial clef. Adding treble")
+					# Add a treble clef for safety
+					default_clef = notation.Clef(notation.Clef.TREBLE_CLEF)
+					measure.m21_measure.insert(0,  default_clef.m21_clef)
+				list_removals += measure.check_consistency(fix=True)	
+		
 		return list_removals
-	
+		
 	def aggregate_voices_from_measures(self):
 		"""
 			 This function attempts to connect the voices internal to the measures
@@ -787,6 +797,8 @@ class Measure:
 		self.m21_measure.style.absoluteX = 23
 
 		# Absolute position of the measure. Initialized with the current part position
+		#
+		# BEWARE: if we have voices too long, then the part duration is not reliable.
 		self.absolute_position = part.get_duration()
 		
 		# Used for checking consistency
@@ -796,11 +808,16 @@ class Measure:
 		# Same thing for the key signature
 		self.initial_ks = part.current_key_signature
 		
+		# A measure may have an initial clef. The first measure MUST have an initial clef
+		# This is tested in check_measure_consistency()
+		self.initial_clef = None 
 	def set_initial_clef (self, clef, abs_position=0):
 		# We add the clef to music 21 measure. 
 		relative_position = abs_position - self.absolute_position 
 		logger.info (f"Adding Clef {clef.m21_clef} at relative position {relative_position} to the current measure of part {self.part.id}")
 		self.m21_measure.insert(relative_position,  clef.m21_clef)
+		if relative_position == 0:
+			self.initial_clef = clef
 		
 	def add_time_signature(self, time_signature):
 		self.initial_ts = time_signature
