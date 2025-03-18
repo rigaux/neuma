@@ -978,29 +978,37 @@ class AnnotationCreate(APIView):
 		# Parse the annotation
 		data = JSONParser().parse(request) 
 		logger.info ("Post data" + json.dumps(data))
-		# Validate
-		if not validator.validate_data (data):
-			return JSONResponse({"errors": validator.error_messages})
+		
+		if type (data) == list:
+			print ("This is a list of annotations")
+		else:
+			print ("This is a single annotation")
+			# Transform the single annotation as a list
+			data = [data]
+			
+		for rest_annot in data:
+			# Validate
+			if not validator.validate_data (rest_annot):
+				return JSONResponse({"errors": validator.error_messages})
 
-		annotation = annot_mod.Annotation.create_from_json(data)
-		concept_code = annotation.annotation_concept
-		logger.info(
-			f"Received a PUT request for annotation insertion. Concept: {annotation.annotation_concept}"
-		)
-
-		try:
-			db_concept = AnalyticConcept.objects.get(code=concept_code)
-		except AnalyticConcept.DoesNotExist:
-			return JSONResponse({"error": f"Unknown concept code= {annotation.annotation_concept}"})
+			annotation = annot_mod.Annotation.create_from_json(rest_annot)
+			concept_code = annotation.annotation_concept
+			logger.info(
+				f"Received a PUT request for annotation insertion. Concept: {annotation.annotation_concept}"
+				)
+			
+			try:
+				db_concept = AnalyticConcept.objects.get(code=concept_code)
+			except AnalyticConcept.DoesNotExist:
+				return JSONResponse({"error": f"Unknown concept code= {annotation.annotation_concept}"})
 	
-		db_annot = Annotation.create_from_web_annotation(request.user, opus, annotation)
-		db_annot.target.save()
-		if db_annot.body is not None:
-			db_annot.body.save()
-		db_annot.save()
+			db_annot = Annotation.create_from_web_annotation(request.user, opus, annotation)
+			db_annot.target.save()
+			if db_annot.body is not None:
+				db_annot.body.save()
+			db_annot.save()
 		serializer = MessageSerializer({"status": "ok", 
-						"message" : f"New annotation {db_annot.id} created on {opus.ref}", "annotation_id": db_annot.id}
-								)
+						"message" : f"{len(data)} annotations have been created on {opus.ref}"})
 		return JSONResponse(serializer.data)
 
 def annotation_to_rest(annotation):

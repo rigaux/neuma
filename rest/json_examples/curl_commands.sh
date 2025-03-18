@@ -2,6 +2,20 @@
 # Tests locaux
 #
 
+
+####################################
+#
+# Test sur les annotations
+#
+####################################
+
+
+####################################
+#
+# Test sur les éditions
+#
+####################################
+
 # Objets musicaux
 curl -u collabscore:collabscore -X POST http://localhost:8000/rest/collections/all%3Acollabscore%3Asaintsaens-ref%3AC006_0/_sources/iiif/_apply_editions/ \
 -d @replace_music_el.json  -H "Content-Type: application/json" > t.xml
