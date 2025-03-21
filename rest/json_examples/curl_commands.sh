@@ -9,7 +9,14 @@
 #
 ####################################
 
+curl -u collabscore:collabscore -X PUT  http://localhost:8000/rest/collections/all:collabscore:saintsaens-ref:C006_0/_annotations/ \
+     -H "Content-Type: application/json" \
+     -d @annotation.json 
 
+curl -u collabscore:collabscore -X PUT  https://neuma.huma-num.fr/rest/collections/all:collabscore:saintsaens-ref:C006_0/_annotations/ \
+     -H "Content-Type: application/json" \
+     -d @annotation_list.json 
+          
 ####################################
 #
 # Test sur les éditions

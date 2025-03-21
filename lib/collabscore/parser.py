@@ -779,7 +779,7 @@ class OmrScore:
 										voice_part.append_decoration(decoration)
 									voice_part.append_event(event)
 									# Note: color 0 is never used
-									event.set_color(int(voice_part.id) )
+									event.set_color(int(voice_part.id) - 1)
 							elif type_event == "clef":
 								# The staff id is in the voice item
 								id_staff = item.no_staff_clef
