@@ -10,7 +10,6 @@ import datetime
 from .constants import *
 
 import lib.music.Score as score_mod
-from numpy.distutils.fcompiler import none
 
 class Annotation:
 	'''

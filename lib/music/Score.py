@@ -11,7 +11,6 @@ from .Voice import Voice
 from . import notation
 from . import events
 from .constants import ID_SEPARATOR
-from numpy.distutils.fcompiler import none
 
 logging.basicConfig(level=logging.WARNING)
 logger = logging.getLogger(__name__)

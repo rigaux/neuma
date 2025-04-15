@@ -41,8 +41,9 @@ DEBUG = True
 
 ALLOWED_HOSTS = ['neuma.huma-num.fr', 'localhost', '0.0.0.0']
 
-# Application definition
+CRISPY_TEMPLATE_PACK = 'bootstrap4'
 
+# Application definition
 INSTALLED_APPS = (
     'django.contrib.admin',
     'django.contrib.auth',
@@ -50,7 +51,7 @@ INSTALLED_APPS = (
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-     'crispy_forms',
+     'crispy_forms','crispy_bootstrap4',
   'guardian',
     # 'debug_toolbar',
     "home",
@@ -64,7 +65,7 @@ INSTALLED_APPS = (
     'django_celery_results',
 )
 
-SESSION_SERIALIZER='django.contrib.sessions.serializers.PickleSerializer'
+SESSION_SERIALIZER='django.contrib.sessions.serializers.JSONSerializer'
 SESSION_SAVE_EVERY_REQUEST = True
 
 MIDDLEWARE = (

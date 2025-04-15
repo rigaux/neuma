@@ -943,7 +943,7 @@ class OmrScore:
 				id_staff = StaffHeader.make_id_staff(head.no_staff) # Will be used as the chord staff.
 				mnf_staff = mnf_system.get_staff(id_staff)
 				event = score_events.Rest(duration, mnf_staff.number_in_part, id=head.id, voice=voice)
-				#event.set_visibility(voice_item.rest_attr.visible)
+				event.set_visibility(voice_item.rest_attr.visible)
 				logger.info (f'Adding rest {event.id} with duration {duration.get_value()} to staff {id_staff}.')
 		elif voice_item.clef_attr is not None:
 			#This is a clef change 

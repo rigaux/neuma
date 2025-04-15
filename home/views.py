@@ -54,11 +54,11 @@ class CorpusView(NeumaView):
 		context = self.get_context_data(**kwargs)
 
 		# Are we in search mode
-		if request.session["search_context"].in_search_mode():
+		if self.search_context.in_search_mode():
 			url = reverse('home:search', args=(), kwargs={})
 			return HttpResponseRedirect(url)
 		else:
-			request.session["search_context"].info_message = ""
+			self.search_context.info_message = ""
  
 		return render(request, "home/corpus.html", context)
 
@@ -97,8 +97,8 @@ class CorpusView(NeumaView):
 		paginator = Paginator(all_opera, settings.ITEMS_PER_PAGE)
 
 		# Record the corpus as the contextual one
-		self.request.session["search_context"].ref = corpus.ref
-		self.request.session["search_context"].type = settings.CORPUS_TYPE
+		self.search_context.ref = corpus.ref
+		self.search_context.type = settings.CORPUS_TYPE
 
 		# Paginator data
 		page = self.request.GET.get('page')
@@ -130,7 +130,6 @@ class CorpusView(NeumaView):
 		# Add upload files
 		context['uploads'] = corpus.upload_set.all()
 
-		# print ("Search context now = " + self.request.session["search_context"].ref)
 		return context
 
 def show_licence (request, licence_code):
@@ -237,8 +236,8 @@ class OpusView(NeumaView):
 		context["page_title"] = opus.title
 
 		# Record the opus as the contextual one
-		self.request.session["search_context"].ref = opus.ref
-		self.request.session["search_context"].type = settings.OPUS_TYPE
+		self.search_context.ref = opus.ref
+		self.search_context.type = settings.OPUS_TYPE
 
 		# Record the fact the user accessed the Opus
 		if self.request.user.is_authenticated:
@@ -264,10 +263,10 @@ class OpusView(NeumaView):
 		# The pattern: it comes either from the search form (and takes priority)
 		# or from the session
 
-		if self.request.session["search_context"].keywords != "":
+		if self.search_context.keywords != "":
 			#There is a keyword to search
 			matching_ids = []
-			keyword_in_search = self.request.session["search_context"].keywords
+			keyword_in_search = self.search_context.keywords
 			score = opus.get_score()
 			for voice in score.get_all_voices():
 				#get lyrics of the current voice
@@ -289,9 +288,9 @@ class OpusView(NeumaView):
 			context["matching_ids"] = mark_safe(json.dumps(matching_ids))
 		
 		# Looking for the pattern if any
-		if self.request.session["search_context"].pattern != "":
+		if self.search_context.pattern != "":
 			pattern_sequence = Sequence()
-			pattern_sequence.set_from_pattern(self.request.session["search_context"].pattern)
+			pattern_sequence.set_from_pattern(self.search_context.pattern)
 
 			msummary = MusicSummary()
 			if opus.summary:
@@ -301,14 +300,14 @@ class OpusView(NeumaView):
 			else:
 				logger.warning ("No summary for Opus " + opus.ref)
 
-			search_type = self.request.session["search_context"].search_type
-			mirror_setting = self.request.session["search_context"].mirror_search
+			search_type = self.search_context.search_type
+			mirror_setting = False 
 
 			occurrences = msummary.find_positions(pattern_sequence, search_type, mirror_setting)
 			matching_ids = msummary.find_matching_ids(pattern_sequence, search_type, mirror_setting)
 			
 			context["msummary"] = msummary
-			context["pattern"] = self.request.session["search_context"].pattern
+			context["pattern"] = self.search_context.pattern
 			context["occurrences"] = occurrences
 			context["matching_ids"] = mark_safe(json.dumps(matching_ids))
 		
@@ -494,8 +493,8 @@ class SearchView(NeumaView):
 
 	def get(self, request, **kwargs):
 		# Get the search context
-		search_context = self.request.session["search_context"]
-		self.request.session["search_context"].info_message = ""
+		search_context = self.search_context
+		search_context.info_message = ""
 
 		# Update the search from the request arguments
 		if 'keywords' in self.request.GET:
@@ -542,7 +541,7 @@ class SearchView(NeumaView):
 			
 	def get_context_data(self, **kwargs):
 		context = super(SearchView, self).get_context_data(**kwargs)
-		search_context = self.request.session["search_context"]
+		search_context = self.search_context
 		#print(dir(search_context))
 		
 		# The context should always be a corpus
