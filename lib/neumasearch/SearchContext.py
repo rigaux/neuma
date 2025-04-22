@@ -3,11 +3,11 @@ from django.conf import settings
 from music import *
 from .Sequence import Sequence
 
-from json import JSONEncoder
+import json
 
 from .constants import MELODIC_SEARCH
 
-class SearchContext(JSONEncoder):
+class SearchContext():
 	"""
 	   Representation of a search context
 	   
@@ -24,9 +24,10 @@ class SearchContext(JSONEncoder):
 		the corpus content. It can also be updated as the user defines / changes
 		the compoents in the search form.
 	"""
-	def default(self, o):
-			return o.__dict__
-		
+	def __str__ (self):
+			return json.dumps(self.toJSON())
+	
+	
 	def __init__(self) :
 		#: The context is either a corpus or an opus
 		self.type = settings.CORPUS_TYPE
@@ -48,7 +49,7 @@ class SearchContext(JSONEncoder):
 		
 	@staticmethod
 	def fromJSON(data):
-		print (f"Decoding data {data}")
+		#print (f"Decoding data {data}")
 		sc = SearchContext()
 		sc.type = data["type"]
 		sc.ref = data["ref"]

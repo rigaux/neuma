@@ -69,8 +69,10 @@
 					{% endif %}
 					{% for corpus in view.top_level_corpora %}
 					 {% if corpus.ref in request.session.search_context.ref  %}
+					   <!-- Show in the breadcrumb-->
 					   {{ view.get_context_for_layout | safe}}
                       {% else %}
+					   <!-- Show in the navigation list -->
                     <li> <a
                         href="{% url 'home:corpus' corpus.ref %}">{{corpus.short_title}}</a>
                       </li>

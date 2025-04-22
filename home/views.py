@@ -62,22 +62,6 @@ class CorpusView(NeumaView):
  
 		return render(request, "home/corpus.html", context)
 
-	def post(self, request, **kwargs):
-		context = self.get_context_data(**kwargs)
-		s = requests.session()
-		q = request.POST.get('query')
-		context["query"] = q
-		context["scoreql"] = True
-		queryurl = "http://cchum-kvm-scorelibneuma.in2p3.fr/ScoreQL/rest/query"
-		querydic = { "query": q}
-
-		result = s.post(queryurl, data=querydic)
-		parser = etree.XMLParser(remove_blank_text=True)
-		rawxml = etree.XML(result.text, parser)
-		reparsed = etree.tostring(rawxml, pretty_print=True)
-		context["results"] = reparsed
-
-		return render(request, "home/corpus.html", context=context)
 
 	def get_context_data(self, **kwargs):
 		# Call the parent method
@@ -99,6 +83,7 @@ class CorpusView(NeumaView):
 		# Record the corpus as the contextual one
 		self.search_context.ref = corpus.ref
 		self.search_context.type = settings.CORPUS_TYPE
+		self.request.session["search_context"] = self.search_context.toJSON()
 
 		# Paginator data
 		page = self.request.GET.get('page')
@@ -238,6 +223,7 @@ class OpusView(NeumaView):
 		# Record the opus as the contextual one
 		self.search_context.ref = opus.ref
 		self.search_context.type = settings.OPUS_TYPE
+		self.request.session["search_context"] = self.search_context.toJSON()
 
 		# Record the fact the user accessed the Opus
 		if self.request.user.is_authenticated:

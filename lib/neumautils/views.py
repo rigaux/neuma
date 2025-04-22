@@ -70,11 +70,11 @@ class NeumaView(TemplateView):
 
 	def get_context_for_layout(self):
 		"""
-		   Create HTML code to display the context in the Layout
+		   Create HTML code to display the context (breadcrumb) in the Layout
 		"""
 		# Now build the HTML code. Dirty, but who cares?
-		if self.request.session["search_context"].is_opus():
-			opus = Opus.objects.get(ref=self.request.session["search_context"].ref)
+		if self.search_context.is_opus():
+			opus = Opus.objects.get(ref=self.search_context.ref)
 			if len(opus.title) < 15:
 				label = opus.title
 			else:
@@ -83,7 +83,7 @@ class NeumaView(TemplateView):
 			corpus_ref = opus.corpus.ref
 		else:
 			context = ""
-			corpus_ref = self.request.session["search_context"].ref
+			corpus_ref = self.search_context.ref
 
 		while corpus_ref != "":
 				corpus = Corpus.objects.get(ref=corpus_ref)
@@ -100,8 +100,9 @@ class NeumaView(TemplateView):
 			self.search_context = SearchContext()
 			self.request.session["search_context"] = self.search_context.toJSON()
 		else:
-			self.search_context = SearchContext.fromJSON(self.request.session["search_context"])
 			
+			self.search_context = SearchContext.fromJSON(self.request.session["search_context"])
+			print (f"After decoding search context: {self.search_context} ") 
 		# Add some useful constant (we could use a context processor - maybe)
 		context = super(NeumaView, self).get_context_data(**kwargs)
 		context['NEUMA_URL'] = settings.NEUMA_URL
