@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8" ?>
 
+
 <analytic_model id="omr-error">
     <name>OMR error model</name>
     <description>Errors returned by the OMR process
@@ -53,6 +54,22 @@
 			<description>Vérifier la durée de la voix
 			</description>
 			 <color name="engraving2"/>
+            <icon name="spade"/>  
+	</concept>
+		<concept id="addElmt">
+			<code>addElmt</code>
+			<name>Added element</name>
+			<description>Un élément a été ajouté bien que la mesure soit trop longue.
+			</description>
+			 <color name="engraving3"/>
+            <icon name="spade"/>  
+	</concept>
+			<concept id="addSkip">
+			<code>addSkip</code>
+			<name>Added skip</name>
+			<description>Un silence invisible a été ajouté.
+			</description>
+			 <color name="engraving3"/>
             <icon name="spade"/>  
 	</concept>
     </concepts>

@@ -48,13 +48,17 @@ OMR_VOICE_DURATION = "durationErr"
 OMR_LOW_CONFIDENCE = "lowConfidenceErr"
 OMR_TSIGN_INCONSISTENCY = "timeInconsistencySystemErr"
 OMR_KSIGN_INCONSISTENCY = "keyInconsistencySystemErr"
+OMR_ADDED_ELEMENT = "addElmt"
+OMR_ADDED_SKIP = "addSkip"
 LIST_OMR_ERRORS = {
 	OMR_LOW_DURATION: "L'élément de voix reconnu semble trop court", 
 	OMR_HIGH_DURATION: "L'élément de voix reconnu semble trop long", 
 	OMR_LOW_CONFIDENCE: "Le symbole a été détecté avec un faible score de confiance",
 	OMR_TSIGN_INCONSISTENCY: "La signature temporelle est incohérente sur l'ensemble des portées du système",
 	OMR_KSIGN_INCONSISTENCY: "L'armure est incohérente sur l'ensemble des portées du système",
-	OMR_VOICE_DURATION: "Vérifier la durée de la voix"
+	OMR_VOICE_DURATION: "Vérifier la durée de la voix",
+	OMR_ADDED_ELEMENT: "Un élément a été ajouté bien que la mesure soit trop longue.",
+	OMR_ADDED_SKIP: "Un silence invisible a été ajouté.",
 }
 
 

@@ -311,7 +311,10 @@ class Note (Event):
 		if self.voice is not None:
 			voice = etree.SubElement(el, 'voice')
 			voice.text = str(self.voice.id)
-			el.set("color", score_constants.COLORS[int(self.voice.id)])
+			if int(self.voice.id) < len(score_constants.COLORS):
+				el.set("color", score_constants.COLORS[int(self.voice.id)])
+			else:
+				score_mod.logger.warning (f"Voice id {self.voice.id} is beyond the maximal color index. Unable to color." )
 			#el.set("color", score_constants.COLORS[score_constants.INDEX_ERROR_COLOR])
 		duration = etree.SubElement(el, 'duration')
 		duration.text= str(Event.get_musicxml_duration(self.duration.get_value(), divisions))
@@ -456,7 +459,11 @@ class Rest (Event):
 		if self.voice is not None:
 			voice = etree.SubElement(el, 'voice')
 			voice.text = str(self.voice.id)
-			el.set("color", score_constants.COLORS[int(self.voice.id)])
+			if int(self.voice.id) < len(score_constants.COLORS):
+				el.set("color", score_constants.COLORS[int(self.voice.id)])
+			else:
+				score_mod.logger.warning (f"Voice id {self.voice.id} is beyond the maximal color index. Unable to color." )
+
 			#el.set("color", score_constants.COLORS[score_constants.INDEX_ERROR_COLOR])
 
 		return [el]

@@ -87,7 +87,7 @@ class TimeSignature:
 		# Display the TS as a symbole
 		if (self.numer==4 and self.denom==4):
 			self.m21_time_signature.symbol="common"
-		if (self.numer==2 and self.denom==4):
+		if (self.numer==2 and self.denom==2):
 			self.m21_time_signature.symbol="cut"
 
 	def set_single_digit(self):
