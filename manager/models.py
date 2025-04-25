@@ -1259,10 +1259,11 @@ class Opus(models.Model):
 
 			db_annot = Annotation.create_from_web_annotation(user_annot, 
 															self, annotation)
-			db_annot.target.save()
-			if db_annot.body is not None:
-				db_annot.body.save()
-			db_annot.save()
+			if db_annot is not None:
+				db_annot.target.save()
+				if db_annot.body is not None:
+					db_annot.body.save()
+				db_annot.save()
 
 		return score
 
@@ -1693,10 +1694,13 @@ class Annotation(models.Model):
 		# Create the target
 		wtarget = webannot.target		
 		wtselector = wtarget.resource.selector
-
-		target = Resource(source=wtarget.resource.source, selector_type=wtselector.type,
+		if wtselector.value is None:
+			logger.error (f"Selector value is empty for annotation of type {webannot.annotation_concept}?! Cannot keep this annotation")
+			return None
+		else:
+			target = Resource(source=wtarget.resource.source, selector_type=wtselector.type,
 					selector_conforms_to=wtselector.conforms_to, selector_value=wtselector.value)
-		target.save()
+			target.save()
 
 		# Create the body
 		wbody = webannot.body

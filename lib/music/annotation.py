@@ -155,7 +155,6 @@ class Annotation:
 		''' 
 			An annotation that links an XML element to an image region
 		'''
-		
 		if annot_concept in LIST_OMR_ERRORS.keys():
 			score_mod.logger.info (f"Add annotation {annot_concept} on element {xml_id}")
 
