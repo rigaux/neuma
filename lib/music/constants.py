@@ -66,9 +66,9 @@ LIST_OMR_ERRORS = {
 	
 
 COLOR_VOICE1 = "#13819E"
-COLOR_VOICE2  = "#0a6206"
+COLOR_VOICE2  = "#a637b0"
 COLOR_VOICE3  = "#5034D4"
-COLOR_VOICE4  = "#a637b0"
+COLOR_VOICE4  = "#0a6206"
 COLOR_VOICE5 = "black"
 
 # For coloring notes in error

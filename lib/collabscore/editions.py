@@ -141,7 +141,7 @@ class Edition:
 		staff_no = self.params["staff_no"]
 		direction = self.params["direction"]
 		
-		object = mxml_doc.find(f"//*[@id = '{object_id}']")
+		object = mxml_doc.find(f".//*[@id = '{object_id}']")
 		if object is not None:
 			# Note: staves in MusicXML are numbered internally
 			# to a part. So, if we move a note, it is either
