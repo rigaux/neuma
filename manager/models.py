@@ -267,7 +267,7 @@ class Corpus(models.Model):
 			try:
 				opus.parse_dmos()
 			except Exception as e:
-				print ("Error when trying to convert DMOS file for opus {opus.ref}:{e}")
+				print (f"Error when trying to convert DMOS file for opus {opus.ref}:{e}")
 
 	def get_direct_children(self):
 		return self.get_children(False)

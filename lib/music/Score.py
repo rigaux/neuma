@@ -466,7 +466,7 @@ class Part:
 			
 				## TRICK ! In MusicXML there is only one  signature for both staves.
 				## The id of the second one is lost, and we cannot therefore find
-				## the related association. Hence the trick: we concatenate
+				## the related annotation. Hence the trick: we concatenate
 				## in the first KS the ids of all the symbol found on the score
 				if no_staff == 2:
 					first_staff_part = self.get_part_staff (1)
