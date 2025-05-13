@@ -539,7 +539,6 @@ class Part:
 			return False
 		else:
 			logger.info (f"Setting the current clef to {clef} for part {part.id} at position {abs_position}")
-			print (f"Setting the current clef to {clef} with id {clef.id} for part {part.id} at position {abs_position}")
 			part.current_clefs.append({"pos": abs_position, "clef": clef})
 			# Insert the clef in the music flow
 			part.current_measure.set_initial_clef(clef, abs_position)
@@ -815,7 +814,6 @@ class Measure:
 		# We add the clef to music 21 measure. 
 		relative_position = abs_position - self.absolute_position 
 		logger.info (f"Adding Clef {clef.m21_clef} at relative position {relative_position} to the current measure of part {self.part.id}")
-		print (f"Adding Clef {clef.m21_clef} with id {clef.m21_clef.id} at relative position {relative_position} to the current measure of part {self.part.id}")
 		self.m21_measure.insert(relative_position,  clef.m21_clef)
 		if relative_position == 0:
 			self.initial_clef = clef
