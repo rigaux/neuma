@@ -545,7 +545,7 @@ class OmrScore:
 		
 		# Create an OMR score (with layout)
 		if self.score != None:
-			print ("The score has already been computed. We return the version in cache")
+			# print ("The score has already been computed. We return the version in cache")
 			return self.score # Returning the score in cache
 		
 		# The score has not yet been computed

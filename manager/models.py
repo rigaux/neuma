@@ -1695,7 +1695,7 @@ class Annotation(models.Model):
 		wtarget = webannot.target		
 		wtselector = wtarget.resource.selector
 		if wtselector.value is None:
-			logger.error (f"Selector value is empty for annotation of type {webannot.annotation_concept}?! Cannot keep this annotation")
+			# logger.error (f"Selector value is empty for annotation of type {webannot.annotation_concept}?! Cannot keep this annotation")
 			return None
 		else:
 			target = Resource(source=wtarget.resource.source, selector_type=wtselector.type,
