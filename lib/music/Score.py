@@ -186,6 +186,15 @@ class Score:
 			tk.loadFile(tmp_file)
 			tk.renderToMIDIFile(filename)
 
+	def write_as_svg(self, filename, page=1):
+			''' Produce the SVG encoding thanks to Verovio'''
+			tk = verovio.toolkit()
+			tmp_file = "/tmp/tmp.xml"
+			self.m21_score.write ("musicxml", tmp_file)
+			#print (f"Load  {tmp_file}")
+			tk.loadFile(tmp_file)
+			tk.renderToSVGFile(filename, page)
+
 	def load_from_xml(self, xml_path, format):
 		"""
 			Get the score representation from a MEI or MusicXML document

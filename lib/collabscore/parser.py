@@ -614,7 +614,11 @@ class OmrScore:
 			mnf_page = self.manifest.get_page(page.no_page)
 			
 			#print (f"Processing page {page.no_page}")
-			page_begins = True
+			if current_measure_no > 0:
+				# We are not on the first page
+				page_begins = True
+			else:
+				page_begins = False
 			for system in page.systems:
 				system_begins = True
 				if not self.config.in_range (page.no_page, system.no_system_in_page):
@@ -649,7 +653,7 @@ class OmrScore:
 						part.reset_voice_counter()
 
 						# Adding page and system breaks
-						if 	page_begins and page.no_page > 1:
+						if 	page_begins:
 							part.add_page_break()
 							page_begins = False
 							system_begins = False

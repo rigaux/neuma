@@ -619,6 +619,7 @@ class SourceApplyEditions(APIView):
 		source = self.get_object(full_neuma_ref, source_ref)
 		# Decode the JSON array
 		new_editions = []
+		page_range = {}
 		for json_edition in request.data:
 			try:
 				new_editions = Edition.add_edition_to_list(new_editions, 		
@@ -627,8 +628,11 @@ class SourceApplyEditions(APIView):
 				print (f"Invalid edition  {json_edition}. Cannot proceed")
 				serializer = MessageSerializer({"message": f"Invalid edition  {json_edition}. Cannot proceed"})
 				return JSONResponse(serializer.data)	
+			# Is there a page range ?
+			if "page_range" in json_edition:
+				page_range = json_edition["page_range"]
 
-		tmp_src = source.apply_editions(new_editions)
+		tmp_src = source.apply_editions(new_editions, page_range)
 						
 		if "format" in self.request.GET and self.request.GET["format"]=="json":
 			json_answer = {"desc": f"Editions applied to source {source_ref} of opus {full_neuma_ref}",

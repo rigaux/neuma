@@ -1157,6 +1157,7 @@ class Opus(models.Model):
 			#	source.delete()
 
 		if dmos_data == None:
+			print ("Unable to find the DMOS file ??")
 			return "Unable to find the DMOS file ??"
 		try:
 			parser.validate_data (dmos_data)
@@ -1198,6 +1199,10 @@ class Opus(models.Model):
 			self.create_source_with_file(source_mod.OpusSource.MIDI_REF, 
 									SourceType.STYPE_MIDI,
 							"", midi_file, "score.midi", "rb")
+			# Generate the SVG file
+			print ("Produce SVG file")
+			svg_file = "/tmp/score.svg"
+			score.write_as_svg (svg_file, 1)
 		
 			# Compute and store the score manifest in the IIIF source
 			iiif_source = None
@@ -1465,10 +1470,14 @@ class OpusSource (models.Model):
 		self.operations = json_editions
 		self.save()
 		
-	def apply_editions(self, new_editions=[]):
+	def apply_editions(self, new_editions=[], page_range={}):
 		"""
 		  Produces a MusicXML file from the DMOS file, after applying editions
 		"""
+		
+		# Page range is not provided ? Take the max
+		if page_range == {}:
+			page_range = {"page_min": 0, "page_max": 999999}
 
 		if not (self.ref == source_mod.OpusSource.IIIF_REF):
 			raise Exception ("Can  only apply editions to an IIIF source ")
@@ -1483,7 +1492,7 @@ class OpusSource (models.Model):
 		for edition in new_editions:
 			editions_to_apply = Edition.add_edition_to_list(editions_to_apply, edition)
 
-		omr_score = OmrScore ("", dmos_data, {}, editions_to_apply)
+		omr_score = OmrScore ("", dmos_data, page_range, editions_to_apply)
 	
 		# Store the MusicXML file in the opus
 		mxml_file = "/tmp/" + shortuuid.uuid() + ".xml"
