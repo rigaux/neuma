@@ -34,6 +34,8 @@ curl -u collabscore:collabscore -X PUT  https://neuma.huma-num.fr/rest/collectio
 # Objets musicaux
 curl -u collabscore:collabscore -X POST http://localhost:8000/rest/collections/all%3Acollabscore%3Asaintsaens-ref%3AC006_0/_sources/iiif/_apply_editions/ \
 -d @replace_music_el.json  -H "Content-Type: application/json" > t.xml
+curl -u collabscore:collabscore -X POST http://neuma.huma-num.fr/rest/collections/all%3Acollabscore%3Asaintsaens-ref%3AC006_0/_sources/iiif/_apply_editions/ \
+-d @replace_music_el.json  -H "Content-Type: application/json" > t.xml
 
 # Deux opérations
 curl -u collabscore:collabscore -X POST http://localhost:8000/rest/collections/all%3Acollabscore%3Asaintsaens-ref%3AC006_0/_sources/iiif/_apply_editions/ \
