@@ -996,8 +996,8 @@ class OmrScore:
 		print ("\nPost-editions done\n")
 
 			
-	def write_as_mei(self, mxml_file, out_file):
-		self.get_score().write_as_mei (mxml_file, out_file)
+	def write_as_mei(self, out_file):
+		self.get_score().write_as_mei (out_file)
 
 class Point:
 	"""
@@ -1502,6 +1502,12 @@ class Duration:
 			self.numer, self.denom =   1, 4
 		elif self.note_type == SMB_32TH_NOTE or self.note_type == SMB_32TH_REST:
 			self.numer, self.denom =   1, 8
+		elif self.note_type == SMB_64TH_NOTE or self.note_type == SMB_64TH_REST:
+			self.numer, self.denom =   1, 16
+		elif self.note_type == SMB_128TH_NOTE or self.note_type == SMB_128TH_REST:
+			self.numer, self.denom =   1, 32
+		elif self.note_type == SMB_256TH_NOTE or self.note_type == SMB_256TH_REST:
+			self.numer, self.denom =   1, 64
 
 		if self.nb_points == 1:
 			rational_fraction = Fraction (self.numer * 1.5 /  self.denom)
