@@ -620,11 +620,9 @@ class SourceApplyEditions(APIView):
 		
 		if isinstance(request.data, list):
 			# Old format before adding the page range
-			print (f"OLD FORMAT")
 			json_editions = request.data
 			page_range = {}
 		else:
-			print (f"NEW FORMAT")
 			json_editions = request.data["editions"]
 			if "page_range" in request.data:
 				page_range = request.data["page_range"]
