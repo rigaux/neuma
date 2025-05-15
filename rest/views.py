@@ -378,9 +378,9 @@ class OpusFile (APIView):
 	@extend_schema(operation_id="OpusFileGet")
 	def get(self, request, full_neuma_ref):
 		opus, object_type = get_object_from_neuma_ref(full_neuma_ref)
-		if opus.mei:
-			with open(opus.mei.path, "r") as f:
-				file_name = os.path.basename(opus.mei.path).split('/')[-1]
+		if opus.musicxml:
+			with open(opus.musicxml.path, "r") as f:
+				file_name = os.path.basename(opus.musicxml.path).split('/')[-1]
 				content = f.read()
 				resp = FileResponse(content) 
 				resp['Content-type'] = "binary/octet-stream"  # source.source_type.mime_type
