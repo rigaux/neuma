@@ -435,8 +435,8 @@ class OmrScore:
 									replace = replacements[Edition.REPLACE_CLEF][item.clef_attr.id]
 									item.clef_attr.overwrite (replace)
 								if item.clef_attr.id in removals:
-									item.clef_attr = None
 									logger.info (f"Voice clef {item.clef_attr.id} has been removed")
+									voice.items.remove(item)
 	
 	def produce_annotations (self, score):
 		"""
