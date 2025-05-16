@@ -34,7 +34,6 @@ class Score:
 	"""
         Representation of a score as a hierarchy of sub-scores / voices
     """
-
 	
 	def __init__(self, title="", composer="", use_layout=False) :
 		self.id = ""
@@ -379,7 +378,9 @@ class Part:
 		   music21 model (for parts with part_type = STAFF_PART)
 		"""
 		self.current_key_signature = notation.KeySignature() 
+		self.measure_key_sign_change = 0
 		self.current_time_signature = notation.TimeSignature() 
+		self.measure_time_sign_change = 0
 		
 		# Sequence of clefs found in the part, at a given position
 		self.current_clefs = [
@@ -476,16 +477,20 @@ class Part:
 				self.current_key_signature = key
 				if self.current_measure is not None:
 					self.current_measure.replace_key_signature(key)
-			
+
 				## TRICK ! In MusicXML there is only one  signature for both staves.
 				## The id of the second one is lost, and we cannot therefore find
 				## the related annotation. Hence the trick: we concatenate
 				## in the first KS the ids of all the symbol found on the score
 				if no_staff == 2:
 					first_staff_part = self.get_part_staff (1)
-					first_staff_ks = first_staff_part.current_measure.initial_ks 
-					first_staff_ks.id = f"{first_staff_ks.id}{ID_SEPARATOR}{key.id}"
-					first_staff_ks.m21_key_signature.id = first_staff_ks.id
+					if first_staff_part.measure_key_sign_change != self.current_measure.no:
+						logger.warning (f"ERROR: at measure {self.current_measure.no} key change on the second staff without change on the first one")
+					else:
+						# We put in the first staff signature both symbols ids
+						first_staff_ks = first_staff_part.current_measure.initial_ks 
+						first_staff_ks.id = f"{first_staff_ks.id}{ID_SEPARATOR}{key.id}"
+						first_staff_ks.m21_key_signature.id = first_staff_ks.id
 
 			return changed_key
 		else:
@@ -497,6 +502,7 @@ class Part:
 				self.current_key_signature = key
 				if self.current_measure is not None:
 						# Might be done during part initialization
+						self.measure_key_sign_change = self.current_measure.no
 						self.current_measure.replace_key_signature(key)
 				return True
 			#else:		
@@ -509,8 +515,7 @@ class Part:
 			subpart = self.get_part_staff (no_staff)
 			changed_ts = subpart.set_current_time_signature(ts)			
 
-			# Keep the current at the global part level: it
-			# is used to check the length of voices
+			# Keep the current at the global part level
 			if changed_ts:
 				self.current_time_signature = ts
 				if self.current_measure is not None:
@@ -547,7 +552,7 @@ class Part:
 		current_clef = part.get_clef_at_pos(abs_position)
 		
 		if current_clef.equals(clef):
-			# No need to change the clef ! Probably an initial signature
+			# No need to change the clef ! Probably a caution signature
 			logger.info (f"Clef {clef} is already the current clef for part {part.id} at position {abs_position}")
 			return False
 		else:
@@ -847,6 +852,9 @@ class Measure:
 		if 	self.initial_ks is not None:
 			self.m21_measure.remove(self.initial_ks.m21_key_signature)
 		self.add_key_signature(new_key_signature)
+		# We record in the part when the key signature has changed
+		self.part.measure_key_sign_change = self.no
+
 		
 	def add_voice (self, voice):
 		self.voices.append(voice)
