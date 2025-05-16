@@ -235,12 +235,14 @@ class Edition:
 		for ed in editions:
 			if edition.name == ed.name and edition.target==ed.target:
 				already_exists = True
-				# Maybe we can UPDATE the current edition. TO DO
-
+				# Update the current edition. 
+				print (f"Edition {edition.name} already exists for target {edition.target}")
+				# Replace the parameters when a new value is found
+				for key, val in edition.params.items():
+					if key in ed.params and key != "id":
+						ed.params[key] = val
 		if not(already_exists):
 			editions.append(edition)
-		else:
-			print (f"Edition {edition.name} already exists for target {edition.target}")
 		
 		return editions
 
