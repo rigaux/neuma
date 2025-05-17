@@ -24,6 +24,11 @@ c_format = logging.Formatter('%(name)s - %(levelname)s - %(message)s')
 c_handler.setFormatter(c_format)
 #logger.addHandler(c_handler)
 
+# Strategy for correcting inconsistent alignment of key signatures.
+# Maximize = we keep the key sign recognized by DMOS and and unify them
+# Minimize = we remove all doutious signatures
+KEY_SIGN_CONSISTENCY_METHOD="minimize"
+
 """
   This module acts as a thin layer over music21, so as to propose
   a somewhat more constrained representation of encoded scores
@@ -306,12 +311,42 @@ class Score:
 		if annotation is not None:
 			self.annotations.append(annotation)
 		
-	def check_time_signatures(self, fix=True):
+	def check_signatures(self, fix=True):
 		"""
 		  Check the consistency of the time signatures for all parts
+		  
+		  Because of a limitation in the Verovio converted, key
+		       signatures must be aligned. The converted only considers
+		       the signature of the first staff, and this 
 		"""
+		list_ks = []
+		ks_found = None
+		part_with_ks = ""
 		for part in self.parts:
-			part.check_time_signatures(fix)
+			(current_ts, current_ks) = part.check_signatures(fix)
+			list_ks.append({"part": part, "current_ks": current_ks})
+			if current_ks is not None:
+				ks_found = current_ks
+				part_with_ks = part
+			# print (f"Part {part.id}, meas. {part.current_measure.no}. Local time and key signs = ({current_ts},{current_ks})")
+		# Check that all KS are the same
+		if ks_found is None:
+			pass # Ok, not local KS for this measure
+		else:
+			# ks found is not None
+			inconsistency_found = False
+			for ks_dict in list_ks:
+				if ks_dict["current_ks"] is None:
+					logger.warning (f"Part {part.id}, meas. {part.current_measure.no}. Inconsistency of key signatures : {ks_found} (part {part_with_ks.id})/ {ks_dict['current_ks']} (part {ks_dict['part'].id}). One is missing: we clear all")
+					inconsistency_found = True
+				elif ks_dict["current_ks"].code() != ks_found.code():
+					# TO DO: we have distinct keys on all staves. Damned, what let it go...
+					logger.warning (f"Part {part.id}, meas. {part.current_measure.no}. Inconsistency of key signatures : {ks_found} (part {part_with_ks.id})/ {ks_dict['current_ks']} (part {ks_dict['part'].id}). TO BE IMPLEMENTED")
+			if inconsistency_found and KEY_SIGN_CONSISTENCY_METHOD=="minimize":
+				# We assume a Key sign  recognition error of DMOS and clear the key signatures
+				for part in self.parts:
+					for measure in part.get_current_measures():
+						measure.remove_key_signature()
 
 	def check_measure_consistency(self):
 		list_removals = []
@@ -485,7 +520,7 @@ class Part:
 				if no_staff == 2:
 					first_staff_part = self.get_part_staff (1)
 					if first_staff_part.measure_key_sign_change != self.current_measure.no:
-						logger.warning (f"ERROR: at measure {self.current_measure.no} key change on the second staff without change on the first one")
+						logger.warning (f"At measure {self.current_measure.id} key change on the second staff without change on the first one")
 					else:
 						# We put in the first staff signature both symbols ids
 						first_staff_ks = first_staff_part.current_measure.initial_ks 
@@ -677,15 +712,25 @@ class Part:
 			for staff_part in self.staff_group: 
 				staff_part.m21_part.insert(position, measure.m21_measure)
 				
-	def check_time_signatures(self, fix=True):
+	def check_signatures(self, fix=True):
 		"""
-		  Check the consistency of the time signatures for the current measure
+		  Check the consistency of the time signatures for the current part's 
+		  measure (there might be wto if the part is a grouped one)
+		  Check also the consistency of key signatures. 
+		    The key signatures MUST be the same for all staves of a part
+		 The function returns a pair (ts, ks) of time and key
+		 signature for this part's measure. If can be None 
+		 if no changed occured
 		"""
-		# Checking consistency of time signatures
+		current_ts = None
+		current_ks = None
 		count_ts = {}
-		# Count the occurrences of each TS
+		count_ks = {}
+		missing_ks = False
+		# Count the occurrences of TS and KS
 		for measure in self.get_current_measures():
-			if measure.initial_ts is not None:
+			if measure.initial_ts is not None and measure.has_own_initial_ts:
+				current_ts = measure.initial_ts
 				hash_measure = measure.initial_ts.code()
 				if hash_measure in count_ts.keys():
 					count_ts[hash_measure] += 1
@@ -693,7 +738,20 @@ class Part:
 					count_ts[hash_measure] = 1
 			else:
 				count_ts["none"] = 1
-		# There should be only one: take the most frequent
+				
+			# Same for key signatures
+			if measure.initial_ks is not None and measure.has_own_initial_ks:
+				current_ks = measure.initial_ks
+				hash_measure = measure.initial_ks.code()
+				if hash_measure in count_ks.keys():
+					count_ks[hash_measure]["count"] += 1
+				else:
+					count_ks[hash_measure] = {"count": 1, "key": measure.initial_ks}
+			else:
+				missing_ks = True
+				count_ks["none"] = {"count": 1, "key": None}
+
+		# There should be only one time signature: take the most frequent
 		if len (count_ts.keys()) > 1:
 			logger.warning (f"Measure {measure.id} in part {self.id} has distinct time signatures. Attempt to fix... !!")
 
@@ -705,16 +763,45 @@ class Part:
 			
 			for measure in self.get_current_measures():
 				if measure.initial_ts.code() == main_ts:
-					ts_to_use = measure.initial_ts
-			logger.warning  (f"The main TS is {ts_to_use}. We use it for all staves")
-				
+					current_ts = measure.initial_ts
+			logger.warning  (f"The main TS is {current_ts}. We use it for all staves")
 			if fix:
 				# Try to fix the issue
 				for measure in self.get_current_measures():
-					ts = ts_to_use.copy()
-					measure.part.set_current_time_signature (ts)
-					measure.replace_time_signature (ts)
+					# Do not erase the object that comes with its Id
+					if current_ts != measure.initial_ts:
+						ts = current_ts.copy()
+						measure.part.set_current_time_signature (ts)
+						measure.replace_time_signature (ts)
 
+		# There should be only one key signature
+		if len (count_ks.keys()) > 1:
+			max_alter = 0
+			# What is the best strategy ? We can mimimize the number
+			# of signatures, or maximize them
+			
+			if missing_ks and KEY_SIGN_CONSISTENCY_METHOD=='minimize':
+				# We can assume that the OMR system has misinterpreted
+				# a single alteration as a signature
+				logger.warning (f"Measure {measure.id} in part {self.id} has distinct key signatures. Since one is missing, we assume this is true for all")
+				for measure in self.get_current_measures():
+					measure.remove_key_signature()
+				current_ks = None
+			else:
+				# Maximize the number of signatures
+				best_key = next(iter(count_ks.values()))['key']
+				for ks in count_ks.values():
+					if ks['key'] is not None and ks['key'].nb_alters() > best_key.nb_alters():
+						best_key = ks['key']
+				logger.warning (f"Measure {measure.id} in part {self.id} has distinct key signatures. Since all are distinct, we take the 'best' one: {best_key}")
+				for measure in self.get_current_measures():
+					ks = best_key.copy()
+					if measure.initial_ks != ks:
+						measure.part.set_current_key_signature (ks)
+						measure.replace_key_signature (ks)
+				current_ks = best_key
+		return (current_ts, current_ks)
+		
 	def check_measure_consistency(self):
 		list_removals = []
 		if self.part_type==Part.GROUP_PART:
@@ -821,9 +908,13 @@ class Measure:
 		# Used for checking consistency
 		# Note: there is only one time signature, common to all staves 
 		self.initial_ts = part.current_time_signature
+		# Record the fact that we met a TS at the beginning of the measure
+		self.has_own_initial_ts = False
 			
 		# Same thing for the key signature
 		self.initial_ks = part.current_key_signature
+		# Record the fact that we met a KS at the beginning of the measure
+		self.has_own_initial_ks = False
 		
 		# A measure may have an initial clef. The first measure MUST have an initial clef
 		# This is tested in check_measure_consistency()
@@ -839,23 +930,27 @@ class Measure:
 	def add_time_signature(self, time_signature):
 		self.initial_ts = time_signature
 		self.m21_measure.insert(0,  time_signature.m21_time_signature)
-
+		self.has_own_initial_ts = True
 	def replace_time_signature(self, new_time_signature):
 		if 	self.initial_ts is not None:
 			self.m21_measure.remove(self.initial_ts.m21_time_signature)
 			self.add_time_signature(new_time_signature)
-			
+
 	def add_key_signature(self, key_signature):
 		self.initial_ks = key_signature
 		self.m21_measure.insert(0,  key_signature.m21_key_signature)
+		self.has_own_initial_ks = True
 	def replace_key_signature(self, new_key_signature):
 		if 	self.initial_ks is not None:
 			self.m21_measure.remove(self.initial_ks.m21_key_signature)
 		self.add_key_signature(new_key_signature)
 		# We record in the part when the key signature has changed
 		self.part.measure_key_sign_change = self.no
-
-		
+	def remove_key_signature(self):
+		if 	self.initial_ks is not None:
+			self.m21_measure.remove(self.initial_ks.m21_key_signature)
+			self.has_own_initial_ks = False
+	
 	def add_voice (self, voice):
 		self.voices.append(voice)
 		self.m21_measure.insert (0, voice.m21_stream)

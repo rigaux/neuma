@@ -157,12 +157,20 @@ class KeySignature:
 		else:
 			return score_events.Note.ALTER_NONE
 
+	def nb_alters(self):
+		if self.nb_sharps > self.nb_flats:
+			return self.nb_sharps 
+		else:
+			return self.nb_flats 
 	def equals(self, other):
 		# Check if two key signatures are identical
 		if other.m21_key_signature == self.m21_key_signature:
 			return True
 		else:
 			return False
+			
+	def code(self):
+		return f"{self.m21_key_signature.asKey()}"
 
 	def copy (self):
 		# Make a copy of the current object

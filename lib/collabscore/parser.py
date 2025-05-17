@@ -821,11 +821,11 @@ class OmrScore:
 						else:
 							logger.warning (f"Found an empty voice {voice_part.id} in measure {measure_for_part.id} of part {current_part.id}. Ignored")
 											
-					# Checking consistency of time signatures
+					# Checking consistency of signatures
 					logger.info("")
-					logger.info("Checking time signatures")
+					logger.info("Checking  signatures for the current measure")
 					logger.info("")
-					score.check_time_signatures()
+					score.check_signatures()
 
 		# Aggregate voices at the part level
 		logger.info("")

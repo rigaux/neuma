@@ -47,6 +47,9 @@ curl -u collabscore:collabscore -X POST http://localhost:8000/rest/collections/a
 # Suppression d'une clé dans Fière beauté
 curl -u collabscore:collabscore -X POST http://localhost:8000/rest/collections/all%3Acollabscore%3Asaintsaens-ref%3AC009_0/_sources/iiif/_apply_editions/ \
 -d @remove_clef.json  -H "Content-Type: application/json" > t.xml
+# Suppression d'une armure dans l'amant malheureux
+curl -u collabscore:collabscore -X POST http://localhost:8000/rest/collections/all%3Acollabscore%3Asaintsaens-ref%3AC046_0/_sources/iiif/_apply_editions/ \
+-d @remove_ks.json  -H "Content-Type: application/json" > t.xml
 
 
 curl -u collabscore:collabscore -X POST http://localhost:8000/rest/collections/all%3Acollabscore%3Asaintsaens-ref%3AC006_0/_sources/iiif/_apply_editions/ \
