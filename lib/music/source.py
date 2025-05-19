@@ -122,7 +122,6 @@ class Manifest:
 		   where some music content has been parsed
 		"""
 		for page in self.pages:
-			print (f"Page URL {page.url}")
 			page_ref = iiif_mod.Proxy.find_page_ref(page.url)
 			self.first_music_page = int(page_ref[1:])
 			break

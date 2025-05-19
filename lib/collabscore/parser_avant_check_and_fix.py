@@ -229,8 +229,8 @@ class OmrScore:
 		
 		# We will set initial signatures in case one is missing
 		# on the initial measure
-		self.initial_key_signature = score_notation.KeySignature()
-		self.initial_time_signature = score_notation.TimeSignature()
+		self.initial_key_signature = None
+		self.initial_time_signature = None
 
 		self.creator = annot_mod.Creator ("collabscore", 
 										annot_mod.Creator.SOFTWARE_TYPE, 
@@ -267,151 +267,44 @@ class OmrScore:
 		self.check_and_fix_input()
 
 
-		print ("\n\t*** Initialization done. Ready to produce the score\n")
+		print ("\*** Initialization done. Ready to produce the score\n")
 
 	def check_and_fix_input(self):
 		"""
 		   Scan of the JSON input to detect inconsistencies
 		   and fix them if necessary before producing the score
 		"""
-		initial_time_signature = None
-		initial_key_signature = None
 		
 		# We create a score limited to the system/staff/measures/headers
 		# structure. This allows to apply consistency methods
 		score = self.initialize_score () 
 		
-		# Start the scan
+		# In this scan, we are going to number systems and measures
 		current_system_no = 1
 		current_measure_no = 1
 		for page in self.pages:
-			if not self.config.in_range (page.no_page):
-				continue
-
-			# Get the page from the manifest
-			mnf_page = self.manifest.get_page(page.no_page)
-
 			for system in page.systems:
-				if not self.config.in_range (page.no_page, system.no_system_in_page):
-					continue
-				# Get the system from the manifest
-				mnf_system = mnf_page.get_system(system.no_system_in_page)
-
-				# Set the system number
 				system.no_system_in_score = current_system_no
 				current_system_no += 1
 				for measure in system.measures:
-					if not self.config.in_range (page.no_page, system.no_system_in_page, measure.no_measure_in_system):
-						logger.info (f'Skipping measure {current_measure_no}')
-						continue
-					# Accidentals are reset at the beginning of measures
-					score.reset_accidentals()
-					# Create a new measure for each part
-					
-					list_ks_by_part = {}
-					for part in score.get_parts():
-						part.add_measure (current_measure_no)
-						part.reset_voice_counter()
-						list_ks_by_part[part.id] = {}
-
-					# Set the measure number
 					measure.no_measure_in_score = current_measure_no
-
-					# Measure headers (DMOS) tells us, for each staff, if 
-					# one starts with a change of clef or meter
-					for header in measure.headers:
-						# Identify the part, staff and measure, from the staff id
-						mnf_staff = mnf_system.get_staff(header.no_staff)
-						id_part = mnf_staff.get_part_id()
-						count_ks = list_ks_by_part[id_part]
-						part = score.get_part (id_part)
-
-						if header.clef is not None:
-							clef_staff = header.clef.get_notation_clef()
-							clef_position = part.get_duration()
-							clef_changed = part.set_current_clef (clef_staff, mnf_staff.number_in_part, clef_position)
-
-						if header.time_signature is not None:
-							new_time_signature = header.time_signature.get_notation_object()
-							if current_measure_no == 1:
-								# This is the initial TS of the score
-								initial_time_signature = new_time_signature
-
-						if header.key_signature is not None:
-							key_sign = header.key_signature.get_notation_object()
-							hash_ks = key_sign.code()
-							if hash_ks in count_ks.keys():
-								count_ks[hash_ks]["count"] += 1
-							else:
-								count_ks[hash_ks] = {"count": 1, "key": key_sign}
-							if current_measure_no == 1:
-								# This is the initial KS of the score
-								initial_key_signature = key_sign
-						else:
-							count_ks["none"] = {"count": 1, "key": None}
-
-					logger.info("")
-					logger.info("Checking  signatures for the current measure")
-					logger.info("")
-					parts_to_clear = []
-					list_ks = []
-					ks_found = None
-					part_with_ks = ""
-					for id_part in list_ks_by_part.keys(): 
-						count_ks = list_ks_by_part[id_part]
-						#print (f"Measure {current_measure_no} part {id_part} List of ks  {count_ks}")
-						# There should be only one key signature
-						if len(count_ks) > 1:
-							# We can assume that the OMR system 
-							# has misinterpreted a single alteration as a signature
-							logger.warning (f"Measure {current_measure_no} in part {id_part} has distinct key signatures. We assume a misinterpretattion of the OMR and clear all")
-							parts_to_clear.append (part.id)
-							list_ks.append({"part": id_part, "current_ks": None})
-						else:
-							# OK we keep the part's signature
-							for key_code in count_ks.keys():
-								part_key_sign = count_ks[key_code]["key"]
-							ks_found = part_key_sign
-							part_with_ks = id_part
-							list_ks.append({"part": id_part, "current_ks": part_key_sign})
-					# Check that all KS are the same
-					if ks_found is None:
-						pass # Ok, not local KS for this measure
-					else:
-						# ks found is not None
-						for ks_dict in list_ks:
-							if ks_dict["current_ks"] is None:
-								logger.warning (f"At measure {part.current_measure.no}. Inconsistency of key signatures : {ks_found} (part {id_part})/ {ks_dict['current_ks']} (part {ks_dict['part']}). One is missing: we clear all")
-								parts_to_clear.append (part_with_ks)
-								parts_to_clear.append (ks_dict['part'])
-							elif ks_dict["current_ks"].code() != ks_found.code():
-								# TO DO: we have distinct keys on all staves. Damned, what let it go...
-								logger.warning (f"At measure {part.current_measure.no}. Inconsistency of key signatures : {ks_found} (part {part_with_ks})/ {ks_dict['current_ks']} (part {ks_dict['part']}). TO BE IMPLEMENTED")
-								parts_to_clear.append (part_with_ks)
-								parts_to_clear.append (ks_dict['part'])
-					
-					# Clear the headers from invalid reading context objects
-					for header in measure.headers:
-						mnf_staff = mnf_system.get_staff(header.no_staff)
-						id_part = mnf_staff.get_part_id()
-						if header.clef is not None:
-							pass
-						if header.time_signature is not None:
-							pass
-						if header.key_signature is not None:
-							if id_part in parts_to_clear:
-								logger.warning (f"Measure {current_measure_no} Clear signature of part {id_part}, staff {header.no_staff}")
-								header.key_signature = None
-					# See this function for a more sophisticated management
-					#score.check_signatures()
+					if current_measure_no == 1:
+						for header in measure.headers:
+							# Identify the part, staff and measure, from the staff id
+							if header.time_signature is not None and self.initial_time_signature is None:
+								self.initial_time_signature = header.time_signature.get_notation_object()
+							if header.key_signature is not None and self.initial_key_signature is None:
+								self.initial_key_signature = header.key_signature.get_notation_object()
 					current_measure_no += 1
-
+		
 		# Something wrong ?
-		if initial_key_signature is None:
+		if self.initial_key_signature is None:
 			# Whaouh, no key signature on the initial measure
+			self.initial_key_signature = score_notation.KeySignature()
 			logger.error (f"Missing key signature at the beginning of the score. Taking {self.initial_key_signature}")						
-		if initial_time_signature is None:
+		if self.initial_time_signature is None:
 			# Whaouh, no time signature on the initial measure
+			self.initial_time_signature = score_notation.TimeSignature()
 			logger.error (f"Missing time signature at the beginning of the score. Taking {self.initial_time_signature}")						
 	
 	def create_manifest(self):

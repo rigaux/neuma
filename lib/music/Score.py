@@ -2,6 +2,9 @@
 import logging
 
 import music21 as m21
+
+from music21 import converter, stream
+
 import converter21
 converter21.register() 
 import verovio
@@ -172,18 +175,28 @@ class Score:
 			''' Produce the MusicXML encoding thanks to Music21'''
 			self.m21_score.write ("musicxml", filename)
 	
+	def write_as_pickle(self, filename):
+		''' Produce a dump of the Music21 code'''
+		converter.freeze(self.m21_score, fp=filename)
+
+
 	def c21_write_as_mei(self, mei_name):
 			''' Produce the MEI encoding from MusicXML thanks to Converter21'''
 			self.m21_score.write ("mei", mei_name)
 
 	def write_as_mei(self, mxml_file, mei_name):
 			''' Produce the MEI encoding from MusicXML thanks to Verovio'''
+
+			# Attempt with converted 21
+			self.m21_score.write ("mei", mei_name)
+
+			""" Verovio converter. Works fine
 			tk = verovio.toolkit()
 			tk.loadFile(mxml_file)
 			print (f"Convert {mxml_file} to MEI and write in {mei_name}")
 			with open(mei_name, "w") as mei_file:
 				mei_file.write(tk.getMEI())
-
+			"""
 	def write_as_midi(self, filename):
 			''' Produce the MIDI encoding thanks to Verovio'''
 			tk = verovio.toolkit()
@@ -323,12 +336,12 @@ class Score:
 		ks_found = None
 		part_with_ks = ""
 		for part in self.parts:
-			(current_ts, current_ks) = part.check_signatures(fix)
+			(current_ts, current_ks) = part.check_signatures()
 			list_ks.append({"part": part, "current_ks": current_ks})
 			if current_ks is not None:
 				ks_found = current_ks
 				part_with_ks = part
-			# print (f"Part {part.id}, meas. {part.current_measure.no}. Local time and key signs = ({current_ts},{current_ks})")
+
 		# Check that all KS are the same
 		if ks_found is None:
 			pass # Ok, not local KS for this measure
@@ -712,6 +725,23 @@ class Part:
 			for staff_part in self.staff_group: 
 				staff_part.m21_part.insert(position, measure.m21_measure)
 				
+	def count_key_signatures(self):
+		# We compute an	array with the initial key signatures 
+		# in the current measures (there might be 2 for piano parts)
+		# In principle there should be only one entry (one key) in the dict
+		count_ks = {}
+		for measure in self.get_current_measures():
+			if measure.initial_ks is not None and measure.has_own_initial_ks:
+				current_ks = measure.initial_ks
+				hash_measure = measure.initial_ks.code()
+				if hash_measure in count_ks.keys():
+					count_ks[hash_measure]["count"] += 1
+				else:
+					count_ks[hash_measure] = {"count": 1, "key": measure.initial_ks}
+			else:
+				count_ks["none"] = {"count": 1, "key": None}
+		return count_ks
+
 	def check_signatures(self, fix=True):
 		"""
 		  Check the consistency of the time signatures for the current part's 
@@ -725,8 +755,8 @@ class Part:
 		current_ts = None
 		current_ks = None
 		count_ts = {}
-		count_ks = {}
-		missing_ks = False
+		count_ks= self.count_key_signatures()
+		
 		# Count the occurrences of TS and KS
 		for measure in self.get_current_measures():
 			if measure.initial_ts is not None and measure.has_own_initial_ts:
@@ -739,17 +769,6 @@ class Part:
 			else:
 				count_ts["none"] = 1
 				
-			# Same for key signatures
-			if measure.initial_ks is not None and measure.has_own_initial_ks:
-				current_ks = measure.initial_ks
-				hash_measure = measure.initial_ks.code()
-				if hash_measure in count_ks.keys():
-					count_ks[hash_measure]["count"] += 1
-				else:
-					count_ks[hash_measure] = {"count": 1, "key": measure.initial_ks}
-			else:
-				missing_ks = True
-				count_ks["none"] = {"count": 1, "key": None}
 
 		# There should be only one time signature: take the most frequent
 		if len (count_ts.keys()) > 1:
@@ -780,7 +799,7 @@ class Part:
 			# What is the best strategy ? We can mimimize the number
 			# of signatures, or maximize them
 			
-			if missing_ks and KEY_SIGN_CONSISTENCY_METHOD=='minimize':
+			if "none" in count_ks and KEY_SIGN_CONSISTENCY_METHOD=='minimize':
 				# We can assume that the OMR system has misinterpreted
 				# a single alteration as a signature
 				logger.warning (f"Measure {measure.id} in part {self.id} has distinct key signatures. Since one is missing, we assume this is true for all")
@@ -800,6 +819,9 @@ class Part:
 						measure.part.set_current_key_signature (ks)
 						measure.replace_key_signature (ks)
 				current_ks = best_key
+		else:
+			for code, ks in count_ks.items():
+				current_ks = ks["key"]
 		return (current_ts, current_ks)
 		
 	def check_measure_consistency(self):
