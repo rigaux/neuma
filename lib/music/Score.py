@@ -188,15 +188,16 @@ class Score:
 			''' Produce the MEI encoding from MusicXML thanks to Verovio'''
 
 			# Attempt with converted 21
-			self.m21_score.write ("mei", mei_name)
+			#self.m21_score.write ("mei", mei_name)
 
-			""" Verovio converter. Works fine
+			# Verovio converter. Works fine, and takes into account
+			# post editions on the MusicXML file
 			tk = verovio.toolkit()
 			tk.loadFile(mxml_file)
 			print (f"Convert {mxml_file} to MEI and write in {mei_name}")
 			with open(mei_name, "w") as mei_file:
 				mei_file.write(tk.getMEI())
-			"""
+
 	def write_as_midi(self, filename):
 			''' Produce the MIDI encoding thanks to Verovio'''
 			tk = verovio.toolkit()
