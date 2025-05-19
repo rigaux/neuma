@@ -339,16 +339,13 @@ class OmrScore:
 
 						if header.key_signature is not None:
 							key_sign = header.key_signature.get_notation_object()
-							hash_ks = key_sign.code()
-							if hash_ks in count_ks.keys():
-								count_ks[hash_ks]["count"] += 1
-							else:
-								count_ks[hash_ks] = {"count": 1, "key": key_sign}
+							if key_sign.code() not in count_ks.keys():
+								count_ks[key_sign.code()] = key_sign
 							if current_measure_no == 1:
 								# This is the initial KS of the score
 								initial_key_signature = key_sign
 						else:
-							count_ks["none"] = {"count": 1, "key": None}
+							count_ks["none"] = None
 
 					logger.info("")
 					logger.info("Checking  signatures for the current measure")
@@ -359,26 +356,22 @@ class OmrScore:
 					part_with_ks = ""
 					for id_part in list_ks_by_part.keys(): 
 						count_ks = list_ks_by_part[id_part]
-						#print (f"Measure {current_measure_no} part {id_part} List of ks  {count_ks}")
 						# There should be only one key signature
 						if len(count_ks) > 1:
-							# We can assume that the OMR system 
-							# has misinterpreted a single alteration as a signature
+							# We can assume that the OMR system  has misinterpreted a single alteration as a signature
 							logger.warning (f"Measure {current_measure_no} in part {id_part} has distinct key signatures. We assume a misinterpretattion of the OMR and clear all")
 							parts_to_clear.append (part.id)
 							list_ks.append({"part": id_part, "current_ks": None})
 						else:
 							# OK we keep the part's signature
-							for key_code in count_ks.keys():
-								part_key_sign = count_ks[key_code]["key"]
-							ks_found = part_key_sign
+							ks_found = next(iter(count_ks.values()))
 							part_with_ks = id_part
-							list_ks.append({"part": id_part, "current_ks": part_key_sign})
+							list_ks.append({"part": id_part, "current_ks": ks_found})
 					# Check that all KS are the same
 					if ks_found is None:
 						pass # Ok, not local KS for this measure
 					else:
-						# ks found is not None
+						# ks found is not None. We compare all other KS with that one
 						for ks_dict in list_ks:
 							if ks_dict["current_ks"] is None:
 								logger.warning (f"At measure {part.current_measure.no}. Inconsistency of key signatures : {ks_found} (part {id_part})/ {ks_dict['current_ks']} (part {ks_dict['part']}). One is missing: we clear all")
@@ -400,7 +393,7 @@ class OmrScore:
 							pass
 						if header.key_signature is not None:
 							if id_part in parts_to_clear:
-								logger.warning (f"Measure {current_measure_no} Clear signature of part {id_part}, staff {header.no_staff}")
+								#logger.warning (f"Measure {current_measure_no} Clear signature of part {id_part}, staff {header.no_staff}")
 								header.key_signature = None
 					# See this function for a more sophisticated management
 					#score.check_signatures()
