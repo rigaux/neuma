@@ -176,6 +176,12 @@ class KeySignature:
 		# Make a copy of the current object
 		return KeySignature (self.nb_sharps, self.nb_flats, self.nb_naturals)
 
+	def local_copy (self, other):
+		# Make a clone of the current object from the other one
+		self.nb_sharps = other.nb_sharps
+		self.nb_flats = other.nb_flats
+		self.nb_naturals = other.nb_naturals
+
 	def __str__ (self):
 		return f"{self.m21_key_signature.asKey()}"
 
@@ -199,6 +205,7 @@ class Clef:
 	ALTO_CLEF = m21.clef.AltoClef
 	TENOR_CLEF = m21.clef.TenorClef
 	BARITONE_CLEF = m21.clef.CBaritoneClef
+	FBARITONE_CLEF = m21.clef.FBaritoneClef
 	BASS_CLEF = m21.clef.BassClef
 	NO_CLEF = m21.clef.NoClef
 	
@@ -234,6 +241,9 @@ class Clef:
 		elif clef_code == self.BARITONE_CLEF:
 			self.default_height = 6
 			self.m21_clef = m21.clef.CBaritoneClef()
+		elif clef_code == self.FBARITONE_CLEF:
+			self.default_height = 3
+			self.m21_clef = m21.clef.FBaritoneClef()
 		elif clef_code == self.BASS_CLEF:
 			self.m21_clef = m21.clef.BassClef()
 			self.default_height = 6
@@ -241,7 +251,12 @@ class Clef:
 			self.m21_clef = m21.clef.NoClef()
 		self.m21_clef.id = self.id
 		Clef.counter += 1
-		
+	
+	def sign(self):
+		return self.m21_clef.sign
+	def height(self):
+		return self.m21_clef.line
+
 	def equals(self, other):
 		# Check if two clefs are identical
 		if other.m21_clef == self.m21_clef:
@@ -266,7 +281,10 @@ class Clef:
 			elif  dmos_octave_change == -1:
 				return Clef (Clef.TREBLE_8MIN_CLEF, dmos_id)
 		elif dmos_code == Clef.DMOS_BASS_CLEF:
-			return Clef (Clef.BASS_CLEF, dmos_id)
+			if dmos_height==3:
+				return Clef (Clef.FBARITONE_CLEF, dmos_id)
+			else:
+				return Clef (Clef.BASS_CLEF, dmos_id)
 		elif dmos_code == Clef.DMOS_UT_CLEF and dmos_height==1:
 			return Clef (Clef.SOPRANO_CLEF, dmos_id)
 		elif dmos_code == Clef.DMOS_UT_CLEF and dmos_height==2:

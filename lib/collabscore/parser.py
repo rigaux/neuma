@@ -23,6 +23,7 @@ import lib.music.source as source_mod
 from .constants import *
 from .editions import Edition
 from lib.music.source import Manifest
+from .utils import check_header_consistency 
 
 # Get an instance of a logger
 # See https://realpython.com/python-logging/
@@ -251,8 +252,7 @@ class OmrScore:
 			page = Page(json_page)							
 			self.pages.append(page)
 			no_page += 1
-
-		
+			
 		# Produce the manifest of the score
 		print ("\t*** Compute the score manifest\n")
 		self.manifest = self.create_manifest()
@@ -264,7 +264,8 @@ class OmrScore:
 		# Now the JSON is decoded: check the OMR structure to clean it
 		# if necessary
 		print ("\t*** Input decoded. Checking its consistency and fixing them\n")
-		self.check_and_fix_input()
+		fix_editions =  self.check_and_fix_input()
+		self.apply_pre_editions(fix_editions)
 
 		print ("\n\t*** Initialization done. Ready to produce the score\n")
 
@@ -274,6 +275,7 @@ class OmrScore:
 		   and fix them if necessary before producing the score
 		"""
 		# Start the scan
+		fix_editions = []
 		current_system_no = 1
 		current_measure_no = 1
 		for page in self.pages:
@@ -281,7 +283,6 @@ class OmrScore:
 				continue
 			# Get the page from the manifest
 			mnf_page = self.manifest.get_page(page.no_page)
-
 			for system in page.systems:
 				if not self.config.in_range (page.no_page, system.no_system_in_page):
 					continue
@@ -292,77 +293,15 @@ class OmrScore:
 					if not self.config.in_range (page.no_page, system.no_system_in_page, measure.no_measure_in_system):
 						logger.info (f'Skipping measure {current_measure_no}')
 						continue
-						
-					list_ks_by_part = {}
-					for id_part in self.manifest.parts.keys():
-						list_ks_by_part[id_part] = {}
-					# Measure headers (DMOS) tells us, for each staff, if 
-					# one starts with a change of clef or meter
-					for header in measure.headers:
-						# Identify the part, staff and measure, from the staff id
-						mnf_staff = mnf_system.get_staff(header.no_staff)
-						id_part = mnf_staff.get_part_id()
-						count_ks = list_ks_by_part[id_part]
-
-						if header.key_signature is not None:
-							key_sign = header.key_signature.get_notation_object()
-							if key_sign.code() not in count_ks.keys():
-								count_ks[key_sign.code()] = key_sign
-						else:
-							count_ks["none"] = None
-
-					logger.info("")
-					logger.info("Checking  signatures for the current measure")
-					logger.info("")
-					parts_to_clear = []
-					list_ks = []
-					ks_found = None
-					part_with_ks = ""
-					for id_part in list_ks_by_part.keys(): 
-						count_ks = list_ks_by_part[id_part]
-						# There should be only one key signature
-						if len(count_ks) > 1:
-							# We can assume that the OMR system  has misinterpreted a single alteration as a signature
-							logger.warning (f"Measure {current_measure_no} in part {id_part} has inconsistent key signatures. Assume an OMR misinterpretattion and clear all")
-							parts_to_clear.append (id_part)
-							list_ks.append({"part": id_part, "current_ks": None})
-						else:
-							# OK we keep the part's signature
-							ks_found = next(iter(count_ks.values()))
-							part_with_ks = id_part
-							list_ks.append({"part": id_part, "current_ks": ks_found})
-					# Check that all KS are the same
-					if ks_found is None:
-						pass # Ok, not local KS for this measure
-					else:
-						# ks found is not None. We compare all other KS with that one
-						for ks_dict in list_ks:
-							if ks_dict["current_ks"] is None:
-								logger.warning (f"At measure {current_measure_no}. Inconsistency of key signatures : {ks_found} (part {id_part})/ {ks_dict['current_ks']} (part {ks_dict['part']}). One is missing: we clear all")
-								parts_to_clear.append (part_with_ks)
-								parts_to_clear.append (ks_dict['part'])
-							elif ks_dict["current_ks"].code() != ks_found.code():
-								# TO DO: we have distinct keys on all staves. Damned, what let it go...
-								logger.warning (f"At measure {current_measure_no}. Inconsistency of key signatures : {ks_found} (part {part_with_ks})/ {ks_dict['current_ks']} (part {ks_dict['part']}). TO BE IMPLEMENTED")
-								parts_to_clear.append (part_with_ks)
-								parts_to_clear.append (ks_dict['part'])
-					
-					# Clear the headers from invalid reading context objects
-					for header in measure.headers:
-						mnf_staff = mnf_system.get_staff(header.no_staff)
-						id_part = mnf_staff.get_part_id()
-						if header.clef is not None:
-							pass
-						if header.time_signature is not None:
-							pass
-						if header.key_signature is not None:
-							if id_part in parts_to_clear:
-								#logger.warning (f"Measure {current_measure_no} Clear signature of part {id_part}, staff {header.no_staff}")
-								header.key_signature = None
-					# See this function for a more sophisticated management
-					#score.check_signatures()
+					fix_editions += check_header_consistency (mnf_system, current_measure_no, self.manifest.parts, measure.headers)
 					current_measure_no += 1
-	
+		
+		"""if len(fix_editions) > 0:
+			for ed in fix_editions:
+				print (f"We produced edition {ed}")
+		"""
+		return fix_editions
+		
 	def create_manifest(self):
 		"""
 		  The Manifest is a description of the source structure
@@ -866,7 +805,8 @@ class OmrScore:
 					logger.info("")
 					logger.info("Checking  signatures for the current measure")
 					logger.info("")
-					score.check_signatures()
+					# In principle the input has been cleaned
+					#score.check_signatures()
 
 		# Aggregate voices at the part level
 		logger.info("")
@@ -1592,6 +1532,9 @@ class Error:
 			self.confidence = json_error["confidence"]
 		else:
 			self.confidence = None
+	
+	def __str__(self):
+		return f"DMOS error '{self.message} with confidence {self.confidence}"
 
 class Duration:
 	"""
