@@ -614,6 +614,8 @@ class VoiceFragment():
 		self.voice = voice
 		self.list_events = list_events
 	
+	def __str__(self):
+		return f"Target: {self.target}, Voice: {self.voice.id} List: {self.list_events}"
 # FIXME
 class IncompleteBarsError(Exception):
 	pass

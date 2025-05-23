@@ -1199,10 +1199,6 @@ class Opus(models.Model):
 			self.create_source_with_file(source_mod.OpusSource.MIDI_REF, 
 									SourceType.STYPE_MIDI,
 							"", midi_file, "score.midi", "rb")
-			# Generate the SVG file
-			print ("Produce SVG file")
-			svg_file = "/tmp/score.svg"
-			score.write_as_svg (svg_file, 1)
 		
 			# Compute and store the score manifest in the IIIF source
 			iiif_source = None
@@ -1235,7 +1231,7 @@ class Opus(models.Model):
 			print (f"Got the IIIF manifest. Nb canvases {iiif_doc.nb_canvases}")
 			images = iiif_doc.get_images()
 			for img in images:
-				print (f"Image {img.url}. Width {img.width}")				
+				#print (f"Image {img.url}. Width {img.width}")				
 				omr_score.manifest.add_image_info (images) 
 
 			iiif_source.manifest.id = iiif_source.full_ref()

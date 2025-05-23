@@ -176,6 +176,15 @@ class KeySignature:
 		# Make a copy of the current object
 		return KeySignature (self.nb_sharps, self.nb_flats, self.nb_naturals)
 
+	def choose_best (self, other):
+		
+		# Used when some inconsistency is found in a list of signatures
+		# Choose the other if is has more alterations (?!)
+		if other.nb_alters() > self.nb_alters():
+			return other
+		else:
+			return self 
+			
 	def local_copy (self, other):
 		# Make a clone of the current object from the other one
 		self.nb_sharps = other.nb_sharps

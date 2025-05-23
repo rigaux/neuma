@@ -34,7 +34,7 @@ logger = logging.getLogger(__name__)
 
 # Create file handler
 f_handler = logging.FileHandler(__name__ + '.log')
-f_handler.setLevel(logging.INFO)
+f_handler.setLevel(logging.WARNING)
 # Create formatters and add it to handlers
 f_format = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 f_handler.setFormatter(f_format)
@@ -43,7 +43,7 @@ logger.addHandler(f_handler)
 
 # For the console
 c_handler = logging.StreamHandler()
-c_handler.setLevel(logging.INFO)
+c_handler.setLevel(logging.WARNING)
 c_format = logging.Formatter('%(name)s - %(levelname)s - %(message)s')
 c_handler.setFormatter(c_format)
 #logger.addHandler(c_handler)
@@ -830,7 +830,7 @@ class OmrScore:
 				self.post_editions.append( editions_mod.Edition (editions_mod.Edition.APPEND_OBJECTS, 
 																removal.target.id, {"events": removal.list_events}))
 			else:
-				logger.warning (f"Unable to find a target for one of the removals")			
+				logger.warning (f"An element over measure limit must be removed but has no id. Ignored")			
 	
 		# Remove in the XML file the pseudo-beam
 		self.post_editions.append( editions_mod.Edition (editions_mod.Edition.CLEAN_BEAM, "score"))
