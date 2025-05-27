@@ -1476,9 +1476,12 @@ class KeySignature:
 			self.id = None
 
 		self.element =   json_key_sign["element"]
-		self.nb_naturals =   json_key_sign["nb_naturals"]
 		self.nb_alterations =   json_key_sign["nb_alterations"]
 
+		if "nb_naturals" in json_key_sign:
+			self.nb_naturals =   json_key_sign["nb_naturals"]
+		else:
+			self.nb_naturals = 0
 		if "region" in json_key_sign:
 			self.region = Region(json_key_sign["region"])
 		else:
@@ -1520,7 +1523,14 @@ class KeySignature:
 		elif nb_flats > 0:
 			self.element = FLAT_SYMBOL
 			self.nb_alterations = nb_flats
-			
+	
+	@staticmethod
+	def build_from_notation_key(notation_key):
+		# Used if we want to reinject in the DMOS file a missing key
+		key_sign = {"element": notation_key.alter_type(),
+		 			"nb_alterations": notation_key.nb_alters()}
+		return KeySignature(key_sign)
+
 class Error:
 	"""
 		Representation of an error met during OMR

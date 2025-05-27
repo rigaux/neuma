@@ -171,6 +171,12 @@ class KeySignature:
 			
 	def code(self):
 		return f"{self.m21_key_signature.asKey()}"
+		
+	def alter_type(self):
+		if self.nb_sharps > 0:
+			return "sharp"
+		else:
+			return "flat"
 
 	def copy (self):
 		# Make a copy of the current object
