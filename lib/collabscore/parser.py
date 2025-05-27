@@ -253,6 +253,7 @@ class OmrScore:
 			self.pages.append(page)
 			no_page += 1
 			
+
 		# Produce the manifest of the score
 		print ("\t*** Compute the score manifest\n")
 		self.manifest = self.create_manifest()
@@ -1407,7 +1408,9 @@ class Clef:
 		self.height  = json_clef["height"]
 		self.octave_change = 0
 		self.errors = []
+		print (f"Decoding clef {self.id}")
 		if "errors" in json_clef:
+			print (f"Found an error for clef {self.id}")
 			for json_error in json_clef["errors"]:
 				self.errors.append(Error (json_error))
 		

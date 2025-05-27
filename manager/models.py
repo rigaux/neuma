@@ -1170,7 +1170,7 @@ class Opus(models.Model):
 		# Parse DMOS data
 		omr_score = OmrScore (self.get_url(), dmos_data, {}, editions)
 		score = omr_score.get_score()
-	
+		
 		# Store the MusicXML file in the opus
 		if not just_annotations:
 			print ("Replace XML file")

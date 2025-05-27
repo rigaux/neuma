@@ -83,14 +83,14 @@ class Headers():
 			# We could insert a copy of the signature. Difficult ... so
 			# we assume that OMR has made a mistake and clear
 			parser_mod.logger.warning (f"At measure {self.measure_no}, {id_part} misses one signature. Assume an OMR misinterpretattion and clear all")
-			for sign_code, sign_info in part_sign["sign_objects"].items():
+			for sign_code, sign_info in part_signs["sign_objects"].items():
 				if sign_code != self.MISSING_CODE:
-					id_sign = sign_info["sign_object"].id
+					id_sign = sign_info["sign"].id
 					parser_mod.logger.warning (f"We remove signature {id_sign}")
 					self.fix_editions.append (Edition (Edition.REMOVE_OBJECT, id_sign))
 			# This part has not any signature 
-			part_sign["sign_objects"] = {}
-			part_sign["sign_objects"][self.MISSING_CODE] =  {"sign": None, "count": 1}
+			part_signs["sign_objects"] = {}
+			part_signs["sign_objects"][self.MISSING_CODE] =  {"sign": None, "count": 1}
 
 	def get_best_sign (self, count_signs):
 		# We found that parts have distinct sign. Try to fix
@@ -121,7 +121,7 @@ class Headers():
 		part_sign = self.part_signs[id_part]["sign_objects"]
 		# Sanity : at this point, we should have fixed internally the part
 		if len (part_sign.keys()) != 1:
-			parser_mod.logger.error (f"PANIC At measure {self.measure_no} part {id_part} should have exactly one sign info {part_sign.keys()}")
+			parser_mod.logger.error (f"PANIC at measure {self.measure_no} part {id_part} should have exactly one sign info {part_sign.keys()}")
 		else:
 			return next(iter(part_sign.keys()))
 	def get_part_sign_info(self, id_part):
@@ -159,7 +159,7 @@ def check_header_consistency(mnf_system, measure_no, parts, headers):
 	 """
 
 	# We need to collect the KS of each part
-	headers_keysign = Headers("keysign", parts.keys(), measure_no)
+	headers_keysign = Headers(Headers.KEYSIGN_TYPE, parts.keys(), measure_no)
 
 	# Measure headers (DMOS) tells us, for each staff, if  one starts with a change of clef or meter
 	nb_staves = 0
@@ -192,21 +192,23 @@ def check_header_consistency(mnf_system, measure_no, parts, headers):
 			sign_code = headers_keysign.get_part_sign_code(id_part)
 			part_sign_info = headers_keysign.get_part_sign_info(id_part)
 			if sign_code == Headers.MISSING_CODE:
-				parser_mod.logger.warning (f"Missing for part {id_part}. Setting key to {best_sign}")
+				parser_mod.logger.warning (f"Missing sign. for part {id_part}. Setting key to {best_sign}")
 				dmos_key = parser_mod.KeySignature.build_from_notation_key(best_sign)
 				# Search for the 
 				for header in headers:
 					if header.key_signature is None:
 						header.key_signature = dmos_key
-						parser_mod.logger.warning (f"The missing key has been informed to match the other ones")
+						parser_mod.logger.warning (f"The missing sign. has been informed to match the other ones")
 			elif sign_code == Headers.MISSING_STAFF_CODE: 
-				parser_mod.logger.warning (f"Not staff for part {id_part}. We do nothing")
+				pass
+				# Too many warnings
+				#parser_mod.logger.warning (f"Not staff for part {id_part}. We do nothing")
 			elif sign_code != best_sign.code():
 				corrected_key = part_sign_info["sign"]
 				edition = Edition (Edition.REPLACE_KEYSIGN, target=corrected_key.id,
 					params= {"nb_sharps": best_sign.nb_sharps, "nb_flats":  best_sign.nb_flats})
 				headers_keysign.fix_editions.append(edition)
-				parser_mod.logger.warning (f"Correcting key {corrected_key} to {best_sign}")
+				parser_mod.logger.warning (f"Correcting sign {corrected_key} to {best_sign}")
 
 	#for ed in headers_keysign.fix_editions:
 	#	print (f"Resulting edition : {ed}")
