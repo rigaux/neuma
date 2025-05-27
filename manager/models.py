@@ -37,6 +37,7 @@ import lib.music.opusmeta as opusmeta_mod
 import lib.music.iiifutils as iiif_mod
 
 # DMOS parser
+import lib.collabscore.parser as parser_mod
 from lib.collabscore.parser import CollabScoreParser, OmrScore
 from lib.collabscore.editions import Edition
 
@@ -1129,6 +1130,8 @@ class Opus(models.Model):
 		# In case we just want to test annotations
 		just_annotations = False 
 
+		parser_mod.logger.warning ("")
+		parser_mod.logger.warning (f"Parsing DMOS file for opus {self.ref}, {self.title}")
 		# Where is the schema?
 		schema_dir = os.path.join(dmos_dir, 'schema/')
 		# The main schema file
