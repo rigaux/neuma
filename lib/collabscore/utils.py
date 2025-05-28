@@ -168,7 +168,7 @@ class Headers():
 			else:
 				mess += f"{sign_code} ({part}) / "
 
-		parser_mod.logger.warning (f"At measure {self.measure_no}. Inconsistency of signatures over parts : {mess}. Best one: {best_sign}")
+		parser_mod.logger.warning (f"At measure {self.measure_no}. Inconsistency of {self.type} signatures over parts : {mess}. Best one: {best_sign}")
 		return best_sign
 		
 	def missing_sign(self, id_part):

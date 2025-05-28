@@ -412,6 +412,7 @@ class OmrScore:
 					# The ids of the graphical object are separated by ID_SEPARATOR
 					ids = edition.target.split (constants_mod.ID_SEPARATOR)
 					for id in ids:
+						edition.target = id
 						logger.info (f"Add edition {edition} for object {id}")
 						replacements[edition.name][id] = edition.params
 			elif edition.name in Edition.PRE_EDITION_CODES:

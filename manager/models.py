@@ -1490,6 +1490,7 @@ class OpusSource (models.Model):
 		editions_to_apply = self.decode_editions()
 		# We add each of the received list of editions
 		for edition in new_editions:
+			print (f"Applying edition {edition}")
 			editions_to_apply = Edition.add_edition_to_list(editions_to_apply, edition)
 
 		omr_score = OmrScore ("", dmos_data, page_range, editions_to_apply)

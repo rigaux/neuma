@@ -100,7 +100,13 @@ class TimeSignature:
 	
 	def code(self):
 		return f"{self.numer} / {self.denom}"
-	
+
+	def choose_best (self, other):
+		
+		# Used when some inconsistency is found in a list of signatures
+		# I do not know what criteria....
+		return self 
+
 	def barDuration(self):
 		# Expected duration of a bar with this TS
 		return self.m21_time_signature.barDuration
