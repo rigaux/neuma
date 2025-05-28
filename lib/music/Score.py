@@ -609,6 +609,7 @@ class Part:
 			part.current_clefs.append({"pos": abs_position, "clef": clef})
 			# Insert the clef in the music flow
 			part.current_measure.set_initial_clef(clef, abs_position)
+			
 			return True
 				
 	def get_current_time_signature(self):
@@ -832,11 +833,17 @@ class Part:
 				list_removals += part_staff.check_measure_consistency()
 		else:
 			for measure in	self.measures:
-				if  measure.no == 1 and measure.initial_clef is None:
-					logger.warning (f"Measure 1 in part {self.id} has no initial clef. Adding treble")
-					# Add a treble clef for safety
-					default_clef = notation.Clef(notation.Clef.TREBLE_CLEF)
-					measure.m21_measure.insert(0,  default_clef.m21_clef)
+				if  measure.no == 1:
+					if measure.initial_clef is None:
+						logger.warning (f"Measure 1 in part {self.id} has no initial clef. Adding treble")
+						# Add a treble clef for safety
+						default_clef = notation.Clef(notation.Clef.TREBLE_CLEF)
+						measure.m21_measure.insert(0,  default_clef.m21_clef)
+					if not measure.has_own_initial_ks:
+						logger.warning (f"Measure 1 in part {self.id} has no initial key signature. ")
+					if not measure.has_own_initial_ts:
+						logger.warning (f"Measure 1 in part {self.id} has no initial time signature. ")
+					
 				list_removals += measure.check_consistency(fix=True)	
 		
 		return list_removals

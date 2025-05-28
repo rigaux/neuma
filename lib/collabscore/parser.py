@@ -23,7 +23,7 @@ import lib.music.source as source_mod
 from .constants import *
 from .editions import Edition
 from lib.music.source import Manifest
-from .utils import check_header_consistency 
+from .utils import check_header_consistency, Headers
 
 # Get an instance of a logger
 # See https://realpython.com/python-logging/
@@ -275,6 +275,11 @@ class OmrScore:
 		   Scan of the JSON input to detect inconsistencies
 		   and fix them if necessary before producing the score
 		"""
+		
+		# We will record a global signature as a default one
+		initial_time_signature = None
+		initial_key_signature = None
+
 		# Start the scan
 		fix_editions = []
 		current_system_no = 1
@@ -294,9 +299,34 @@ class OmrScore:
 					if not self.config.in_range (page.no_page, system.no_system_in_page, measure.no_measure_in_system):
 						logger.info (f'Skipping measure {current_measure_no}')
 						continue
-					fix_editions += check_header_consistency (mnf_system, current_measure_no, self.manifest.parts, measure.headers)
+					for header in measure.headers:
+						if header.time_signature is not None:
+							if current_measure_no == 1:
+								# This is the initial TS of the score
+								initial_time_signature = header.time_signature.get_notation_object()
+						if header.key_signature is not None:
+							if current_measure_no == 1:
+								# This is the initial KS of the score
+								initial_key_signature = header.key_signature.get_notation_object()		
+					# Check key signatures
+					fix_editions += check_header_consistency (mnf_system, current_measure_no, 
+					     measure.headers, Headers.KEYSIGN_TYPE)
+					fix_editions += check_header_consistency (mnf_system, current_measure_no, 
+					     measure.headers, Headers.TIMESIGN_TYPE)
 					current_measure_no += 1
 		
+		# Determine the default signature
+		if initial_key_signature is None:
+			# Whaouh, no key signature on the initial measure
+			logger.warning (f"Missing key signature at the beginning of the score. Taking {self.initial_key_signature}")
+		else: 
+			self.initial_key_signature = initial_key_signature
+		if initial_time_signature is None:
+			# Whaouh, no time signature on the initial measure
+			logger.warning (f"Missing time signature at the beginning of the score. Taking {self.initial_time_signature}")						
+		else:
+			self.initial_time_signature = initial_time_signature
+
 		"""if len(fix_editions) > 0:
 			for ed in fix_editions:
 				print (f"We produced edition {ed}")
@@ -946,16 +976,11 @@ class OmrScore:
 		  This function initializes a music score with its parts 
 		"""
 
-		initial_time_signature = None
-		initial_key_signature = None
-
 		score =  score_model.Score(use_layout=False)
-
-		# Set initial context
-		logger.info (f"Initial time signature set to {self.initial_time_signature}")						
-		score.set_initial_key_signature (self.initial_key_signature)
-		logger.info (f'Initial key signature set to {self.initial_key_signature}')
 		score.set_initial_time_signature(self.initial_time_signature)
+		logger.info (f"Initial key signature set to {self.initial_time_signature}")
+		score.set_initial_key_signature(self.initial_key_signature)
+		logger.info (f"Initial key signature set to {self.initial_key_signature}")
 
 		# The manifest tells us the parts of the score: we create them
 		for src_part in self.manifest.get_parts():
@@ -984,7 +1009,7 @@ class OmrScore:
 					logger.info (f"Add a staff part {id_part_staff} in a part group")
 					staff_group.append(part_staff)
 					score.add_part(part_staff)
-				# + a Staff grouo for the global part
+				# + a Staff group for the global part
 				part_group = score_model.Part(id_part=src_part.id, name=src_part.name, 
 												abbreviation=src_part.abbreviation,
 												part_type=score_model.Part.GROUP_PART, 
@@ -993,35 +1018,6 @@ class OmrScore:
 				logger.info (f"Add a part group {src_part.id} with {i_staff} staff-parts")
 				score.add_part(part_group)
 		
-		# Scan the pages/systems/measures to get some globql information
-		# Start the scan
-		current_system_no = 1
-		current_measure_no = 1
-		for page in self.pages:
-			for system in page.systems:
-				# Set the system number
-				system.no_system_in_score = current_system_no
-				current_system_no += 1
-				for measure in system.measures:
-					# Set the measure number
-					measure.no_measure_in_score = current_measure_no
-					# Search for the initial signatures
-					for header in measure.headers:
-						if header.time_signature is not None:
-							if current_measure_no == 1:
-								# This is the initial TS of the score
-								initial_time_signature = header.time_signature.get_notation_object()
-						if header.key_signature is not None:
-							if current_measure_no == 1:
-								# This is the initial KS of the score
-								initial_key_signature = header.key_signature.get_notation_object()		
-		# Something wrong ?
-		if initial_key_signature is None:
-			# Whaouh, no key signature on the initial measure
-			logger.error (f"Missing key signature at the beginning of the score. Taking {self.initial_key_signature}")						
-		if initial_time_signature is None:
-			# Whaouh, no time signature on the initial measure
-			logger.error (f"Missing time signature at the beginning of the score. Taking {self.initial_time_signature}")						
 
 		return score
 
@@ -1408,7 +1404,6 @@ class Clef:
 		self.height  = json_clef["height"]
 		self.octave_change = 0
 		self.errors = []
-		print (f"Decoding clef {self.id}")
 		if "errors" in json_clef:
 			print (f"Found an error for clef {self.id}")
 			for json_error in json_clef["errors"]:
