@@ -1132,6 +1132,7 @@ class Opus(models.Model):
 
 		parser_mod.logger.warning ("")
 		parser_mod.logger.warning (f"Parsing DMOS file for opus {self.ref}, {self.title}")
+		parser_mod.logger.warning ("")
 		# Where is the schema?
 		schema_dir = os.path.join(dmos_dir, 'schema/')
 		# The main schema file
