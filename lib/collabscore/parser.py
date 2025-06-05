@@ -1275,21 +1275,28 @@ class VoiceItem:
 		if "direction" in json_voice_item:
 			self.direction = json_voice_item["direction"]
 			self.type = "Direction"
+		
+		# Read the errors, before assigning them to he proper type
+		errors = []
+		if "errors" in json_voice_item:
+			for json_error in json_voice_item["errors"]:
+				errors.append(Error (json_error))
+
 		if "att_note" in json_voice_item:
 			self.note_attr = NoteAttr (json_voice_item["att_note"])
 			self.type= "Note or chord"
+			self.note_attr.errors = errors
 		if "att_rest" in json_voice_item:
 			# NB: using the same type for note heads and rest heads
 			self.rest_attr = NoteAttr (json_voice_item["att_rest"])
+			self.rest_attr.errors = errors
 			self.type="Note"
 		if "att_clef" in json_voice_item:
 			self.clef_attr  = Clef (json_voice_item["att_clef"])
 			self.no_staff_clef = StaffHeader.make_id_staff(json_voice_item["att_clef"]["no_staff"])
+			self.clef_attr.errors = errors
 			self.type="Clef"
 		self.errors = []
-		if "errors" in json_voice_item:
-			for json_error in json_voice_item["errors"]:
-				self.errors.append(Error (json_error))
 
 	def __str__(self):
 		return f'({self.type}, dur. ({self.duration.numer}/{self.duration.denom})'
