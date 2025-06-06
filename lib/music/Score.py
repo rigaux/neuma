@@ -77,10 +77,10 @@ class Score:
 		self.initial_key_signature = notation.KeySignature() 
 		self.initial_time_signature = notation.TimeSignature() 
 
-		'''
-			We can store annotations on a score and any of its elemnts
-		'''
+		# We can store annotations on a score and any of its elemnts
 		self.annotations = []
+		# We keep a hash of annotated objects in ordre to avoid duplicates
+		self.objects_annotated = {}
 		
 		# For compatibility ...
 		self.components = list()
@@ -323,7 +323,18 @@ class Score:
 	
 	def add_annotation(self, annotation):
 		if annotation is not None:
-			self.annotations.append(annotation)
+			# Find the value of the annotated object
+			# Avoid duplication : not twice an annotation on the same object
+			# with the same concept 
+			value = annotation.target.resource.selector.value
+			concept = annotation.annotation_concept
+			annot_key = f"{value}--{concept}"
+			if annot_key not in self.objects_annotated:
+				self.objects_annotated[annot_key] = {} 
+				self.annotations.append(annotation)
+			#else:
+			#	print (f"Warning. Duplicate annotation found for {annot_key}")
+
 		
 	def check_signatures(self, fix=True):
 		"""

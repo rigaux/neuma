@@ -1249,13 +1249,11 @@ class Opus(models.Model):
 			score.uri = "Undetermined: change the 'just_annotations' setting"
 
 		# Clean existing annotations for image-region model
-		for dba in Annotation.objects.filter(opus=self):
-			if dba.analytic_concept.model.name == AM_IMAGE_REGION:
-				if dba.target is not None:
-					dba.target.delete()
-				if dba.body is not None:
-					dba.body.delete()
-				dba.delete()
+		print ("Cleaning existing annotations")
+		image_model = AnalyticModel.objects.get(code=AM_IMAGE_REGION)
+		Annotation.objects.filter(opus=self).filter(analytic_concept__model=image_model).delete()
+		error_model = AnalyticModel.objects.get(code=AM_OMR_ERROR)
+		Annotation.objects.filter(opus=self).filter(analytic_concept__model=error_model).delete()
 
 		print (f'Inserting annotations')
 		user_annot = User.objects.get(username=settings.COMPUTER_USER_NAME)
