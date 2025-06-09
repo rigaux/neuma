@@ -16,18 +16,24 @@ class Headers():
 	KEYSIGN_TYPE = "key"
 	TIMESIGN_TYPE = "time"
 	
-	def __init__(self, type, measure_no, mnf_system, headers):
+	def __init__(self, type_sign, measure_no, mnf_system, headers):
 		self.measure_no = measure_no
 
 		# We process either keysign ot timesign objects
-		if type != self.KEYSIGN_TYPE:
+		if type_sign != self.KEYSIGN_TYPE:
 			self.type = self.TIMESIGN_TYPE
 		else:
 			self.type = self.KEYSIGN_TYPE
-			
+
+		# We will record the fact that we found a signature
+		self.signature = None
+		
+		# We keep the headers, maybe we will have to change them
+		self.headers = headers
+		
 		# Scan the headers and get, for each staff, the signatures of missing info
 		self.part_signs = {}
-		for header in headers:
+		for header in self.headers:
 			# Identify the part, staff and measure, from the staff id
 			mnf_staff = mnf_system.get_staff(header.no_staff)
 			id_part = mnf_staff.get_part_id()
@@ -116,7 +122,7 @@ class Headers():
 			part_signs["sign_objects"] = {}
 			part_signs["sign_objects"][self.MISSING_CODE] =  {"sign": None, "count": 1}
 
-	def align_part_signatures(self, headers):
+	def align_part_signatures(self):
 		# At this point, all parts should have a single signature.
 		# We check that they are all the same, and align on the best
 		# on if necessary
@@ -133,7 +139,7 @@ class Headers():
 					if self.type == Headers.KEYSIGN_TYPE:
 						dmos_key = parser_mod.KeySignature.build_from_notation_key(best_sign)
 						# Search for the missing headers and inform them
-						for header in headers:
+						for header in self.headers:
 							if header.key_signature is None:
 								header.key_signature = dmos_key
 								parser_mod.logger.warning (f"The missing sign. has been informed to match the other ones")
@@ -150,6 +156,12 @@ class Headers():
 								params= {"time": best_sign.numer, "unit":  best_sign.denom})
 					self.fix_editions.append(edition)
 					parser_mod.logger.warning (f"Correcting sign {corrected_key} to {best_sign}")
+			# Cool. Now all parts are align on best_sign = this is THE signature
+			self.signature = best_sign
+		else:
+			sign_code = next(iter(count_signs.keys()))
+			self.signature =  count_signs[sign_code]["sign"]
+			#print (f"No pb at measure {self.measure_no} for type {self.type}. Signature is {self.signature}")
 		return
 
 	def get_best_sign (self, count_signs):
@@ -201,27 +213,17 @@ class Headers():
 			else:
 				count_ks[sign_code]["count"] += 1
 		return count_ks
+		
+	def check_consistency(self):
+		"""
+		  Check the consistency of signatures in the headers
+		"""
 
-def check_header_consistency(mnf_system, measure_no, headers, type_sign):
-	"""
-	  Each measure begins with a list of headers, one for
-	  each staff. They contains clefs, times signatures
-	  and key signatures.
-	  
-	  The function check that thay are consistent, and try to fix problems
-	 """
-
-	# Initialize the utility class 
-	headers_keysign = Headers(type_sign, measure_no, mnf_system, headers)
-
-			
-	# First check that the key signatures are the same inside each part
-	for id_part in headers_keysign.part_ids(): 
-		# There should be only one key signature
-		if headers_keysign.count_signs_for_part(id_part) > 1:
-			headers_keysign.fix_inconsistent_part(id_part)
-
-	# Now check that all KS are the same for all the parts
-	headers_keysign.align_part_signatures(headers)
-
-	return headers_keysign.fix_editions
+		# First check that the key signatures are the same inside each part
+		for id_part in self.part_ids(): 
+			# There should be only one key signature
+			if self.count_signs_for_part(id_part) > 1:
+				self.fix_inconsistent_part(id_part)
+		# Now check that all KS are the same for all the parts
+		self.align_part_signatures()
+		

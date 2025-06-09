@@ -55,24 +55,11 @@ class Score:
 		'''
 		self.parts = []
 		
-		''' 
-            Optionally, a score is split in pages and systems: mostly useful
-            for OMR applications. In that case the current system
-            behaves as a sub-score, and all call on parts are delegated to it
-            
-            From music21: the proper hierarchy for a stream describing layout is:
-
-				LayoutScore->Page->System->Staff->Measure
-
-			where LayoutScore and Page are subclasses of stream.Opus, 
-			System is a subclass of Score, and Staff subclasses Part, so 
-			the normal music21 hierarchy of Opus*->Score->Part->Measure is 
-			preserved. (Where Opus* indicates  optional and able to 
-			embed other Opuses, like Opus->Opus->Opus->Score…)
-		'''
+		""" USELESS ??
 		self.pages = []
 		self.current_page = None
-
+		"""
+		
 		# We need to know the initial signatures in case they are missing
 		self.initial_key_signature = notation.KeySignature() 
 		self.initial_time_signature = notation.TimeSignature() 
@@ -628,7 +615,7 @@ class Part:
 	def get_current_key_signature(self):
 		return self.current_key_signature
 
-	def add_measure (self, measure_no):
+	def add_measure (self, measure_no, default_ts=None, default_ks=None):
 
 		if self.part_type == Part.GROUP_PART:
 			# This is the measure of the group. It is not exported but we give an id anyway
@@ -644,20 +631,19 @@ class Part:
 
 		measure = Measure(self, measure_no, id_measure)
 		
-		""" In case this is the first measure, we insert
-		   the current time signature (necessary when 
-		    a part begins after the other, and the TS is implicit)
-		    Music21 seems clever enough to remove subsequent and equals signatures
+		""" Sometimes we must add a default signature. useful
+		    when a staff is missing for the part, while it is shown
+		    empty by the engraver (eg verovio)		
 		"""
-		if len(self.measures) == 0:
+		if default_ts is not None:
 			default_ts = self.current_time_signature.copy()
 			default_ts.set_by_default(f"default_ts_{self.id}")
 			measure.add_time_signature(default_ts)
+		if default_ks is not None:
 			default_ks = self.current_key_signature.copy()
 			default_ks.set_by_default(f"default_ks_{self.id}")
 			measure.add_key_signature(default_ks)
-			
-			
+
 		self.measures.append(measure)
 		self.current_measure = measure
 			

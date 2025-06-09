@@ -23,7 +23,7 @@ import lib.music.source as source_mod
 from .constants import *
 from .editions import Edition
 from lib.music.source import Manifest
-from .utils import check_header_consistency, Headers
+from .utils import Headers
 
 # Get an instance of a logger
 # See https://realpython.com/python-logging/
@@ -233,6 +233,11 @@ class OmrScore:
 		self.initial_key_signature = score_notation.KeySignature()
 		self.initial_time_signature = score_notation.TimeSignature()
 
+		# We keep the list of key and time signatures occurrences,
+		# indexed by the measure
+		self.ks_per_measure = {}
+		self.ts_per_measure = {}
+		
 		self.creator = annot_mod.Creator ("collabscore", 
 										annot_mod.Creator.SOFTWARE_TYPE, 
 										"collabscore")
@@ -253,86 +258,66 @@ class OmrScore:
 			self.pages.append(page)
 			no_page += 1
 			
+		# Apply editions to correct the DMOS raw output
+		print ("\t*** Apply pre-editions\n")
+		self.apply_pre_editions(editions)
 
 		# Produce the manifest of the score
 		print ("\t*** Compute the score manifest\n")
 		self.manifest = self.create_manifest()
 				
-		# Apply editions to prepare the score production
-		print ("\t*** Apply pre-editions\n")
-		self.apply_pre_editions(editions)
+		# Now the JSON is decoded and we assume that the structure
+		# of the score, encoded in the manifest, is correct.
+		# We run some additional tests (mostly on key and time signatures)
 
-		# Now the JSON is decoded: check the OMR structure to clean it
 		# if necessary
 		print ("\t*** Input decoded. Checking its consistency and fixing them\n")
-		fix_editions =  self.check_and_fix_input()
-		self.apply_pre_editions(fix_editions)
-
-		print ("\n\t*** Initialization done. Ready to produce the score\n")
-
-	def check_and_fix_input(self):
-		"""
-		   Scan of the JSON input to detect inconsistencies
-		   and fix them if necessary before producing the score
-		"""
-		
-		# We will record a global signature as a default one
-		initial_time_signature = None
-		initial_key_signature = None
-
-		# Start the scan
 		fix_editions = []
-		current_system_no = 1
 		current_measure_no = 1
 		for page in self.pages:
-			if not self.config.in_range (page.no_page):
-				continue
 			# Get the page from the manifest
 			mnf_page = self.manifest.get_page(page.no_page)
 			for system in page.systems:
-				if not self.config.in_range (page.no_page, system.no_system_in_page):
-					continue
 				# Get the system from the manifest
 				mnf_system = mnf_page.get_system(system.no_system_in_page)
-				current_system_no += 1
 				for measure in system.measures:
-					if not self.config.in_range (page.no_page, system.no_system_in_page, measure.no_measure_in_system):
-						logger.info (f'Skipping measure {current_measure_no}')
-						continue
-					for header in measure.headers:
-						if header.time_signature is not None:
-							if current_measure_no == 1:
-								# This is the initial TS of the score
-								initial_time_signature = header.time_signature.get_notation_object()
-						if header.key_signature is not None:
-							if current_measure_no == 1:
-								# This is the initial KS of the score
-								initial_key_signature = header.key_signature.get_notation_object()		
 					# Check key signatures
-					fix_editions += check_header_consistency (mnf_system, current_measure_no, 
-					     measure.headers, Headers.KEYSIGN_TYPE)
-					fix_editions += check_header_consistency (mnf_system, current_measure_no, 
-					     measure.headers, Headers.TIMESIGN_TYPE)
+					headers = Headers(Headers.KEYSIGN_TYPE, current_measure_no, mnf_system, measure.headers)
+					headers.check_consistency ()
+					if headers.signature is not None:
+						# We found an occurrence 
+						self.ks_per_measure[current_measure_no] = headers.signature
+					fix_editions += headers.fix_editions
+					# Check time signatures
+					headers = Headers(Headers.TIMESIGN_TYPE, current_measure_no, mnf_system, measure.headers)
+					headers.check_consistency ()
+					if headers.signature is not None:
+						# We found an occurrence 
+						self.ts_per_measure[current_measure_no] = headers.signature
+					fix_editions += headers.fix_editions
+					# Did we find a key signature here ?
 					current_measure_no += 1
-		
+		# fix_editions =  self.check_and_fix_input()
+		self.apply_pre_editions(fix_editions)
+
+		# Show the list of signature changes
+		#for meas_no, sign in self.ks_per_measure.items():
+		#	print (f"Found a key signature at measure {meas_no}: {sign}")
+
 		# Determine the default signature
-		if initial_key_signature is None:
+		if 1 not in  self.ks_per_measure.keys():
 			# Whaouh, no key signature on the initial measure
 			logger.warning (f"Missing key signature at the beginning of the score. Taking {self.initial_key_signature}")
 		else: 
-			self.initial_key_signature = initial_key_signature
-		if initial_time_signature is None:
+			self.initial_key_signature = self.ks_per_measure[1]
+		if 1 not in  self.ts_per_measure.keys():
 			# Whaouh, no time signature on the initial measure
 			logger.warning (f"Missing time signature at the beginning of the score. Taking {self.initial_time_signature}")						
 		else:
-			self.initial_time_signature = initial_time_signature
+			self.initial_time_signature = self.ts_per_measure[1]
 
-		"""if len(fix_editions) > 0:
-			for ed in fix_editions:
-				print (f"We produced edition {ed}")
-		"""
-		return fix_editions
-		
+		print ("\n\t*** Initialization done. Ready to produce the score\n")
+
 	def create_manifest(self):
 		"""
 		  The Manifest is a description of the source structure
@@ -661,7 +646,17 @@ class OmrScore:
 					# Create a new measure for each part
 					for part in score.get_parts():
 						logger.info (f"Adding measure {current_measure_no} to part {part.id}")
-						part.add_measure (current_measure_no)
+						# We initialize the measure signatures with the current defaults
+						default_ks = None
+						if current_measure_no in self.ks_per_measure.keys():
+							default_ks = self.ks_per_measure[current_measure_no]
+							part.current_key_signature = default_ks							
+							#print (f"Part {part.id} default signature becomes {default_ks} at measure {current_measure_no}")
+						default_ts =None
+						if current_measure_no in self.ts_per_measure.keys():
+							default_ts = self.ts_per_measure[current_measure_no]
+							part.current_time_signature = default_ts
+						part.add_measure (current_measure_no, default_ts, default_ks)
 						part.reset_voice_counter()
 
 						# Adding page and system breaks
