@@ -142,9 +142,15 @@ class Headers():
 						for header in self.headers:
 							if header.key_signature is None:
 								header.key_signature = dmos_key
-								parser_mod.logger.warning (f"The missing sign. has been informed to match the other ones")
+								parser_mod.logger.warning (f"The missing {self.type} sign. has been informed to match the other ones")
 					else:
-						parser_mod.logger.warning (f"TO BE IMPLEMENTED: TIME SIGNATURE INSERTION")
+						best_sign.id = "pseudo-tsign"
+						dmos_tsign = parser_mod.TimeSignature.build_from_notation_key(best_sign)
+						# Search for the missing headers and inform them
+						for header in self.headers:
+							if header.time_signature is None:
+								header.time_signature = dmos_tsign
+								parser_mod.logger.warning (f"The missing {self.type} sign. has been informed to match the other ones")
 						
 				elif sign_code != best_sign.code():
 					corrected_key = part_sign_info["sign"]
@@ -227,3 +233,9 @@ class Headers():
 		# Now check that all KS are the same for all the parts
 		self.align_part_signatures()
 		
+		return self.headers
+		
+	def print(self):
+		print (f"SHOWING HEADERS")
+		for header in self.headers:
+			print (header) 

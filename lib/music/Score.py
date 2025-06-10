@@ -636,12 +636,14 @@ class Part:
 		    empty by the engraver (eg verovio)		
 		"""
 		if default_ts is not None:
-			default_ts = self.current_time_signature.copy()
+			default_ts = default_ts.copy()
 			default_ts.set_by_default(f"default_ts_{self.id}")
+			self.current_time_signature = default_ts
 			measure.add_time_signature(default_ts)
 		if default_ks is not None:
 			default_ks = self.current_key_signature.copy()
 			default_ks.set_by_default(f"default_ks_{self.id}")
+			self.current_key_signature = default_ks
 			measure.add_key_signature(default_ks)
 
 		self.measures.append(measure)
@@ -658,7 +660,7 @@ class Part:
 		if self.part_type == Part.GROUP_PART:			
 			# We add a measure to each sub-part
 			for staff_part in self.staff_group: 
-				staff_part.add_measure(measure_no)
+				staff_part.add_measure(measure_no, default_ts, default_ks)
 
 	def get_current_measures(self):
 		if not self.part_type == Part.GROUP_PART:

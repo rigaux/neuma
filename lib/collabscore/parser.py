@@ -258,11 +258,15 @@ class OmrScore:
 			self.pages.append(page)
 			no_page += 1
 			
+		# Produce the manifest of the score
+		print ("\t*** Compute the score manifest\n")
+		self.manifest = self.create_manifest()
+
 		# Apply editions to correct the DMOS raw output
 		print ("\t*** Apply pre-editions\n")
 		self.apply_pre_editions(editions)
 
-		# Produce the manifest of the score
+		# Re-compute the manifest, as it might be affected by editions
 		print ("\t*** Compute the score manifest\n")
 		self.manifest = self.create_manifest()
 				
@@ -283,14 +287,17 @@ class OmrScore:
 				for measure in system.measures:
 					# Check key signatures
 					headers = Headers(Headers.KEYSIGN_TYPE, current_measure_no, mnf_system, measure.headers)
-					headers.check_consistency ()
+					measure.headers = headers.check_consistency ()
 					if headers.signature is not None:
 						# We found an occurrence 
 						self.ks_per_measure[current_measure_no] = headers.signature
 					fix_editions += headers.fix_editions
 					# Check time signatures
 					headers = Headers(Headers.TIMESIGN_TYPE, current_measure_no, mnf_system, measure.headers)
-					headers.check_consistency ()
+					measure.headers  = headers.check_consistency ()
+					#print (f"\nHeaders for measure {current_measure_no}")
+					#for header in measure.headers:
+					#	print (header) 
 					if headers.signature is not None:
 						# We found an occurrence 
 						self.ts_per_measure[current_measure_no] = headers.signature
@@ -650,12 +657,9 @@ class OmrScore:
 						default_ks = None
 						if current_measure_no in self.ks_per_measure.keys():
 							default_ks = self.ks_per_measure[current_measure_no]
-							part.current_key_signature = default_ks							
-							#print (f"Part {part.id} default signature becomes {default_ks} at measure {current_measure_no}")
 						default_ts =None
 						if current_measure_no in self.ts_per_measure.keys():
 							default_ts = self.ts_per_measure[current_measure_no]
-							part.current_time_signature = default_ts
 						part.add_measure (current_measure_no, default_ts, default_ks)
 						part.reset_voice_counter()
 
@@ -697,9 +701,13 @@ class OmrScore:
 									logger.info (f"Clef {clef_staff} found on staff {header.no_staff} without change. Ignored.")									
 
 						if header.time_signature is not None:
+							logger.info (f'Found time signature  {header.time_signature} on staff {header.no_staff} at measure {current_measure_no}')
 							new_time_signature = header.time_signature.get_notation_object()
 							# We assign the TS specifically to the current parts: the id is preserved
 							changed_ts = part.set_current_time_signature (new_time_signature, mnf_staff.number_in_part)			
+							if not changed_ts:
+								logger.info (f'Time signature  {new_time_signature} with id {new_time_signature.id} found on staff {header.no_staff} at measure {current_measure_no} without change. Ignored.')
+								
 							# Annotate the key with its region
 							if header.time_signature.region is not None and header.time_signature.id is not None:
 								if changed_ts:
@@ -708,10 +716,8 @@ class OmrScore:
 										self.creator, self.uri, header.time_signature.id, 
 										page.page_url, header.time_signature.region.string_xyhw(), constants_mod.IREGION_SYMBOL_CONCEPT)
 									score.add_annotation (annotation)
-								else:
-									logger.info (f'Time signature  {new_time_signature} with id {new_time_signature.id} found on staff {header.no_staff} at measure {current_measure_no} without change. Ignored.')
-							else:
-								logger.error (f"Null region or XML ID for a time signature. Ignored")
+							#else:
+							#	logger.warning (f"Null region or XML ID for a time signature. No annotation produced")
 
 						if header.key_signature is not None:
 							key_sign = header.key_signature.get_notation_object()
@@ -1417,7 +1423,8 @@ class Clef:
 		self.height  = replacement["line"]
 		if "octave_change" in replacement:
 			self.octave_change =  replacement["octave_change"]
-
+	def __str__(self):
+		return f"Clef {self.symbol} {self.height}"
 	def get_notation_clef(self):
 		# Decode the DMOS infos
 		return score_notation.Clef.decode_from_dmos(self.symbol.label, 
@@ -1464,6 +1471,19 @@ class TimeSignature:
 		elif self.element == "singleDigit":
 			ts.set_single_digit()
 		return ts
+		
+	def __str__ (self):
+		return f"TimeSignature id: {self.id} ({self.time}  /  {self.unit}) (element: {self.element})"
+
+	
+	@staticmethod
+	def build_from_notation_key(notation_tsign):
+		# Used if we want to reinject in the DMOS file a missing time signature
+		time_sign = {"id": notation_tsign.id,
+		            "time": notation_tsign.numer,
+		 			"unit": notation_tsign.denom,
+		 			"element": "none"}
+		return TimeSignature(time_sign)
 
 class KeySignature:
 	"""
@@ -1525,6 +1545,9 @@ class KeySignature:
 			self.element = FLAT_SYMBOL
 			self.nb_alterations = nb_flats
 	
+	def __str__ (self):
+		return f"KeySignature ({self.nb_sharps()} sharps, {self.nb_flats()} flats)"
+
 	@staticmethod
 	def build_from_notation_key(notation_key):
 		# Used if we want to reinject in the DMOS file a missing key
@@ -1682,7 +1705,7 @@ class MeasureHeader:
 			self.id_elem = self.time_signature.id 
 
 	def __str__(self):
-		return f"{self.type} {self.id_elem}"
+		return f"Staff {self.no_staff} Clef {self.clef} KS: {self.key_signature} TS: {self.time_signature}"
 
 class CScoreParserError(Exception):
 	def __init__(self, *args):
