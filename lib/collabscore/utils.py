@@ -8,6 +8,7 @@ import lib.music.notation as score_notation
 # Utility functions for the CollabScore parser
 #
 
+
 # A class that conveniently represents the distribution
 # of reading objects (clef, keysign, timesign) over parts
 #
@@ -15,7 +16,7 @@ class Headers():
 	MISSING_CODE = "missing_sign"
 	KEYSIGN_TYPE = "key"
 	TIMESIGN_TYPE = "time"
-	
+
 	def __init__(self, type_sign, measure_no, mnf_system, headers):
 		self.measure_no = measure_no
 
@@ -144,7 +145,8 @@ class Headers():
 								header.key_signature = dmos_key
 								parser_mod.logger.warning (f"The missing {self.type} sign. has been informed to match the other ones")
 					else:
-						best_sign.id = "pseudo-tsign"
+						parser_mod.PSEUDO_SIGN_COUNTER += 1
+						best_sign.id = parser_mod.PSEUDO_SIGN_ID + f"{parser_mod.PSEUDO_SIGN_COUNTER}"
 						dmos_tsign = parser_mod.TimeSignature.build_from_notation_key(best_sign)
 						# Search for the missing headers and inform them
 						for header in self.headers:

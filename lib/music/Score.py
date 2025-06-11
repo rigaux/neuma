@@ -638,10 +638,9 @@ class Part:
 		if default_ts is not None:
 			default_ts = default_ts.copy()
 			default_ts.set_by_default(f"default_ts_{self.id}")
-			self.current_time_signature = default_ts
 			measure.add_time_signature(default_ts)
 		if default_ks is not None:
-			default_ks = self.current_key_signature.copy()
+			default_ks = default_ks.copy()
 			default_ks.set_by_default(f"default_ks_{self.id}")
 			self.current_key_signature = default_ks
 			measure.add_key_signature(default_ks)

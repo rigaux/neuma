@@ -48,6 +48,11 @@ c_format = logging.Formatter('%(name)s - %(levelname)s - %(message)s')
 c_handler.setFormatter(c_format)
 #logger.addHandler(c_handler)
 
+# For generated signatures
+PSEUDO_SIGN_ID="pseudo_sign"
+PSEUDO_SIGN_COUNTER=0
+
+
 def set_logging_level(level):
 	logger.setLevel(level)
 
@@ -273,11 +278,12 @@ class OmrScore:
 		# Now the JSON is decoded and we assume that the structure
 		# of the score, encoded in the manifest, is correct.
 		# We run some additional tests (mostly on key and time signatures)
-
 		# if necessary
 		print ("\t*** Input decoded. Checking its consistency and fixing them\n")
 		fix_editions = []
 		current_measure_no = 1
+		current_key_signature = None
+		current_time_signature = None
 		for page in self.pages:
 			# Get the page from the manifest
 			mnf_page = self.manifest.get_page(page.no_page)
@@ -289,8 +295,10 @@ class OmrScore:
 					headers = Headers(Headers.KEYSIGN_TYPE, current_measure_no, mnf_system, measure.headers)
 					measure.headers = headers.check_consistency ()
 					if headers.signature is not None:
-						# We found an occurrence 
-						self.ks_per_measure[current_measure_no] = headers.signature
+						# We found an occurrence. Check if a change occurred
+						if current_key_signature is None or not headers.signature.equals(current_key_signature):
+							self.ks_per_measure[current_measure_no] = headers.signature
+							current_key_signature = headers.signature
 					fix_editions += headers.fix_editions
 					# Check time signatures
 					headers = Headers(Headers.TIMESIGN_TYPE, current_measure_no, mnf_system, measure.headers)
@@ -300,7 +308,9 @@ class OmrScore:
 					#	print (header) 
 					if headers.signature is not None:
 						# We found an occurrence 
-						self.ts_per_measure[current_measure_no] = headers.signature
+						if current_time_signature is None or not headers.signature.equals(current_time_signature):
+							self.ts_per_measure[current_measure_no] = headers.signature
+							current_time_signature = headers.signature
 					fix_editions += headers.fix_editions
 					# Did we find a key signature here ?
 					current_measure_no += 1
@@ -308,8 +318,10 @@ class OmrScore:
 		self.apply_pre_editions(fix_editions)
 
 		# Show the list of signature changes
-		#for meas_no, sign in self.ks_per_measure.items():
-		#	print (f"Found a key signature at measure {meas_no}: {sign}")
+		for meas_no, sign in self.ks_per_measure.items():
+			print (f"Found a key signature change at measure {meas_no}: {sign}")
+		for meas_no, sign in self.ts_per_measure.items():
+			print (f"Found a time signature change at measure {meas_no}: {sign}")
 
 		# Determine the default signature
 		if 1 not in  self.ks_per_measure.keys():
