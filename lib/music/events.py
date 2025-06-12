@@ -204,9 +204,8 @@ class Expression ():
 		elif  expr_type == Expression.TRILL:
 			self.m21_expression = m21.expressions.Trill()
 		elif  expr_type == Expression.ARPEGGIO:
-			#self.m21_expression = m21.expressions.ArpeggioMark('normal')
-			self.m21_expression = m21.expressions.Trill()
-			print ("Arpeggio mark unknown by Music21??")
+			self.m21_expression = m21.expressions.ArpeggioMark('normal')
+			#self.m21_expression = m21.expressions.Trill()
 		else:
 			raise score_mod.CScoreModelError (f"Unknown expression type: '{expr_type}'")
 
