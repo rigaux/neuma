@@ -69,6 +69,14 @@ class TimeSignature:
 			self.id = id_ts
 
 		self.numer = numer
+		
+		# The denom must be in 1, 2, 4? 8, 16, 32
+		if denom not in [1, 2, 4, 8, 16, 32]:
+			score_mod.logger.warning (f"Trying to instantiate a time signature with denom {denom}")
+			if denom == 3:
+				# Bet: confusion with a 8
+				denom =8
+
 		self.denom = denom
 		self.single_digit = False
 		self.is_by_default = False
@@ -104,7 +112,8 @@ class TimeSignature:
 	def choose_best (self, other):
 		
 		# Used when some inconsistency is found in a list of signatures
-		# I do not know what criteria....
+		
+		# If 
 		return self 
 
 	def barDuration(self):
