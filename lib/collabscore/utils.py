@@ -160,7 +160,7 @@ class Headers():
 						edition = Edition (Edition.REPLACE_KEYSIGN, target=corrected_key.id,
 							params= {"nb_sharps": best_sign.nb_sharps, "nb_flats":  best_sign.nb_flats})
 					else: 
-						edition = Edition (Edition.REPLACE_TIMESIGN, target=sign_info["sign"].id,
+						edition = Edition (Edition.REPLACE_TIMESIGN, target=corrected_key.id,
 								params= {"time": best_sign.numer, "unit":  best_sign.denom})
 					self.fix_editions.append(edition)
 					parser_mod.logger.warning (f"Correcting sign {corrected_key} to {best_sign}")
