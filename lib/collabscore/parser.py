@@ -267,13 +267,9 @@ class OmrScore:
 		print ("\t*** Compute the score manifest\n")
 		self.manifest = self.create_manifest()
 
-		# Apply editions to correct the DMOS raw output
+		# Apply editions to correct the DMOS raw output and the manifest
 		print ("\t*** Apply pre-editions\n")
 		self.apply_pre_editions(editions)
-
-		# Re-compute the manifest, as it might be affected by editions
-		print ("\t*** Compute the score manifest\n")
-		self.manifest = self.create_manifest()
 				
 		# Now the JSON is decoded and we assume that the structure
 		# of the score, encoded in the manifest, is correct.
@@ -318,10 +314,10 @@ class OmrScore:
 		self.apply_pre_editions(fix_editions)
 
 		# Show the list of signature changes
-		for meas_no, sign in self.ks_per_measure.items():
-			print (f"Found a key signature change at measure {meas_no}: {sign}")
-		for meas_no, sign in self.ts_per_measure.items():
-			print (f"Found a time signature change at measure {meas_no}: {sign}")
+		#for meas_no, sign in self.ks_per_measure.items():
+		#	print (f"Found a key signature change at measure {meas_no}: {sign}")
+		#for meas_no, sign in self.ts_per_measure.items():
+		#	print (f"Found a time signature change at measure {meas_no}: {sign}")
 
 		# Determine the default signature
 		if 1 not in  self.ks_per_measure.keys():
