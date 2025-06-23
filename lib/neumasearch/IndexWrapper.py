@@ -45,7 +45,7 @@ class IndexWrapper:
 		"""
 		
 		es_config = settings.ELASTIC_SEARCH
-		conn_string =  es_config["scheme"] + es_config["host"] + ":" + str(es_config["port"])
+		#conn_string =  es_config["scheme"] + es_config["host"] + ":" + str(es_config["port"])
 		if auth_login is None:
 			"""host=settings.ELASTIC_SEARCH["host"], 
 											port=settings.ELASTIC_SEARCH["port"],
