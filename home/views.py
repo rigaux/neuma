@@ -478,7 +478,14 @@ class SearchView(NeumaView):
 	"""Carry out a search"""
 
 	def get(self, request, **kwargs):
-		# Get the search context
+		
+		# Security : we create a SearchContext from scratch or from the session
+		if "search_context" not in self.request.session:
+			self.search_context = SearchContext()
+		else:
+			self.search_context = SearchContext.fromJSON(self.request.session["search_context"])
+			print (f"After decoding search context: {self.search_context} ") 
+
 		search_context = self.search_context
 		search_context.info_message = ""
 
@@ -503,30 +510,29 @@ class SearchView(NeumaView):
 				search_context.pattern = ""
 
 		#Initialize search_context.mirror_search according to the search request
-		if 'mirror_search' in self.request.GET:
-			if self.request.GET['mirror_search'] == "yes":
-				search_context.mirror_search = True
-			elif self.request.GET['mirror_search'] == "no":
-				search_context.mirror_search = False
-		else:
-			search_context.mirror_search = False
+		search_context.mirror_search = False
 
 		# If the context is an Opus, we redirect to the Opus view
 		if search_context.is_opus():
 			url = reverse('home:opus', args=(), kwargs={'opus_ref': search_context.ref})
 			return HttpResponseRedirect(url)
 
+		# OK store back the search context in the session
+		self.request.session["search_context"] = self.search_context.toJSON()
+
 		# If the criteria are empty, then forward to the corpus page
 		if not search_context.in_search_mode():
 			url = reverse('home:corpus', args=(), kwargs={'corpus_ref': search_context.ref})
 			return HttpResponseRedirect(url)
 
-		# OK, carry out the search
+
+		# Now, carry out the search
 		context = self.get_context_data(**kwargs)
 		return render(request, "home/search.html", context)
 			
 	def get_context_data(self, **kwargs):
 		context = super(SearchView, self).get_context_data(**kwargs)
+
 		search_context = self.search_context
 		#print(dir(search_context))
 		
