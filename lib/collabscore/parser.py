@@ -310,6 +310,18 @@ class OmrScore:
 					fix_editions += headers.fix_editions
 					# Did we find a key signature here ?
 					current_measure_no += 1
+					
+					clefs_already_met = {}
+					for voice in measure.voices:
+						cleaned_items = []
+						for item in voice.items:
+							if item.clef_attr is not None:
+								if not item.clef_attr.id in clefs_already_met.keys():
+									clefs_already_met[item.clef_attr.id] = 1
+									cleaned_items.append(item)
+							else:
+								cleaned_items.append(item)
+						voice.items = cleaned_items
 		# fix_editions =  self.check_and_fix_input()
 		self.apply_pre_editions(fix_editions)
 
