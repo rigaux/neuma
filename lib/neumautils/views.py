@@ -12,6 +12,7 @@ class NeumaView(TemplateView):
 	'''Override the view class to always add the list of t
 	top-level corpora to the context '''
 
+
 	def top_level_stats(self):
 
 		return {"total_corpus": Corpus.objects.all().count(),
@@ -100,7 +101,6 @@ class NeumaView(TemplateView):
 			self.search_context = SearchContext()
 			self.request.session["search_context"] = self.search_context.toJSON()
 		else:
-			
 			self.search_context = SearchContext.fromJSON(self.request.session["search_context"])
 			print (f"After decoding search context: {self.search_context} ") 
 		# Add some useful constant (we could use a context processor - maybe)

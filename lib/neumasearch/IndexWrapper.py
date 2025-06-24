@@ -47,11 +47,11 @@ class IndexWrapper:
 		es_config = settings.ELASTIC_SEARCH
 		#conn_string =  es_config["scheme"] + es_config["host"] + ":" + str(es_config["port"])
 		if auth_login is None:
-			self.elastic_search = Elasticsearch(host=settings.ELASTIC_SEARCH["host"], 
+			self.elastic_search = Elasticsearch(settings.ELASTIC_SEARCH["host"], 
 											port=settings.ELASTIC_SEARCH["port"],
 											index=settings.ELASTIC_SEARCH["index"])
 			
-			# self.elastic_search = Elasticsearch(conn_string)
+			#self.elastic_search = Elasticsearch(conn_string)
 		else:
 			self.elastic_search = Elasticsearch(host=settings.ELASTIC_SEARCH["host"], 
 											port=settings.ELASTIC_SEARCH["port"],
@@ -61,6 +61,7 @@ class IndexWrapper:
 		es_logger = logging.getLogger('elasticsearch')
 		es_logger.setLevel(logging.WARNING)
 		
+		 
 		# Open, and possibly create the index
 		self.index = Index (settings.ELASTIC_SEARCH["index"],using=self.elastic_search)
 		
