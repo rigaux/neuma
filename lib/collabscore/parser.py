@@ -23,7 +23,7 @@ import lib.music.source as source_mod
 from .constants import *
 from .editions import Edition
 from lib.music.source import Manifest
-from .utils import Headers
+from .utils import Headers, DmosVoice
 
 # Get an instance of a logger
 # See https://realpython.com/python-logging/
@@ -312,16 +312,26 @@ class OmrScore:
 							self.ts_per_measure[current_measure_no] = headers.signature
 							current_time_signature = headers.signature
 					fix_editions += headers.fix_editions
-					# Did we find a key signature here ?
+					
+					# Ok now check voices
+					voices_to_remove = []
+					for voice in measure.voices:
+						dmos_voice = DmosVoice (current_measure_no, voice)
+						if dmos_voice.is_empty():
+							voices_to_remove.append(voice)
+					for v in voices_to_remove:
+							logger.warning (f"Remove an empty voice {voice.id} in measure {current_measure_no}")
+							measure.voices.remove (v)
+				
 					current_measure_no += 1
 		# fix_editions =  self.check_and_fix_input()
 		self.apply_pre_editions(fix_editions)
 
 		# Show the list of signature changes
-		for meas_no, sign in self.ks_per_measure.items():
-			print (f"Found a key signature change at measure {meas_no}: {sign}")
-		for meas_no, sign in self.ts_per_measure.items():
-			print (f"Found a time signature change at measure {meas_no}: {sign}")
+		#for meas_no, sign in self.ks_per_measure.items():
+		#	print (f"Found a key signature change at measure {meas_no}: {sign}")
+		#for meas_no, sign in self.ts_per_measure.items():
+		#	print (f"Found a time signature change at measure {meas_no}: {sign}")
 
 		# Determine the default signature
 		if 1 not in  self.ks_per_measure.keys():

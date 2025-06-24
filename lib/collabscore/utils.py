@@ -241,3 +241,19 @@ class Headers():
 		print (f"SHOWING HEADERS")
 		for header in self.headers:
 			print (header) 
+			
+
+# A class that represents the items of a DMOS voice
+#
+class DmosVoice():
+
+	def __init__(self, measure_no, voice):
+		self.measure_no = measure_no
+		self.voice = voice
+		self.items = voice.items
+		
+	def is_empty(self):
+		# A voice without any item is useless 
+		return len (self.items) == 0
+		
+
