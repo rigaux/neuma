@@ -151,6 +151,24 @@ class Annotation:
 							datetime.datetime.now(), datetime.datetime.now())
 
 	@staticmethod 
+	def create_annot_from_xml_to_audio(creator, doc_url, xml_id, audio_url, timestamp, annot_concept):
+		''' 
+			An annotation that links an XML element to an audio timestamp
+		'''
+		target = Annotation.create_target_for_annotation(doc_url, xml_id)
+		
+		body_selector = FragmentSelector(FragmentSelector.AUDIO_SELECTOR, timestamp)
+		body_resource = SpecificResource(audio_url, body_selector)
+		body = ResourceBody(body_resource)
+		
+		#print(f'Inserting annotation with concept {annot_concept} from {target} on element {xml_id}, with body {body} ')
+			
+		return Annotation(Annotation.get_new_id(), creator, target, body, 
+							AM_AUDIO_TIME_FRAME, annot_concept, 
+							Annotation.MOTIVATION_LINKING,
+							datetime.datetime.now(), datetime.datetime.now())
+
+	@staticmethod 
 	def create_from_error (creator, doc_url, xml_id, annot_concept):
 		''' 
 			An annotation that links an XML element to an image region

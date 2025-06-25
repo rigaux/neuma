@@ -18,6 +18,7 @@ class OpusSource:
 	# Codes for normalized references
 	DMOS_REF = "dmos"
 	MEI_REF = "ref_mei"
+	AUDIO_REF = "audio"
 	IIIF_REF = "iiif"
 	MIDI_REF = "midi"
 	MUSICXML_REF = "musicxml"

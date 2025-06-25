@@ -4,6 +4,7 @@ import datetime
 import jsonschema
 import jsonref
 import json
+import csv
 from jsonref import JsonRef
 
 import os 
@@ -13,6 +14,8 @@ from django.core.files.base import ContentFile
 
 from django.conf import settings
 from django.db.models import Count, F
+
+from django.contrib.auth.models import User
 
 from rest_framework import viewsets
 from . import serializers
@@ -784,6 +787,51 @@ class SourceFile (APIView):
 			
 			print ("Parsing DMOS in asynchronous mode")
 			parse_dmos.delay(opus.ref)
+			
+		# Special case audio: parse the file and create annotations
+		if source_ref==source_mod.OpusSource.AUDIO_REF:
+			name, extension = os.path.splitext(filename)
+			if extension == ".txt":
+				# Should be an Audacity file. We convert to a JSON
+				# TODO: encapsulate in OO
+				measure_no = 1
+				synchro_json = {"opus": full_neuma_ref, "source": source_ref,
+								"measure_timeframes": []}
+				print (f"Received an Audacity file")
+				with open(source.source_file.path) as sync_file:
+					synchro_data = csv.reader(sync_file, delimiter='\t')
+					current_tstamp = 0
+					for synchro in synchro_data:
+						tstamp = synchro[0]
+						tframe = f"t={current_tstamp},{tstamp}"
+						synchro_json["measure_timeframes"].append(
+							{"measure": f"m{measure_no}","timeframe": tframe})
+						measure_no += 1
+						current_tstamp = tstamp
+				source.source_file.save(name + ".json", ContentFile(json.dumps(synchro_json)))
+			
+			# Now create annotations
+			opus, object_type = get_object_from_neuma_ref(full_neuma_ref)
+			user_annot = User.objects.get(username=settings.COMPUTER_USER_NAME)
+			audio_concept = AnalyticConcept.objects.get(code=constants_mod.TFRAME_MEASURE_CONCEPT)
+			Annotation.objects.filter(opus=opus).filter(analytic_concept=audio_concept).delete()
+			creator = annot_mod.Creator ("collabscore", 
+										annot_mod.Creator.SOFTWARE_TYPE, 
+										"collabscore")
+			for meas_annot in synchro_json["measure_timeframes"]:
+				annotation = annot_mod.Annotation.create_annot_from_xml_to_audio(creator, opus.musicxml.url, 
+								meas_annot["measure"], source.url, meas_annot["timeframe"], 
+								constants_mod.TFRAME_MEASURE_CONCEPT)
+				db_annot = Annotation.create_from_web_annotation(user_annot, 
+															opus, annotation)
+				if db_annot is not None:
+					db_annot.target.save()
+					if db_annot.body is not None:
+						db_annot.body.save()
+					db_annot.save()
+
+			
+			print (f"Parsing synchronization data between source {source_ref} and opus {full_neuma_ref}")
 
 		serializer = MessageSerializer({"message": "Source file uploaded"})
 		return JSONResponse(serializer.data)	

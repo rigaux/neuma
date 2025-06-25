@@ -11,6 +11,9 @@ curl  -u collabscore:collabscore -X POST http://neuma.huma-num.fr/rest/collectio
 curl -u collabscore:collabscore -X POST "http://localhost:8000/rest/collections/all:collabscore:saintsaens-ref:C006_0/_sources/iiif/_file/"  -F 'dmos.json=@coinsbleus.json'
 
 
+curl -u collabscore:collabscore -X POST "http://localhost:8000/rest/collections/all:collabscore:saintsaens-audii:C055_0/_sources/audio/_file/"  -F 'synchro.txt=@synchro_audio.txt'
+
+
 ####################################
 #
 # Test sur les annotations
