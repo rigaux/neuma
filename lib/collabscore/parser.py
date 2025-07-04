@@ -427,15 +427,18 @@ class OmrScore:
 		# We add the editions received in parameter
 		for edition in editions:
 			if edition.name in Edition.PARSE_TIME_EDITION_CODES:
+				# One edition can apply to many graphical objects (eg keys/tsign).
+				# The ids of the graphical object are separated by ID_SEPARATOR
+				ids = edition.target.split (constants_mod.ID_SEPARATOR)
 				if edition.name == Edition.REMOVE_OBJECT:
-					removals[edition.target] = edition.params
-				else:
-					# One edition can apply to many graphical objects (eg keys/tsign).
-					# The ids of the graphical object are separated by ID_SEPARATOR
-					ids = edition.target.split (constants_mod.ID_SEPARATOR)
 					for id in ids:
 						edition.target = id
-						logger.info (f"Add edition {edition} for object {id}")
+						logger.warning (f"Add edition {edition} for object {id}")
+						removals[edition.target] = edition.params
+				else:
+					for id in ids:
+						edition.target = id
+						logger.warning (f"Add edition {edition} for object {id}")
 						replacements[edition.name][id] = edition.params
 			elif edition.name in Edition.PRE_EDITION_CODES:
 				# Pre editions  concern pages  and staff layout are applied the manifest
