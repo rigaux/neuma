@@ -24,11 +24,13 @@ class OpusSource:
 	MUSICXML_REF = "musicxml"
 	TMP_REF = "tmp"
 		
-	def __init__(self, ref, source_type, mime_type, url):
+	def __init__(self, ref, source_type, mime_type, 
+				url, metadata={}):
 		self.ref = ref
 		self.source_type = source_type
 		self.mime_type = mime_type
 		self.url  = url
+		self.metadata = metadata
 		self.file_path = None
 		self.has_manifest = False
 		self.has_iiif_manifest = False
@@ -57,6 +59,7 @@ class OpusSource:
 			"source_type": self.source_type, 
 			"mime_type": self.mime_type, 
 			"url": self.url,
+			"metadata": self.metadata,
 			"file_path": self.file_path,
 			"has_manifest": self.has_manifest,
 			"has_iiif_manifest": self.has_iiif_manifest,

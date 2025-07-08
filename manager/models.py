@@ -1398,7 +1398,9 @@ class OpusSource (models.Model):
 	url = models.CharField(max_length=255,blank=True,null=True)
 	# A set of operations applied to the source file. Example: post-OMR processing
 	operations = models.JSONField(blank=True,default=list)
-	
+	# Meta data 
+	metadata = models.JSONField(blank=True, default=dict)
+
 	creation_timestamp = models.DateTimeField('Created', auto_now_add=True)
 	update_timestamp = models.DateTimeField('Updated', auto_now=True)
 
@@ -1423,7 +1425,7 @@ class OpusSource (models.Model):
 		"""
 		source_dict = source_mod.OpusSource(
 			self.ref, self.source_type.code, self.source_type.mime_type, 
-			self.url)
+					self.url, self.metadata)
 		source_dict.description = self.description
 		
 		# We send the path in order to give a way to download the source file

@@ -407,7 +407,10 @@ class OmrScore:
 		manifest.create_groups()
 		# Clean pages URL and find the first page of music
 		manifest.clean_pages_url()
-		manifest.get_first_music_page()
+		
+		#
+		# A QUOI CA SERT ???
+		#manifest.get_first_music_page()
 		return manifest
 		
 	def apply_pre_editions(self, editions):
