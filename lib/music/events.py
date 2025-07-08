@@ -428,7 +428,7 @@ class Rest (Event):
 	"""
 	
 	def __init__(self,  duration, no_staff, id=None, voice=None) :
-		super ().__init__(duration, tied=False, id=None, voice=voice)
+		super ().__init__(duration, tied=False, id=id, voice=voice)
 		self.type = Event.TYPE_REST
 
 		self.m21_event = m21.note.Rest()
