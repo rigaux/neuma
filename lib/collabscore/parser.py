@@ -1418,10 +1418,10 @@ class Note:
 	def overwrite (self, edition):
 		# Apply an edition to the note head
 		if "pitch_change" in edition:
-			print (f"Head pitch must be moved {edition['pitch_change']} steps")
+			#print (f"Head pitch must be moved {edition['pitch_change']} steps")
 			self.height += edition['pitch_change']
 		if "alter" in edition:
-			print (f"Head pitch alteration must be  {edition['alter']}")
+			#print (f"Head pitch alteration must be  {edition['alter']}")
 			alter = edition['alter']
 			if alter == -1:
 				self.alter = score_events.Note.ALTER_FLAT
@@ -1663,7 +1663,7 @@ class Duration:
 			self.numer, self.denom = rational_fraction.numerator, rational_fraction.denominator
 
 	def overwrite (self, edition):
-		print (f"Received edition {edition}")
+		#print (f"Received edition {edition}")
 		if "duration" in edition:
 			self.note_type = edition['duration']
 		if "dots" in edition:

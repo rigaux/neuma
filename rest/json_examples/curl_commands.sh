@@ -45,6 +45,11 @@ curl -u collabscore:collabscore -X POST http://neuma.huma-num.fr/rest/collection
 curl -u collabscore:collabscore -X POST http://localhost:8000/rest/collections/all%3Acollabscore%3Asaintsaens-ref%3AC006_0/_sources/iiif/_apply_editions/ \
 -d @remove_and_edit.json  -H "Content-Type: application/json" > t.xml
 
+# Deux remplacements sur le même élément
+curl -u collabscore:collabscore -X POST http://localhost:8000/rest/collections/all%3Acollabscore%3Asaintsaens-ref%3AC006_0/_sources/iiif/_apply_editions/ \
+-d @2_replace_music_el.json  -H "Content-Type: application/json" > t.xml
+
+
 # Cas d'une armure sur une portée double, avec deux identifiants
 curl -u collabscore:collabscore -X POST http://localhost:8000/rest/collections/all%3Acollabscore%3Asaintsaens-ref%3AC035_0/_sources/iiif/_apply_editions/ \
 -d @replace_key_2staves.json  -H "Content-Type: application/json" > t.xml
