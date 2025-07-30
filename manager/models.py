@@ -1,36 +1,50 @@
 
+#
+# General purpose Python imports
+#
 from datetime import datetime, date
 from urllib.request import urlopen
 import io
 import json
 import jsonref
 import jsonschema
-
 import requests
-
 import zipfile
 import os
 import shortuuid
+from xml.dom import minidom
 
+
+import music21 as m21
+import verovio
+
+#
+# Django packages imports
+#
 from django.db import models
 from django.core.files import File
 from django.core.files.temp import NamedTemporaryFile
 from django.core.files.base import ContentFile, File
-
-from .utils import OverwriteStorage
-
 from django.contrib.auth.models import User
 from django.db.models import Count
 from django.urls import reverse
 #from django.urls import reverse_lazy
 from django.conf import settings
+# For tree models
+from mptt.models import MPTTModel, TreeForeignKey
 
+#
+# Local imports
+#
+from .utils import OverwriteStorage
+
+#
+# My music model
+#
 
 from lib.music.constants import *
 from lib.music.Score import *
 from lib.music.jsonld import JsonLD
-
-# Score model
 import lib.music.annotation as annot_mod
 import lib.music.source as source_mod
 import lib.music.opusmeta as opusmeta_mod
@@ -40,26 +54,6 @@ import lib.music.iiifutils as iiif_mod
 import lib.collabscore.parser as parser_mod
 from lib.collabscore.parser import CollabScoreParser, OmrScore
 from lib.collabscore.editions import Edition
-
-
-# For tree models
-from mptt.models import MPTTModel, TreeForeignKey
-
-import inspect
-from pprint import pprint
-import music21 as m21
-
-import verovio
-
-from xml.dom import minidom
-import itertools
-import uuid
-from hashlib import md5
-
-# Note : we no longer need sklearn nor scipy
-#from lib.neumautils.stats import symetrical_chi_square
-#from lib.neumautils.matrix_transform import matrix_transform
-#from lib.neumautils.kmedoids import cluster
 
 
 # Get an instance of a logger
@@ -134,13 +128,11 @@ class Corpus(models.Model):
 		return 'corpora/%s/%s' % (self.ref.replace(settings.NEUMA_ID_SEPARATOR, "/"), filename)
 	cover = models.FileField(upload_to=upload_path,null=True,storage=OverwriteStorage())
 
-
 	def __init__(self, *args, **kwargs):
 		super(Corpus, self).__init__(*args, **kwargs)
 
 		# Non persistent fields
 		self.children = []
-		self.matrix = {}
 
 	class Meta:
 		db_table = "Corpus"
@@ -276,12 +268,6 @@ class Corpus(models.Model):
 	def get_nb_children(self):
 		return Corpus.objects.filter(parent=self).count()
 
-	def get_nb_grammars(self):
-		return transcription.models.Grammar.objects.filter(corpus=self).count()
-	
-	def get_grammars(self):
-		return transcription.models.Grammar.objects.filter(corpus=self).order_by('name')
-
 	def get_nb_opera(self):
 		return Opus.objects.filter(corpus=self).count()
 
@@ -290,137 +276,6 @@ class Corpus(models.Model):
 
 	def get_opera(self):
 		return Opus.objects.filter(corpus=self).order_by('ref')
-
-	def generate_sim_matrix(self):
-		''' Compute distance matrix and store them in database in form
-			of triplets (opus,opus,distance) '''
-
-		all_pairs = itertools.combinations(self.get_opera(),2)
-		i,l = 0, len(list(all_pairs))
-
-		missing_score = {}
-		error_status = {}
-
-		for pair in itertools.combinations(self.get_opera(),2):
-			#print(str(i)+'/'+str(l),end="	")
-			if pair[0].ref != pair[1].ref:
-				for crit in SimMeasure.objects.order_by('code'):#does this work without @/map ?
-					self.matrix[crit] = {} # temp local storage
-
-#					print ("Process opus " + matrix.opus1.ref + " and opus " + matrix.opus2.ref)
-					try:
-						hist1 = pair[0].get_histograms(crit)#.values() 
-					except LookupError:
-						missing_score[pair[0].ref] = True
-						continue				
-					except Exception as e:
-						error_status[pair[0].ref] = True
-						continue										
-
-					try:
-						hist2 = pair[1].get_histograms(crit)#.values()
-					except LookupError:
-						missing_score[pair[1].ref] = True
-						continue				
-					except Exception as e:
-						error_status[pair[1].ref] = True
-						continue						  
-
-					# Make the two histogram have the same keys
-					# This solves rhythms "problem"
-					for a in set(hist1.keys()).union(set(hist2.keys())):
-						if a not in hist1:
-							hist1[a] = 0
-						if a not in hist2:
-							hist2[a] = 0
-			  
-
-					value = symetrical_chi_square(list(hist1.values()),list(hist2.values()))
-
-					# Note : we update or create value to avoid duplication of matrix in DB
-					if value != 'nan':
-						SimMatrix.objects.update_or_create(
-							sim_measure = crit,
-							opus1 = pair[0],
-							opus2 = pair[1],
-							value = value
-						)
-						SimMatrix.objects.update_or_create(
-							sim_measure = crit,
-							opus1 = pair[1],
-							opus2 = pair[0],
-							value = value
-						)
-			i+=1
-			#print("\r",end="")
-		print(str(l-len(error_status)-len(missing_score))+"/"+str(l)+" combination computed")
-		print("Missing score for "+str(len(missing_score))+" opera : ")
-		print(",".join(missing_score.keys()))
-		print("Error processing "+str(len(error_status))+" opera : ")
-		print(",".join(error_status.keys()))
-
-	def get_matrix_data(self, measure):
-		# measure = SimMeasure.objects.get(code=measure)
-		data = SimMatrix.objects.filter(sim_measure=measure,
-										opus1__corpus=self,
-										opus2__corpus=self)
-		return data
-
-	def has_matrix(self,measure):
-		return len(self.get_matrix_data(measure))>0
-
-	def generate_kmeans(self,measure_name,nb_class):
-
-		# Prevents crash if distances haven't been computed for this corpus
-		if not self.has_matrix(measure_name):
-			return []
-
-
-		try:
-			measure = SimMeasure.objects.get(code=measure_name)
-		except:
-			print('Invalid measure given "'+measure_name+'"')
-			return
-		
-		q1 = SimMatrix.objects.filter(sim_measure=measure,
-				opus1__corpus=self).values_list('opus1','opus2','value')
-		q2 = SimMatrix.objects.filter(sim_measure=measure,
-				opus2__corpus=self).values_list('opus1','opus2','value')
-
-		# x + (y-x)   :: note : this is missing on neighbor query !!!
-		all_distances = list(q1) + list(set(q1) - set(q2))
-
-		# Mapping distances to matrix
-		#distances , map_ids = matrix_transform(all_distances)
-
-		# Computing clusters / medoids
-		#clusters , medoids = cluster(distances,int(nb_class))
-
-
-		
-	#	pprint(clusters)
-	#	pprint(medoids)
-#		pprint(list(map(lambda x:map_ids[x],clusters)))
-	#	pprint(list(map(lambda x:map_ids[x],medoids)))
-
-
- #		SimMatrix.objects.update_or_create(
- #		   sim_measure = crit,
- #		   corpus = self,
- #		   value = value
- #	   )
- 
-		# ok FIXME : how should we store kmedoids / clusters in DB ?
-		# --> how to display them on corpus page ?
-
-
-		# Return n medoids
-		return list(map(lambda x:map_ids[x],medoids))
-
-	def get_medoids(self,measure,k):
-		x = list(map(lambda x:Opus.objects.filter(id=x)[0],self.generate_kmeans(measure,k)))
-		pprint(x)
-		return x
 
 	def export_as_zip(self, request, mode="json"):
 		''' Export a corpus, its children and all opuses in
@@ -786,12 +641,6 @@ class Opus(models.Model):
 				   "mei.xml": "mei",
 				   "summary.json": "summary"}
 
-	def statsDic(opus):
-		""" produces a dic with features"""
-		stats = StatsDesc(opus)
-		dico = stats.computeStats()
-		return dico
-
 	def upload_path(self, filename):
 		'''Set the path where opus-related files must be stored'''
 		return 'corpora/%s/%s' % (self.ref.replace(settings.NEUMA_ID_SEPARATOR, "/"), filename)
@@ -1024,35 +873,6 @@ class Opus(models.Model):
 	def __str__(self):			  # __unicode__ on Python 2
 		return self.title
 
-	def get_histograms(self,measure):
-		"""Compute the histogram feature from some measure
-		   and put it in the cache. Further requests of the same
-		   feature will find it in the cache"""
-		measure=str(measure)
-
-		if measure in self.histogram_cache and self.histogram_cache[measure]:
-			# The histogram already exists
-			return self.histogram_cache[measure]
-		else:
-			# We need to compute it
-			score = self.get_score()
-			voices = score.get_all_voices()
-			if not len(voices):
-				raise LookupError
-
-			voice = voices[0] # FIXME
-			if measure == 'pitches':
-				self.histogram_cache[measure] = voice.get_pitches_norm()
-			elif measure == 'degrees':
-				self.histogram_cache[measure] = voice.get_degrees_norm()
-			elif measure == 'intervals':
-				self.histogram_cache[measure] = voice.get_intervals_norm()
-			elif measure == 'rhythms':
-				self.histogram_cache[measure] = voice.get_rhythmicfigures_norm()
-			else:
-				print("WARNING : unknown measure " + str(measure))#raise UnknownSimMeasure(measure)
-
-			return self.histogram_cache[measure]
 
 	def delete_index(self):
 		#
@@ -1269,7 +1089,6 @@ class Opus(models.Model):
 				db_annot.save()
 
 		return score
-
 
 class OpusDiff(models.Model):
 	
@@ -1733,21 +1552,6 @@ class Annotation(models.Model):
 								analytic_concept =  annot_concept,
 								target=target, textual_body=wbody.value, 
 								motivation=webannot.motivation)
-
-class ScoreFeature():
-	''' 
-		A class to represent features in the JSON LD export
-	'''
-
-	feature_type = ""
-	feature_value = ""
-	
-	def __init__(self, ftype, fvalue):
-		self.feature_type = ftype
-		self.feature_value = fvalue
-		
-	def to_json(self):
-		return {"type": self.feature_type, "value": self.feature_value}
 
 # Get the Opus ref and extension from a file name
 def decompose_zip_name (fname):
