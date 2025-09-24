@@ -30,13 +30,13 @@ INDEX_ALL_ACTION = "index_all"
 STATS_ACTION="stats"
 TITLE_ACTION="title"
 CPTDIST="cptdist"
-KMEANS="kmeans"# -c corpus -k nb_class -t tag(id) -d descriptor -m metric
 QUALEVAL="qualeval"
 FIX_PERMISSIONS_ACTION="fix_permissions"
 CPT_GRAMMAR="cptgrammar"
 DESCRIPTORJSON_ACTION="descriptorjson"
 ANALYZE_CORPUS_ACTION = "analyze"
 ANALYZE_OPUS_ACTION = "analyze_opus"
+COPY_DMOS_ACTION = "copy_dmos"
 
 EXTRACT_FEATURES_ACTION = "extract_features"
 
@@ -50,7 +50,7 @@ class Command(BaseCommand):
 		parser.add_argument('-a', dest='action')
 		parser.add_argument('-o', dest='opus_ref')
 		parser.add_argument('-k', dest='class_number')
-		parser.add_argument('-t', dest='tag')
+		parser.add_argument('-t', dest='corpus_target')
 		parser.add_argument('-d', dest='descriptor')
 		parser.add_argument('-m', dest='metric')
 
@@ -138,37 +138,20 @@ class Command(BaseCommand):
 					Workflow.extract_features_from_corpus(corpus)
 				except corpus.DoesNotExist:
 					raise CommandError('corpus "%s" does not exist' % corpusref)
-			elif action == CPTDIST:
-				print("Generating SimMatrix ... this may takes a while")
-				try: 
-					corpus.generate_sim_matrix()
-				except Exception as e:
-					print ("Something wrong with corpus " + corpus.ref +  " : "
-						   + str(e))
-				print("done.")
-
-			elif action == KMEANS:
-				try:
-					class_number = options['class_number']
-				except:
-					class_number = 8
-					print("Note : nb_class not specified, will use default = 8")
-
-				try:
-					measure = options['measure']
-				except:
-					measure = 'pitches'
-					print("Note : measure not specified, will use default = pitches")
-
-				print("Computing Kmeans for corpus ... this may takes a while")
-				corpus.generate_kmeans(measure,class_number)
-
 			elif action == QUALEVAL:
 				"""Evaluate the quality of a corpus"""
 				opera = corpus.get_opera()
 				valid = total = 0
 				for opus in opera:
 					Workflow.quality_check(opus)
+				print("Done. ")
+			elif action == COPY_DMOS_ACTION:
+				"""Copy dmos files from one corpus to the other"""
+				try:
+					corpus_target = Corpus.objects.get(ref=options['corpus_target'])
+					Workflow.copy_dmos(corpus, corpus_target)
+				except Corpus.DoesNotExist:
+					raise CommandError('Corpus "%s" does not exist' % options['corpus_target'])
 				print("Done. ")
 
 			elif action == CPT_GRAMMAR:

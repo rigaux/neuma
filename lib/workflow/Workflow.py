@@ -8,7 +8,6 @@ import subprocess
 from django.core.files import File
 from django.core.files.base import ContentFile
 
-from neumautils.duration_tree import *
 
 import ast
 
@@ -20,6 +19,8 @@ from musicdiff.annotation import AnnScore
 from musicdiff.comparison import Comparison
 from musicdiff.visualization import Visualization
 
+
+
 import logging
 # Get an instance of a logger
 logger = logging.getLogger(__name__)
@@ -29,6 +30,8 @@ from xml.dom import minidom
 
 
 from lib.music.Score import *
+import lib.music.source as source_mod
+
 from lib.neumasearch.MusicSummary import MusicSummary
 from neumasearch.IndexWrapper import IndexWrapper
 
@@ -696,6 +699,44 @@ class Workflow:
 		#Workflow.index_corpus(upload.corpus, True)
 		return list_imported
 	
+	@staticmethod 
+	def copy_dmos(source, target):
+		print (f"Copy DMOS files from corpus '{source.ref}' to corpus '{target.ref}'")
+		for opus in source.get_opera():
+			print (f"Checking opus {opus.ref}")
+			# Is there a corresponding opus in the target corpus
+			opus_target_ref = target.ref + ":" + opus.local_ref()
+			try:
+				opus_target = Opus.objects.get(ref=opus_target_ref)
+			except Opus.DoesNotExist:
+				print (f"\tNo Opus {opus_target_ref} in the target Corpus. Ignored")
+				continue 
+			
+			try:
+				source = OpusSource.objects.get(opus=opus,ref=source_mod.OpusSource.IIIF_REF)
+			except OpusSource.DoesNotExist:
+				print (f"\tNo source IIIF for this Opus. Ignored")
+				continue 
+			
+			if source.source_file:
+				with open(source.source_file.path, "r") as f:
+					dmos_data = f.read()
+				print (f"\tFound a source IIIF with a DMOS file for this Opus.")
+				try:
+					source_target = OpusSource.objects.get(opus=opus_target,ref=source_mod.OpusSource.IIIF_REF)
+					source_target.source_file.save("dmos.json", ContentFile(dmos_data))
+					print (f"\tSUCCESS. DMOS file has been copied for opus {opus_target_ref}.")
+					# And now, parse...
+					opus_target.parse_dmos()
+				except OpusSource.DoesNotExist:
+					print (f"\tSource IIIF in target opus does not exist")
+					continue 
+			else:
+				print (f"\tNo DMOS data in this source. Ignored")
+				continue 
+				
+		return
+
 	@staticmethod 
 	def export_from_es(output_dir):
 		print ("Exporting all JSON files from Elastic search in dir %s" % output_dir)
