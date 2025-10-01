@@ -696,7 +696,9 @@ class Workflow:
 				print (f"Saving MEI file of {opus.ref} as reference MEI")
 				opus.copy_mei_as_source()
 		# Produce descriptors and index the corpus in ElasticSearch
-		#Workflow.index_corpus(upload.corpus, True)
+		print (f"\n\nINDEXING IMPORTED OPUSES")
+		for opus in list_imported:
+			Workflow.index_opus(opus)
 		return list_imported
 	
 	@staticmethod 
