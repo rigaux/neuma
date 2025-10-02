@@ -1034,13 +1034,13 @@ class Opus(models.Model):
 				raise Exception (f"Unable to find the IIIF source in Opus {self.id} ")
 
 			# Get the IIIF manifest for image infos
-			if not (iiif_source.iiif_manifest) or iiif_source.iiif_manifest == {}:
+			if 1: #not (iiif_source.iiif_manifest) or iiif_source.iiif_manifest == {}:
 				# Special case: we know the Gallica URL, from which
 				# we can get the manifest
-				print (f"Get the IIIF manifest from Gallica")
 				# Take the manifest
 				docid = iiif_mod.Proxy.decompose_gallica_ref(iiif_source.url)
 				req_url = "".join([iiif_mod.GALLICA_BASEURL, docid, '/manifest.json'])
+				print (f"Get the IIIF manifest at URL {req_url} from Gallica")
 				r = requests.get(req_url)
 				r.raise_for_status()
 				iiif_manifest = r.json()
@@ -1055,7 +1055,7 @@ class Opus(models.Model):
 			print (f"Got the IIIF manifest. Nb canvases {iiif_doc.nb_canvases}")
 			images = iiif_doc.get_images()
 			for img in images:
-				#print (f"Image {img.url}. Width {img.width}")				
+				print (f"Image {img.url}. Width {img.width} Height {img.height}")				
 				omr_score.manifest.add_image_info (images) 
 
 			iiif_source.manifest.id = iiif_source.full_ref()
