@@ -1,0 +1,93 @@
+{% extends "layout_quality.html" %} 
+{% load i18n %} 
+{% load extras %} 
+{% load guardian_tags %}
+
+{% load crispy_forms_tags %}
+
+{% block content %}
+
+<!-- Load the user/object permissions for the corpus -->
+{% get_obj_perms request.user for opus.corpus as "user_corpus_perms" %}
+
+<script type="text/javascript" src="/static/js/chart.min.js"></script>
+
+<script type="text/javascript">
+/* remove access header and replace by alternative header */
+$(function() {
+  //$('.page-header .banner.access').remove();
+  $("#alternate-banner").appendTo(".page-header");
+});
+</script>
+{% include "alternate-banner.html" %}
+
+
+<h1>Source {{source.ref}} de l'opus {{opus.title}}
+	{% if "change_corpus" in user_corpus_perms %}
+	  <a href="{% url 'admin:manager_opussource_change' source.id %}">
+	                  (Edit)
+	          </a> 
+	 {% endif %}  
+
+</h1>
+
+<dl class="description">
+	<dt>{% trans "Corpus" %}</dt>
+	<dd>
+		<a href="{% url 'home:corpus' opus.corpus.ref %}">{{opus.corpus.title}}
+	</dd>
+	<dt>{% trans "Opus title" %}</a></dt>
+	<dd><a href="{% url 'home:opus' opus.ref %}">{{opus.title}}</a></dd>  
+</dl>
+  
+    <h4>{% trans "Détail de la source"%}</h4>
+    
+	<dl class="description">
+		<dt>{% trans "Référence" %}</dt>
+		<dd>{{source.ref}}</dd>
+		{% if source.url %}      
+ 			<dt>{% trans "URL" %}</dt>
+			<dd><a target="_blank" href="{{source.url}}">{{source.url}}</a></dd>
+		{% endif %} 
+  {% if source.ref == 'iiif' %}
+  <dt>{% trans "IIIF Manifest" %}</dt>
+  <dd>  <dd><a target="_blank" href="{{source.iiif_manifest.url}}">Show</a></dd>
+</dd>
+  <dt>{% trans "View" %}</dt>
+  <dd>  <a href="{% url 'home:iiif_viewer' source.id 'uv'  %}" target=”_blank”>
+                     with Universal viewer </a></dd>
+	<dt>{% trans "View" %}</dt>
+	<dd>  <a href="{% url 'home:iiif_viewer' source.id 'mirador'  %}" target=”_blank”>
+					                    with Mirador</a></dd>
+	<dt>{% trans "Metadata" %}</dt>
+	<dd>{{source.metadata}}</dd>
+{% endif %}           
+	</dl>
+
+	 <h4>{% trans "Fichiers"%}</h4>
+	 <ul>
+	 {% if source.source_file %}      
+	 	<li>
+	 	<a target="_blank" href="{{source.source_file.url}}">Download attached file {{source.source_file}}</a>
+	 </li>
+	 {% endif %} 
+	 <li><a target="_blank" href="{{source.manifest.url}}">Show the source manifest</a></li>
+	   {% if source.ref == 'iiif' %}
+	<li><a target="_blank" href="{{source.iiif_manifest.url}}">Show the IIIF manifest</a></li>
+	   {% endif %}
+    </ul>
+
+	 
+	 {% if source.ref == 'iiif' %}
+		<h4>{% trans "Opérations sur la source IIIF"%}</h4>
+		<ul>
+		  {% for op in source.operations  %}
+		  <li>
+		    Type: {{op.name}},{{op.target}}, params: {{op.params}}
+		  </li>
+		  {% endfor %}
+ 		</ul>
+	{% endif %}  
+
+<!-- fin div .description -->
+{% endblock content %}

@@ -380,7 +380,39 @@ class OpusView(NeumaView):
 			context["source_form"] = form
 			return  self.render_to_response(context)
 
+class SourceView(NeumaView):
+	
+	""" 
+		Any information displayed is put in the context array by this function 
+	"""
+	def get_context_data(self, **kwargs):
+		# Get the opus
+		opus_ref = self.kwargs['opus_ref']
+		opus = Opus.objects.get(ref=opus_ref)
+		# Get the source
+		source_ref = self.kwargs['source_ref']
+		try:
+			source = OpusSource.objects.get(opus=opus, ref=source_ref)
+		except OpusSource.DoesNotExist:
+			raise Http404
 
+		# Initialize context
+		context = super(SourceView, self).get_context_data(**kwargs)
+		context["opus"] = opus
+		context["source"] = source
+		
+		# Set the HTML page title to the corpus title		
+		context["page_title"] = f"Source {source.ref} opus {opus.title}"
+
+		# By default, the tab shown is the first one (with the score)
+		context['tab'] = 0
+
+		return context
+
+	def get(self, request, *args, **kwargs):
+		context = self.get_context_data(**kwargs)
+		
+		return self.render_to_response(context)
 
 class OpusEditView(NeumaView):
 	""" Create and edit an Opus"""

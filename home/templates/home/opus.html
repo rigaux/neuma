@@ -123,6 +123,8 @@ var tabNames = [
        {% for source in opus.opussource_set.all %}
          <li>
           <b>Source {{source.ref}}</b>. 
+		  <a href="{% url 'home:source' opus.ref source.ref %}" >
+		               Details | 
             {% if source.url %}      
                 <a target="_blank" href="{{source.url}}">Link to the source</a> |
             {% endif %} 
@@ -131,15 +133,16 @@ var tabNames = [
           {% endif %}           
           {% if source.ref == 'iiif' %}
               | <a href="{% url 'home:iiif_viewer' source.id 'uv'  %}" target=”_blank”>
-                           View with Universal viewer 
+                           View with Universal viewer </a>
               | <a href="{% url 'home:iiif_viewer' source.id 'mirador'  %}" target=”_blank”>
-                           View with Mirador
+                           View with Mirador </a>
         {% endif %}           
          {% if "change_corpus" in user_corpus_perms %}
            | <a href="{% url 'admin:manager_opussource_change' source.id %}">
                            Edit
                    </a> 
                {% endif %}  
+			
          </li>
       {% endfor %}
       </ul>
