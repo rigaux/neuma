@@ -400,6 +400,7 @@ class SourceView(NeumaView):
 		context = super(SourceView, self).get_context_data(**kwargs)
 		context["opus"] = opus
 		context["source"] = source
+		context["stats_editions"] = source.stats_editions()
 		
 		# Set the HTML page title to the corpus title		
 		context["page_title"] = f"Source {source.ref} opus {opus.title}"

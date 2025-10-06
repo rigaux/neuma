@@ -38,11 +38,7 @@ $(function() {
 	</dd>
 	<dt>{% trans "Opus title" %}</a></dt>
 	<dd><a href="{% url 'home:opus' opus.ref %}">{{opus.title}}</a></dd>  
-</dl>
-  
-    <h4>{% trans "Détail de la source"%}</h4>
-    
-	<dl class="description">
+
 		<dt>{% trans "Référence" %}</dt>
 		<dd>{{source.ref}}</dd>
 		{% if source.url %}      
@@ -59,12 +55,18 @@ $(function() {
 	<dt>{% trans "View" %}</dt>
 	<dd>  <a href="{% url 'home:iiif_viewer' source.id 'mirador'  %}" target=”_blank”>
 					                    with Mirador</a></dd>
-	<dt>{% trans "Metadata" %}</dt>
-	<dd>{{source.metadata}}</dd>
 {% endif %}           
 	</dl>
 
-	 <h4>{% trans "Fichiers"%}</h4>
+
+	<h3>{% trans "Metadata"%}</h3>
+	<ul>
+	  {% for key, val in source.metadata.items %}
+	     <li><b>{{key}}</b> : {{val}}</li>
+	{% endfor %}
+  </ul>
+
+  	 <h4>{% trans "Fichiers"%}</h4>
 	 <ul>
 	 {% if source.source_file %}      
 	 	<li>
@@ -79,7 +81,20 @@ $(function() {
 
 	 
 	 {% if source.ref == 'iiif' %}
-		<h4>{% trans "Opérations sur la source IIIF"%}</h4>
+		<h3>{% trans "Opérations sur la source IIIF"%}</h3>
+		
+		<h4>{% trans "Stats"%}</h4>
+
+		<table>
+			<tr><th>Edition type</th><th>Nb</th></tr>
+		  {% for key, val in source.stats_editions.items  %}
+		  <tr>
+		    <td>{{key}}</td><td>{{val}}</td>
+		  </tr>
+		  {% endfor %}
+		</table>
+		
+		<h4>{% trans "Details"%}</h4>
 		<ul>
 		  {% for op in source.operations  %}
 		  <li>

@@ -1325,6 +1325,17 @@ class OpusSource (models.Model):
 
 		return tmp_src
 
+	def stats_editions(self):
+		# Group editions by type and return a dict with 
+		# stats on each edition type
+		stats = {}
+		for op in self.operations:
+			if op['name'] in stats.keys():
+				stats[op['name']] += 1
+			else:
+				stats[op['name']] = 1
+		return stats
+		
 class Bookmark(models.Model):
 	'''Record accesses from user to opera'''
 	opus = models.ForeignKey(Opus,on_delete=models.CASCADE)
