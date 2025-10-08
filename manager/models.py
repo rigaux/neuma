@@ -622,6 +622,26 @@ class Corpus(models.Model):
 				print ("Opus ref " + opus_ref + " imported in corpus " + corpus.ref+ "\n")
 		return list_imported
 	
+	
+	def stats_editions(self):
+		# Group all opus editions by type and return a dict with 
+		# stats on each edition type
+		stats_corpus = {"nb_opera": self.get_nb_opera(), "nb_annotated": 0}
+		for opus in self.get_opera():
+			iiif_source = opus.get_source(source_mod.OpusSource.IIIF_REF)
+			if iiif_source is not None:
+				stats_opus = iiif_source.stats_editions()
+				if not stats_opus:
+					continue
+				# This opus has been annotated
+				stats_corpus["nb_annotated"] += 1
+				for edition_name in stats_opus.keys():
+					if edition_name in stats_corpus.keys():
+						stats_corpus[edition_name] += 1
+					else:
+						stats_corpus[edition_name] = 1
+		return stats_corpus
+
 ####################################################
 
 class Opus(models.Model):
@@ -714,6 +734,15 @@ class Opus(models.Model):
 			print (f"Error when adding source {source_dict['ref']} to opus {self.ref}: {e}")
 		source.save()
 		return source
+
+	def get_source (self, source_ref):
+		"""Get  a source from the opus"""
+		
+		# Search if exists
+		try:
+			return OpusSource.objects.get(opus=self,ref=source_ref)
+		except OpusSource.DoesNotExist as e:
+			return None
 
 	def copy_mei_as_source(self):
 		# Save the MEI file as a reference source 

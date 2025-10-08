@@ -216,56 +216,6 @@ var tabNames = [{"tabId": "tab1", "divId": "subcorpus"},
 
 <div class="clearer">&nbsp;</div>
 
-<div id="stats" style="display: none">
-	<h1>Statistics</h1>
-	<ul>
-		{% for cell in corpus.get_matrix_data %}
-		<li>Opus 1 = {{cell.opus1.ref}} Opus 2 = {{cell.opus2.ref}} Value
-			= {{cell.value}} {% endfor %}
-	</ul>
-
-
-
-	<div>
-		<table class="corpus-medoids-selectbox">
-			<thead>
-				<td></td>{% for k in class_number_range %}
-				<td>{{k}}</td>{% endfor %}
-			</thead>
-			<tbody>
-				{% for measure in measures %}
-				<tr>
-					<td>{{measure}}</td> 
-					{% for k in class_number_range %}
-					<td><a href='{% url '
-						home:corpus' corpus.ref %}?sim_measure={{measure}}&nb_class={{k}}'>go</a></td>
-					{% endfor %}
-				</tr>
-				{% endfor %}
-			</tbody>
-		</table>
-		<br />
-	</div>
-<!-- 
-	<h4>Medoids ({{measure}}, {{nbclass}} medoids)</h4>
-	<p></p>
-
-	<div style="clear: both; width: 100%; display: inline-block">
-		<span style="width: 49; display: inline-block;"> 
-		{% autoescape	off %} 
-		{% for medoid_voice in medoids %}
-			<div style="width: 49%; display: inline-block">
-				<span style="font-weight: bold; width: 100%; clear: both">
-					{{medoid_voice.0}} </span> 
-					medoid_voice.1|print_histogram
-			</div> 
-			{% endfor %} 
-			{% endautoescape %}
-		</span>
-	</div>
-	 -->
-</div>
-
 <!--   Tab for management functions -->
 <div id="manage" style="display: none">
   <h1>Manage corpus</h1>
@@ -348,13 +298,26 @@ var tabNames = [{"tabId": "tab1", "divId": "subcorpus"},
     	<p>&copy; {{corpus.copyright}}</p>
        {% endif %} 
 
-<h2>Stats</h2>
+<h2>Statistics</h2>
+
+
+<h4>General</h4>
 <dl class="description">
 
 	<dt>{% trans "Nb opera" %}</dt>
 	<dd>{{ nb_opera }}</dd>
 </dl>
 
+<h4>Editions</h4>
+
+	<table>
+		<tr><th>Edition type</th><th>Nb</th></tr>
+	  {% for key, val in stats_editions.items  %}
+	  <tr>
+	    <td>{{key}}</td><td>{{val}}</td>
+	  </tr>
+	  {% endfor %}
+	</table>
 </div>
 
 <script type="text/javascript">

@@ -111,7 +111,7 @@ class CorpusView(NeumaView):
 		context['current_tab'] = current_tab
 		context['neuma_url'] = settings.NEUMA_URL
 		context['class_number_range'] = range(5,11)
-
+		context["stats_editions"] = corpus.stats_editions()
 		# Add upload files
 		context['uploads'] = corpus.upload_set.all()
 
