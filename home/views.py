@@ -219,7 +219,7 @@ class OpusView(NeumaView):
 
 		# Set the HTML page title to the corpus title		
 		context["page_title"] = opus.title
-
+		context["my_url"] =  self.request.build_absolute_uri("/")[:-1]
 		# Record the opus as the contextual one
 		self.search_context.ref = opus.ref
 		self.search_context.type = settings.OPUS_TYPE

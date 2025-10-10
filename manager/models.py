@@ -1286,6 +1286,9 @@ class OpusSource (models.Model):
 			source_dict.has_iiif_manifest =  True	
 		return source_dict
 
+	def file_rest_url (self):
+		return reverse ('rest:handle_source_file_request', args=[self.opus.ref, self.ref])
+
 	def full_ref(self):
 		return self.opus.ref + '_sources/' + self.ref 
 	

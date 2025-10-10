@@ -137,7 +137,11 @@ var tabNames = [
               | <a href="{% url 'home:iiif_viewer' source.id 'mirador'  %}" target=”_blank”>
                            View with Mirador </a>
         {% endif %}           
-         {% if "change_corpus" in user_corpus_perms %}
+		{% if source.ref == 'sync' %}
+		  | <a href="https://react-iiif-vault-demo.netlify.app/#manifest={{my_url}}{{source.file_rest_url|urlencode}}" target=”_blank”>
+		            Playing the IIIF Synchronisation</a> 
+			        {% endif %}           
+        {% if "change_corpus" in user_corpus_perms %}
            | <a href="{% url 'admin:manager_opussource_change' source.id %}">
                            Edit
                    </a> 
