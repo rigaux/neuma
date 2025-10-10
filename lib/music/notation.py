@@ -280,6 +280,9 @@ class Clef:
 		elif clef_code == self.NO_CLEF:
 			self.m21_clef = m21.clef.NoClef()
 		self.m21_clef.id = self.id
+		#self.m21_clef.style = m21.style.Style()
+		#self.m21_clef.style.color = "red"
+		#self.m21_clef.style.units = self.id
 		Clef.counter += 1
 	
 	def sign(self):

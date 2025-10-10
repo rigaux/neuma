@@ -637,7 +637,7 @@ class Corpus(models.Model):
 				stats_corpus["nb_annotated"] += 1
 				for edition_name in stats_opus.keys():
 					if edition_name in stats_corpus.keys():
-						stats_corpus[edition_name] += 1
+						stats_corpus[edition_name] += stats_opus[edition_name]
 					else:
 						stats_corpus[edition_name] = 1
 		return stats_corpus
@@ -1084,8 +1084,8 @@ class Opus(models.Model):
 			print (f"Got the IIIF manifest. Nb canvases {iiif_doc.nb_canvases}")
 			images = iiif_doc.get_images()
 			for img in images:
-				#print (f"Image {img.url}. Width {img.width} Height {img.height}")				
-				omr_score.manifest.add_image_info (images) 
+				print (f"Image {img.url}. Width {img.width} Height {img.height}")				
+			omr_score.manifest.add_image_info (images) 
 
 			iiif_source.manifest.id = iiif_source.full_ref()
 			print (f"Save the manifest with id {iiif_source.manifest.id}")

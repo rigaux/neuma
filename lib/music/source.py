@@ -114,12 +114,18 @@ class Manifest:
 	def add_image_info(self, images):
 		# Enrich the manifest with info coming from IIIF
 		for page in self.pages:
-			# print (f"Searching for page {page.url}")
+			#print (f"Searching for the image of page {page.url}")
+			image_found = False
 			for img in images:
 				if page.url == img.url:
+					image_found = True
 					page.width = img.width
 					page.height = img.height
-					
+			if not image_found:
+				print (f"ERROR in Manifest::add_image_info. Unable to find image for page URL {page.url}")	
+			#else:
+			#	print (f"OK image for page URL {page.url} found")	
+				
 	def get_first_music_page(self):	
 		"""
 		   Determine the first page of the source
