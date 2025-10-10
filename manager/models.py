@@ -1229,7 +1229,8 @@ class SourceType (models.Model):
 	STYPE_MXML = "MusicXML"
 	STYPE_JPEG = "JPEG"
 	STYPE_PDF = "PDF"
-	STYPE_MPEG = "M"
+	STYPE_MPEG = "SYNC"
+	STYPE_MPEG = "MPEG"
 		
 	class Meta:
 		db_table = "SourceType"	

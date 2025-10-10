@@ -20,6 +20,7 @@ class OpusSource:
 	MEI_REF = "ref_mei"
 	AUDIO_REF = "audio"
 	IIIF_REF = "iiif"
+	SYNC_REF = "sync"
 	MIDI_REF = "midi"
 	MUSICXML_REF = "musicxml"
 	TMP_REF = "tmp"
