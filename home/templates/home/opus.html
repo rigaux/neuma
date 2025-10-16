@@ -138,7 +138,7 @@ var tabNames = [
                            View with Mirador </a>
         {% endif %}           
 		{% if source.ref == 'sync' %}
-		  | <a href="https://react-iiif-vault-demo.netlify.app/#manifest={{my_url}}{{source.file_rest_url|urlencode}}" target=”_blank”>
+		  | <a href="https://theseusviewer.org/?iiif-content={{my_url}}{{source.file_rest_url|urlencode}}" target=”_blank”>
 		            Playing the IIIF Synchronisation</a> 
 			        {% endif %}           
         {% if "change_corpus" in user_corpus_perms %}

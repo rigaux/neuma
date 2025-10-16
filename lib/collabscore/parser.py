@@ -295,7 +295,8 @@ class OmrScore:
 						if current_key_signature is None or not headers.signature.equals(current_key_signature):
 							self.ks_per_measure[current_measure_no] = headers.signature
 							current_key_signature = headers.signature
-					fix_editions += headers.fix_editions
+					# Disabled, do better for transposing instruments
+					#fix_editions += headers.fix_editions
 					# Check time signatures
 					headers = Headers(Headers.TIMESIGN_TYPE, current_measure_no, mnf_system, measure.headers)
 					measure.headers  = headers.check_consistency ()
