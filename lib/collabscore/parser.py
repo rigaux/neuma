@@ -424,6 +424,7 @@ class OmrScore:
 		replacements = {Edition.REPLACE_CLEF: {}, 
 					    Edition.REPLACE_KEYSIGN: {}, 
 					    Edition.REPLACE_TIMESIGN: {},
+					    Edition.COMMENT_ELEMENT: {},
 					    Edition.REPLACE_MUSIC_ELEMENT: {}}
 		# Dictionary of objects to remove
 		removals = {}
