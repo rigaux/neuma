@@ -201,6 +201,7 @@ MAX_ITEMS_IN_RESULT = 1000
 # Nb of items in a page
 ITEMS_PER_PAGE = 20
 
+NEUMA_BASE_URL = 'http://neuma.huma-num.fr/'
 NEUMA_URL = 'http://neuma.huma-num.fr/rest'
 #NEUMA_URL = 'http://neuma-dev.huma-num.fr/rest'
 NEUMA_ID_SEPARATOR = ":"

@@ -137,6 +137,7 @@ class Manifest:
 			self.first_music_page = int(page_ref[1:])
 			break
 		self.nb_empty_pages = self.first_music_page - 1
+		return self.first_music_page
 
 	def clean_pages_url(self):	
 		"""

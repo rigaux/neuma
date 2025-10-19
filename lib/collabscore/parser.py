@@ -1665,7 +1665,7 @@ class Duration:
 			self.numer, self.denom = rational_fraction.numerator, rational_fraction.denominator
 
 	def overwrite (self, edition):
-		#print (f"Received edition {edition}")
+		print (f"Received edition {edition}")
 		if "duration" in edition:
 			self.note_type = edition['duration']
 		if "dots" in edition:

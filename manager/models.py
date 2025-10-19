@@ -13,7 +13,7 @@ import zipfile
 import os
 import shortuuid
 from xml.dom import minidom
-
+from natsort import natsorted
 
 import music21 as m21
 import verovio
@@ -49,6 +49,7 @@ import lib.music.annotation as annot_mod
 import lib.music.source as source_mod
 import lib.music.opusmeta as opusmeta_mod
 import lib.music.iiifutils as iiif_mod
+import lib.iiif.IIIFProxy as iiif_proxy
 
 # DMOS parser
 import lib.collabscore.parser as parser_mod
@@ -754,6 +755,81 @@ class Opus(models.Model):
 			source = self.add_source (source_dict)
 			source.source_file.save("ref_mei.xml", File(self.mei))
 
+	def create_sync_source(self, iiif_source, audio_source):
+		print (f"Create synchronization source for opus {self.ref} between source {iiif_source.ref} and source {audio_source.ref}")
+		base_url =settings.NEUMA_BASE_URL
+		opus_url = base_url + self.ref
+		
+		#image_url = "https://gallica.bnf.fr/iiif/ark:/12148/bpt6k11620688/f2/full/full/0/native.jpg"
+		#audio_url =  "https://openapi.bnf.fr/iiif/audio/v3/ark:/12148/bpt6k88448791/3.audio"
+		duration = 257
+		
+		# Create the combined manifest
+		manifest = iiif_proxy.Manifest(opus_url, self.title)
+		
+		# One single canvas 
+		canvas = iiif_proxy.Canvas (opus_url+"/canvas", "Combined image-audio canvas")
+
+		# We create the content list
+		content_list_id = opus_url+"/list-media"
+		content_list = iiif_proxy.AnnotationList(content_list_id,"List of source media (audio and images)")
+		
+		# The audio file is in the URL of the source. At some point
+		# it will be more consistent to use this URL to point to
+		# the audio manifest, and the file URL will have to be extracted
+		content_list.add_audio_item (f"{opus_url}/audio", canvas, audio_source.url, "audio/mp3", duration)
+
+		# Get the image URL from the IIIF image manifest
+		if not (iiif_source.iiif_manifest) or iiif_source.iiif_manifest == {}:
+			print (f"Missing manifest in the IIIF iage source. Synchronization aborted")
+			return
+
+		print (f"Take the image manifest from the source")	
+		with open(iiif_source.iiif_manifest.path, "r") as f:
+			iiif_doc = iiif_mod.Document(json.load(f))
+		# We should now the first page of music
+		if "first_page_of_music" in iiif_source.metadata:
+			first_page_of_music = iiif_source.metadata["first_page_of_music"]
+		else:
+			first_page_of_music = 1
+		images = iiif_doc.get_images()
+		i_img= 0
+		for img in images:
+			print (f"Image {img.native}. Width {img.width} Height {img.height}")
+			i_img += 1
+			if i_img >= first_page_of_music:
+				content_list.add_image_item (f"{opus_url}/img{i_img}", canvas, img.native, "application/jpg", img.height, img.width)
+				break
+		canvas.add_content_list (content_list)
+
+		# Next we add annotations to link 
+		synchro_list = iiif_proxy.AnnotationList(opus_url+"/synchro","Synchronisation list")
+
+		annotations_images = Annotation.for_opus_and_concept(self,
+					IREGION_MEASURE_CONCEPT)
+		annotations_audio = Annotation.for_opus_and_concept(self,
+					TFRAME_MEASURE_CONCEPT)
+		# Both are dictionary indexed by the measure id
+		sorted_dict = dict(natsorted(annotations_images.items())) 
+		for measure_ref in list(sorted_dict.keys()):
+			if measure_ref in annotations_audio:
+				annot_image = annotations_images[measure_ref]
+				annot_audio = annotations_audio[measure_ref]
+				time_frame = annot_audio.body.selector_value
+				polygon = annot_image.body.selector_value.replace(")("," ").replace("P","").replace("((","").replace("))","")
+				#print (f"Found both annotations for measure {measure_ref}. Region {polygon} Time frame {time_frame}")
+				synchro_list.add_synchro(canvas, opus_url + "/"+measure_ref, content_list_id, polygon, time_frame)
+
+		manifest.add_canvas (canvas)
+		
+		manifest_fname = "/tmp/combined_manifest.json"
+		with open(manifest_fname, "w") as manifest_file:
+				manifest_file.write(manifest.json (2))
+		self.create_source_with_file(source_mod.OpusSource.SYNC_REF, 
+								SourceType.STYPE_IIIF, "", 
+								manifest_fname, "combined_manfest.json", "rb")
+
+
 	def load_from_dict(self, corpus, dict_opus, files={}, opus_url=""):
 		"""Load content from a dictionary.
 
@@ -1088,8 +1164,10 @@ class Opus(models.Model):
 			omr_score.manifest.add_image_info (images) 
 
 			iiif_source.manifest.id = iiif_source.full_ref()
-			print (f"Save the manifest with id {iiif_source.manifest.id}")
+			first_page_of_music = omr_score.manifest.get_first_music_page()
+			print (f"Save the manifest with id {iiif_source.manifest.id}. First page of music {first_page_of_music}")
 			iiif_source.manifest = ContentFile(json.dumps(omr_score.manifest.to_json()), name="score_manifest.json")
+			iiif_source.metadata["first_page_of_music"] = omr_score.manifest.get_first_music_page()
 			iiif_source.save()
 		
 			# Now we know the full url of the MEI document
@@ -1229,7 +1307,7 @@ class SourceType (models.Model):
 	STYPE_MXML = "MusicXML"
 	STYPE_JPEG = "JPEG"
 	STYPE_PDF = "PDF"
-	STYPE_MPEG = "SYNC"
+	STYPE_IIIF = "IIIF"
 	STYPE_MPEG = "MPEG"
 		
 	class Meta:
@@ -1596,6 +1674,17 @@ class Annotation(models.Model):
 								analytic_concept =  annot_concept,
 								target=target, textual_body=wbody.value, 
 								motivation=webannot.motivation)
+
+	@staticmethod
+	def for_opus_and_concept(opus, concept_code):
+		db_annotations = Annotation.objects.filter(
+					opus=opus, analytic_concept__code=concept_code
+				)
+		annotations = {}
+		for annotation in db_annotations:
+			annotations[annotation.ref]= annotation
+		return annotations
+
 
 # Get the Opus ref and extension from a file name
 def decompose_zip_name (fname):

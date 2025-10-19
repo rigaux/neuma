@@ -784,7 +784,6 @@ class SourceFile (APIView):
 		# Special case DMOS: parse the file and create XML files
 		if source_ref==source_mod.OpusSource.IIIF_REF:
 			opus, object_type = get_object_from_neuma_ref(full_neuma_ref)
-			
 			print ("Parsing DMOS in asynchronous mode")
 			parse_dmos.delay(opus.ref)
 			
@@ -829,9 +828,16 @@ class SourceFile (APIView):
 					if db_annot.body is not None:
 						db_annot.body.save()
 					db_annot.save()
-
 			
-			print (f"Parsing synchronization data between source {source_ref} and opus {full_neuma_ref}")
+			## Allright, now everything shoud be ready to create the SYNC
+			# source between the image and the audio
+			try:
+				opus, object_type = get_object_from_neuma_ref(full_neuma_ref)
+				iiif_source = OpusSource.objects.get(opus=opus,ref=source_mod.OpusSource.IIIF_REF)
+				audio_source = OpusSource.objects.get(opus=opus,ref=source_mod.OpusSource.AUDIO_REF)
+				opus.create_sync_source(iiif_source, audio_source)
+			except OpusSource.DoesNotExist:
+				print (f"No way to create a synchronization, one of the expected sources is missing")
 
 		serializer = MessageSerializer({"message": "Source file uploaded"})
 		return JSONResponse(serializer.data)	

@@ -165,11 +165,11 @@ def main(argv=None):
 		synchro_list = iiif_proxy.AnnotationList(source_url+"/synchro","Synchronisation list")
 
 		polygon = "1221,1589 2151,1589 1221,2266 2161,2266"
-		time_frame = "0,4.852608"
+		time_frame = "t=0,4.852608"
 		synchro_list.add_synchro(canvas, source_url + "/m1", content_list_id, polygon, time_frame)
 
 		polygon = "2151,1589 2766,1589 2161,2266 2775,2266"
-		time_frame = "4.852608,8.707483"
+		time_frame = "t=4.852608,8.707483"
 		synchro_list.add_synchro(canvas, source_url + "/m2", content_list_id, polygon, time_frame)
 
 		#canvas.add_annotation_list (synchro_list)

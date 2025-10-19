@@ -96,6 +96,7 @@ class Image:
 		res =  img_dict["resource"]
 		self.format = res["format"]
 		self.url = res["service"]["@id"]
+		self.native = res["@id"]
 		self.width = res["width"]
 		self.height = res["height"]
 		

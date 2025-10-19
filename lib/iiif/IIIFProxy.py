@@ -73,7 +73,7 @@ class AnnotationList():
 	def add_synchro (self, canvas, uri, content_list_id, polygon, time_frame):
 		"""
 		    Polygon must be a list of points of the form 1221,1589 2151,1589 1221,2266 2161,2266
-		    Time frame is a pair of floats, such as 0,4.852608
+		    Time frame is a pair of floats, such as t=0,4.852608
 		"""
 		body = TextualBody (uri, "resource")
 		
@@ -83,7 +83,7 @@ class AnnotationList():
 		
 		svg_pattern = f"<svg xmlns=\"http://www.w3.org/2000/svg\"><polygon points=\"{polygon}\"/></svg>"
 
-		audio_selector = FragmentSelector(FragmentSelector.AUDIO_SELECTOR, f"t={time_frame}")
+		audio_selector = FragmentSelector(FragmentSelector.AUDIO_SELECTOR, time_frame)
 		image_selector = FragmentSelector(FragmentSelector.IMAGE_SELECTOR, svg_pattern)
 		resource_selector = SpecificResource (content_list_id, [image_selector, audio_selector])
 	
