@@ -139,10 +139,41 @@ def main(argv=None):
 		fh.close()
 		print(f"Manifest has been written to {output_file}")
 	else:
-		print ("TESTING THE IIIF API")
-		neuma = "http://neuma.huma-num.fr"
-		manifest = iiif_proxy.IIIF3Manifest(neuma, "TEST API")
-		canvas = iiif_proxy.Canvas (neuma + "/1", "Premier canvas")
+		#print ("TESTING THE IIIF API")
+		
+		#source_url = f"https://neuma.huma-num.fr/home/opus/all:collabscore:saintsaens-audio:asciano"
+		source_url = "http://test.fr/asciano"
+		image_url = "https://gallica.bnf.fr/iiif/ark:/12148/bpt6k11620688/f2/full/full/0/native.jpg"
+		audio_url =  "https://openapi.bnf.fr/iiif/audio/v3/ark:/12148/bpt6k88448791/3.audio"
+		duration = 257
+		height = 6174
+		width = 4564
+		manifest = iiif_proxy.Manifest(source_url, "Asciano")
+		
+		# One single canvas 
+		canvas = iiif_proxy.Canvas (source_url+"/canvas", "Combined image-audio canvas")
+
+		# We create the content list
+		content_list_id = source_url+"/list-media"
+		content_list = iiif_proxy.AnnotationList(content_list_id,"List of source media")
+		# The annotation  list contains the audio and all the pages
+		content_list.add_audio_item (f"{source_url}/audio", canvas, audio_url, "audio/mp3", duration)
+		content_list.add_image_item (f"{source_url}/image", canvas, image_url, "application/jpg", height, width)
+		canvas.add_content_list (content_list)
+
+		# Next we add annotations to link 
+		synchro_list = iiif_proxy.AnnotationList(source_url+"/synchro","Synchronisation list")
+
+		polygon = "1221,1589 2151,1589 1221,2266 2161,2266"
+		time_frame = "0,4.852608"
+		synchro_list.add_synchro(canvas, source_url + "/m1", content_list_id, polygon, time_frame)
+
+		polygon = "2151,1589 2766,1589 2161,2266 2775,2266"
+		time_frame = "4.852608,8.707483"
+		synchro_list.add_synchro(canvas, source_url + "/m2", content_list_id, polygon, time_frame)
+
+		#canvas.add_annotation_list (synchro_list)
+
 		manifest.add_canvas (canvas)
 		print (manifest.json (2))
 		
