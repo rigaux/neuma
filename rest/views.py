@@ -836,8 +836,10 @@ class SourceFile (APIView):
 				iiif_source = OpusSource.objects.get(opus=opus,ref=source_mod.OpusSource.IIIF_REF)
 				audio_source = OpusSource.objects.get(opus=opus,ref=source_mod.OpusSource.AUDIO_REF)
 				opus.create_sync_source(iiif_source, audio_source)
-			except OpusSource.DoesNotExist:
-				print (f"No way to create a synchronization, one of the expected sources is missing")
+			except Exception as ex:
+				serializer = MessageSerializer({"status":"ko", 
+				   "message": f"Error when creating a sync source for opus {full_neuma_ref}: {ex}"})
+				return JSONResponse(serializer.data)	
 
 		serializer = MessageSerializer({"message": "Source file uploaded"})
 		return JSONResponse(serializer.data)	

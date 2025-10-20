@@ -763,12 +763,17 @@ class Opus(models.Model):
 		#image_url = "https://gallica.bnf.fr/iiif/ark:/12148/bpt6k11620688/f2/full/full/0/native.jpg"
 		#audio_url =  "https://openapi.bnf.fr/iiif/audio/v3/ark:/12148/bpt6k88448791/3.audio"
 		duration = 257
-		
+		height = 6174
+		width = 4564
+
 		# Create the combined manifest
 		manifest = iiif_proxy.Manifest(opus_url, self.title)
 		
 		# One single canvas 
 		canvas = iiif_proxy.Canvas (opus_url+"/canvas", "Combined image-audio canvas")
+
+		canvas.prezi_canvas.height = height
+		canvas.prezi_canvas.width = width
 
 		# We create the content list
 		content_list_id = opus_url+"/list-media"
@@ -781,8 +786,49 @@ class Opus(models.Model):
 
 		# Get the image URL from the IIIF image manifest
 		if not (iiif_source.iiif_manifest) or iiif_source.iiif_manifest == {}:
-			print (f"Missing manifest in the IIIF iage source. Synchronization aborted")
+			raise Exception (f"Missing manifest in the IIIF image source for opus {self.ref}. Synchronization aborted")
 			return
+
+		# Get annotations both are dictionary indexed by the measure id
+		annotations_images = Annotation.for_opus_and_concept(self,
+					IREGION_MEASURE_CONCEPT)
+		annotations_audio = Annotation.for_opus_and_concept(self,
+					TFRAME_MEASURE_CONCEPT)
+		sorted_images = dict(natsorted(annotations_images.items())) 
+		sorted_audio = dict(natsorted(annotations_audio.items())) 
+
+		# We need the time duration of each page wrt to the audio. The source
+		# of the body tells us the page Id
+		
+		# First we create a dict of pages and measures range
+		pages_measures = {}
+#		for measure_ref in list(sorted_audio.keys()):
+		for measure_ref, annot_image in sorted_images.items():
+			no_measure = int(measure_ref.replace ("m",""))
+			if  annot_image.body.source not in  pages_measures.keys():
+				print (f"Found a new page {annot_image.body.source}.")
+				pages_measures[annot_image.body.source] = {"first_measure" : no_measure,
+										"start_at": None, "stop_at": None}
+			else:
+				pages_measures[annot_image.body.source]["last_measure"] = no_measure
+
+		# Now we scan the audio annotations and aggregate the time ranges
+		for measure_ref, audio_annot in sorted_audio.items():
+			no_measure = int(measure_ref.replace ("m",""))
+			# extract time range
+			t_range = audio_annot.body.selector_value.replace("t=","").split(",")
+			# 	Find the page of the measure
+			for page_id, measure_range  in pages_measures.items():
+				if (no_measure >= measure_range["first_measure"] 
+				      and no_measure <= measure_range["last_measure"]):
+					#print (f"Measure {no_measure} is in page {page_id}")
+					if measure_range["start_at"] is None:
+						measure_range["start_at"] = t_range[0]
+					else:
+						measure_range["stop_at"] = t_range[1]
+						
+		#for page_id, measure_range  in pages_measures.items():
+		#	print (f"Page {page_id}. Range {measure_range}")
 
 		print (f"Take the image manifest from the source")	
 		with open(iiif_source.iiif_manifest.path, "r") as f:
@@ -792,26 +838,37 @@ class Opus(models.Model):
 			first_page_of_music = iiif_source.metadata["first_page_of_music"]
 		else:
 			first_page_of_music = 1
+		if "last_page_of_music" in iiif_source.metadata:
+			last_page_of_music = iiif_source.metadata["last_page_of_music"]
+		else:
+			last_page_of_music = 99999
 		images = iiif_doc.get_images()
 		i_img= 0
 		for img in images:
-			print (f"Image {img.native}. Width {img.width} Height {img.height}")
 			i_img += 1
-			if i_img >= first_page_of_music:
-				content_list.add_image_item (f"{opus_url}/img{i_img}", canvas, img.native, "application/jpg", img.height, img.width)
-				break
+			if i_img >= first_page_of_music and i_img <= last_page_of_music :
+				if img.url in pages_measures.keys():
+					start_at = pages_measures[img.url]['start_at']
+					stop_at = pages_measures[img.url]['stop_at']
+					t_range = f"t={start_at},{stop_at}"
+				else:
+					# THIS SHOULD NOT HAPPEN
+					raise Exception(f"Unable to find annotations on image {img.url} when creating the sync manifest")
+					t_range=""
+				target = canvas.id + "#" + t_range
+				print (f"Image {img.native}. URL {img.url} Time range {t_range} Width {img.width} Height {img.height}")
+				content_list.add_image_item (f"{opus_url}/img{i_img}", target, img.native, "application/jpg", img.height, img.width)
+			#if i_img > 2:
+			#	break
+
 		canvas.add_content_list (content_list)
 
 		# Next we add annotations to link 
 		synchro_list = iiif_proxy.AnnotationList(opus_url+"/synchro","Synchronisation list")
 
-		annotations_images = Annotation.for_opus_and_concept(self,
-					IREGION_MEASURE_CONCEPT)
-		annotations_audio = Annotation.for_opus_and_concept(self,
-					TFRAME_MEASURE_CONCEPT)
-		# Both are dictionary indexed by the measure id
-		sorted_dict = dict(natsorted(annotations_images.items())) 
-		for measure_ref in list(sorted_dict.keys()):
+		i_measure = 0
+		for measure_ref in list(sorted_images.keys()):
+			i_measure += 1
 			if measure_ref in annotations_audio:
 				annot_image = annotations_images[measure_ref]
 				annot_audio = annotations_audio[measure_ref]
@@ -819,6 +876,8 @@ class Opus(models.Model):
 				polygon = annot_image.body.selector_value.replace(")("," ").replace("P","").replace("((","").replace("))","")
 				#print (f"Found both annotations for measure {measure_ref}. Region {polygon} Time frame {time_frame}")
 				synchro_list.add_synchro(canvas, opus_url + "/"+measure_ref, content_list_id, polygon, time_frame)
+			#if i_measure > 3:
+			#	break
 
 		manifest.add_canvas (canvas)
 		
@@ -1165,9 +1224,11 @@ class Opus(models.Model):
 
 			iiif_source.manifest.id = iiif_source.full_ref()
 			first_page_of_music = omr_score.manifest.get_first_music_page()
-			print (f"Save the manifest with id {iiif_source.manifest.id}. First page of music {first_page_of_music}")
+			last_page_of_music = omr_score.manifest.get_last_music_page()
+			print (f"Save the manifest with id {iiif_source.manifest.id}. Page range of music {first_page_of_music}-{last_page_of_music}")
 			iiif_source.manifest = ContentFile(json.dumps(omr_score.manifest.to_json()), name="score_manifest.json")
 			iiif_source.metadata["first_page_of_music"] = omr_score.manifest.get_first_music_page()
+			iiif_source.metadata["last_page_of_music"] = omr_score.manifest.get_last_music_page()
 			iiif_source.save()
 		
 			# Now we know the full url of the MEI document

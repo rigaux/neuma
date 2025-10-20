@@ -144,7 +144,16 @@ def main(argv=None):
 		#source_url = f"https://neuma.huma-num.fr/home/opus/all:collabscore:saintsaens-audio:asciano"
 		source_url = "http://test.fr/asciano"
 		image_url = "https://gallica.bnf.fr/iiif/ark:/12148/bpt6k11620688/f2/full/full/0/native.jpg"
+		image2_url = "https://gallica.bnf.fr/iiif/ark:/12148/bpt6k11620688/f3/full/full/0/native.jpg"
 		audio_url =  "https://openapi.bnf.fr/iiif/audio/v3/ark:/12148/bpt6k88448791/3.audio"
+
+		# First ten seconds: we show polygon1, then 10 following second
+		# we show polygon 2
+		polygon1 = "1221,1589 2151,1589 1221,2266 2161,2266"
+		time_frame1 = "t=0,20"
+		polygon2 = "2151,1589 2766,1589 2161,2266 2775,2266"
+		time_frame2 = "t=20,40"
+
 		duration = 257
 		height = 6174
 		width = 4564
@@ -158,19 +167,21 @@ def main(argv=None):
 		content_list = iiif_proxy.AnnotationList(content_list_id,"List of source media")
 		# The annotation  list contains the audio and all the pages
 		content_list.add_audio_item (f"{source_url}/audio", canvas, audio_url, "audio/mp3", duration)
-		content_list.add_image_item (f"{source_url}/image", canvas, image_url, "application/jpg", height, width)
+		# First image is the background for time_frame1
+		target = canvas.id + "#" + time_frame1
+		content_list.add_image_item (f"{source_url}/img1", target, image_url, "application/jpg", height, width)
+		# Second image is the background for time_frame2
+		target = canvas.id + "#" + time_frame2
+		content_list.add_image_item (f"{source_url}/img2", target, image2_url, "application/jpg", height, width)
+		canvas.prezi_canvas.height = height
+		canvas.prezi_canvas.width = width
 		canvas.add_content_list (content_list)
 
 		# Next we add annotations to link 
 		synchro_list = iiif_proxy.AnnotationList(source_url+"/synchro","Synchronisation list")
 
-		polygon = "1221,1589 2151,1589 1221,2266 2161,2266"
-		time_frame = "t=0,4.852608"
-		synchro_list.add_synchro(canvas, source_url + "/m1", content_list_id, polygon, time_frame)
-
-		polygon = "2151,1589 2766,1589 2161,2266 2775,2266"
-		time_frame = "t=4.852608,8.707483"
-		synchro_list.add_synchro(canvas, source_url + "/m2", content_list_id, polygon, time_frame)
+		synchro_list.add_synchro(canvas, source_url + "/m1", content_list_id, polygon1, time_frame1)
+		synchro_list.add_synchro(canvas, source_url + "/m2", content_list_id, polygon2, time_frame2)
 
 		#canvas.add_annotation_list (synchro_list)
 

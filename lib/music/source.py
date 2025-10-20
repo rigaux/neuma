@@ -99,6 +99,7 @@ class Manifest:
 		self.groups = {}
 		# Music can be found after x pages
 		self.first_music_page = first_p_music
+		self.last_music_page = first_p_music
 		self.nb_empty_pages = self.first_music_page - 1
 		
 	def add_page(self, page):
@@ -138,6 +139,16 @@ class Manifest:
 			break
 		self.nb_empty_pages = self.first_music_page - 1
 		return self.first_music_page
+
+	def get_last_music_page(self):	
+		"""
+		   Determine the last page of the source
+		   where some music content has been parsed
+		"""
+		for page in self.pages:
+			page_ref = iiif_mod.Proxy.find_page_ref(page.url)
+			self.last_music_page = int(page_ref[1:])
+		return self.last_music_page
 
 	def clean_pages_url(self):	
 		"""

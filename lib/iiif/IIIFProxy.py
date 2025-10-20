@@ -58,16 +58,14 @@ class AnnotationList():
 		annot = Annotation (annot_id, canvas.id, body, Annotation.MOTIVATION_PAINTING)
 		self.prezi_annotation_page.add_item (annot.prezi_annotation)
 
-	def add_image_item (self, annot_id, canvas, image_uri, format, height, width):
+	def add_image_item (self, annot_id, target, image_uri, format, height, width):
 		resource = Resource (image_uri, Annotation.IMAGE_TYPE, "audio/jpeg")
 		body = ResourceBody (image_uri, resource)
 		body.prezi_body.height = height
 		body.prezi_body.width = width
 		body.prezi_body.format = "image/jpeg"
-		canvas.prezi_canvas.height = height
-		canvas.prezi_canvas.width = width
 	
-		annot = Annotation (annot_id, canvas.id, body, Annotation.MOTIVATION_PAINTING)
+		annot = Annotation (annot_id, target, body, Annotation.MOTIVATION_PAINTING)
 		self.prezi_annotation_page.add_item (annot.prezi_annotation)
 
 	def add_synchro (self, canvas, uri, content_list_id, polygon, time_frame):
