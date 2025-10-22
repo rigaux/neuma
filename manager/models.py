@@ -858,8 +858,8 @@ class Opus(models.Model):
 				target = canvas.id + "#" + t_range
 				print (f"Image {img.native}. URL {img.url} Time range {t_range} Width {img.width} Height {img.height}")
 				content_list.add_image_item (f"{opus_url}/img{i_img}", target, img.native, "application/jpg", img.height, img.width)
-			#if i_img > 2:
-			#	break
+			if i_img > 3:
+				break
 
 		canvas.add_content_list (content_list)
 
@@ -876,8 +876,8 @@ class Opus(models.Model):
 				polygon = annot_image.body.selector_value.replace(")("," ").replace("P","").replace("((","").replace("))","")
 				#print (f"Found both annotations for measure {measure_ref}. Region {polygon} Time frame {time_frame}")
 				synchro_list.add_synchro(canvas, opus_url + "/"+measure_ref, content_list_id, polygon, time_frame)
-			#if i_measure > 3:
-			#	break
+			if i_measure > 30:
+				break
 
 		manifest.add_canvas (canvas)
 		
@@ -1218,17 +1218,17 @@ class Opus(models.Model):
 			
 			print (f"Got the IIIF manifest. Nb canvases {iiif_doc.nb_canvases}")
 			images = iiif_doc.get_images()
-			for img in images:
-				print (f"Image {img.url}. Width {img.width} Height {img.height}")				
+			#for img in images:
+			#	print (f"Image {img.url} Width {img.width} Height {img.height}")				
 			omr_score.manifest.add_image_info (images) 
 
 			iiif_source.manifest.id = iiif_source.full_ref()
-			first_page_of_music = omr_score.manifest.get_first_music_page()
-			last_page_of_music = omr_score.manifest.get_last_music_page()
+			first_page_of_music = 1 #omr_score.manifest.get_first_music_page()
+			last_page_of_music = 999 #omr_score.manifest.get_last_music_page()
 			print (f"Save the manifest with id {iiif_source.manifest.id}. Page range of music {first_page_of_music}-{last_page_of_music}")
 			iiif_source.manifest = ContentFile(json.dumps(omr_score.manifest.to_json()), name="score_manifest.json")
-			iiif_source.metadata["first_page_of_music"] = omr_score.manifest.get_first_music_page()
-			iiif_source.metadata["last_page_of_music"] = omr_score.manifest.get_last_music_page()
+			iiif_source.metadata["first_page_of_music"] = first_page_of_music
+			iiif_source.metadata["last_page_of_music"] = last_page_of_music
 			iiif_source.save()
 		
 			# Now we know the full url of the MEI document
