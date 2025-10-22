@@ -86,6 +86,7 @@ def main(argv=None):
 			extension = components[len(components)-1]
 			if extension == ".jpg":
 				jpegs.append(fname)
+		# It is assumed that the order of images matches the aphanumerci file name order
 		jpegs.sort()
 	
 		fac = ManifestFactory()
@@ -105,23 +106,31 @@ def main(argv=None):
 	
 		manifest = fac.manifest(ident=args.url_prefix + "/" + path_to_images + "/manifest.json", label="Manifest")
 		manifest.set_metadata({"Date": now.strftime("%m/%d/%Y"), "Creator": "Neuma"})
-		manifest.description = ""
+		manifest.description = "Created by xxx"
 		manifest.viewingDirection = "left-to-right"
 		i_jpg = 0
 		seq = manifest.sequence()  # unlabeled, anonymous sequence
 
+		# Loop on images, create on can
 		for jpg_name in jpegs:
 			i_jpg += 1
-			print (f"File {jpg_name}")
+			# We get rid of the extension in the image ID. This
+			# assumes that the IIIF server is configured with 
+			# BasicLookupStrategy.path_suffix = .jpg
+			image_id = path_to_images + "%2F" + Path (jpg_name).stem
+			# The image path instead feature the extens
 			image_path = path_to_images + "%2F" + jpg_name
+			print (f"File {jpg_name}, image id {image_id}")
 	
 			# Create a canvas with uri slug of page-1, and label of Page 1
-			cvs = seq.canvas(ident=f"{image_path}/info.json", label="Page %s" % i_jpg)
+			# Note: this library enforce a .json extension to the canvas id...
+			cvs = seq.canvas(ident=f"{image_id}/info.json", label="Page %s" % i_jpg)
 			# Create an annotation on the Canvas
-			anno = cvs.annotation()
+			anno = cvs.annotation(ident=f"{image_id}/anno")
 
 			# Add Image: http://www.example.org/path/to/image/api/p1/full/full/0/native.jpg
-			img = anno.image(image_path, iiif=True)
+			# Create the image, telling that it is available via an IIIF service
+			img = anno.image(image_id, iiif=True)
 
 			# Set image height and width, and canvas to same dimensions
 			imagefile = os.path.join(args.input_dir, jpg_name)

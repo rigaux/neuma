@@ -2,7 +2,9 @@ import json
 
 import lib.music.Score as score_mod
 import lib.music.notation as notation_mod
-import lib.music.iiifutils as iiif_mod
+
+import lib.iiif.IIIF2 as iiif2_mod
+
 from lib.music.Score import Part
 from collections import OrderedDict
 
@@ -41,10 +43,10 @@ class OpusSource:
 	def get_iiif_manifest(self):
 		# IIIF extraction: only for sources of type IIIF_REF
 		if self.ref == self.IIIF_REF:
-			iiif_proxy = iiif_mod.Proxy(iiif_mod.GALLICA_BASEURL)
+			iiif_proxy = iiif2_mod.Proxy(iiif2_mod.GALLICA_BASEURL)
 			self.images = []
 			# Extract the document identifier			
-			docid = iiif_mod.Proxy.decompose_gallica_ref(self.url)
+			docid = iiif2_mod.Proxy.decompose_gallica_ref(self.url)
 			try:
 				document = iiif_proxy.get_document(docid)
 				for i in range(document.nb_canvases):
@@ -115,6 +117,22 @@ class Manifest:
 
 	def add_image_info(self, images):
 		# Enrich the manifest with info coming from IIIF
+		
+		# First get the position of the first and last pages in the 
+		# image list: this is the first page that contains music
+		images_url = []
+		for image in images:
+			images_url.append(image.url)
+		try:
+			self.first_music_page = images_url.index (self.pages[0].url) + 1
+		except ValueError:
+			raise Exception(f"Manifest::add_image_info. Image {self.pages[0].url} is not in the list of Manifest images ")
+		try:
+			self.last_music_page = images_url.index (self.pages[-1].url) + 1
+		except ValueError:
+			raise Exception(f"Manifest::add_image_info. Image {self.pages[-1].url} is not in the list of Manifest images ")
+
+		# Next, find the dimension of images		
 		for page in self.pages:
 			#print (f"Searching for the image of page {page.url}")
 			image_found = False
@@ -123,39 +141,13 @@ class Manifest:
 					image_found = True
 					page.width = img.width
 					page.height = img.height
-			if not image_found:
-				print (f"ERROR in Manifest::add_image_info. Unable to find image for page URL {page.url}")	
-			#else:
-			#	print (f"OK image for page URL {page.url} found")	
-				
-	def get_first_music_page(self):	
-		"""
-		   Determine the first page of the source
-		   where some music content has been parsed
-		"""
-		for page in self.pages:
-			page_ref = iiif_mod.Proxy.find_page_ref(page.url)
-			self.first_music_page = int(page_ref[1:])
-			break
-		self.nb_empty_pages = self.first_music_page - 1
-		return self.first_music_page
-
-	def get_last_music_page(self):	
-		"""
-		   Determine the last page of the source
-		   where some music content has been parsed
-		"""
-		for page in self.pages:
-			page_ref = iiif_mod.Proxy.find_page_ref(page.url)
-			self.last_music_page = int(page_ref[1:])
-		return self.last_music_page
 
 	def clean_pages_url(self):	
 		"""
 		  Normalize the IIIF URLs
 		"""
 		for page in self.pages:
-			page.url = iiif_mod.Proxy.find_page_id(page.url)
+			page.url = iiif2_mod.Proxy.find_page_id(page.url)
 
 	def add_part(self, part):
 		self.parts[part.id] = part

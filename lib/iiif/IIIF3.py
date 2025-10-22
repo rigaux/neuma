@@ -59,7 +59,7 @@ class AnnotationList():
 		self.prezi_annotation_page.add_item (annot.prezi_annotation)
 
 	def add_image_item (self, annot_id, target, image_uri, format, height, width):
-		resource = Resource (image_uri, Annotation.IMAGE_TYPE, "audio/jpeg")
+		resource = Resource (image_uri, Annotation.IMAGE_TYPE, "image/jpeg")
 		body = ResourceBody (image_uri, resource)
 		body.prezi_body.height = height
 		body.prezi_body.width = width

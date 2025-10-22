@@ -48,8 +48,9 @@ from lib.music.jsonld import JsonLD
 import lib.music.annotation as annot_mod
 import lib.music.source as source_mod
 import lib.music.opusmeta as opusmeta_mod
-import lib.music.iiifutils as iiif_mod
-import lib.iiif.IIIFProxy as iiif_proxy
+
+import lib.iiif.IIIF2 as iiif2_mod
+import lib.iiif.IIIF3 as iiif3_mod
 
 # DMOS parser
 import lib.collabscore.parser as parser_mod
@@ -767,17 +768,17 @@ class Opus(models.Model):
 		width = 4564
 
 		# Create the combined manifest
-		manifest = iiif_proxy.Manifest(opus_url, self.title)
+		manifest = iiif3_mod.Manifest(opus_url, self.title)
 		
 		# One single canvas 
-		canvas = iiif_proxy.Canvas (opus_url+"/canvas", "Combined image-audio canvas")
+		canvas = iiif3_mod.Canvas (opus_url+"/canvas", "Combined image-audio canvas")
 
 		canvas.prezi_canvas.height = height
 		canvas.prezi_canvas.width = width
 
 		# We create the content list
 		content_list_id = opus_url+"/list-media"
-		content_list = iiif_proxy.AnnotationList(content_list_id,"List of source media (audio and images)")
+		content_list = iiif3_mod.AnnotationList(content_list_id,"List of source media (audio and images)")
 		
 		# The audio file is in the URL of the source. At some point
 		# it will be more consistent to use this URL to point to
@@ -832,7 +833,7 @@ class Opus(models.Model):
 
 		print (f"Take the image manifest from the source")	
 		with open(iiif_source.iiif_manifest.path, "r") as f:
-			iiif_doc = iiif_mod.Document(json.load(f))
+			iiif_doc = iiif2_mod.Document(json.load(f))
 		# We should now the first page of music
 		if "first_page_of_music" in iiif_source.metadata:
 			first_page_of_music = iiif_source.metadata["first_page_of_music"]
@@ -858,13 +859,13 @@ class Opus(models.Model):
 				target = canvas.id + "#" + t_range
 				print (f"Image {img.native}. URL {img.url} Time range {t_range} Width {img.width} Height {img.height}")
 				content_list.add_image_item (f"{opus_url}/img{i_img}", target, img.native, "application/jpg", img.height, img.width)
-			if i_img > 3:
-				break
+			#if i_img > 2:
+			#	break
 
 		canvas.add_content_list (content_list)
 
 		# Next we add annotations to link 
-		synchro_list = iiif_proxy.AnnotationList(opus_url+"/synchro","Synchronisation list")
+		synchro_list = iiif3_mod.AnnotationList(opus_url+"/synchro","Synchronisation list")
 
 		i_measure = 0
 		for measure_ref in list(sorted_images.keys()):
@@ -876,8 +877,8 @@ class Opus(models.Model):
 				polygon = annot_image.body.selector_value.replace(")("," ").replace("P","").replace("((","").replace("))","")
 				#print (f"Found both annotations for measure {measure_ref}. Region {polygon} Time frame {time_frame}")
 				synchro_list.add_synchro(canvas, opus_url + "/"+measure_ref, content_list_id, polygon, time_frame)
-			if i_measure > 30:
-				break
+			#if i_measure > 3:
+			#	break
 
 		manifest.add_canvas (canvas)
 		
@@ -1202,19 +1203,19 @@ class Opus(models.Model):
 				# Special case: we know the Gallica URL, from which
 				# we can get the manifest
 				# Take the manifest
-				docid = iiif_mod.Proxy.decompose_gallica_ref(iiif_source.url)
-				req_url = "".join([iiif_mod.GALLICA_BASEURL, docid, '/manifest.json'])
+				docid = iiif2_mod.Proxy.decompose_gallica_ref(iiif_source.url)
+				req_url = "".join([iiif2_mod.GALLICA_BASEURL, docid, '/manifest.json'])
 				print (f"Get the IIIF manifest at URL {req_url} from Gallica")
 				r = requests.get(req_url)
 				r.raise_for_status()
 				iiif_manifest = r.json()
-				iiif_doc = iiif_mod.Document(iiif_manifest)
+				iiif_doc = iiif2_mod.Document(iiif_manifest)
 				iiif_source.iiif_manifest = ContentFile(json.dumps(iiif_manifest), name="iiif_manifest.json")
 			else:
 				print (f"Take the manifest from the source")
 				
 				with open(iiif_source.iiif_manifest.path, "r") as f:
-					iiif_doc = iiif_mod.Document(json.load(f))
+					iiif_doc = iiif2_mod.Document(json.load(f))
 			
 			print (f"Got the IIIF manifest. Nb canvases {iiif_doc.nb_canvases}")
 			images = iiif_doc.get_images()
@@ -1223,12 +1224,10 @@ class Opus(models.Model):
 			omr_score.manifest.add_image_info (images) 
 
 			iiif_source.manifest.id = iiif_source.full_ref()
-			first_page_of_music = 1 #omr_score.manifest.get_first_music_page()
-			last_page_of_music = 999 #omr_score.manifest.get_last_music_page()
-			print (f"Save the manifest with id {iiif_source.manifest.id}. Page range of music {first_page_of_music}-{last_page_of_music}")
+			print (f"Save the manifest with id {iiif_source.manifest.id}")
 			iiif_source.manifest = ContentFile(json.dumps(omr_score.manifest.to_json()), name="score_manifest.json")
-			iiif_source.metadata["first_page_of_music"] = first_page_of_music
-			iiif_source.metadata["last_page_of_music"] = last_page_of_music
+			iiif_source.metadata["first_page_of_music"] = omr_score.manifest.first_music_page
+			iiif_source.metadata["last_page_of_music"] = omr_score.manifest.last_music_page
 			iiif_source.save()
 		
 			# Now we know the full url of the MEI document
