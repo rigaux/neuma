@@ -1377,12 +1377,50 @@ class SourceType (models.Model):
 		return self.description + " (" + self.code + ")"
 
 class OpusSource (models.Model):
-	'''A link to a source that contains the representation of an Opus'''
+	'''A link to a source that contains the representation of an Opus.
+	   Evolution to clarify:
+	       A source is contained in a file. The file can be local
+	       or known by its URL. We should never have both, or at
+	       least they must be consistent (the file being a cache
+	       of the remote resource)
+	       I will add a Boolean field 'iiif'. If true, the source
+	       file is a manifest which is either stored remotely (eg Gallica)
+	       or locally (Royaumont, or the combined manifest).
+	       
+	       The source can have an "internal" manifest that describes
+	       its structure, for instance pages/systems/staves for score
+	       images, of list of time frames for audio or videos. Currently
+	       it is named "manifest". Ok, or rename ?
+	       
+	       The field iiif_manifest can be dropped. It is redundant
+	       with the source_file
+	       
+	       I can add a REST service 'manifest.json' which will return
+	       an error for non-iiif sources 
+	       
+	       DMOS file should become again a specific source. The file
+	       should refer to the IIIF image source used as input
+	       
+	       Regarding types and other properties. There is an IIIF
+	       model (https://iiif.io/api/presentation/3.0/#32-technical-properties)
+	       for type. The current list is more detailed than the IIIF one.
+	       I can keep it, and add the IIIF type as a type attr. (probably not important)
+	       
+	       It would be useful to ensure that the source ref is unique. Solution
+	       add a 'full_ref' field in the DB, with UNIQUE property.
+	       
+	       Technical properties (duration..) should be put in the metadata field.
+	'''
 	opus = models.ForeignKey(Opus,on_delete=models.CASCADE)
 	ref =   models.CharField(max_length=25)
+	# The full reference of the source (sth like opus_ref/_sources/source_ref)
+	# Used to ensure unicity
+	# Complicated, due to existing rows
+	# full_ref = models.CharField(max_length=255,unique=True,default=uuid.uuid4)
 	description =   models.TextField()
 	source_type = models.ForeignKey(SourceType,on_delete=models.PROTECT)
 	url = models.CharField(max_length=255,blank=True,null=True)
+	is_iiif = models.BooleanField(default=False)
 	# A set of operations applied to the source file. Example: post-OMR processing
 	operations = models.JSONField(blank=True,default=list)
 	# Meta data 
