@@ -93,6 +93,10 @@ class ParserConfig:
 			self.measure_max = config["measure_max"]
 		else:
 			self.measure_max = sys.maxsize
+		if "ensure_measure_duration" in config:
+			self.ensure_measure_duration = config["ensure_measure_duration"]
+		else:
+			self.ensure_measure_duration = False
 
 	def print (self):
 		print (f"\t**Parser configuration**\n\t\tLog level={self.log_level}\n" +
@@ -894,6 +898,13 @@ class OmrScore:
 		logger.info("")
 		list_removals = score.check_measure_consistency()			
 
+		if self.config.ensure_measure_duration:
+			# We removed items that overflow each measure. We
+			# do not reinsert them in that case
+			print ("WE ENSURE MEASURE DURATION")
+			list_removals = []
+		else:
+			print ("WE DO NOT ENSURE MEASURE DURATION")
 		for removal in list_removals:
 			# Adding removed events to the post editions they
 			# must be reinserted in the XML file

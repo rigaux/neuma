@@ -1,6 +1,6 @@
 from django.core.management.base import BaseCommand, CommandError
 from django.conf import settings
-from manager.models import Corpus, AnalyticModel
+from manager.models import Corpus, AnalyticModel, Config
 from manager.models import AnalyticConcept, Licence, Person, SourceType
 from lib.workflow.Workflow import Workflow
 import string
@@ -32,6 +32,14 @@ class Command(BaseCommand):
 
 	def handle(self, *args, **options):
 		
+		# Create default config
+		try:
+			conf_def = Config.objects.get(code=Config.CODE_DEFAULT_CONFIG)
+		except Config.DoesNotExist:
+			print ("Create default config")
+			conf_def =  Config (code=Config.CODE_DEFAULT_CONFIG)
+			conf_def.save()
+
 		# Anonymous user
 		try:
 			anon = User.objects.get(username='anonymous')

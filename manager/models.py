@@ -5,6 +5,7 @@
 from datetime import datetime, date
 from urllib.request import urlopen
 import io
+import sys
 import json
 import jsonref
 import jsonschema
@@ -73,6 +74,46 @@ logger.addHandler(c_handler)
 
 def set_logging_level(level):
 	logger.setLevel(level)
+
+#################
+class Config(models.Model):
+	"""
+		Global configuration object
+	"""
+	
+	CODE_DEFAULT_CONFIG = "default"
+	code = models.CharField(max_length=20, default="default", primary_key=True)
+	
+	#
+	# Configuration of DMOS parsing
+	
+	log_level = models.IntegerField(default=logging.WARNING)
+	page_min = models.IntegerField(default=0)
+	page_max = models.IntegerField(default=32767)
+	system_min = models.IntegerField(default=0)
+	system_max = models.IntegerField(default=32767)
+	measure_min = models.IntegerField(default=0)
+	measure_max = models.IntegerField(default=32767)
+
+	# Do we ensure that each measure does not overflow ?	
+	ensure_measure_duration = models.BooleanField(default=True)
+
+	class Meta:
+		db_table = "Config"
+
+	def __str__(self):			  # __unicode__ on Python 2
+		return self.code
+
+	def __init__(self, *args, **kwargs):
+		super(Config, self).__init__(*args, **kwargs)
+	
+	def to_dict (self):
+		return {"log_level": self.log_level,
+				"page_min": self.page_min, "page_max": self.page_max,
+				"system_min": self.system_min, "system_max": self.system_max,
+				"measure_min": self.measure_min, "measure_max": self.measure_max,
+				"ensure_measure_duration": self.ensure_measure_duration
+				}
 
 class Person (models.Model):
 	'''Persons (authors, composers, etc)'''
@@ -1153,8 +1194,12 @@ class Opus(models.Model):
 		except Exception as ex:
 			return "DMOS file validation error : " + str(ex)
 		
+		# Get the global configuration
+		config = Config.objects.get(code=Config.CODE_DEFAULT_CONFIG)
+
 		# Parse DMOS data
-		omr_score = OmrScore (self.get_url(), dmos_data, {}, editions)
+		omr_score = OmrScore (self.get_url(), dmos_data, 
+						config.to_dict(), editions)
 		score = omr_score.get_score()
 		
 		# Store the MusicXML file in the opus
