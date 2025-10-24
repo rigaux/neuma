@@ -901,7 +901,7 @@ class Opus(models.Model):
 					raise Exception(f"Unable to find annotations on image {img.url} when creating the sync manifest")
 					t_range=""
 				target = canvas.id + "#" + t_range
-				print (f"Image {img.native}. URL {img.url} Time range {t_range} Width {img.width} Height {img.height}")
+				#print (f"Image {img.native}. URL {img.url} Time range {t_range} Width {img.width} Height {img.height}")
 				content_list.add_image_item (f"{opus_url}/img{i_img}", target, img.native, "application/jpg", img.height, img.width)
 			#if i_img > 2:
 			#	break
@@ -1593,6 +1593,10 @@ class OpusSource (models.Model):
 				stats[op['name']] = 1
 		return stats
 		
+	#def save(self, *args, **kwargs):
+	#	print (f"Saving OpusSource {self.ref}")
+	#	super(OpusSource, self).save(*args, **kwargs)
+
 class Bookmark(models.Model):
 	'''Record accesses from user to opera'''
 	opus = models.ForeignKey(Opus,on_delete=models.CASCADE)

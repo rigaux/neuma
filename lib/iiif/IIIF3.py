@@ -49,10 +49,17 @@ class AnnotationList():
 		self.prezi_annotation_page = iiif_prezi3.AnnotationPage (id=id, label={"en":[label]})
 
 	def add_audio_item (self, annot_id, canvas, audio_uri, format, duration):
-		resource = Resource (audio_uri, Annotation.SOUND_TYPE, "audio/mpeg")
+		resource = Resource (audio_uri, Annotation.SOUND_TYPE, format)
 		body = ResourceBody (audio_uri, resource)
 		body.prezi_body.duration = duration
-		body.prezi_body.format = "audio/mpeg"
+		body.prezi_body.format = format
+		canvas.prezi_canvas.duration = duration
+
+	def add_video_item (self, annot_id, canvas, audio_uri, format, duration):
+		resource = Resource (audio_uri, Annotation.VIDEO_TYPE, format)
+		body = ResourceBody (audio_uri, resource)
+		body.prezi_body.duration = duration
+		body.prezi_body.format = format
 		canvas.prezi_canvas.duration = duration
 	
 		annot = Annotation (annot_id, canvas.id, body, Annotation.MOTIVATION_PAINTING)

@@ -1,4 +1,5 @@
 import json
+import csv
 
 import lib.music.Score as score_mod
 import lib.music.notation as notation_mod
@@ -81,6 +82,51 @@ class OpusSource:
   via the concept of "Manifest" inspired by IIIF 
 '''
 
+
+class AudioManifest:
+	"""
+		Used for synchro of Audio sources with a score.
+		
+		Receive a file of labels from Audacity, Dezrann or another
+		interface. Each label  is the start/end of a measure
+		 Return an audio manifest
+	"""
+	
+	def __init__(self, opus_ref, source_ref) :
+		self.opus_ref = opus_ref
+		self.source_ref = source_ref
+		# List of timestamps
+		self.time_frames = []
+
+	def convert_audacity(self, marker_file):
+		measure_no = 1
+		with open(marker_file) as sync_file:
+			synchro_data = csv.reader(sync_file, delimiter='\t')
+			current_tstamp = 0
+			for synchro in synchro_data:
+				tstamp = synchro[0]
+				tframe = {"from" : current_tstamp, "to": tstamp}
+				self.time_frames.append(
+					{"measure_no": measure_no,"time_frame": tframe})
+				measure_no += 1
+				current_tstamp = tstamp
+
+	def convert_dezrann(self, synchro_file):
+		synchros = json.load (synchro_file)
+		measure_no = 1
+		current_tstamp = 0
+		for synchro in synchros:
+			tstamp = synchro[0]
+			tframe = {"from" : current_tstamp, "to": tstamp}
+			self.time_frames.append(
+				{"measure_no": measure_no,"time_frame": tframe})
+			measure_no += 1
+			current_tstamp = tstamp
+
+	def to_dict(self):
+		return {"opus_ref": self.opus_ref, 
+					"source_ref": self.source_ref,
+					"time_frames": self.time_frames}
 
 class Manifest:
 	'''

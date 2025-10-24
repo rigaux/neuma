@@ -760,6 +760,7 @@ class SourceFile (APIView):
 				 responses= MessageSerializer)
 	@parser_classes([MultiPartParser])
 	def post(self, request, full_neuma_ref, source_ref):
+		opus, object_type = get_object_from_neuma_ref(full_neuma_ref)
 		source = self.get_object(full_neuma_ref, source_ref)
 
 		for filename, filecontent in request.FILES.items():
@@ -783,31 +784,22 @@ class SourceFile (APIView):
 		
 		# Special case DMOS: parse the file and create XML files
 		if source_ref==source_mod.OpusSource.IIIF_REF:
-			opus, object_type = get_object_from_neuma_ref(full_neuma_ref)
 			print ("Parsing DMOS in asynchronous mode")
 			parse_dmos.delay(opus.ref)
 			
 		# Special case audio: parse the file and create annotations
 		if source_ref==source_mod.OpusSource.AUDIO_REF:
 			name, extension = os.path.splitext(filename)
+			audio_manifest = source_mod.AudioManifest(opus.ref, source_ref)
 			if extension == ".txt":
 				# Should be an Audacity file. We convert to a JSON
-				# TODO: encapsulate in OO
-				measure_no = 1
-				synchro_json = {"opus": full_neuma_ref, "source": source_ref,
-								"measure_timeframes": []}
-				print (f"Received an Audacity file")
-				with open(source.source_file.path) as sync_file:
-					synchro_data = csv.reader(sync_file, delimiter='\t')
-					current_tstamp = 0
-					for synchro in synchro_data:
-						tstamp = synchro[0]
-						tframe = f"t={current_tstamp},{tstamp}"
-						synchro_json["measure_timeframes"].append(
-							{"measure": f"m{measure_no}","timeframe": tframe})
-						measure_no += 1
-						current_tstamp = tstamp
-				source.source_file.save(name + ".json", ContentFile(json.dumps(synchro_json)))
+				audio_manifest.convert_audacity(source.source_file.path)
+			if extension == ".json":
+				# Should be a Dezrann file. We convert to a JSON
+				audio_manifest.convert_dezrann(source.source_file.path)
+				
+			source.source_file.save(name + ".json", 
+					ContentFile(json.dumps(audio_manifest.to_dict())))
 			
 			# Now create annotations
 			opus, object_type = get_object_from_neuma_ref(full_neuma_ref)
@@ -817,9 +809,11 @@ class SourceFile (APIView):
 			creator = annot_mod.Creator ("collabscore", 
 										annot_mod.Creator.SOFTWARE_TYPE, 
 										"collabscore")
-			for meas_annot in synchro_json["measure_timeframes"]:
+			for meas_annot in audio_manifest.time_frames:
+				measure = "m" + str(meas_annot["measure_no"])
+				time_frame = "t=" + str(meas_annot["time_frame"]["from"]) + "," + str(meas_annot["time_frame"]["to"])
 				annotation = annot_mod.Annotation.create_annot_from_xml_to_audio(creator, opus.musicxml.url, 
-								meas_annot["measure"], source.url, meas_annot["timeframe"], 
+								measure, source.url, time_frame, 
 								constants_mod.TFRAME_MEASURE_CONCEPT)
 				db_annot = Annotation.create_from_web_annotation(user_annot, 
 															opus, annotation)
