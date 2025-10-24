@@ -22,7 +22,7 @@ from django.core.files.base import ContentFile
 import requests
 
 import lxml.etree as etree
-from manager.models import Corpus, Opus, Upload, Bookmark, Licence, Annotation, AnalyticModel, AnalyticConcept, OpusDiff
+from manager.models import Corpus, Opus, Upload, Bookmark, Config, Licence, Annotation, AnalyticModel, AnalyticConcept, OpusDiff
 from music import *
 
 from neumasearch.IndexWrapper import IndexWrapper
@@ -216,6 +216,9 @@ class OpusView(NeumaView):
 
 		# Initialize context
 		context = super(OpusView, self).get_context_data(**kwargs)
+
+		#  Put the config in the context
+		context["config"] = Config.objects.get(code=Config.CODE_DEFAULT_CONFIG)
 
 		# Set the HTML page title to the corpus title		
 		context["page_title"] = opus.title

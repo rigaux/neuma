@@ -98,6 +98,9 @@ class Config(models.Model):
 	# Do we ensure that each measure does not overflow ?	
 	ensure_measure_duration = models.BooleanField(default=True)
 
+	# Do we rely on caching to show a score?	
+	enable_score_caching = models.BooleanField(default=True)
+
 	class Meta:
 		db_table = "Config"
 

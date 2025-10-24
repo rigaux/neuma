@@ -242,13 +242,16 @@ var tabNames = [
 	       
 	 });
 </script>
-<!-- 
+   {% if config.enable_score_caching == True %}
+       <!-- We show the score directly from the file. It may be cached
+		    by the browser -->
 <display-verovio-score opus_ref="{{opus.ref}}" mei_url="{{opus.mei.url}}">
 </display-verovio-score>
--->
-<display-verovio-score opus_ref="{{opus.ref}}" mei_url="{{opus_file_url}}">
+    {% else %}
+	<!-- We get the score from a REST call. No caching but slow . -->
+	<display-verovio-score opus_ref="{{opus.ref}}" mei_url="{{opus_file_url}}">
 </display-verovio-score>
-
+     {% endif %}
 	{% else %}
 	<ul class="toolbar">
 		<li class="download"><a href="{{opus.url_musicxml}}"
