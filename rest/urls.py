@@ -33,6 +33,8 @@ urlpatterns = [
 	path(r'collections/<str:full_neuma_ref>/_sources/<str:source_ref>/_editions/',views.SourceEditions.as_view(), name='handle_source_editions_request'),
 	# Apply a list of editions to the source
 	path(r'collections/<str:full_neuma_ref>/_sources/<str:source_ref>/_apply_editions/',views.SourceApplyEditions.as_view(), name='handle_source_editions_request'),
+	# GET the manifest of an IIIF source
+	path(r'collections/<str:full_neuma_ref>/_sources/<str:source_ref>/manifest.json',views.SourceFile.as_view(), name='handle_source_file_request'),
 	# GET or POST a file of a source
 	path(r'collections/<str:full_neuma_ref>/_sources/<str:source_ref>/_file/',views.SourceFile.as_view(), name='handle_source_file_request'),
 	# GET the manifest of a source

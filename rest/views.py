@@ -9,6 +9,7 @@ from jsonref import JsonRef
 
 import os 
 import zipfile
+from pathlib import Path
 
 from django.core.files.base import ContentFile
 
@@ -740,10 +741,13 @@ class SourceFile (APIView):
 		source = self.get_object(full_neuma_ref, source_ref)
 		if source.source_file:
 			with open(source.source_file.path, "r") as f:
-				file_name = os.path.basename(source.source_file.path).split('/')[-1]
+				file_name = Path(request.path).name
 				content = f.read()
 				resp = FileResponse(content) 
-				resp['Content-type'] = "binary/octet-stream"  # source.source_type.mime_type
+				if file_name == "manifest.json":
+					resp['Content-type'] =  "application/json"
+				else:
+					resp['Content-type'] =  source.source_type.mime_type
 				resp["Content-Disposition"] = f"attachment; filename={file_name}"
 				resp['Access-Control-Allow-Origin'] = '*'
 				resp['Access-Control-Allow-Credentials'] = "true"
