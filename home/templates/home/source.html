@@ -46,9 +46,11 @@ var tabNames = [
 	                  (Edit)
 	          </a> 
 	 {% endif %}  
-
 </h1>
 
+{% if message %}
+<b>Message</b> : {{message}}
+{% endif %}
 
 <div>
 	<ul id="tabnav">
@@ -172,6 +174,12 @@ var tabNames = [
 		    <!-- Must be moved to DMOS sources -->
 		   <li><a href="{% url 'home:source' opus.ref source.ref %}?rebuild_score=1">Re-build the score from DMOS file</li>
         {% endif %}
+		{% if source.source_type.code == 'MP3' or source.source_type.code == 'MP4' %}        
+		   <li><a href="{% url 'home:source' opus.ref source.ref %}?rebuild_audio_manifest=1">Re-build the audio manifest</li>
+		{% endif %}
+	{% if source.source_type.code == 'SYNC' %}        
+	   <li><a href="{% url 'home:source' opus.ref source.ref %}?rebuild_combined_manifest=1">Re-build the combined manifest</li>
+	{% endif %}
 		</ul>
 	
 </div>

@@ -49,6 +49,7 @@ from lib.music.jsonld import JsonLD
 import lib.music.annotation as annot_mod
 import lib.music.source as source_mod
 import lib.music.opusmeta as opusmeta_mod
+import lib.music.constants as constants_mod
 
 import lib.iiif.IIIF2 as iiif2_mod
 import lib.iiif.IIIF3 as iiif3_mod
@@ -807,7 +808,13 @@ class Opus(models.Model):
 		
 		#image_url = "https://gallica.bnf.fr/iiif/ark:/12148/bpt6k11620688/f2/full/full/0/native.jpg"
 		#audio_url =  "https://openapi.bnf.fr/iiif/audio/v3/ark:/12148/bpt6k88448791/3.audio"
-		duration = 257
+
+		if "duration" in audio_source.metadata:
+			duration = audio_source.metadata["duration"]
+		else:
+			print (f"Create_combined_manifest WARNING: no duration in metadata. Assuling a default value...")
+			duration = 180
+			
 		height = 6174
 		width = 4564
 
@@ -827,9 +834,14 @@ class Opus(models.Model):
 		# The audio file is in the URL of the source. At some point
 		# it will be more consistent to use this URL to point to
 		# the audio manifest, and the file URL will have to be extracted
-		content_list.add_audio_item (f"{opus_url}/audio", canvas, audio_source.url, "audio/mp3", duration)
-
-		# Get the image URL from the IIIF image manifest
+		if audio_source.source_type.code == SourceType.STYPE_MP3:
+			content_list.add_audio_item (f"{opus_url}/audio", canvas, audio_source.url, 
+							audio_source.source_type.mime_type, duration)
+		else:
+			content_list.add_video_item (f"{opus_url}/video", canvas, audio_source.url, 
+							audio_source.source_type.mime_type, duration)
+			
+		# Get the images URLs from the IIIF image manifest
 		if not (iiif_source.iiif_manifest) or iiif_source.iiif_manifest == {}:
 			raise Exception (f"Missing manifest in the IIIF image source for opus {self.ref}. Synchronization aborted")
 			return
@@ -930,7 +942,7 @@ class Opus(models.Model):
 		with open(manifest_fname, "w") as manifest_file:
 				manifest_file.write(manifest.json (2))
 		self.create_source_with_file(source_mod.OpusSource.SYNC_REF, 
-								SourceType.STYPE_IIIF, "", 
+								SourceType.STYPE_SYNC, "", 
 								manifest_fname, "combined_manfest.json", "rb")
 
 
@@ -1425,6 +1437,8 @@ class SourceType (models.Model):
 	STYPE_JPEG = "JPEG"
 	STYPE_MP3 = "MP3"
 	STYPE_MP4 = "MP4"
+	# Combined manifest
+	STYPE_SYNC = "SYNC"
 	# A supprimer
 	STYPE_IIIF = "IIIF"
 		
@@ -1596,6 +1610,83 @@ class OpusSource (models.Model):
 							"", mxml_file, "tmp.xml")
 
 		return tmp_src
+
+	def convert_file_to_audio_manifest(self):
+		"""
+			A file has been uploaded in an Audio source: it 
+			os either an Audacity TXT file, or a Dezrann file.
+			We convert it to an audio manifest
+		"""
+		if (self.source_type.code != SourceType.STYPE_MP3 and 
+				self.source_type.code != SourceType.STYPE_MP4):
+			raise Exception (f"Source::convert_file_to_audio cannot be applied to a source of type {self.source_type.code}.")
+
+		name, extension = os.path.splitext(self.source_file.name)
+		audio_manifest = source_mod.AudioManifest(self.opus.ref, self.ref)
+		if extension == ".txt":
+			# Should be an Audacity file. We convert to a JSON
+			audio_manifest.convert_audacity(self.source_file.path)
+		if extension == ".drz":
+			# Should be a Dezrann file. We convert to a JSON
+			audio_manifest.convert_dezrann(self.source_file.path)
+		else:
+			raise Exception (f"Source::convert_file_to_audio unknown file extension {extension}")
+		# And we replace the file		
+		self.source_file.save("manifest.json", 
+					ContentFile(json.dumps(audio_manifest.to_dict())))
+					
+		# I makes sense to re-compute annotations
+		self.create_audio_annotations()
+		return audio_manifest
+
+	def create_audio_annotations(self):
+		# Now create annotations for an audio source from an audio
+		# manifest
+		if (self.source_type.code != SourceType.STYPE_MP3 and 
+				self.source_type.code != SourceType.STYPE_MP4):
+			raise Exception (f"Source::create_audio_annotations cannot be applied to a source of type {self.source_type.code}.")
+		
+		user_annot = User.objects.get(username=settings.COMPUTER_USER_NAME)
+		audio_concept = AnalyticConcept.objects.get(code=constants_mod.TFRAME_MEASURE_CONCEPT)
+		
+		# Remove existing annotations
+		Annotation.objects.filter(opus=self.opus).filter(analytic_concept=audio_concept).delete()
+		creator = annot_mod.Creator ("collabscore", 
+						annot_mod.Creator.SOFTWARE_TYPE, "collabscore")
+		
+		audio_manifest = json.loads(self.source_file.read())
+		for meas_annot in audio_manifest["time_frames"]:
+				measure = "m" + str(meas_annot["measure_no"])
+				time_frame = "t=" + str(meas_annot["time_frame"]["from"]) + "," + str(meas_annot["time_frame"]["to"])
+				annotation = annot_mod.Annotation.create_annot_from_xml_to_audio(creator, self.opus.musicxml.url, 
+								measure, self.url, time_frame, 
+								constants_mod.TFRAME_MEASURE_CONCEPT)
+				db_annot = Annotation.create_from_web_annotation(user_annot, 
+															self.opus, annotation)
+				if db_annot is not None:
+					db_annot.target.save()
+					if db_annot.body is not None:
+						db_annot.body.save()
+					db_annot.save()
+
+	def rebuild_combined_manifest(self):
+		"""
+		  Build a combined manifest from an image and audio source
+		"""
+		if "image_source" in self.metadata:
+			image_source = OpusSource.objects.get(opus=self.opus,ref=self.metadata["image_source"])
+		else:
+			# By default we take the source with ref iiiif
+			image_source =  OpusSource.objects.get(opus=self.opus,ref=source_mod.OpusSource.IIIF_REF)
+			print (f"OpusSource::rebuild_combined_manifest Warning: the 'image_source' field is undefined. taking 'iiif' by default")
+		if "audio_source" in self.metadata:
+			audio_source = OpusSource.objects.get(opus=self.opus,ref=self.metadata["audio_source"])
+		else:
+			# By default we take the source with ref audio
+			audio_source =  OpusSource.objects.get(opus=self.opus,ref=source_mod.OpusSource.AUDIO_REF)
+			print (f"OpusSource::rebuild_combined_manifest Warning: the 'audio_source' field is undefined. taking 'audio' by default")
+		
+		self.opus.create_sync_source(image_source, audio_source)
 
 	def stats_editions(self):
 		# Group editions by type and return a dict with 

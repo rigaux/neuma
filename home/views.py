@@ -419,6 +419,14 @@ class SourceView(NeumaView):
 			print ("Il faut recaluler la partition")
 			context['source'].apply_editions()
 			context['message'] = 'The score has been rebuilt'
+		if 'rebuild_audio_manifest' in request.GET:
+			# Convert the file (and create annotations)
+			audio_manifest = source.convert_file_to_audio_manifest()			
+			context['message'] = 'The audio manifest has been rebuilt'
+		if 'rebuild_combined_manifest' in request.GET:
+			# Create a combined manifest
+			combined_manifest = context['source'].rebuild_combined_manifest()			
+			context['message'] = 'The combined manifest has been rebuilt'
 		return self.render_to_response(context)
 
 class OpusEditView(NeumaView):

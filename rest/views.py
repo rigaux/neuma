@@ -789,47 +789,16 @@ class SourceFile (APIView):
 			
 		# Special case audio: parse the file and create annotations
 		if source_ref==source_mod.OpusSource.AUDIO_REF:
-			name, extension = os.path.splitext(filename)
-			audio_manifest = source_mod.AudioManifest(opus.ref, source_ref)
-			if extension == ".txt":
-				# Should be an Audacity file. We convert to a JSON
-				audio_manifest.convert_audacity(source.source_file.path)
-			if extension == ".json":
-				# Should be a Dezrann file. We convert to a JSON
-				audio_manifest.convert_dezrann(source.source_file.path)
-				
-			source.source_file.save(name + ".json", 
-					ContentFile(json.dumps(audio_manifest.to_dict())))
-			
-			# Now create annotations
-			opus, object_type = get_object_from_neuma_ref(full_neuma_ref)
-			user_annot = User.objects.get(username=settings.COMPUTER_USER_NAME)
-			audio_concept = AnalyticConcept.objects.get(code=constants_mod.TFRAME_MEASURE_CONCEPT)
-			Annotation.objects.filter(opus=opus).filter(analytic_concept=audio_concept).delete()
-			creator = annot_mod.Creator ("collabscore", 
-										annot_mod.Creator.SOFTWARE_TYPE, 
-										"collabscore")
-			for meas_annot in audio_manifest.time_frames:
-				measure = "m" + str(meas_annot["measure_no"])
-				time_frame = "t=" + str(meas_annot["time_frame"]["from"]) + "," + str(meas_annot["time_frame"]["to"])
-				annotation = annot_mod.Annotation.create_annot_from_xml_to_audio(creator, opus.musicxml.url, 
-								measure, source.url, time_frame, 
-								constants_mod.TFRAME_MEASURE_CONCEPT)
-				db_annot = Annotation.create_from_web_annotation(user_annot, 
-															opus, annotation)
-				if db_annot is not None:
-					db_annot.target.save()
-					if db_annot.body is not None:
-						db_annot.body.save()
-					db_annot.save()
+			# Convert the file (and create annotations)
+			audio_manifest = source.convert_file_to_audio_manifest()			
 			
 			## Allright, now everything shoud be ready to create the SYNC
 			# source between the image and the audio
 			try:
 				opus, object_type = get_object_from_neuma_ref(full_neuma_ref)
-				iiif_source = OpusSource.objects.get(opus=opus,ref=source_mod.OpusSource.IIIF_REF)
+				image_source = OpusSource.objects.get(opus=opus,ref=source_mod.OpusSource.IIIF_REF)
 				audio_source = OpusSource.objects.get(opus=opus,ref=source_mod.OpusSource.AUDIO_REF)
-				opus.create_sync_source(iiif_source, audio_source)
+				opus.create_sync_source(image_source, audio_source)
 			except Exception as ex:
 				serializer = MessageSerializer({"status":"ko", 
 				   "message": f"Error when creating a sync source for opus {full_neuma_ref}: {ex}"})

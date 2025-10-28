@@ -111,12 +111,13 @@ class AudioManifest:
 				measure_no += 1
 				current_tstamp = tstamp
 
-	def convert_dezrann(self, synchro_file):
-		synchros = json.load (synchro_file)
+	def convert_dezrann(self, marker_file):
+		with open(marker_file) as sync_file:
+			synchros = json.load (sync_file)
 		measure_no = 1
-		current_tstamp = 0
-		for synchro in synchros:
-			tstamp = synchro[0]
+		current_tstamp = synchros[0]["date"]
+		for synchro in synchros[1:]:
+			tstamp = synchro["date"]
 			tframe = {"from" : current_tstamp, "to": tstamp}
 			self.time_frames.append(
 				{"measure_no": measure_no,"time_frame": tframe})
