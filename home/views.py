@@ -415,7 +415,10 @@ class SourceView(NeumaView):
 
 	def get(self, request, *args, **kwargs):
 		context = self.get_context_data(**kwargs)
-		
+		if 'rebuild_score' in request.GET:
+			print ("Il faut recaluler la partition")
+			context['source'].apply_editions()
+			context['message'] = 'The score has been rebuilt'
 		return self.render_to_response(context)
 
 class OpusEditView(NeumaView):

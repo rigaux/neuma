@@ -22,6 +22,24 @@ $(function() {
 {% include "alternate-banner.html" %}
 
 
+<script language="JavaScript" type="text/JavaScript">
+/* Declare the list of tabs in the current page */
+{% if "change_corpus" in user_corpus_perms  %}
+var tabNames = [
+	            {"tabId": "tab1", "divId": "source"}, 
+                {"tabId": "tab2", "divId":"files"},
+                {"tabId": "tab3", "divId":"misc"},
+                {"tabId": "tab4", "divId":"manage"}
+                ]
+ {% else %}
+var tabNames = [
+	     {"tabId": "tab1", "divId": "source"}, 
+         {"tabId": "tab2", "divId":"files"},
+         {"tabId": "tab3", "divId":"misc"}
+                ]
+{% endif %}
+</script>
+
 <h1>Source {{source.ref}} de l'opus {{opus.title}}
 	{% if "change_corpus" in user_corpus_perms %}
 	  <a href="{% url 'admin:manager_opussource_change' source.id %}">
@@ -30,6 +48,27 @@ $(function() {
 	 {% endif %}  
 
 </h1>
+
+
+<div>
+	<ul id="tabnav">
+		<li id="tab1" class="active"><a href="#"
+			onClick="TabClick(tabNames, 0);">General properties</a></li>
+		<li id="tab2"><a href="#"
+			onClick="TabClick(tabNames, 1);">Files</a></li>
+        <li id="tab3"><a href="#"
+			onClick="TabClick(tabNames, 2);">Misc.</a></li>
+         {% if "change_corpus" in user_corpus_perms %}
+           <li id="tab4"><a href="#" onClick="TabClick(tabNames, 3);">Manage</a></li>
+        {% endif %}
+		</li>
+	</ul>
+</div>
+
+<div class="clearer">&nbsp;</div>
+<!--   Tab for general properties  -->
+<div id="source" style="display: block">
+
 
 <dl class="description">
 	<dt>{% trans "Corpus" %}</dt>
@@ -41,6 +80,8 @@ $(function() {
 
 		<dt>{% trans "Référence" %}</dt>
 		<dd>{{source.ref}}</dd>
+		<dt>{% trans "IIIF source?" %}</dt>
+		<dd>{{source.is_iiif}}</dd>
 		{% if source.url %}      
  			<dt>{% trans "URL" %}</dt>
 			<dd><a target="_blank" href="{{source.url}}">{{source.url}}</a></dd>
@@ -66,6 +107,11 @@ $(function() {
 	{% endfor %}
   </ul>
 
+  </div>
+  <div class="clearer">&nbsp;</div>
+  <!--   Tab for main score  -->
+  <div id="files" style="display: block">
+
   	 <h4>{% trans "Fichiers"%}</h4>
 	 <ul>
 	 {% if source.source_file %}      
@@ -80,7 +126,13 @@ $(function() {
 	<li><a target="_blank" href="{{source.iiif_manifest.url}}">Show the IIIF manifest</a></li>
 	   {% endif %}
     </ul>
+</div>
 
+
+
+<div class="clearer">&nbsp;</div>
+<!--   Tab for operations on sources  -->
+<div id="misc" style="display: block">
 	 
 	 {% if source.ref == 'iiif' %}
 		<h3>{% trans "Opérations sur la source IIIF"%}</h3>
@@ -105,6 +157,31 @@ $(function() {
 		  {% endfor %}
  		</ul>
 	{% endif %}  
+</div>
+
+
+<div class="clearer">&nbsp;</div>
+<!--   Tab for operations on sources  -->
+<div id="manage" style="display: block">
+
+	<h2>Manage source</h2>
+	 
+	<ul>
+		<li><a href="{% url 'admin:manager_opussource_change' source.id %}">Edit the source</a></li>
+		{% if source.source_type.code == 'JPEG' and source.is_iiif == True %}        
+		    <!-- Must be moved to DMOS sources -->
+		   <li><a href="{% url 'home:source' opus.ref source.ref %}?rebuild_score=1">Re-build the score from DMOS file</li>
+        {% endif %}
+		</ul>
+	
+</div>
+
+	<script type="text/javascript">
+	  $(document).ready(function() {
+	      TabClick(tabNames,0);
+	    }
+	  );
+	 </script>
 
 <!-- fin div .description -->
 {% endblock content %}

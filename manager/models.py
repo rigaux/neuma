@@ -1133,6 +1133,9 @@ class Opus(models.Model):
 							url, file_path=None, 
 							file_name=None, file_mode="r"):
 		
+		"""
+		   Create of replace a source description and files
+		"""
 		try:
 			source = OpusSource.objects.get(opus=self,ref=source_ref)
 			description = f"{source_type_code} file updated on {date.today()}", 
@@ -1153,6 +1156,21 @@ class Opus(models.Model):
 				
 		return source
 		
+	def replace_musicxml (self, mxml_file):
+		with open(mxml_file) as f:
+			self.musicxml = File(f,name="score.xml")
+			self.save()
+		return  self.create_source_with_file(source_mod.OpusSource.MUSICXML_REF, 
+					SourceType.STYPE_MXML, "", mxml_file, "score.xml")
+
+	def replace_mei (self, mei_file):
+		with open(mei_file) as f:
+			print ("Replace MEI file")
+			self.mei = File(f,name="mei.xml")
+			self.save()	
+		return self.create_source_with_file("mei", SourceType.STYPE_MEI,
+							"", mei_file, "score.mei")
+
 	def parse_dmos(self):
 		dmos_dir = os.path.join("file://" + settings.BASE_DIR, 'static/json/', 'dmos')
 		
@@ -1210,24 +1228,13 @@ class Opus(models.Model):
 			print ("Replace XML file")
 			mxml_file = "/tmp/" + shortuuid.uuid() + ".xml"
 			omr_score.write_as_musicxml (mxml_file)
-
-			with open(mxml_file) as f:
-				self.musicxml = File(f,name="score.xml")
-				self.save()
-			self.create_source_with_file(source_mod.OpusSource.MUSICXML_REF, 
-									SourceType.STYPE_MXML,
-							"", mxml_file, "score.xml")
+			mxml_source = self.replace_musicxml(mxml_file)
 		
 			# Generate and store the MEI file as a source and main file
 			# Create the file
 			mei_file = "/tmp/" + shortuuid.uuid() + "_mei.xml"
 			omr_score.write_as_mei (mxml_file, mei_file)
-			with open(mei_file) as f:
-				print ("Replace MEI file")
-				self.mei = File(f,name="mei.xml")
-				self.save()	
-			mei_source = self.create_source_with_file("mei", SourceType.STYPE_MEI,
-							"", mei_file, "score.mei")
+			mei_source = self.replace_mei (mei_file)
 		
 			# Generate the MIDI file
 			print ("Produce MIDI file")
@@ -1413,10 +1420,13 @@ class SourceType (models.Model):
 	STYPE_DMOS = "DMOS"
 	STYPE_MIDI = "MIDI"
 	STYPE_MXML = "MusicXML"
-	STYPE_JPEG = "JPEG"
 	STYPE_PDF = "PDF"
+	# Images, audio and videos
+	STYPE_JPEG = "JPEG"
+	STYPE_MP3 = "MP3"
+	STYPE_MP4 = "MP4"
+	# A supprimer
 	STYPE_IIIF = "IIIF"
-	STYPE_MPEG = "MPEG"
 		
 	class Meta:
 		db_table = "SourceType"	
@@ -1574,7 +1584,12 @@ class OpusSource (models.Model):
 		# Store the MusicXML file in the opus
 		mxml_file = "/tmp/" + shortuuid.uuid() + ".xml"
 		omr_score.write_as_musicxml (mxml_file)
-		
+		self.opus.replace_musicxml(mxml_file)
+		# Same for MEI
+		mei_file = "/tmp/" + shortuuid.uuid() + "_mei.xml"
+		omr_score.write_as_mei (mxml_file, mei_file)
+		self.opus.replace_mei (mei_file)
+
 		# Return a temporary source, it can be the result a the REST service
 		tmp_src = self.opus.create_source_with_file(source_mod.OpusSource.TMP_REF, 
 									SourceType.STYPE_MXML,
