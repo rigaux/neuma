@@ -102,6 +102,26 @@ var tabNames = [
 	</dl>
 
 
+	<h3>{% trans "IIIF players"%}</h3>
+	
+	{% if source.is_iiif == True %}
+	  <ul>
+	 {% if source.ref == 'iiif' %}
+	      <li> <a href="{% url 'home:iiif_viewer' source.id 'uv'  %}" target=”_blank”>
+	                   View with Universal viewer </a>
+	      | <a href="{% url 'home:iiif_viewer' source.id 'mirador'  %}" target=”_blank”>
+	                   View with Mirador </a></li>
+	{% endif %}           
+	{% if source.source_type.code == 'SYNC' %}
+	 <li> Playing the synchronisation with  <a href="https://theseusviewer.org/?iiif-content={{my_url}}{{source.file_rest_url|urlencode}}" target=”_blank”>
+	           Theseus</a> or
+	<a href="https://ifrit.fr/iiif/index.html#manifest={{my_url}}{{source.file_rest_url|urlencode}}" target=”_blank”>
+				       CollabPlayer</a> </li>
+		        {% endif %}           
+    {% else %}
+	  This is not an IIIF source.
+	{% endif %}
+   </ul>
 	<h3>{% trans "Metadata"%}</h3>
 	<ul>
 	  {% for key, val in source.metadata.items %}
