@@ -1599,9 +1599,10 @@ class OpusSource (models.Model):
 		omr_score.write_as_musicxml (mxml_file)
 		self.opus.replace_musicxml(mxml_file)
 		# Same for MEI
-		mei_file = "/tmp/" + shortuuid.uuid() + "_mei.xml"
-		omr_score.write_as_mei (mxml_file, mei_file)
-		self.opus.replace_mei (mei_file)
+		# Crashes on Mac OS X...
+		#mei_file = "/tmp/" + shortuuid.uuid() + "_mei.xml"
+		#omr_score.write_as_mei (mxml_file, mei_file)
+		#self.opus.replace_mei (mei_file)
 
 		# Return a temporary source, it can be the result a the REST service
 		tmp_src = self.opus.create_source_with_file(source_mod.OpusSource.TMP_REF, 
