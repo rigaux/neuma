@@ -137,9 +137,11 @@ var tabNames = [
               | <a href="{% url 'home:iiif_viewer' source.id 'mirador'  %}" target=”_blank”>
                            View with Mirador </a>
         {% endif %}           
-		{% if source.ref == 'sync' %}
-		  | <a href="https://theseusviewer.org/?iiif-content={{my_url}}{{source.file_rest_url|urlencode}}" target=”_blank”>
-		            Playing the IIIF Synchronisation</a> 
+		{% if source.source_type.code == 'SYNC' %}
+		  |  Playing the synchronisation with  <a href="https://theseusviewer.org/?iiif-content={{my_url}}{{source.file_rest_url|urlencode}}" target=”_blank”>
+		           Theseus</a> or
+		<a href="https://ifrit.fr/iiif/index.html#manifest={{my_url}}{{source.file_rest_url|urlencode}}" target=”_blank”>
+					       CollabPlayer</a> 
 			        {% endif %}           
         {% if "change_corpus" in user_corpus_perms %}
            | <a href="{% url 'admin:manager_opussource_change' source.id %}">

@@ -815,8 +815,9 @@ class Opus(models.Model):
 			print (f"Create_combined_manifest WARNING: no duration in metadata. Assuling a default value...")
 			duration = 180
 			
-		height = 6174
-		width = 4564
+		print (f"Take the image manifest from the source")	
+		with open(iiif_source.iiif_manifest.path, "r") as f:
+			iiif_doc = iiif2_mod.Document(json.load(f))
 
 		# Create the combined manifest
 		manifest = iiif3_mod.Manifest(opus_url, self.title)
@@ -824,9 +825,14 @@ class Opus(models.Model):
 		# One single canvas 
 		canvas = iiif3_mod.Canvas (opus_url+"/canvas", "Combined image-audio canvas")
 
-		canvas.prezi_canvas.height = height
-		canvas.prezi_canvas.width = width
-
+		# The height and width of the canvas are those of the first image.
+		# Unclear, should be clarified
+		images = iiif_doc.get_images()
+		for img in images:
+			canvas.prezi_canvas.height = img.height
+			canvas.prezi_canvas.width = img.width
+			break
+			
 		# We create the content list
 		content_list_id = opus_url+"/list-media"
 		content_list = iiif3_mod.AnnotationList(content_list_id,"List of source media (audio and images)")
@@ -887,9 +893,6 @@ class Opus(models.Model):
 		#for page_id, measure_range  in pages_measures.items():
 		#	print (f"Page {page_id}. Range {measure_range}")
 
-		print (f"Take the image manifest from the source")	
-		with open(iiif_source.iiif_manifest.path, "r") as f:
-			iiif_doc = iiif2_mod.Document(json.load(f))
 		# We should now the first page of music
 		if "first_page_of_music" in iiif_source.metadata:
 			first_page_of_music = iiif_source.metadata["first_page_of_music"]
