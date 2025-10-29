@@ -128,9 +128,6 @@ var tabNames = [
             {% if source.url %}      
                 <a target="_blank" href="{{source.url}}">Link to the source</a> |
             {% endif %} 
-          {% if source.source_file %}
-           <a href="{{source.source_file.url}}">File: {{source.ref}}</a>
-          {% endif %}           
           {% if source.ref == 'iiif' %}
               | <a href="{% url 'home:iiif_viewer' source.id 'uv'  %}" target=”_blank”>
                            View with Universal viewer </a>

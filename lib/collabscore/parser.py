@@ -903,6 +903,7 @@ class OmrScore:
 			# do not reinsert them in that case
 			print ("WE ENSURE MEASURE DURATION")
 			list_removals = []
+			score.clean_voices() 
 		else:
 			print ("WE DO NOT ENSURE MEASURE DURATION")
 		for removal in list_removals:

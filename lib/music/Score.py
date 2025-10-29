@@ -1008,6 +1008,9 @@ class Measure:
 		
 		# First get the time signature in effect
 		for voice in self.voices:
+			# Is it really better ?
+			voice.remove_hidden_events()
+			
 			bar_duration = self.get_expected_duration()
 			if voice.get_duration() > bar_duration:					
 				logging.warning (f"Overduration in measure {self.id}. Expected duration: {bar_duration}. Voice {voice.id} duration is {voice.get_duration()}")
