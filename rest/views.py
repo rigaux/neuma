@@ -796,18 +796,6 @@ class SourceFile (APIView):
 			# Convert the file (and create annotations)
 			audio_manifest = source.convert_file_to_audio_manifest()			
 			
-			## Allright, now everything shoud be ready to create the SYNC
-			# source between the image and the audio
-			try:
-				opus, object_type = get_object_from_neuma_ref(full_neuma_ref)
-				image_source = OpusSource.objects.get(opus=opus,ref=source_mod.OpusSource.IIIF_REF)
-				audio_source = OpusSource.objects.get(opus=opus,ref=source_mod.OpusSource.AUDIO_REF)
-				opus.create_sync_source(image_source, audio_source)
-			except Exception as ex:
-				serializer = MessageSerializer({"status":"ko", 
-				   "message": f"Error when creating a sync source for opus {full_neuma_ref}: {ex}"})
-				return JSONResponse(serializer.data)	
-
 		serializer = MessageSerializer({"message": "Source file uploaded"})
 		return JSONResponse(serializer.data)	
 

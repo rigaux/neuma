@@ -301,11 +301,11 @@ class Corpus(models.Model):
 			child.get_children(recursive)
 		return self.children
 	
-	def parse_dmos(self):
+	def parse_dmos(self, just_annotations = False, just_score=False):
 		for opus in Opus.objects.filter(corpus=self).order_by("ref"):
 			print (f"\n\nProcessing opus {opus.ref}")
 			try:
-				opus.parse_dmos()
+				opus.parse_dmos(just_annotations, just_score)
 			except Exception as e:
 				print (f"Error when trying to convert DMOS file for opus {opus.ref}:{e}")
 
@@ -943,7 +943,7 @@ class Opus(models.Model):
 				manifest_file.write(manifest.json (2))
 		self.create_source_with_file(source_mod.OpusSource.SYNC_REF, 
 								SourceType.STYPE_SYNC, "", 
-								manifest_fname, "combined_manfest.json", "rb")
+								manifest_fname, "combined_manifest.json", "rb")
 
 
 	def load_from_dict(self, corpus, dict_opus, files={}, opus_url=""):
@@ -1183,11 +1183,11 @@ class Opus(models.Model):
 		return self.create_source_with_file("mei", SourceType.STYPE_MEI,
 							"", mei_file, "score.mei")
 
-	def parse_dmos(self):
+	def parse_dmos(self, just_annotations = False, just_score=False):
 		dmos_dir = os.path.join("file://" + settings.BASE_DIR, 'static/json/', 'dmos')
 		
 		# In case we just want to test annotations
-		just_annotations = False 
+		
 
 		parser_mod.logger.warning ("")
 		parser_mod.logger.warning (f"Parsing DMOS file for opus {self.ref}, {self.title}")
@@ -1214,10 +1214,6 @@ class Opus(models.Model):
 					dmos_data = json.loads(dmos_source.source_file.read())
 				for json_edition in dmos_source.operations:
 					editions.append (Edition.from_json(json_edition))
-
-			#if source.ref == source_mod.OpusSource.DMOS_REF:
-				# Clean this old source
-			#	source.delete()
 
 		if dmos_data == None:
 			print ("Unable to find the DMOS file ??")
@@ -1302,25 +1298,25 @@ class Opus(models.Model):
 		else:
 			score.uri = "Undetermined: change the 'just_annotations' setting"
 
-		# Clean existing annotations for image-region model
-		print ("Cleaning existing annotations")
-		image_model = AnalyticModel.objects.get(code=AM_IMAGE_REGION)
-		Annotation.objects.filter(opus=self).filter(analytic_concept__model=image_model).delete()
-		error_model = AnalyticModel.objects.get(code=AM_OMR_ERROR)
-		Annotation.objects.filter(opus=self).filter(analytic_concept__model=error_model).delete()
+		if not just_score:
+			# Clean existing annotations for image-region model
+			print ("Cleaning existing annotations")
+			image_model = AnalyticModel.objects.get(code=AM_IMAGE_REGION)
+			Annotation.objects.filter(opus=self).filter(analytic_concept__model=image_model).delete()
+			error_model = AnalyticModel.objects.get(code=AM_OMR_ERROR)
+			Annotation.objects.filter(opus=self).filter(analytic_concept__model=error_model).delete()
 
-		print (f'Inserting annotations')
-		user_annot = User.objects.get(username=settings.COMPUTER_USER_NAME)
-		for annotation in score.annotations:
-			annotation.target.resource.source = score.uri
-
-			db_annot = Annotation.create_from_web_annotation(user_annot, 
+			print (f'Inserting annotations')
+			user_annot = User.objects.get(username=settings.COMPUTER_USER_NAME)
+			for annotation in score.annotations:
+				annotation.target.resource.source = score.uri
+				db_annot = Annotation.create_from_web_annotation(user_annot, 
 															self, annotation)
-			if db_annot is not None:
-				db_annot.target.save()
-				if db_annot.body is not None:
-					db_annot.body.save()
-				db_annot.save()
+				if db_annot is not None:
+					db_annot.target.save()
+					if db_annot.body is not None:
+						db_annot.body.save()
+					db_annot.save()
 
 		return score
 
