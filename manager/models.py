@@ -1626,11 +1626,11 @@ class OpusSource (models.Model):
 		if extension == ".txt":
 			# Should be an Audacity file. We convert to a JSON
 			audio_manifest.convert_audacity(self.source_file.path)
-		if extension == ".drz":
+		elif extension == ".drz":
 			# Should be a Dezrann file. We convert to a JSON
 			audio_manifest.convert_dezrann(self.source_file.path)
 		else:
-			raise Exception (f"Source::convert_file_to_audio unknown file extension {extension}")
+			raise Exception (f"Source::convert_file_to_audio unknown file extension '{extension}'")
 		# And we replace the file		
 		self.source_file.save("manifest.json", 
 					ContentFile(json.dumps(audio_manifest.to_dict())))

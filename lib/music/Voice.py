@@ -101,7 +101,8 @@ class Voice:
 				self.append_event(event)
 				#score_mod.logger.warning (f"Accepting event {event.id}")
 			else:
-				score_mod.logger.warning (f"Removing event {event.id}")
+				pass
+				#score_mod.logger.warning (f"Removing event {event.id}")
 
 	def shrink_to_bar_duration(self, bar_duration):
 		# Ensure that a voice duration does not exceeds bar duration
