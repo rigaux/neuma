@@ -528,6 +528,7 @@ class OmrScore:
 		"""
 		  Scan the DMOS structure and produce regions and errors annotations
 		"""
+		print (f"\nProduce annotations\n")
 		# We keep the measure id along the way
 		current_measure_no = 0
 		for page in self.pages:
@@ -589,8 +590,10 @@ class OmrScore:
 							if voice_item.note_attr is not None or voice_item.rest_attr is not None:
 								if voice_item.note_attr  is not None:
 									heads = voice_item.note_attr.heads
+									errors = voice_item.note_attr.errors
 								else:
 									heads = voice_item.rest_attr.heads
+									errors = voice_item.rest_attr.errors
 								for head in heads:
 									if head.head_symbol.region is not None:
 										annotation = annot_mod.Annotation.create_annot_from_xml_to_image(
@@ -598,18 +601,11 @@ class OmrScore:
 											page.page_url, head.head_symbol.region.string_xyhw(), 
 											constants_mod.IREGION_NOTE_CONCEPT)
 										score.add_annotation (annotation)
-									# Did we met errors at the voice item level ?
-									for error in voice_item.errors:
-										score.add_annotation (annot_mod.Annotation.create_from_error (
-											self.creator, self.uri, head.id, error.message))
-									# Clear the errors to avoid attaching them to each head
-									voice_item.errors = []
-									# Did we met errors at the head level ?
-									for error in voice_item.errors:
-										score.add_annotation (annot_mod.Annotation.create_from_error (
-											self.creator, self.uri, head.id, error.message))
-									#else:
-									#	score_model.logger.warning (f"No region for an event. Probably a non visible rest")
+								# Did we met errors at the voice item level ?
+								for error in errors:
+									score.add_annotation (annot_mod.Annotation.create_from_error (
+										self.creator, self.uri, head.id, error.message))
+									#print (f"Add error {error.message} for element")
 							elif voice_item.clef_attr is not None:
 								clef_region = voice_item.clef_attr.symbol.region
 								#This is a clef change 
@@ -622,6 +618,7 @@ class OmrScore:
 								for error in voice_item.clef_attr.errors:
 									score.add_annotation (annot_mod.Annotation.create_from_error (
 											self.creator, self.uri, voice_item.clef_attr.id, error.message))
+		print (f"\nAnnotations produced\n")
 
 				
 	def get_score(self):

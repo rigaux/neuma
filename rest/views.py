@@ -851,8 +851,8 @@ class AnnotationModelStats (APIView):
 		if type(neuma_object) is Opus:
 			opus = neuma_object
 		else:
-			serializer = MessageSerializer(status="ko", 
-										    message = f"Unknown opus {full_neuma_ref}")
+			serializer = MessageSerializer({"status": "ko", 
+										"message": f"Unknown opus {full_neuma_ref}"})
 			return JSONResponse(serializer.data)
 
 		# The model is explicitly given
