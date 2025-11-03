@@ -603,8 +603,10 @@ class OmrScore:
 										score.add_annotation (annotation)
 								# Did we met errors at the voice item level ?
 								for error in errors:
-									score.add_annotation (annot_mod.Annotation.create_from_error (
-										self.creator, self.uri, head.id, error.message))
+									# I don't take "lowDurErr" : too many
+									if error.message != "lowDurErr":
+										score.add_annotation (annot_mod.Annotation.create_from_error (
+											self.creator, self.uri, head.id, error.message))
 									#print (f"Add error {error.message} for element")
 							elif voice_item.clef_attr is not None:
 								clef_region = voice_item.clef_attr.symbol.region
