@@ -18,7 +18,7 @@ from iiif_prezi.loader import ManifestReader
 sys.path.append("..")
 from lib.collabscore.parser import CollabScoreParser, OmrScore
 
-import lib.iiif.IIIFProxy as iiif_proxy
+import lib.iiif.IIIF2 as iiif_proxy
 
 import lib.music.source as source_mod
 
@@ -118,6 +118,7 @@ def main(argv=None):
 			# assumes that the IIIF server is configured with 
 			# BasicLookupStrategy.path_suffix = .jpg
 			image_id = path_to_images + "%2F" + Path (jpg_name).stem
+			image_id = path_to_images + "%2F" + jpg_name
 			# The image path instead feature the extens
 			image_path = path_to_images + "%2F" + jpg_name
 			print (f"File {jpg_name}, image id {image_id}")

@@ -1502,8 +1502,8 @@ class OpusSource (models.Model):
 
 	def upload_path(self, filename):
 		'''Set the path where source files must be stored'''
-		source_ref = self.opus.ref.replace(settings.NEUMA_ID_SEPARATOR, "-")
-		return 'sources/' + source_ref + '/' + filename
+		source_path = self.opus.ref.replace(settings.NEUMA_ID_SEPARATOR, "-") + "/" + self.ref
+		return 'sources/' + source_path + '/' + filename
 	source_file = models.FileField(upload_to=upload_path,blank=True,null=True,storage=OverwriteStorage())
 	manifest = models.FileField(upload_to=upload_path,blank=True,null=True,storage=OverwriteStorage())
 	# For IIIF sources, we store locally the IIIF manifest
