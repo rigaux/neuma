@@ -416,13 +416,12 @@ class SourceView(NeumaView):
 	def get(self, request, *args, **kwargs):
 		context = self.get_context_data(**kwargs)
 		if 'rebuild_score' in request.GET:
-			print ("Il faut recaluler la partition")
 			context['source'].apply_editions()
 			context['message'] = 'The score has been rebuilt'
-		if 'rebuild_audio_manifest' in request.GET:
-			# Convert the file (and create annotations)
-			audio_manifest = context['source'].convert_file_to_audio_manifest()			
-			context['message'] = 'The audio manifest has been rebuilt'
+		if 'compute_annotations' in request.GET:
+			# Create annotations
+			audio_manifest = context['source'].create_audio_annotations()			
+			context['message'] = 'Annotations have been rebuilt'
 		if 'rebuild_combined_manifest' in request.GET:
 			# Create a combined manifest
 			combined_manifest = context['source'].rebuild_combined_manifest()			

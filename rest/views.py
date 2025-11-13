@@ -7,6 +7,8 @@ import json
 import csv
 from jsonref import JsonRef
 
+from natsort import natsorted
+
 import os 
 import zipfile
 from pathlib import Path
@@ -905,7 +907,7 @@ class AnnotationList(generics.ListAPIView):
 			try:
 				db_annotations = Annotation.objects.filter(
 					opus=opus, analytic_concept__code=concept_code
-				)
+				).order_by ("ref")
 			except AnalyticConcept.DoesNotExist:
 				serializer = MessageSerializer({"status": "ko", 
 										    "message" : f"Unknown concept {concept_code}"})
@@ -921,7 +923,10 @@ class AnnotationList(generics.ListAPIView):
 				annotations[annotation.ref] = []
 			annotations[annotation.ref].append(AnnotationSerializer(annotation).data)
 
-		return JSONResponse(annotations)
+		# Sort in natural order
+		sorted_annotations = dict(natsorted(annotations.items())) 
+
+		return JSONResponse(sorted_annotations)
 
 	@extend_schema(operation_id="AnnotationsClear")
 	def delete(self, request, full_neuma_ref, model_code='_stats', concept_code="_all"):

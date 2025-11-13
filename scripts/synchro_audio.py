@@ -20,10 +20,13 @@ import lib.music.source as source_mod
 
 SHOW_MANIFEST = "show"
 SPLIT_TIMEFRAME = "split"
+MERGE_TIMEFRAMES = "merge"
+CONVERT_FROM_AUDACITY = "cnv_audacity"
 
 #
 # Example: 
-#
+#   python3 synchro_audio.py -i data/EtqPelleasa2s1.txt -a cnv_audacity -o pelleas.json
+#   python3 synchro_audio.py -i pelleas.json  -a split -r m14 -n m14bis 
 
 def main(argv=None):
 	""" 
@@ -48,21 +51,48 @@ def main(argv=None):
 		
 	if args.input_file is None:
 		sys.exit ("You must provide an input file name with -i ")
-	with open(args.input_file) as manifest_file:
-		synchro_data = json.load (manifest_file)
-		audio_mnf = source_mod.AudioManifest.from_json(synchro_data)
 
 	if action == SHOW_MANIFEST:
 		print (f"Action: show the content of an audio manifest")
+		with open(args.input_file) as manifest_file:
+			synchro_data = json.load (manifest_file)
+			audio_mnf = source_mod.AudioManifest.from_json(synchro_data)
 		audio_mnf.show()
 	elif action == SPLIT_TIMEFRAME:
 		if args.object_ref is None:
 			sys.exit ("Split action. You must provide an object ref")
 		if args.new_ref is None:
 			sys.exit ("Split action. You must provide the new ref")
+		if args.output_file is None:
+			sys.exit ("Split action. You must provide the output file name")
+		with open(args.input_file) as manifest_file:
+			synchro_data = json.load (manifest_file)
+			audio_mnf = source_mod.AudioManifest.from_json(synchro_data)
 		print (f"Action: split time frame for object {args.object_ref}")
 		audio_mnf.split_tframe (args.object_ref, args.new_ref)
-		audio_mnf.show()
+		output = open(args.output_file, 'w', encoding='utf-8')
+		json.dump (audio_mnf.to_json(), output, indent=4)
+		print (f"Manifest after split of {args.object_ref} has been written in {args.output_file}")
+	elif action == MERGE_TIMEFRAMES:
+		if args.object_ref is None:
+			sys.exit ("Merge action. You must provide an object ref")
+		if args.output_file is None:
+			sys.exit ("Merge action. You must provide the output file name")
+		with open(args.input_file) as manifest_file:
+			audio_mnf = source_mod.AudioManifest.from_json(json.load (manifest_file))
+		print (f"Action: merge time frames from object {args.object_ref}")
+		audio_mnf.merge_tframes (args.object_ref)
+		output = open(args.output_file, 'w', encoding='utf-8')
+		json.dump (audio_mnf.to_json(), output, indent=4)
+		print (f"Manifest after merge of {args.object_ref} has been written in {args.output_file}")
+	elif action == CONVERT_FROM_AUDACITY:
+		if args.output_file is None:
+			sys.exit ("Convert action. You must provide the output file name")
+		audio_mnf = source_mod.AudioManifest ("","")
+		audio_mnf.load_from_audacity (args.input_file)
+		output = open(args.output_file, 'w', encoding='utf-8')
+		json.dump (audio_mnf.to_json(), output, indent=4)
+		print (f"Manifest has been loaded from {args.input_file} and written to {args.output_file}")
 	else:
 		sys.exit (f"Unknown action {action}")
 		

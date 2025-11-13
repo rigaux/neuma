@@ -869,7 +869,7 @@ class Opus(models.Model):
 		for measure_ref, annot_image in sorted_images.items():
 			no_measure = int(measure_ref.replace ("m",""))
 			if  annot_image.body.source not in  pages_measures.keys():
-				print (f"Found a new page {annot_image.body.source}.")
+				# print (f"Found a new page {annot_image.body.source}.")
 				pages_measures[annot_image.body.source] = {"first_measure" : no_measure,
 										"start_at": None, "stop_at": None}
 			else:
@@ -890,8 +890,8 @@ class Opus(models.Model):
 					else:
 						measure_range["stop_at"] = t_range[1]
 						
-		#for page_id, measure_range  in pages_measures.items():
-		#	print (f"Page {page_id}. Range {measure_range}")
+		for page_id, measure_range  in pages_measures.items():
+			print (f"Page {page_id}. Range {measure_range}")
 
 		# We should now the first page of music
 		if "first_page_of_music" in iiif_source.metadata:
@@ -916,7 +916,7 @@ class Opus(models.Model):
 					raise Exception(f"Unable to find annotations on image {img.url} when creating the sync manifest")
 					t_range=""
 				target = canvas.id + "#" + t_range
-				#print (f"Image {img.native}. URL {img.url} Time range {t_range} Width {img.width} Height {img.height}")
+				print (f"Image {img.native}. URL {img.url} Time range {t_range} Width {img.width} Height {img.height}")
 				content_list.add_image_item (f"{opus_url}/img{i_img}", target, img.native, "application/jpg", img.height, img.width)
 			#if i_img > 2:
 			#	break
@@ -1625,10 +1625,10 @@ class OpusSource (models.Model):
 		audio_manifest = source_mod.AudioManifest(self.opus.ref, self.ref)
 		if extension == ".txt":
 			# Should be an Audacity file. We convert to a JSON
-			audio_manifest.convert_audacity(self.source_file.path)
+			audio_manifest.load_from_audacity(self.source_file.path)
 		elif extension == ".drz":
 			# Should be a Dezrann file. We convert to a JSON
-			audio_manifest.convert_dezrann(self.source_file.path)
+			audio_manifest.load_from_dezrann(self.source_file.path)
 		else:
 			raise Exception (f"Source::convert_file_to_audio unknown file extension '{extension}'")
 		# And we replace the file		
@@ -1654,10 +1654,10 @@ class OpusSource (models.Model):
 		creator = annot_mod.Creator ("collabscore", 
 						annot_mod.Creator.SOFTWARE_TYPE, "collabscore")
 		
-		audio_manifest = json.loads(self.source_file.read())
-		for meas_annot in audio_manifest["time_frames"]:
-				measure = "m" + str(meas_annot["measure_no"])
-				time_frame = "t=" + str(meas_annot["time_frame"]["from"]) + "," + str(meas_annot["time_frame"]["to"])
+		audio_manifest = source_mod.AudioManifest.from_json (json.loads(self.source_file.read()))
+		for tframe in audio_manifest.time_frames:
+				measure = tframe.id
+				time_frame = "t=" + str(tframe.begin) + "," + str(tframe.end)
 				annotation = annot_mod.Annotation.create_annot_from_xml_to_audio(creator, self.opus.musicxml.url, 
 								measure, self.url, time_frame, 
 								constants_mod.TFRAME_MEASURE_CONCEPT)

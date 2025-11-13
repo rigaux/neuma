@@ -119,11 +119,28 @@ class AudioManifest:
 		to an object (typ. a measure) in the pivot srcore
 	"""
 	
-	def __init__(self, opus_ref, source_ref) :
+	# Patterns used to generate the ids of objects referred to in frames
+	MEASURE_REF_PATTERN = "measure"
+	NO_REF_PATTERN = "none"
+
+	def __init__(self, opus_ref, source_ref, ref_pattern="measure") :
 		self.opus_ref = opus_ref
 		self.source_ref = source_ref
 		# List of timeframes
 		self.time_frames = []
+		# Record the pattern
+		self.ref_pattern = ref_pattern
+
+	def rebuild_object_refs(self):
+		# This method must be called when the order and number
+		# of frames has changed.
+		if self.ref_pattern == AudioManifest.MEASURE_REF_PATTERN:
+			measure_no = 1
+			for tframe in self.time_frames:
+				tframe.id = f"m{measure_no}"
+				measure_no += 1
+		else:
+			print ("AudioManifest::rebuild_object_refs. Don't know how to rebuild refs for pattern {self.ref_pattern}")
 
 	def insert_timeframe(self, tframe):
 		# Insert a new time frame. 
@@ -137,11 +154,10 @@ class AudioManifest:
 		for tframe in self.time_frames:
 			if tframe.id == object_id:
 				found = True
-				print (f"Found time frame {tframe} at pos {pos}. Split !")
+				#print (f"Found time frame {tframe} at pos {pos}. Split !")
 				mid_ts = tframe.begin + tframe.length () / 2
 				new_tframe = AudioFrame (new_id, mid_ts, tframe.end)
 				tframe.end = mid_ts
-				print (f"After split. Old ts {tframe} New {new_tframe}")
 				break
 			pos += 1
 			
@@ -152,26 +168,63 @@ class AudioManifest:
 			print (f"Insert {new_tframe} at pos {pos+1}")
 			self.time_frames.insert (pos+1, new_tframe)
 
+		# Rebuild the measure refs
+		self.rebuild_object_refs()
 	
-	def convert_audacity(self, marker_file):
+	def merge_tframes (self, object_id, nb_merges=2):
+		# Merge a sequence of time frames
+		found = False
+		pos_target = 0
+		for tframe in self.time_frames:
+			if tframe.id == object_id:
+				found = True
+				target = tframe
+				#print (f"Found time frame {tframe} at pos {pos_target}. Merge from here !")
+				mid_ts = tframe.begin + tframe.length () / 2
+				break
+			pos_target += 1
+			
+		if not found:
+			print (f"No such object in the manifest {object_id}.")
+		else:
+			# We know the pos of the target. Get the next nb_merges tframes
+			for pos in range (pos_target+1, pos_target + nb_merges):
+				merged_frame = self.time_frames[pos]
+				target.end = merged_frame.end
+				#print (f"Merge {merged_frame} found at pos {pos+1}")
+			# Second pass to delete merge frames
+			for pos in range (pos_target+1, pos_target + nb_merges):
+				del self.time_frames[pos]
+
+		print (f"Result : {target}")
+		# Rebuild the measure refs
+		self.rebuild_object_refs()
+
+	def load_from_audacity(self, marker_file):
 		measure_no = 1
 		with open(marker_file) as sync_file:
 			synchro_data = csv.reader(sync_file, delimiter='\t')
 			current_tstamp = 0
 			for synchro in synchro_data:
-				tstamp = synchro[0]
-				audio_frame = AudioFrame (f"m{measure_no}", current_tstamp, tstamp)
+				tstamp = float (synchro[0])
+				if self.ref_pattern == AudioManifest.MEASURE_REF_PATTERN:
+					# Follow the measure pattern: "m"+no
+					object_ref = f"m{measure_no}"
+				else:
+					object_ref = ""
+					print (f"ERROR: cannot infer the object reference from an Audacity file")
+				audio_frame = AudioFrame (object_ref, current_tstamp, tstamp)
 				self.insert_timeframe(audio_frame)
 				measure_no += 1
 				current_tstamp = tstamp
 
-	def convert_dezrann(self, marker_file):
+	def load_from_dezrann(self, marker_file):
 		with open(marker_file) as sync_file:
 			synchros = json.load (sync_file)
 		measure_no = 1
-		current_tstamp = synchros[0]["date"]
+		current_tstamp = float(synchros[0]["date"])
 		for synchro in synchros[1:]:
-			tstamp = synchro["date"]
+			tstamp = float(synchro["date"])
 			audio_frame = AudioFrame (f"m{measure_no}", current_tstamp, tstamp)
 			self.insert_timeframe(audio_frame)
 			measure_no += 1
@@ -183,6 +236,7 @@ class AudioManifest:
 			json_frames.append (frame.to_json())
 		return {"opus_ref": self.opus_ref, 
 					"source_ref": self.source_ref,
+					"nb_frames": len(self.time_frames),
 					"time_frames": json_frames}
 
 	def show(self):

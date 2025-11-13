@@ -118,7 +118,6 @@ def main(argv=None):
 			# assumes that the IIIF server is configured with 
 			# BasicLookupStrategy.path_suffix = .jpg
 			image_id = path_to_images + "%2F" + Path (jpg_name).stem
-			image_id = path_to_images + "%2F" + jpg_name
 			# The image path instead feature the extens
 			image_path = path_to_images + "%2F" + jpg_name
 			print (f"File {jpg_name}, image id {image_id}")
