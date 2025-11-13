@@ -8,6 +8,7 @@ import lib.iiif.IIIF2 as iiif2_mod
 
 from lib.music.Score import Part
 from collections import OrderedDict
+from pip._vendor.distlib import manifest
 
 '''
  A class used to represent a source (multimedia document) associated to an Opus
@@ -83,21 +84,75 @@ class OpusSource:
 '''
 
 
+class AudioFrame:
+	"""
+		A time frame in a video or audio source, along
+		with the reference of the related object in the pivot score
+	"""
+	
+	def __init__(self, object_id, begin, end) :
+		self.id = object_id
+		self.begin = begin
+		self.end = end
+		
+	def to_json (self):
+		tframe = {"from" : self.begin, "to": self.end}
+		return {"id": self.id,"time_frame": tframe}
+
+	def length(self):
+		return self.end - self.begin
+	
+	def __str__ (self):
+		return json.dumps (self.to_json())
+	
+	@staticmethod
+	def from_json (json_dict):
+		tframe = json_dict["time_frame"]
+		return AudioFrame (json_dict["id"], tframe["from"], tframe["to"])
+
 class AudioManifest:
 	"""
-		Used for synchro of Audio sources with a score.
+		Representation of an internal manifest annotating
+		an audio or video source.
 		
-		Receive a file of labels from Audacity, Dezrann or another
-		interface. Each label  is the start/end of a measure
-		 Return an audio manifest
+		The manifest is a list of time frames, each associated
+		to an object (typ. a measure) in the pivot srcore
 	"""
 	
 	def __init__(self, opus_ref, source_ref) :
 		self.opus_ref = opus_ref
 		self.source_ref = source_ref
-		# List of timestamps
+		# List of timeframes
 		self.time_frames = []
 
+	def insert_timeframe(self, tframe):
+		# Insert a new time frame. 
+		# Maybe add some controls
+		self.time_frames.append(tframe)
+		
+	def split_tframe (self, object_id, new_id):
+		# Split a time frame in two
+		found = False
+		pos = 0
+		for tframe in self.time_frames:
+			if tframe.id == object_id:
+				found = True
+				print (f"Found time frame {tframe} at pos {pos}. Split !")
+				mid_ts = tframe.begin + tframe.length () / 2
+				new_tframe = AudioFrame (new_id, mid_ts, tframe.end)
+				tframe.end = mid_ts
+				print (f"After split. Old ts {tframe} New {new_tframe}")
+				break
+			pos += 1
+			
+		if not found:
+			print (f"No such object in the manifest {object_id}.")
+		else:
+			# Insert in the list
+			print (f"Insert {new_tframe} at pos {pos+1}")
+			self.time_frames.insert (pos+1, new_tframe)
+
+	
 	def convert_audacity(self, marker_file):
 		measure_no = 1
 		with open(marker_file) as sync_file:
@@ -105,9 +160,8 @@ class AudioManifest:
 			current_tstamp = 0
 			for synchro in synchro_data:
 				tstamp = synchro[0]
-				tframe = {"from" : current_tstamp, "to": tstamp}
-				self.time_frames.append(
-					{"measure_no": measure_no,"time_frame": tframe})
+				audio_frame = AudioFrame (f"m{measure_no}", current_tstamp, tstamp)
+				self.insert_timeframe(audio_frame)
 				measure_no += 1
 				current_tstamp = tstamp
 
@@ -118,17 +172,33 @@ class AudioManifest:
 		current_tstamp = synchros[0]["date"]
 		for synchro in synchros[1:]:
 			tstamp = synchro["date"]
-			tframe = {"from" : current_tstamp, "to": tstamp}
-			self.time_frames.append(
-				{"measure_no": measure_no,"time_frame": tframe})
+			audio_frame = AudioFrame (f"m{measure_no}", current_tstamp, tstamp)
+			self.insert_timeframe(audio_frame)
 			measure_no += 1
 			current_tstamp = tstamp
 
-	def to_dict(self):
+	def to_json(self):
+		json_frames = []
+		for frame in self.time_frames:
+			json_frames.append (frame.to_json())
 		return {"opus_ref": self.opus_ref, 
 					"source_ref": self.source_ref,
-					"time_frames": self.time_frames}
+					"time_frames": json_frames}
 
+	def show(self):
+		print (f"\nAudio manifest for Opus {self.opus_ref} and source {self.source_ref}")
+		print (f"Nb time frames {len(self.time_frames)}")
+		for tframe in self.time_frames:
+			print (f"\tTime frame for object {tframe.id}: {tframe.begin} -- {tframe.end} ")
+			
+	@staticmethod
+	def from_json (json_dict):
+		manifest = AudioManifest (json_dict["opus_ref"], json_dict["source_ref"])
+		for json_frame in json_dict["time_frames"]:
+			tframe = AudioFrame.from_json (json_frame)
+			manifest.insert_timeframe(tframe)
+		return manifest
+	
 class Manifest:
 	'''
 		Describes the organization of an image of set of images 
