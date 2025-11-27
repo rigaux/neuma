@@ -32,7 +32,8 @@ class OpusForm(ModelForm):
 
     class Meta:
         model = Opus
-        fields = ('corpus', 'ref', 'title', 'musicxml', 'mei')
+        fields = ('corpus', 'ref', 'title', 'description', 
+         				'composer_ld', 'musicxml', 'mei')
         
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -52,6 +53,8 @@ class OpusForm(ModelForm):
         self.helper.layout = Layout(
             'ref',
             'title',
+            'composer_ld',
+            'description',
             'musicxml',
             'mei',
             'corpus_ref', 

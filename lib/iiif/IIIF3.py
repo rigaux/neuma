@@ -12,6 +12,38 @@ from pathlib import Path
 #
 import iiif_prezi3
 
+class Property ():
+
+	'''
+		IIIF property model: A dict of arrays of strings, 
+		  each item key being the language code
+	'''
+	
+	def __init__(self,  strings, lang="fr") :
+		self.lang = lang
+		# Must be an array
+		if isinstance(strings, str):
+			# We received a single string
+			self.strings = [strings]
+		else:
+			self.strings = strings
+	
+	def json(self):
+		return {self.lang : self.strings}
+
+class Metadata ():
+
+	'''
+		IIIF metadata model: a label/value pair, each being a property
+	'''
+	
+	def __init__(self, label, value) :
+		self.label = label
+		self.value = value
+	
+	def json(self):
+		return {"label": self.label.json(),
+				"value" : self.value.json()}
 
 class Manifest ():
 
@@ -20,8 +52,10 @@ class Manifest ():
 	'''
 	
 	def __init__(self, id, label) :
-		self.prezi_manifest = iiif_prezi3.Manifest(id=id, label={"en":[label]})
+		self.prezi_manifest = iiif_prezi3.Manifest(id=id, 
+					label=label.json())
 		self.prezi_manifest.items = []
+		self.prezi_manifest.metadata = []
 	
 	def json(self, indent=2):
 		return self.prezi_manifest.json(indent)
@@ -29,6 +63,13 @@ class Manifest ():
 	def add_canvas (self, canvas):
 		self.prezi_manifest.items.append (canvas.prezi_canvas)
 
+	def set_label (self, label):
+		self.prezi_manifest.label = label.json()
+	def set_summary (self, summary):
+		self.prezi_manifest.summary = summary.json()
+	def add_metadata (self, metadata):
+		self.prezi_manifest.metadata.append(metadata.json())
+		
 class Canvas ():
 	
 	def __init__(self, id, label) :
@@ -48,34 +89,40 @@ class AnnotationList():
 		self.id = id
 		self.prezi_annotation_page = iiif_prezi3.AnnotationPage (id=id, label={"en":[label]})
 
-	def add_audio_item (self, annot_id, canvas, audio_uri, format, duration):
+	def add_audio_item (self, annot_id, canvas, audio_uri, format, 
+							label, summary, duration):
 		resource = Resource (audio_uri, Annotation.SOUND_TYPE, format)
 		body = ResourceBody (audio_uri, resource)
 		body.prezi_body.duration = duration
 		body.prezi_body.format = format
 		canvas.prezi_canvas.duration = duration
 		
-		annot = Annotation (annot_id, canvas.id, body, Annotation.MOTIVATION_PAINTING)
+		annot = Annotation (annot_id, canvas.id, body, 
+					Annotation.MOTIVATION_PAINTING, label, summary)
 		self.prezi_annotation_page.add_item (annot.prezi_annotation)
 
-	def add_video_item (self, annot_id, canvas, audio_uri, format, duration):
+	def add_video_item (self, annot_id, canvas, audio_uri, format, 
+							label, summary, duration):
 		resource = Resource (audio_uri, Annotation.VIDEO_TYPE, format)
 		body = ResourceBody (audio_uri, resource)
 		body.prezi_body.duration = duration
 		body.prezi_body.format = format
 		canvas.prezi_canvas.duration = duration
-	
-		annot = Annotation (annot_id, canvas.id, body, Annotation.MOTIVATION_PAINTING)
+
+		annot = Annotation (annot_id, canvas.id, body, 
+					Annotation.MOTIVATION_PAINTING, label, summary)
 		self.prezi_annotation_page.add_item (annot.prezi_annotation)
 
-	def add_image_item (self, annot_id, target, image_uri, format, height, width):
+	def add_image_item (self, annot_id, target, image_uri, format, 
+				height, width, label, summary):
 		resource = Resource (image_uri, Annotation.IMAGE_TYPE, "image/jpeg")
 		body = ResourceBody (image_uri, resource)
 		body.prezi_body.height = height
 		body.prezi_body.width = width
 		body.prezi_body.format = "image/jpeg"
 	
-		annot = Annotation (annot_id, target, body, Annotation.MOTIVATION_PAINTING)
+		annot = Annotation (annot_id, target, body, 
+				Annotation.MOTIVATION_PAINTING, label, summary)
 		self.prezi_annotation_page.add_item (annot.prezi_annotation)
 
 	def add_synchro (self, canvas, uri, content_list_id, polygon, time_frame):
@@ -117,7 +164,8 @@ class Annotation():
 	TEXT_TYPE = "Text"
 	VIDEO_TYPE = "Video"
 
-	def __init__(self, id, target, body, motivation) :
+	def __init__(self, id, target, body, motivation, 
+						label=None, summary=None) :
 		
 		self.id =id
 		self.target = target
@@ -129,6 +177,10 @@ class Annotation():
 		self.prezi_annotation = iiif_prezi3.Annotation(id=id,
 		 		motivation=motivation, body=body.prezi_body, 
 		 		target=target)
+		if label is not None:
+			self.prezi_annotation.label = label.json()
+		if summary is not None:
+			self.prezi_annotation.summary = summary.json()
 
 class Body:
 	'''

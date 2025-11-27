@@ -140,6 +140,21 @@ class Person (models.Model):
 			"year_death": self.year_death,
 			"dbpedia_uri": self.dbpedia_uri			
 			}
+
+	def name_and_dates (self):
+		# Normalized representation of a person' 
+		full_name = str(self)
+		if self.year_birth is None:
+			birth = "-"
+		else:
+			birth = self.year_birth
+		if self.year_death is None:
+			death = "-"
+		else:
+			death = self.year_death
+			
+		lifespan = f"({birth}, {death})"
+		return full_name + " " + lifespan
 	
 class Licence (models.Model):
 	'''Description of a licence'''
@@ -694,6 +709,7 @@ class Corpus(models.Model):
 class Opus(models.Model):
 	corpus = models.ForeignKey(Corpus,on_delete=models.CASCADE)
 	title = models.CharField(max_length=255)
+	description = models.TextField(null=True, blank=True)
 	lyricist = models.CharField(max_length=255,null=True, blank=True)
 	composer = models.CharField(max_length=255,null=True, blank=True)
 	
@@ -731,6 +747,18 @@ class Opus(models.Model):
 		  Get the URL to the Web opus page, taken from urls.py
 		"""
 		return reverse('home:opus', args=[self.ref])
+
+	def get_composer(self):
+		"""
+		  If the composer is not set at the Opus level, get
+		  it from the Corpus (if any)
+		"""
+		if self.composer_ld is not None:
+			return self.composer_ld
+		elif self.corpus.composer is not None:
+			return self.corpus.composer
+		else:
+			return None
 
 	def local_ref(self):
 		"""
@@ -820,8 +848,21 @@ class Opus(models.Model):
 			iiif_doc = iiif2_mod.Document(json.load(f))
 
 		# Create the combined manifest
-		manifest = iiif3_mod.Manifest(opus_url, self.title)
-		
+		title_prop = iiif3_mod.Property (self.title)
+		manifest = iiif3_mod.Manifest(opus_url, title_prop)
+		# Add a description/summary
+		if self.description is not None:
+			summary_prop = iiif3_mod.Property (self.description)
+			manifest.set_summary (summary_prop)
+		# Add metadata
+		title_meta =  iiif3_mod.Metadata (iiif3_mod.Property("title"), 
+										iiif3_mod.Property(self.title))
+		manifest.add_metadata (title_meta)
+		if self.get_composer() is not None:
+			composer_meta =  iiif3_mod.Metadata (iiif3_mod.Property("creator"), 
+										iiif3_mod.Property(self.get_composer().name_and_dates()))
+			manifest.add_metadata (composer_meta)
+			
 		# One single canvas 
 		canvas = iiif3_mod.Canvas (opus_url+"/canvas", "Combined image-audio canvas")
 
@@ -840,13 +881,25 @@ class Opus(models.Model):
 		# The audio file is in the URL of the source. At some point
 		# it will be more consistent to use this URL to point to
 		# the audio manifest, and the file URL will have to be extracted
+		label_audio = iiif3_mod.Property ("Source audio/vidéo")
+		if audio_source.description is not None:
+			summary_audio = iiif3_mod.Property (audio_source.description)
+		else:
+			summary_source = None
 		if audio_source.source_type.code == SourceType.STYPE_MP3:
 			content_list.add_audio_item (f"{opus_url}/audio", canvas, audio_source.url, 
-							audio_source.source_type.mime_type, duration)
+							audio_source.source_type.mime_type, 
+							label_audio, summary_audio, duration)
 		else:
 			content_list.add_video_item (f"{opus_url}/video", canvas, audio_source.url, 
-							audio_source.source_type.mime_type, duration)
+							audio_source.source_type.mime_type, 
+							label_audio,  summary_audio, duration)
 			
+		if iiif_source.description is not None:
+			summary_image = iiif3_mod.Property (iiif_source.description)
+		else:
+			summary_image = None
+
 		# Get the images URLs from the IIIF image manifest
 		if not (iiif_source.iiif_manifest) or iiif_source.iiif_manifest == {}:
 			raise Exception (f"Missing manifest in the IIIF image source for opus {self.ref}. Synchronization aborted")
@@ -917,7 +970,9 @@ class Opus(models.Model):
 					t_range=""
 				target = canvas.id + "#" + t_range
 				print (f"Image {img.native}. URL {img.url} Time range {t_range} Width {img.width} Height {img.height}")
-				content_list.add_image_item (f"{opus_url}/img{i_img}", target, img.native, "application/jpg", img.height, img.width)
+				label_image = iiif3_mod.Property (f"Page {i_img}")
+				content_list.add_image_item (f"{opus_url}/img{i_img}", target, img.native, "application/jpg", 
+						img.height, img.width, label_image, summary_image)
 			#if i_img > 2:
 			#	break
 
@@ -969,6 +1024,9 @@ class Opus(models.Model):
 		self.corpus = corpus
 		self.title = dict_opus["title"]
 
+		if ("description" in dict_opus.keys()):
+			if (dict_opus["description"] != None):
+				self.description = dict_opus["description"]
 		if ("lyricist" in dict_opus.keys()):
 			if (dict_opus["lyricist"] != None):
 				self.lyricist = dict_opus["lyricist"]
@@ -1113,9 +1171,10 @@ class Opus(models.Model):
 		if self.composer_ld is not None:
 			opusmeta = opusmeta_mod.OpusMeta(self.corpus.ref, self.local_ref(), 
 											self.title, 
-											self.composer_ld.dbpedia_uri)
+											self.composer_ld.dbpedia_uri, self.id)
 		else:
-			opusmeta = opusmeta_mod.OpusMeta(self.corpus.ref, self.local_ref(), self.title, 
+			opusmeta = opusmeta_mod.OpusMeta(self.corpus.ref, self.local_ref(), 
+											self.title, 
 											self.composer, self.id)
 			
 		# Adding sources
