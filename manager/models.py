@@ -142,7 +142,33 @@ class Image(models.Model):
 					
 	def __str__(self):
 		return f"{self.iiif_id} ({self.width},{self.height})"
-		
+
+
+class Organization (models.Model):
+	''' 
+		Descriptions of institutions that provide
+		music resources. based on IIIF provide
+		property https://iiif.io/api/presentation/3.0/#provider
+	'''
+	name = models.CharField(max_length=100)
+	homepage = models.CharField(max_length=100)
+	logo = models.ForeignKey(Image,
+			on_delete=models.SET_NULL, null=True, blank=True,
+			related_name="organizations", verbose_name=_("Logo"),
+	)
+
+	class Meta:
+		db_table = "Organization"
+
+	def __str__(self):  # __unicode__ on Python 2
+		return self.name
+	
+	def to_dict (self):
+		return {"name": self.name,
+			"logo": self.logo.to_dict(),
+			"homepage": self.homepage
+			}
+
 class Person (models.Model):
 	'''Persons (authors, composers, etc)'''
 	first_name = models.CharField(max_length=100)
@@ -157,13 +183,15 @@ class Person (models.Model):
 	def __str__(self):  # __unicode__ on Python 2
 		return self.first_name  + "  " + self.last_name
 	
-	def to_json (self):
+	def to_dict (self):
 		return {"first_name": self.first_name,
 			"last_name": self.last_name,
 			"year_birth": self.year_birth,
 			"year_death": self.year_death,
 			"dbpedia_uri": self.dbpedia_uri			
 			}
+	def json (self):
+		return json.dumps(self.to_dict())
 
 	def name_and_dates (self):
 		# Normalized representation of a person' 
@@ -212,6 +240,8 @@ class Corpus(models.Model):
 	licence = models.ForeignKey(Licence, null=True,blank=True,on_delete=models.PROTECT)
 	copyright = models.CharField(max_length=255,null=True,blank=True)
 	supervisors = models.CharField(max_length=255,null=True,blank=True)
+	# Organization responsible for the Corpus
+	organization = models.ForeignKey(Organization, null=True,blank=True,on_delete=models.SET_NULL)
 	# An image than can be used to represent the Corpus
 	thumbnail = models.ForeignKey(Image,
 			on_delete=models.SET_NULL, null=True, blank=True,
@@ -321,7 +351,8 @@ class Corpus(models.Model):
 				self.description, self.short_description, 
 				self.is_public, self.composer, 
 				self.licence, self.copyright, 
-				self.supervisors, self.thumbnail)
+				self.supervisors, self.thumbnail,
+				self.organization)
 				
 		return collection
 

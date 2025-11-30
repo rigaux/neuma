@@ -13,7 +13,6 @@ from pathlib import Path
 import iiif_prezi3
 
 class Property ():
-
 	'''
 		IIIF property model: A dict of arrays of strings, 
 		  each item key being the language code
@@ -32,7 +31,6 @@ class Property ():
 		return {self.lang : self.strings}
 
 class Metadata ():
-
 	'''
 		IIIF metadata model: a label/value pair, each being a property
 	'''
@@ -45,6 +43,30 @@ class Metadata ():
 		return {"label": self.label.to_dict(),
 				"value" : self.value.to_dict()}
 
+class Homepage ():
+	'''
+		IIIF homepagae model
+	'''
+	
+	def __init__(self, id, label) :
+		self.prezi_homepage = iiif_prezi3.Homepage(id=id, 
+					label=label.to_dict(), type="Text",
+					format="text/html")
+
+class Provider ():
+
+	'''
+		IIIF provider https://iiif.io/api/presentation/3.0/#provider
+	'''
+	
+	def __init__(self, id, label, homepage=None, logo=None) :
+		self.homepage = homepage
+		self.logo = logo
+		self.prezi_provider = iiif_prezi3.Provider(id=id, 
+					label=label.to_dict(), 
+					logo=logo.prezi_body,
+					homepage=homepage.prezi_homepage)
+
 class Collection ():
 
 	'''
@@ -52,6 +74,7 @@ class Collection ():
 	'''
 	
 	def __init__(self, id, label) :
+		self.id = id
 		self.prezi_collection = iiif_prezi3.Collection(id=id, 
 					label=label.to_dict())
 		self.prezi_collection.items = []
@@ -71,6 +94,9 @@ class Collection ():
 		
 	def set_thumbnail (self, thumbnail):
 		self.prezi_collection.thumbnail = thumbnail.prezi_body
+		
+	def set_provider (self, provider):
+		self.prezi_collection.provider = provider.prezi_provider
 				
 	def set_required_statement(self, required_stmt):
 		self.prezi_collection.requiredStatement = required_stmt.to_dict()

@@ -6,9 +6,8 @@ from guardian.admin import GuardedModelAdmin
 from .models import (Corpus, Opus, OpusMeta, Upload, 
 					AnalyticModel, Bookmark, Config,
 					AnalyticConcept, Annotation, Resource, 
-					Descriptor,  Licence, Person, Image,
+					Descriptor,  Organization, Licence, Person, Image,
 					SourceType, OpusSource, OpusDiff)
-
 
 class CorpusAdmin(GuardedModelAdmin):
     search_fields = ("ref", "title", "description")
@@ -51,6 +50,7 @@ admin.site.register(OpusSource,OpusSourceAdmin)
 admin.site.register(Annotation)
 admin.site.register(Resource)
 admin.site.register(Descriptor)
+admin.site.register(Organization)
 admin.site.register(Licence)
 admin.site.register(Config)
 admin.site.register(Image)
