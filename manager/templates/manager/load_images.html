@@ -1,0 +1,19 @@
+{% extends "layout.html" %} 
+{% load i18n %}
+
+{% block content %}
+
+<h1>Loading images from data/imgs</h1>
+
+<div>
+	<ul>
+	{% for img in images %}	
+	   <li>Image {{img.file_name}} ({{img.width}}X{{img.height}}), with IIIF URL 
+		    <a href="{{img.iiif_url}}">{{img.iiif_url}}</a>, has been loaded</li>
+	{% endfor %}
+	</ul>
+	
+</div>
+<a href="{% url 'manager:index' %}">Back to the manager menu</a>
+
+{% endblock content %}

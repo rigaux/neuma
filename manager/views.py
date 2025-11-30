@@ -5,14 +5,19 @@ from django.conf import settings
 from neumasearch.IndexWrapper import IndexWrapper
 
 from neumautils.views import NeumaView
-import zipfile, os.path, io
+import zipfile, io
+
+import PIL as pillow
 
 import json
+import os  
+from pathlib import Path
+
 
 # Create your views here.
 from django.http import HttpResponse
 
-from .models import Opus, Corpus, Descriptor, Upload
+from .models import Image, Opus, Corpus, Descriptor, Upload
 
 from django_celery_results.models import TaskResult
 
@@ -50,6 +55,47 @@ def testes(request):
 	
 	context = {"hits": corpora}
 	return render(request, 'manager/testes.html', context)
+
+
+def load_images(request):
+	'''Load IIIF images'''
+
+	context = {"images": []}
+	
+	directory = 'data/imgs'  # IIIF images are locally stored there
+	remote_dir = "imgs%2F" # Images are stored there in the IIIF server 
+	for entry in os.scandir(directory):  
+		if entry.is_file():  # check if it's a file
+			if Path(entry.path).suffix in [".jpg", ".jpeg"]:
+				file_id = Path(entry.path).stem
+				file_name = Path(entry.path).name
+				
+				img = pillow.Image.open(entry.path)
+				width, height= img.size
+				iiif_url = settings.IIIF2_SERVER + remote_dir + file_id
+
+				try:
+					db_img = Image.objects.get(iiif_url=iiif_url)
+				except Image.DoesNotExist:
+					print (f"Unknown Image {{iiif_url}}")
+					db_img = Image (iiif_id=file_id, 
+							iiif_url=iiif_url,width=width,height=height)
+					db_img.save()
+
+				context['images'].append({"file_name": file_name,
+								"iiif_url": iiif_url, 
+								"width": width, "height":height})
+		
+	return render(request, 'manager/load_images.html', context)
+
+def list_images(request):
+	'''List IIIF images'''
+
+	context = {"images": []}
+	for img in Image.objects.all():
+		context['images'].append(img)
+		
+	return render(request, 'manager/list_images.html', context)
 
 
 class ShowUploads(NeumaView):

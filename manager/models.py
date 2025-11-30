@@ -29,6 +29,8 @@ from django.core.files.base import ContentFile, File
 from django.contrib.auth.models import User
 from django.db.models import Count
 from django.urls import reverse
+from django.utils.translation import gettext_lazy as _
+
 #from django.urls import reverse_lazy
 from django.conf import settings
 # For tree models
@@ -48,6 +50,7 @@ from lib.music.Score import *
 from lib.music.jsonld import JsonLD
 import lib.music.annotation as annot_mod
 import lib.music.source as source_mod
+import lib.music.collection as collection_mod
 import lib.music.opusmeta as opusmeta_mod
 import lib.music.constants as constants_mod
 
@@ -119,6 +122,27 @@ class Config(models.Model):
 				"ensure_measure_duration": self.ensure_measure_duration
 				}
 
+class Image(models.Model):
+	iiif_id = models.CharField(unique=True,max_length=30, verbose_name=_("IIIF ID"))
+	iiif_url = models.URLField(unique=True, max_length=512, verbose_name=_("IIIF URL"))
+	width = models.PositiveIntegerField(default=0, verbose_name=_("Width"))
+	height = models.PositiveIntegerField(default=0, verbose_name=_("Height"))
+
+	class Meta:
+		verbose_name = _("Image")
+		verbose_name_plural = _("Images")
+
+	def url_default(self):
+		return self.iiif_url + "/full/max/0/default.jpg"
+
+	def to_dict (self):
+		return {"id": self.iiif_id, "url": self.iiif_url,
+					"url_default": self.url_default(),
+					"width": self.width, "height": self.height}
+					
+	def __str__(self):
+		return f"{self.iiif_id} ({self.width},{self.height})"
+		
 class Person (models.Model):
 	'''Persons (authors, composers, etc)'''
 	first_name = models.CharField(max_length=100)
@@ -170,6 +194,10 @@ class Licence (models.Model):
 	def __str__(self):  # __unicode__ on Python 2
 		return "(" + self.code + ") " + self.name
 
+	def to_dict(self):
+		return {"code": self.code, "name": self.name,
+				"url": self.url, "notice": self.notice}
+				
 class Corpus(models.Model):
 	title = models.CharField(max_length=255)
 	short_title = models.CharField(max_length=255)
@@ -184,12 +212,16 @@ class Corpus(models.Model):
 	licence = models.ForeignKey(Licence, null=True,blank=True,on_delete=models.PROTECT)
 	copyright = models.CharField(max_length=255,null=True,blank=True)
 	supervisors = models.CharField(max_length=255,null=True,blank=True)
+	# An image than can be used to represent the Corpus
+	thumbnail = models.ForeignKey(Image,
+			on_delete=models.SET_NULL, null=True, blank=True,
+			related_name="corpuses", verbose_name=_("Thumbnail"),
+	)
 
 	def upload_path(self, filename):
 		'''Set the path where corpus-related files must be stored'''
 		return 'corpora/%s/%s' % (self.ref.replace(settings.NEUMA_ID_SEPARATOR, "/"), filename)
 	cover = models.FileField(upload_to=upload_path,null=True,storage=OverwriteStorage())
-
 	def __init__(self, *args, **kwargs):
 		super(Corpus, self).__init__(*args, **kwargs)
 
@@ -281,10 +313,22 @@ class Corpus(models.Model):
 		if "supervisors" in dict_corpus:
 			self.supervisors = dict_corpus["supervisors"]
 		return
-	   
+	
+	def to_collection(self):
+		uri = settings.NEUMA_BASE_URL + self.get_url()
+		collection = collection_mod.Collection (uri, 
+				self.ref, self.title, self.short_title,
+				self.description, self.short_description, 
+				self.is_public, self.composer, 
+				self.licence, self.copyright, 
+				self.supervisors, self.thumbnail)
+				
+		return collection
+
 	def to_json(self):
 		"""
 		  Create a dictionary that can be used for JSON exports
+		  TODO : replace by the Collection json() function, everywhere
 		"""
 		if self.licence is not None:
 			licence_code = self.licence.code
@@ -292,6 +336,7 @@ class Corpus(models.Model):
 			licence_code = None
 
 		core = {"ref": Corpus.local_ref(self.ref), 
+				"url": self.get_url(),
 				 "title": self.title, 
 				 "short_title": self.short_title, 
 				 "description": self.description, 
@@ -819,6 +864,16 @@ class Opus(models.Model):
 		except OpusSource.DoesNotExist as e:
 			return None
 
+	def get_source_with_type (self, source_type):
+		"""Get  a source from the opus"""
+		
+		stype = SourceType (code=source_type)
+		# Search if exists
+		try:
+			return OpusSource.objects.get(opus=self,source_type=stype)
+		except OpusSource.DoesNotExist as e:
+			return None
+
 	def copy_mei_as_source(self):
 		# Save the MEI file as a reference source 
 		if self.mei:
@@ -1002,7 +1057,6 @@ class Opus(models.Model):
 		self.create_source_with_file(source_mod.OpusSource.SYNC_REF, 
 								SourceType.STYPE_SYNC, "", 
 								manifest_fname, "combined_manifest.json", "rb")
-
 
 	def load_from_dict(self, corpus, dict_opus, files={}, opus_url=""):
 		"""Load content from a dictionary.

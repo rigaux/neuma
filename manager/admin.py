@@ -3,9 +3,11 @@ from django.contrib import admin
 from mptt.admin import MPTTModelAdmin
 
 from guardian.admin import GuardedModelAdmin
-from .models import Corpus, Opus, OpusMeta, Upload,  AnalyticModel, Bookmark, Config
-from .models import AnalyticConcept, Annotation, Resource, Descriptor,  Licence, Person
-from .models import SourceType, OpusSource, OpusDiff
+from .models import (Corpus, Opus, OpusMeta, Upload, 
+					AnalyticModel, Bookmark, Config,
+					AnalyticConcept, Annotation, Resource, 
+					Descriptor,  Licence, Person, Image,
+					SourceType, OpusSource, OpusDiff)
 
 
 class CorpusAdmin(GuardedModelAdmin):
@@ -51,6 +53,7 @@ admin.site.register(Resource)
 admin.site.register(Descriptor)
 admin.site.register(Licence)
 admin.site.register(Config)
+admin.site.register(Image)
 admin.site.register(Person)
 admin.site.register(OpusDiff)
 admin.site.register(AnalyticConcept, MPTTModelAdmin)

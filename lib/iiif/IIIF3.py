@@ -28,7 +28,7 @@ class Property ():
 		else:
 			self.strings = strings
 	
-	def json(self):
+	def to_dict(self):
 		return {self.lang : self.strings}
 
 class Metadata ():
@@ -41,10 +41,46 @@ class Metadata ():
 		self.label = label
 		self.value = value
 	
-	def json(self):
-		return {"label": self.label.json(),
-				"value" : self.value.json()}
+	def to_dict(self):
+		return {"label": self.label.to_dict(),
+				"value" : self.value.to_dict()}
 
+class Collection ():
+
+	'''
+		Acts as a proxy for the Prezi3 collection class
+	'''
+	
+	def __init__(self, id, label) :
+		self.prezi_collection = iiif_prezi3.Collection(id=id, 
+					label=label.to_dict())
+		self.prezi_collection.items = []
+		self.prezi_collection.metadata = []
+	
+	def json(self, indent=2):
+		return self.prezi_collection.json(indent)
+
+	def set_label (self, label):
+		self.prezi_collection.label = label.to_dict()
+	def set_summary (self, summary):
+		self.prezi_collection.summary = summary.to_dict()
+	def add_metadata (self, metadata):
+		self.prezi_collection.metadata.append(metadata.to_dict())
+	def set_rights (self, licence):
+		self.prezi_collection.rights = licence
+		
+	def set_thumbnail (self, thumbnail):
+		self.prezi_collection.thumbnail = thumbnail.prezi_body
+				
+	def set_required_statement(self, required_stmt):
+		self.prezi_collection.requiredStatement = required_stmt.to_dict()
+
+	def add_manifest_ref (self,  manifest_url, label):
+		label_prop = Property (label)
+		manifest_ref = Manifest (manifest_url, label_prop)
+		print (manifest_ref.json())
+		self.prezi_collection.items.append(manifest_ref.prezi_manifest)
+	
 class Manifest ():
 
 	'''
@@ -53,9 +89,9 @@ class Manifest ():
 	
 	def __init__(self, id, label) :
 		self.prezi_manifest = iiif_prezi3.Manifest(id=id, 
-					label=label.json())
-		self.prezi_manifest.items = []
-		self.prezi_manifest.metadata = []
+					label=label.to_dict())
+		#self.prezi_manifest.items = []
+		#self.prezi_manifest.metadata = []
 	
 	def json(self, indent=2):
 		return self.prezi_manifest.json(indent)
@@ -194,7 +230,6 @@ class Body:
 		self.id = id
 		self.prezi_body = iiif_prezi3.AnnotationBody(id=id, type=type)
 
-
 class TextualBody(Body):
 	'''
 	   The body value is simply a text
@@ -209,6 +244,23 @@ class TextualBody(Body):
 
 	def get_json_obj(self, w3c=True):
 		return {"type": "TextualBody", "value": self.value}
+
+class ImageBody(Body):
+	'''
+	   An annotation body with a width and heigy
+	'''
+	
+	def __init__(self, id, width, height) :
+		super().__init__(id, Annotation.IMAGE_TYPE)
+		self.prezi_body.width=width
+		self.prezi_body.height=height
+		self.prezi_body.format="image/jpeg"
+
+	def __str__ (self):
+		return self.id
+
+	def to_dict(self):
+		return self.prezi_body
 
 class ResourceBody(Body):
 	'''

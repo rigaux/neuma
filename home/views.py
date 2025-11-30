@@ -34,6 +34,9 @@ import xml.etree.ElementTree as ET
 
 from .forms import *
 
+import lib.iiif.IIIF3 as iiif3_mod
+import lib.iiif.helpers as iiif3_helpers
+
 # Create your views here.
 # To communicate with ElasticSearch
 # Get an instance of a logger
@@ -150,6 +153,67 @@ def export_corpus_as_zip (request, corpus_ref):
 
 	return resp
 
+def iiif_collection (request, corpus_ref):
+	""" Produce the IIIF collection of a corpus"""
+	
+	#
+	# Todo: by default we put the manifest of SYNC sources in 
+	# the collection. We  add a URL param 'source_type' that woul
+	# allow to get also images, etc.
+	#
+	corpus = Corpus.objects.get(ref=corpus_ref)
+	if "source_type" in request.GET:
+		# Check that we received sth that makes sense....
+		source_type = request.GET.get("source_type")
+	else:
+		# Default : we produce the collection of 
+		source_type = SourceType.STYPE_SYNC
+	
+	collection = corpus.to_collection()
+	#return HttpResponse(collection.json(2), content_type = "application/json")
+	iiif_collection  = iiif3_helpers.corpus_collection (collection)
+
+	# Now look on the list of opera
+	for opus in corpus.get_opera():
+		sync_source = opus.get_source_with_type(source_type)
+		if sync_source is not None:
+			manifest_url = settings.NEUMA_BASE_URL + reverse('home:iiif_manifest', args=[opus.ref])
+			iiif_collection.add_manifest_ref (manifest_url, opus.local_ref())
+
+	resp = HttpResponse(iiif_collection.json(2), content_type = "application/json")
+
+	return resp
+
+
+def iiif_manifest (request, opus_ref):
+	""" 
+		Find a source and return its IIIF manifest
+	"""
+
+	opus = Opus.objects.get(ref=opus_ref)
+	if "source_type" in request.GET:
+		# Check that we received sth that makes sense....
+		source_type = request.GET.get("source_type")
+	else:
+		# Default : we produce the collection of 
+		source_type = SourceType.STYPE_SYNC
+	
+	# Find the source given the type
+	sync_source = opus.get_source_with_type(source_type)
+	if sync_source is None:
+		# Not found
+		return HttpResponseNotFound("<h1>Source {source_type} not found</h1>")
+	else:
+		print (f"We found a sync source {sync_source.source_file.path} for opus {opus.ref}")
+		if sync_source.source_file is None:
+			print (f"No file for this source. ignored")
+			return HttpResponseNotFound("<h1>No manifestnot found</h1>")
+		else:
+			with open(sync_source.source_file.path, "r") as f:
+				content = f.read()
+			return  HttpResponse(content, content_type = "application/json")
+
+	return  HttpResponse(iiif_collection.json(2), content_type = "application/json")
 
 def upload_corpus_zip (request, corpus_ref):
 	""" Upload a zip file with a set of XML files"""

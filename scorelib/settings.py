@@ -267,6 +267,9 @@ CELERY_RESULT_BACKEND = 'django-db'
 CELERY_CACHE_BACKEND = 'django-cache'
 CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP= True
 
+# IIIF server
+IIIF2_SERVER="https://deptfod.cnam.fr/ImageS/iiif/2/"
+IIIF3_SERVER="https://deptfod.cnam.fr/ImageS/iiif/3/"
 
 # List of similarity measures
 SIMILARITY_MEASURES = ["pitches","intervals","degrees","rhythms"]

@@ -1,0 +1,21 @@
+{% extends "layout.html" %} 
+{% load i18n %}
+
+{% block content %}
+
+<h1>List of images</h1>
+
+<div>
+	<ul>
+	{% for img in images %}	
+	   <li>Image {{img.iiif_id}} ({{img.width}}X{{img.height}}),
+		    <img src="{{img.url_default}}"/>
+		
+	   </li>
+	{% endfor %}
+	</ul>
+	
+</div>
+<a href="{% url 'manager:index' %}">Back to the manager menu</a>
+
+{% endblock content %}
