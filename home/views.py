@@ -191,7 +191,7 @@ def iiif_collection (request, corpus_ref):
 				thumbnail =  iiif3_helpers.create_image_item(Image.default_image().to_dict())
 				
 			else:
-				thumbnail =  iiif3_helpers.create_image_item(sync_source.thumbnail)
+				thumbnail =  iiif3_helpers.create_image_item(sync_source.thumbnail.to_dict())
 			manifest_url = settings.NEUMA_BASE_URL + reverse('home:iiif_manifest', args=[opus.ref])
 			manifest_ref = iiif3_mod.ManifestRef (manifest_url, 
 				sync_source.ref, thumbnail)

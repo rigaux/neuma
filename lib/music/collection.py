@@ -28,7 +28,10 @@ class Collection:
 		self.local_ref =  local_ref(ref)
 		self.title = title
 		self.short_title = title
-		self.composer = composer.to_dict()
+		if composer is not None:
+			self.composer = composer.to_dict()
+		else:
+			self.composer = None
 		self.description = description
 		self.short_description = short_description
 		self.is_public = is_public

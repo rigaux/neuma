@@ -349,7 +349,8 @@ class Corpus(models.Model):
 		return
 	
 	def to_collection(self):
-		uri = settings.NEUMA_BASE_URL + self.get_url()
+		# Remove '/' both ends to get_url()
+		uri = settings.NEUMA_BASE_URL + self.get_url()[1:-1]
 		collection = collection_mod.Collection (uri, 
 				self.ref, self.title, self.short_title,
 				self.description, self.short_description, 
