@@ -285,13 +285,13 @@ def iiif_manifest (request, opus_ref):
 	musicxml_source = opus.get_source(source_mod.OpusSource.MUSICXML_REF)
 	if musicxml_source is not None:
 		rest_url = settings.NEUMA_BASE_URL + musicxml_source.file_rest_url()
-		musixml_meta =  iiif3_mod.Metadata (iiif3_mod.Property("MusicXML link"), 
+		musixml_meta =  iiif3_mod.Metadata (iiif3_mod.Property("MusicXML"), 
 								iiif3_mod.Property(rest_url))
 		iiif_manifest.add_metadata (musixml_meta)
 	mei_source = opus.get_source(source_mod.OpusSource.MEI_REF)
 	if mei_source is not None:
 		rest_url = settings.NEUMA_BASE_URL + mei_source.file_rest_url()
-		mei_meta =  iiif3_mod.Metadata (iiif3_mod.Property("MEI link"), 
+		mei_meta =  iiif3_mod.Metadata (iiif3_mod.Property("MEI"), 
 								iiif3_mod.Property(rest_url))
 		iiif_manifest.add_metadata (mei_meta)
 
