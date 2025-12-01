@@ -219,6 +219,7 @@ def iiif_manifest (request, opus_ref):
 		
 	# Convert to a collection item 
 	item = opus.to_collection_item()
+
 	#return  HttpResponse(item.json(), content_type = "application/json")
 
 	# Find the source given the type
@@ -279,6 +280,20 @@ def iiif_manifest (request, opus_ref):
 							image_source.to_item_source(),
 							images,
 							sorted_images, sorted_audio)
+
+	# Add some links to other sources
+	musicxml_source = opus.get_source(source_mod.OpusSource.MUSICXML_REF)
+	if musicxml_source is not None:
+		rest_url = settings.NEUMA_BASE_URL + musicxml_source.file_rest_url()
+		musixml_meta =  iiif3_mod.Metadata (iiif3_mod.Property("MusicXML link"), 
+								iiif3_mod.Property(rest_url))
+		iiif_manifest.add_metadata (musixml_meta)
+	mei_source = opus.get_source(source_mod.OpusSource.MEI_REF)
+	if mei_source is not None:
+		rest_url = settings.NEUMA_BASE_URL + mei_source.file_rest_url()
+		mei_meta =  iiif3_mod.Metadata (iiif3_mod.Property("MEI link"), 
+								iiif3_mod.Property(rest_url))
+		iiif_manifest.add_metadata (mei_meta)
 
 	# Put the manifest in the Sync source
 	file_name = "combined_manifest.json"

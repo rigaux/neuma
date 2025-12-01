@@ -1650,6 +1650,12 @@ class OpusSource (models.Model):
 	def __str__(self):  # __unicode__ on Python 2
 		return "(" + self.opus.ref + ") " + self.ref
 
+	def get_url(self):
+		"""
+			Get the URL to the Web source page, taken from urls.py
+		"""
+		return reverse('home:source', args=[self.opus.ref, self.ref])
+
 	def full_ref(self):
 		return self.opus.ref + '/_sources/' + self.ref 
 		

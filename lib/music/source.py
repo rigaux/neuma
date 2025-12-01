@@ -21,7 +21,7 @@ class OpusSource:
 	
 	# Codes for normalized references
 	DMOS_REF = "dmos"
-	MEI_REF = "ref_mei"
+	MEI_REF = "mei"
 	AUDIO_REF = "audio"
 	IIIF_REF = "iiif"
 	SYNC_REF = "sync"

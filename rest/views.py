@@ -743,7 +743,11 @@ class SourceFile (APIView):
 		source = self.get_object(full_neuma_ref, source_ref)
 		if source.source_file:
 			with open(source.source_file.path, "r") as f:
-				file_name = Path(request.path).name
+				file_name = full_neuma_ref.replace (':','-') + '-' + source.ref
+				if source.source_type.mime_type == "application/xml":
+					file_name += ".xml"
+				if source.source_type.mime_type == "application/json":
+					file_name += ".json"
 				content = f.read()
 				resp = FileResponse(content) 
 				if file_name == "manifest.json":
