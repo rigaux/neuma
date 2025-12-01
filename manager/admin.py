@@ -7,7 +7,7 @@ from .models import (Corpus, Opus, OpusMeta, Upload,
 					AnalyticModel, Bookmark, Config,
 					AnalyticConcept, Annotation, Resource, 
 					Descriptor,  Organization, Licence, Person, Image,
-					SourceType, OpusSource, OpusDiff)
+					SourceType, OpusSource)
 
 class CorpusAdmin(GuardedModelAdmin):
     search_fields = ("ref", "title", "description")
@@ -55,6 +55,5 @@ admin.site.register(Licence)
 admin.site.register(Config)
 admin.site.register(Image)
 admin.site.register(Person)
-admin.site.register(OpusDiff)
 admin.site.register(AnalyticConcept, MPTTModelAdmin)
 

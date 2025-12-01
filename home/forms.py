@@ -33,7 +33,7 @@ class OpusForm(ModelForm):
     class Meta:
         model = Opus
         fields = ('corpus', 'ref', 'title', 'description', 
-         				'composer_ld', 'musicxml', 'mei')
+         				'composer', 'musicxml', 'mei')
         
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

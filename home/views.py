@@ -22,7 +22,11 @@ from django.core.files.base import ContentFile
 import requests
 
 import lxml.etree as etree
-from manager.models import Corpus, Opus, Upload, Bookmark, Config, Licence, Annotation, AnalyticModel, AnalyticConcept, OpusDiff
+from manager.models import (Corpus, 
+						Opus, Upload, Bookmark, 
+						Config, Licence, Annotation, 
+						AnalyticModel, AnalyticConcept)
+
 from music import *
 
 from neumasearch.IndexWrapper import IndexWrapper
@@ -171,7 +175,7 @@ def iiif_collection (request, corpus_ref):
 	
 	collection = corpus.to_collection()
 	#return HttpResponse(collection.json(2), content_type = "application/json")
-	iiif_collection  = iiif3_helpers.corpus_collection (collection)
+	iiif_collection  = iiif3_helpers.create_collection (collection)
 
 	# Now look on the list of opera
 	for opus in corpus.get_opera():
@@ -180,10 +184,7 @@ def iiif_collection (request, corpus_ref):
 			manifest_url = settings.NEUMA_BASE_URL + reverse('home:iiif_manifest', args=[opus.ref])
 			iiif_collection.add_manifest_ref (manifest_url, opus.local_ref())
 
-	resp = HttpResponse(iiif_collection.json(2), content_type = "application/json")
-
-	return resp
-
+	return HttpResponse(iiif_collection.json(2), content_type = "application/json")
 
 def iiif_manifest (request, opus_ref):
 	""" 
@@ -204,6 +205,8 @@ def iiif_manifest (request, opus_ref):
 		# Not found
 		return HttpResponseNotFound("<h1>Source {source_type} not found</h1>")
 	else:
+		return HttpResponse(json.dumps({"test": "ok"}), content_type = "application/json")
+
 		print (f"We found a sync source {sync_source.source_file.path} for opus {opus.ref}")
 		if sync_source.source_file is None:
 			print (f"No file for this source. ignored")
@@ -378,11 +381,6 @@ class OpusView(NeumaView):
 		# We use the service to provide file, in order to avoid caching
 		context["opus_file_url"] = reverse("rest:opus_file_request", kwargs={"full_neuma_ref": opus.ref})
 		
-		try:
-			context["opus_diff"] = OpusDiff.objects.get(opus=opus)
-		except OpusDiff.DoesNotExist:
-			context["opus_diff"] = None
-
 		# get meta values 
 		context["meta_values"] = opus.get_metas()
 		

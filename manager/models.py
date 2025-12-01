@@ -359,7 +359,7 @@ class Corpus(models.Model):
 	def to_json(self):
 		"""
 		  Create a dictionary that can be used for JSON exports
-		  TODO : replace by the Collection json() function, everywhere
+		  DEPRECATED : replace by the Collection json() function, everywhere
 		"""
 		if self.licence is not None:
 			licence_code = self.licence.code
@@ -782,19 +782,21 @@ class Corpus(models.Model):
 
 ####################################################
 
+
+
 class Opus(models.Model):
 	corpus = models.ForeignKey(Corpus,on_delete=models.CASCADE)
 	title = models.CharField(max_length=255)
 	description = models.TextField(null=True, blank=True)
 	lyricist = models.CharField(max_length=255,null=True, blank=True)
-	composer = models.CharField(max_length=255,null=True, blank=True)
-	
-	# Linked data to the composer entity
-	composer_ld = models.ForeignKey(Person, null=True,blank=True,on_delete=models.PROTECT)
-
+	composer = models.ForeignKey(Person, null=True,blank=True,on_delete=models.PROTECT)
 	ref = models.CharField(max_length=255,unique=True)
 	external_link  = models.CharField(max_length=255,null=True, blank=True)
-	
+	# We can enrich the Opus description with free data
+	metadata = models.JSONField(blank=True,default=list)
+	# Feature = computed property (eg tonality)
+	features = models.JSONField(blank=True,default=list)
+
 	# .Files names
 	FILE_NAMES = {"score.xml": "musicxml", 
 				   "mei.xml": "mei",
@@ -1250,26 +1252,23 @@ class Opus(models.Model):
 		result = opus.delete()
 		return result
 
-	def to_serializable(self, absolute_url):
+	def to_dict(self, absolute_url):
 		" Produce a serialisable object from the Opus data"
 				
-		if self.composer_ld is not None:
-			opusmeta = opusmeta_mod.OpusMeta(self.corpus.ref, self.local_ref(), 
-											self.title, 
-											self.composer_ld.dbpedia_uri, self.id)
-		else:
-			opusmeta = opusmeta_mod.OpusMeta(self.corpus.ref, self.local_ref(), 
-											self.title, 
-											self.composer, self.id)
+		coll_item = collection_mod.CollectionItem (
+					setting.NEUMA_BASE_URL + self.ref, 
+						self.corpus.ref, self.ref,
+						self.title, self.composer, 
+						self.description)
 			
 		# Adding sources
 		for source in self.opussource_set.all ():
-			opusmeta.add_source(source.to_serializable(absolute_url))
+			coll_item.add_source(source.to_dict(absolute_url))
 
 		# Adding meta fields (features)
 		for meta in self.get_metas():
 			feature = opusmeta_mod.OpusFeature (meta.meta_key, meta.meta_value)
-			opusmeta.add_feature(feature)
+			coll_item.add_feature(feature)
 
 		# Adding files
 		for fname, fattr in Opus.FILE_NAMES.items():
@@ -1278,7 +1277,11 @@ class Opus(models.Model):
 				opus_file = opusmeta_mod.OpusFile (fname, absolute_url + the_file.url)
 				opusmeta.add_file(opus_file)
 		return opusmeta
-
+	
+	def to_serializable(self, absolute_url):
+		# DEPRECATED
+		return self.to_dict ()
+	
 	def to_json(self, request):
 		"""
 		  Produces a JSON representation (useful for REST services)
@@ -1467,17 +1470,19 @@ class Opus(models.Model):
 
 		return score
 
+#
+# NOT LONGER USED BUT ERROR WHEN TRYING TO REMOVE
 class OpusDiff(models.Model):
-	
+	opus = models.ForeignKey(Opus,on_delete=models.CASCADE)
+
+	class Meta:
+		db_table = "OpusDiff"
 	def upload_path(self, filename):
 		'''Set the path where opus-related files must be stored'''
-		return 'corpora/%s/%s' % (self.opus.ref.replace(settings.NEUMA_ID_SEPARATOR, "/"), filename)
+		return 'corpora/%s/%s' % (self.ref.replace(settings.NEUMA_ID_SEPARATOR, "/"), filename)
 
-	# Record the differences between two MEI versions of an Opus
-	opus = models.ForeignKey(Opus,on_delete=models.CASCADE)
-	mei_omr = models.FileField(upload_to=upload_path,null=True,blank=True,storage=OverwriteStorage())
-	mei_ref = models.FileField(upload_to=upload_path,null=True,blank=True,storage=OverwriteStorage(), max_length=255)
-
+	def __init__(self, *args, **kwargs):
+		super(OpusDiff, self).__init__(*args, **kwargs)
 
 class OpusMeta(models.Model):
 	opus = models.ForeignKey(Opus,on_delete=models.CASCADE)
@@ -1659,6 +1664,7 @@ class OpusSource (models.Model):
 	def __str__(self):  # __unicode__ on Python 2
 		return "(" + self.opus.ref + ") " + self.ref
 
+	
 	def to_serializable(self, abs_url):
 		"""
 		  Create an object that can be serialized for JSON exports
@@ -1676,6 +1682,7 @@ class OpusSource (models.Model):
 		if self.iiif_manifest:
 			source_dict.has_iiif_manifest =  True	
 		return source_dict
+
 
 	def file_rest_url (self):
 		return reverse ('rest:handle_source_file_request', args=[self.opus.ref, self.ref])
@@ -1798,9 +1805,9 @@ class OpusSource (models.Model):
 		creator = annot_mod.Creator ("collabscore", 
 						annot_mod.Creator.SOFTWARE_TYPE, "collabscore")
 		
-		audio_manifest = source_mod.AudioManifest.from_json (json.loads(self.source_file.read()))
+		audio_manifest = source_mod.AudioManifest.from_json (json.loads(self.manifest.read()))
 		for tframe in audio_manifest.time_frames:
-				measure = tframe.id
+				measure = "m" + str(tframe.id)
 				time_frame = "t=" + str(tframe.begin) + "," + str(tframe.end)
 				annotation = annot_mod.Annotation.create_annot_from_xml_to_audio(creator, self.opus.musicxml.url, 
 								measure, self.url, time_frame, 

@@ -15,7 +15,7 @@ import lib.music.Score as score_mod
 
 class Collection:
 	'''
-		A collection of items
+		A collection of items (eq. to a Corpus in Neuma)
 	'''
 	
 	def __init__(self, url, ref, title, short_title,
@@ -62,6 +62,61 @@ class Collection:
 				"licence":  self.licence,
 				"composer": self.composer.to_json()
 		}
+
+	def json(self, indent=2):
+		return json.dumps (self.to_dict(), indent=indent)
+
+class CollectionItem:
+	'''
+		A collection item (eq. to an Opus in Neuma)
+	'''
+	
+	def __init__(self, url, collection_ref, ref, title, composer, 
+				description=None):
+		self.url = url
+		self.ref = ref
+		self.local_ref =  local_ref(ref)
+		self.title = title
+		self.collection_ref = collection_ref
+		if composer is not None:
+			self.composer = composer.to_dict()
+		else:
+			self.composer = None
+		self.description = description
+		self.sources = []
+		self.features = []
+		self.files = []
+
+	def add_source (self, source):
+		self.sources.append(source)	
+	def add_feature (self, feature):
+		self.features.append(feature)
+	def add_file (self, the_file):
+		self.files.append(the_file)
+
+	def to_dict (self):
+		item = {}
+		features =[]
+		for f in self.features:
+			features.append(f.to_json())
+		sources =[]
+		for s in self.sources:
+			sources.append(s.to_json())
+		files =[]
+		for f in self.files:
+			files.append(f.to_json())
+
+		item["ref"] =  self.ref
+		item["local_ref"] = self.local_ref
+		item["collection_ref"] = self.collection_ref
+		item["title"] = self.title
+		item["description"] = self.description
+		item["composer"] = self.composer
+		item["features"] =  features
+		item["sources"] = sources
+		item["files"] = files
+
+		return item
 
 	def json(self, indent=2):
 		return json.dumps (self.to_dict(), indent=indent)
