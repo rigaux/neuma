@@ -143,6 +143,9 @@ class Image(models.Model):
 	def __str__(self):
 		return f"{self.iiif_id} ({self.width},{self.height})"
 
+	@staticmethod
+	def default_image():
+		return Image.objects.get(iiif_id="noimage")
 
 class Organization (models.Model):
 	''' 
@@ -183,15 +186,6 @@ class Person (models.Model):
 	def __str__(self):  # __unicode__ on Python 2
 		return self.first_name  + "  " + self.last_name
 	
-	def to_dict (self):
-		return {"first_name": self.first_name,
-			"last_name": self.last_name,
-			"year_birth": self.year_birth,
-			"year_death": self.year_death,
-			"dbpedia_uri": self.dbpedia_uri			
-			}
-	def json (self):
-		return json.dumps(self.to_dict())
 
 	def name_and_dates (self):
 		# Normalized representation of a person' 
@@ -207,7 +201,17 @@ class Person (models.Model):
 			
 		lifespan = f"({birth}, {death})"
 		return full_name + " " + lifespan
-	
+	def to_dict (self):
+		return {"first_name": self.first_name,
+			"last_name": self.last_name,
+			"name_and_dates": self.name_and_dates(),
+			"year_birth": self.year_birth,
+			"year_death": self.year_death,
+			"dbpedia_uri": self.dbpedia_uri			
+			}
+	def json (self):
+		return json.dumps(self.to_dict())
+
 class Licence (models.Model):
 	'''Description of a licence'''
 	code = models.CharField(max_length=25,primary_key=True)
@@ -814,6 +818,12 @@ class Opus(models.Model):
 		else:
 			return None
 
+	def get_url(self):
+		"""
+			Get the URL to the Web opus page, taken from urls.py
+		"""
+		return reverse('home:opus', args=[self.ref])
+
 	def local_ref(self):
 		"""
 		The ref of the Opus inside its Corpus
@@ -1220,17 +1230,21 @@ class Opus(models.Model):
 
 	def to_collection_item(self):
 		" Produce a Collection item from the Opus data"
-				
+		
+		# Remove first and last '/' from the URL
+		item_id = settings.NEUMA_BASE_URL + self.get_url()[1:-1]
+		# safety
+		
 		coll_item = collection_mod.CollectionItem (
-					settings.NEUMA_BASE_URL + self.ref, 
+						item_id, 
 						self.corpus.ref, self.ref,
-						self.title, self.composer, 
+						self.title, self.get_composer(), 
 						self.description, self.metadata,
 						self.features)
 			
 		# Adding sources
 		for source in self.opussource_set.all ():
-			coll_item.add_source(source.to_dict(settings.NEUMA_BASE_URL))
+			coll_item.add_source(source.to_item_source())
 
 		# Adding files
 		for fname, fattr in Opus.FILE_NAMES.items():
@@ -1607,6 +1621,15 @@ class OpusSource (models.Model):
 	operations = models.JSONField(blank=True,default=list)
 	# Meta data 
 	metadata = models.JSONField(blank=True, default=dict)
+	licence = models.ForeignKey(Licence, null=True,blank=True,on_delete=models.PROTECT)
+	copyright = models.CharField(max_length=255,null=True,blank=True)
+	# Organization responsible for the source
+	organization = models.ForeignKey(Organization, null=True,blank=True,on_delete=models.SET_NULL)
+	# An image than can be used to represent the source
+	thumbnail = models.ForeignKey(Image,
+			on_delete=models.SET_NULL, null=True, blank=True,
+			related_name="sources", verbose_name=_("Thumbnail"),
+	)
 
 	creation_timestamp = models.DateTimeField('Created', auto_now_add=True)
 	update_timestamp = models.DateTimeField('Updated', auto_now=True)
@@ -1626,43 +1649,51 @@ class OpusSource (models.Model):
 	def __str__(self):  # __unicode__ on Python 2
 		return "(" + self.opus.ref + ") " + self.ref
 
-	
-	def to_dict(self, abs_url):
+	def full_ref(self):
+		return self.opus.ref + '/_sources/' + self.ref 
+		
+	def to_item_source(self):
 		"""
 		  Create an object that can be serialized for JSON exports
 		"""
-		source_dict = source_mod.OpusSource(
-			self.ref, self.source_type.code, self.source_type.mime_type, 
-					self.url, self.metadata)
-		source_dict.description = self.description
+		
+		# Following IIIF principles, the ID is a dereferencable URL
+		source_id = settings.NEUMA_BASE_URL + reverse('home:source', args=[self.opus.ref,self.ref])
+
+		item_source = source_mod.OpusSource(source_id,
+					self.ref, self.source_type.code, 
+					self.source_type.mime_type, 
+					self.url, self.metadata,
+					self.licence, self.copyright,
+					self.thumbnail, self.organization)
+		item_source.description = self.description
 		
 		# We send the path in order to give a way to download the source file
 		if self.source_file:
-			source_dict.file_path =  self.source_file.url
+			item_source.file_path =  self.source_file.url
 		if self.manifest:
-			source_dict.has_manifest =  True			
+			item_source.has_manifest =  True			
 		if self.iiif_manifest:
-			source_dict.has_iiif_manifest =  True	
-		return source_dict
+			item_source.has_iiif_manifest =  True	
+		return item_source
+
+	def to_dict(self):
+		return self.to_item_source().to_dict()
+		
 	def to_serialisable(self, abs_url):
+		# Deprecated
 		return self.to_dict()
-
-
-	def file_rest_url (self):
-		return reverse ('rest:handle_source_file_request', args=[self.opus.ref, self.ref])
-
-	def full_ref(self):
-		return self.opus.ref + '_sources/' + self.ref 
-	
-	def to_json(self, request):
+	def json(self):
 		"""
 		  Produces a JSON representation (useful for REST services)
 		"""
-		# We need the absolute URL 
-		abs_url = request.build_absolute_uri("/")[:-1]
-		src_dict = self.to_serializable(abs_url)
-		output = src_dict.to_json()
-		return output
+		return self.to_item_source().json()
+	def to_json(self, request):
+		# DEPRECATED
+		return self.json()
+
+	def file_rest_url (self):
+		return reverse ('rest:handle_source_file_request', args=[self.opus.ref, self.ref])
 
 	def decode_editions(self):
 		# Decode the list of JSON editions as a list of objects

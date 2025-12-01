@@ -25,7 +25,7 @@ DATABASES = {
 }
 
 NEUMA_URL = 'http://localhost:8000/rest'
-NEUMA_BASE_URL = 'http://localhost:8000'
+NEUMA_BASE_URL = 'http://localhost:8000/'
 
 ALLOWED_HOSTS = ['neuma.huma-num.fr', 'localhost', '0.0.0.0', "127.0.0.1"]
 NEUMA_QUALITY_CORPUS_REF = "neumasuite:qualeval"

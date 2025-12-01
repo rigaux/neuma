@@ -101,12 +101,20 @@ class Collection ():
 	def set_required_statement(self, required_stmt):
 		self.prezi_collection.requiredStatement = required_stmt.to_dict()
 
-	def add_manifest_ref (self,  manifest_url, label):
-		label_prop = Property (label)
-		manifest_ref = Manifest (manifest_url, label_prop)
-		print (manifest_ref.json())
+	def add_manifest_ref (self,  manifest_ref):
 		self.prezi_collection.items.append(manifest_ref.prezi_manifest)
+
+class ManifestRef ():
+	'''
+		A reference to a manifest, with and id, label and a thumbnail
+	'''
 	
+	def __init__(self, id, label, thumbnail) :
+		label_prop = Property (label)
+		self.prezi_manifest = iiif_prezi3.ManifestRef(id=id, 
+					label=label_prop.to_dict(), 
+					thumbnail=thumbnail.prezi_body)
+
 class Manifest ():
 
 	'''
@@ -116,8 +124,8 @@ class Manifest ():
 	def __init__(self, id, label) :
 		self.prezi_manifest = iiif_prezi3.Manifest(id=id, 
 					label=label.to_dict())
-		#self.prezi_manifest.items = []
-		#self.prezi_manifest.metadata = []
+		self.prezi_manifest.items = []
+		self.prezi_manifest.metadata = []
 	
 	def json(self, indent=2):
 		return self.prezi_manifest.json(indent)
@@ -126,11 +134,19 @@ class Manifest ():
 		self.prezi_manifest.items.append (canvas.prezi_canvas)
 
 	def set_label (self, label):
-		self.prezi_manifest.label = label.json()
+		self.prezi_manifest.label = label.to_dict()
 	def set_summary (self, summary):
-		self.prezi_manifest.summary = summary.json()
+		self.prezi_manifest.summary = summary.to_dict()
+	def set_rights (self, licence):
+		self.prezi_manifest.rights = licence
+	def set_thumbnail (self, thumbnail):
+		self.prezi_manifest.thumbnail = thumbnail.prezi_body
+	def set_provider (self, provider):
+		self.prezi_manifest.provider = provider.prezi_provider	
+	def set_required_statement(self, required_stmt):
+		self.prezi_manifest.requiredStatement = required_stmt.to_dict()
 	def add_metadata (self, metadata):
-		self.prezi_manifest.metadata.append(metadata.json())
+		self.prezi_manifest.metadata.append(metadata.to_dict())
 		
 class Canvas ():
 	
@@ -147,33 +163,23 @@ class Canvas ():
 
 class AnnotationList():
 
-	def __init__(self, id, label) :
+	def __init__(self, id) :
 		self.id = id
-		self.prezi_annotation_page = iiif_prezi3.AnnotationPage (id=id, label={"en":[label]})
+		self.prezi_annotation_page = iiif_prezi3.AnnotationPage (id=id)
 
-	def add_audio_item (self, annot_id, canvas, audio_uri, format, 
-							label, summary, duration):
-		resource = Resource (audio_uri, Annotation.SOUND_TYPE, format)
+	def add_audio_item (self, annot_id, annot_type, canvas, audio_uri, format, 
+							duration):
+							
+		resource = Resource (audio_uri, annot_type, format)
 		body = ResourceBody (audio_uri, resource)
 		body.prezi_body.duration = duration
 		body.prezi_body.format = format
 		canvas.prezi_canvas.duration = duration
 		
 		annot = Annotation (annot_id, canvas.id, body, 
-					Annotation.MOTIVATION_PAINTING, label, summary)
+					Annotation.MOTIVATION_PAINTING)
 		self.prezi_annotation_page.add_item (annot.prezi_annotation)
-
-	def add_video_item (self, annot_id, canvas, audio_uri, format, 
-							label, summary, duration):
-		resource = Resource (audio_uri, Annotation.VIDEO_TYPE, format)
-		body = ResourceBody (audio_uri, resource)
-		body.prezi_body.duration = duration
-		body.prezi_body.format = format
-		canvas.prezi_canvas.duration = duration
-
-		annot = Annotation (annot_id, canvas.id, body, 
-					Annotation.MOTIVATION_PAINTING, label, summary)
-		self.prezi_annotation_page.add_item (annot.prezi_annotation)
+		return annot
 
 	def add_image_item (self, annot_id, target, image_uri, format, 
 				height, width, label, summary):
@@ -184,8 +190,9 @@ class AnnotationList():
 		body.prezi_body.format = "image/jpeg"
 	
 		annot = Annotation (annot_id, target, body, 
-				Annotation.MOTIVATION_PAINTING, label, summary)
+				Annotation.MOTIVATION_PAINTING)
 		self.prezi_annotation_page.add_item (annot.prezi_annotation)
+		return annot
 
 	def add_synchro (self, canvas, uri, content_list_id, polygon, time_frame):
 		"""
@@ -227,7 +234,7 @@ class Annotation():
 	VIDEO_TYPE = "Video"
 
 	def __init__(self, id, target, body, motivation, 
-						label=None, summary=None) :
+						label=None) :
 		
 		self.id =id
 		self.target = target
@@ -239,10 +246,19 @@ class Annotation():
 		self.prezi_annotation = iiif_prezi3.Annotation(id=id,
 		 		motivation=motivation, body=body.prezi_body, 
 		 		target=target)
-		if label is not None:
-			self.prezi_annotation.label = label.json()
-		if summary is not None:
-			self.prezi_annotation.summary = summary.json()
+			
+	def set_label (self, label):
+		self.prezi_annotation.label = label.to_dict()
+	def set_summary (self, summary):
+		self.prezi_annotation.summary = summary.to_dict()
+	def set_rights (self, licence):
+		self.prezi_annotation.rights = licence
+	def set_thumbnail (self, thumbnail):
+		self.prezi_annotation.thumbnail = thumbnail.prezi_body
+	def set_provider (self, provider):
+		self.prezi_annotation.provider = provider.prezi_provider	
+	def set_required_statement(self, required_stmt):
+		self.prezi_annotation.requiredStatement = required_stmt.to_dict()
 
 class Body:
 	'''
@@ -276,11 +292,14 @@ class ImageBody(Body):
 	   An annotation body with a width and heigy
 	'''
 	
-	def __init__(self, id, width, height) :
+	def __init__(self, id, width, height, service=None) :
 		super().__init__(id, Annotation.IMAGE_TYPE)
 		self.prezi_body.width=width
 		self.prezi_body.height=height
 		self.prezi_body.format="image/jpeg"
+		if service is not None:
+			# Add the service ref
+			self.prezi_body.service = {"id": service, "type": "ImageService3"}
 
 	def __str__ (self):
 		return self.id

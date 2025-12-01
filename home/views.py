@@ -4,6 +4,7 @@ import os
 from pprint import pprint  # debug only
 import zipfile
 import verovio
+from natsort import natsorted
 
 #from Cython.Compiler.Buffer import context
 from django.conf import settings
@@ -17,7 +18,7 @@ from django.http import HttpResponseRedirect
 from django.shortcuts import redirect
 from django.shortcuts import render
 from django.utils.safestring import mark_safe
-from django.core.files.base import ContentFile
+from django.core.files.base import ContentFile, File
 
 import requests
 
@@ -25,7 +26,7 @@ import lxml.etree as etree
 from manager.models import (Corpus, 
 						Opus, Upload, Bookmark, 
 						Config, Licence, Annotation, 
-						AnalyticModel, AnalyticConcept)
+						AnalyticModel, AnalyticConcept, Image)
 
 from music import *
 
@@ -38,6 +39,10 @@ import xml.etree.ElementTree as ET
 
 from .forms import *
 
+# Music model modules
+import lib.music.source as source_mod
+import lib.music.constants as constants_mod
+import lib.iiif.IIIF2 as iiif2_mod
 import lib.iiif.IIIF3 as iiif3_mod
 import lib.iiif.helpers as iiif3_helpers
 
@@ -181,8 +186,16 @@ def iiif_collection (request, corpus_ref):
 	for opus in corpus.get_opera():
 		sync_source = opus.get_source_with_type(source_type)
 		if sync_source is not None:
+			if not bool(sync_source.thumbnail):
+				print ("Missing thumbnail. There shoud be a default one ")
+				thumbnail =  iiif3_helpers.create_image_item(Image.default_image().to_dict())
+				
+			else:
+				thumbnail =  iiif3_helpers.create_image_item(sync_source.thumbnail)
 			manifest_url = settings.NEUMA_BASE_URL + reverse('home:iiif_manifest', args=[opus.ref])
-			iiif_collection.add_manifest_ref (manifest_url, opus.local_ref())
+			manifest_ref = iiif3_mod.ManifestRef (manifest_url, 
+				sync_source.ref, thumbnail)
+			iiif_collection.add_manifest_ref (manifest_ref)
 
 	return HttpResponse(iiif_collection.json(2), content_type = "application/json")
 
@@ -197,20 +210,82 @@ def iiif_manifest (request, opus_ref):
 	else:
 		# Default : we produce the collection of 
 		source_type = SourceType.STYPE_SYNC
-	
+	if "force" in request.GET:
+		print ("The manifest must be replaced")
+		recompute = True
+	else:
+		recompute = False
+		print ("Return the stored manifest is present")
+		
 	# Convert to a collection item 
-	coll_item = opus.to_collection_item()
+	item = opus.to_collection_item()
+	#return  HttpResponse(item.json(), content_type = "application/json")
 
 	# Find the source given the type
 	sync_source = opus.get_source_with_type(source_type)
 	if sync_source is None:
 		# Not found
 		return HttpResponseNotFound("<h1>Source {source_type} not found</h1>")
+	#return  HttpResponse(sync_source.json(), content_type = "application/json")
+
+	print (f"We found a sync source for opus {opus.ref}")
+	
+	# If the manifest is already there, and 'force' is not set,
+	# we take the stored file
+	if bool(sync_source.source_file) and recompute is False:
+		with open(sync_source.source_file.path,"r") as f:
+			return  HttpResponse(f.read(), content_type = "application/json")
+
+	# Else we compute or re-compute the manifest
+	if "image_source" in sync_source.metadata:
+		image_source = OpusSource.objects.get(opus=opus,
+						ref=sync_source.metadata["image_source"])
 	else:
-		print (f"We found a sync source for opus {opus.ref}")
-		# OK we can proceed
-		
-	return  HttpResponse(coll_item.json(), content_type = "application/json")
+		# By default we take the source with ref iiiif
+		image_source =  OpusSource.objects.get(opus=opus,
+				ref=source_mod.OpusSource.IIIF_REF)
+		print (f"iiif_combined_manifest Warning: the 'image_source' field is undefined. taking 'iiif' by default")
+	if "audio_source" in sync_source.metadata:
+		audio_source = OpusSource.objects.get(opus=opus,ref=sync_source.metadata["audio_source"])
+	else:
+		# By default we take the source with ref audio
+		audio_source =  OpusSource.objects.get(opus=opus,
+						ref=source_mod.OpusSource.AUDIO_REF)
+
+
+	#return  HttpResponse(audio_source.json(), content_type = "application/json")
+	#return  HttpResponse(image_source.json(), content_type = "application/json")
+
+	# Get the images URLs from the IIIF image manifest
+	print (f"Take the image manifest from the source")	
+	if not (image_source.iiif_manifest) or image_source.iiif_manifest == {}:
+		raise Exception (f"Missing manifest in the IIIF image source for opus {self.ref}. Synchronization aborted")
+		return
+	with open(image_source.iiif_manifest.path, "r") as f:
+		iiif_doc = iiif2_mod.Document(json.load(f))
+	images = iiif_doc.get_images()
+
+	# Get annotations both are dictionary indexed by the measure id
+	annotations_images = Annotation.for_opus_and_concept(opus,
+				constants_mod.IREGION_MEASURE_CONCEPT)
+	annotations_audio = Annotation.for_opus_and_concept(opus,
+					constants_mod.TFRAME_MEASURE_CONCEPT)
+	sorted_images = dict(natsorted(annotations_images.items())) 
+	sorted_audio = dict(natsorted(annotations_audio.items())) 
+
+	iiif_manifest  = iiif3_helpers.create_combined_manifest (item, 
+							sync_source.to_item_source(),
+							audio_source.to_item_source(), 
+							image_source.to_item_source(),
+							images,
+							sorted_images, sorted_audio)
+
+	# Put the manifest in the Sync source
+	file_name = "combined_manifest.json"
+	sync_source.source_file.save(file_name, ContentFile(iiif_manifest.json (2)))
+	sync_source.save()
+
+	return  HttpResponse(iiif_manifest.json(), content_type = "application/json")
 
 def upload_corpus_zip (request, corpus_ref):
 	""" Upload a zip file with a set of XML files"""

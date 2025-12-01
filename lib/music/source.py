@@ -29,8 +29,11 @@ class OpusSource:
 	MUSICXML_REF = "musicxml"
 	TMP_REF = "tmp"
 		
-	def __init__(self, ref, source_type, mime_type, 
-				url, metadata={}):
+	def __init__(self, id, ref, source_type, mime_type, 
+				url, metadata={}, licence=None, 
+				copyright=None, thumbnail=None, 
+				organization=None):
+		self.id = id
 		self.ref = ref
 		self.source_type = source_type
 		self.mime_type = mime_type
@@ -41,6 +44,19 @@ class OpusSource:
 		self.has_iiif_manifest = False
 		self.description = ""
 		self.images = []
+		if licence is not None:
+			self.licence = licence.to_dict()
+		else:
+			self.licence = None
+		if thumbnail is not None:
+			self.thumbnail = thumbnail.to_dict()
+		else:
+			self.thumbnail = None
+		if organization is not None:
+			self.organization = organization.to_dict()
+		else:
+			self.organization = None
+		self.copyright = copyright
 
 	def get_iiif_manifest(self):
 		# IIIF extraction: only for sources of type IIIF_REF
@@ -57,14 +73,19 @@ class OpusSource:
 			except Exception as ex:
 				score_mod.logger.info(str(ex))
 		
-	def to_json (self):
+	def to_dict (self):
 		source_dict =  {
+			"id": self.id,
 			"ref": self.ref, 
 			"description": self.description,
 			"source_type": self.source_type, 
 			"mime_type": self.mime_type, 
 			"url": self.url,
 			"metadata": self.metadata,
+			"copyright": self.copyright,
+			"organization": self.organization,
+			"licence":  self.licence,
+			"thumbnail":  self.thumbnail,
 			"file_path": self.file_path,
 			"has_manifest": self.has_manifest,
 			"has_iiif_manifest": self.has_iiif_manifest,
@@ -76,6 +97,9 @@ class OpusSource:
 				source_dict["images"].append(img.to_dict())
 		return source_dict
 
+	def json(self):
+		return json.dumps(self.to_dict())
+		
 '''
   Classes describing sources of abstract scores: images, audio, etc.
   

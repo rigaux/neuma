@@ -60,7 +60,8 @@ class Collection:
 				"supervisors": self.supervisors,
 				"organization": self.organization,
 				"licence":  self.licence,
-				"composer": self.composer.to_json()
+				"thumbnail":  self.thumbnail,
+				"composer": self.composer.json()
 		}
 
 	def json(self, indent=2):
@@ -75,7 +76,7 @@ class CollectionItem:
 				title, composer, 
 				description,
 				metadata, features):
-		self.url = url
+		self.id = url
 		self.ref = ref
 		self.local_ref =  local_ref(ref)
 		self.title = title
@@ -96,26 +97,21 @@ class CollectionItem:
 		self.files.append(the_file)
 
 	def to_dict (self):
-		item = {}
-		features =[]
-		for f in self.features:
-			features.append(f.to_json())
-		sources =[]
-		for s in self.sources:
-			sources.append(s.to_json())
-		files =[]
-		for f in self.files:
-			files.append(f.to_json())
+		item = {"id": self.id, "ref": self.ref, 
+				"local_ref": self.local_ref, "collection_ref": self.collection_ref,
+				"title": self.title, "description": self.description,
+				"composer": self.composer}
 
-		item["ref"] =  self.ref
-		item["local_ref"] = self.local_ref
-		item["collection_ref"] = self.collection_ref
-		item["title"] = self.title
-		item["description"] = self.description
-		item["composer"] = self.composer
-		item["features"] =  features
-		item["sources"] = sources
-		item["files"] = files
+		item["features"] =[]
+		for f in self.features:
+			item["features"].append(f.to_dict())
+		item["sources"] =[]
+		for s in self.sources:
+			item["sources"].append(s.to_dict())
+		item["files"] =[]
+		for f in self.files:
+			item["files"].append(f.to_dict())
+
 
 		return item
 

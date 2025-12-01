@@ -1,4 +1,4 @@
-
+import json
 from lib.music.jsonld import JsonLD
 
 import lib.music.Score as score_mod
@@ -6,7 +6,6 @@ import lib.music.Score as score_mod
 '''
  A class used to represent the metadata of an Opus
 '''
-
 
 class OpusFile:
 	'''
@@ -16,8 +15,10 @@ class OpusFile:
 		self.name = name
 		self.url = url
 		
-	def to_json (self):
+	def to_dict (self):
 		return {"name": self.name, "url": self.url}
+	def json (self):
+		return json.dumps(self.to_dict())
 
 
 class OpusFeature:
