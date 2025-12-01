@@ -355,36 +355,12 @@ class Corpus(models.Model):
 				self.organization)
 				
 		return collection
-
+	def to_dict(self):
+		return self.to_collection.to_dict()
+	def json(self):
+		return self.to_collection.json()
 	def to_json(self):
-		"""
-		  Create a dictionary that can be used for JSON exports
-		  DEPRECATED : replace by the Collection json() function, everywhere
-		"""
-		if self.licence is not None:
-			licence_code = self.licence.code
-		else:
-			licence_code = None
-
-		core = {"ref": Corpus.local_ref(self.ref), 
-				"url": self.get_url(),
-				 "title": self.title, 
-				 "short_title": self.short_title, 
-				 "description": self.description, 
-				 "is_public": self.is_public,
-				 "short_description": self.short_description,
-				 "licence_code":  licence_code,
-				 "copyright": self.copyright,
-				 "supervisors": self.supervisors
-		}
-		
-		if self.composer is not None:
-			core["composer"] = self.composer.to_json()
-		return core
-
-		if self.composer is not None:
-			core["composer"] = self.composer.dbpedia_uri
-		return core
+		return self.json()
 
 	def get_children(self, recursive=True):
 		self.children = Corpus.objects.filter(parent=self).order_by("ref")
@@ -831,8 +807,8 @@ class Opus(models.Model):
 		  If the composer is not set at the Opus level, get
 		  it from the Corpus (if any)
 		"""
-		if self.composer_ld is not None:
-			return self.composer_ld
+		if self.composer is not None:
+			return self.composer
 		elif self.corpus.composer is not None:
 			return self.corpus.composer
 		else:
@@ -847,26 +823,16 @@ class Opus(models.Model):
 
 	def add_meta (self, mkey, mvalue):
 		"""Add a (key, value) pair as an ad-hoc attribute"""
-		
 		# The key must belongs to the list of pre-deefined accepted values
 		if mkey not in OpusMeta.META_KEYS:
 			raise Exception(f"Sorry, the key {mkey} does not belong to the accepted meta keys")
 		
 		# Search if exists
-		try:
-			meta_pair = OpusMeta.objects.get(opus=self,meta_key=mkey)
-		except OpusMeta.DoesNotExist as e:
-
-			meta_pair = OpusMeta(opus=self, meta_key=mkey, meta_value=mvalue)
-			meta_pair.save()
-
-	def get_metas (self):
-		"""Return the list of key-value pairs"""
-		metas = []
-		for m in OpusMeta.objects.filter(opus=self):
-			m.displayed_label = OpusMeta.META_KEYS[m.meta_key]["displayed_label"]
-			metas.append (m)
-		return metas
+		if mkey in self.metadata:
+			self.metadata[mkey] = mvalue 
+		else:
+			self.metadata.append({"key": mkey, "value": mvalue})
+		self.save()
 
 	def add_source (self,source_dict):
 		"""Add a source to the opus"""
@@ -1252,44 +1218,40 @@ class Opus(models.Model):
 		result = opus.delete()
 		return result
 
-	def to_dict(self, absolute_url):
-		" Produce a serialisable object from the Opus data"
+	def to_collection_item(self):
+		" Produce a Collection item from the Opus data"
 				
 		coll_item = collection_mod.CollectionItem (
-					setting.NEUMA_BASE_URL + self.ref, 
+					settings.NEUMA_BASE_URL + self.ref, 
 						self.corpus.ref, self.ref,
 						self.title, self.composer, 
-						self.description)
+						self.description, self.metadata,
+						self.features)
 			
 		# Adding sources
 		for source in self.opussource_set.all ():
-			coll_item.add_source(source.to_dict(absolute_url))
-
-		# Adding meta fields (features)
-		for meta in self.get_metas():
-			feature = opusmeta_mod.OpusFeature (meta.meta_key, meta.meta_value)
-			coll_item.add_feature(feature)
+			coll_item.add_source(source.to_dict(settings.NEUMA_BASE_URL))
 
 		# Adding files
 		for fname, fattr in Opus.FILE_NAMES.items():
 			the_file = getattr(self, fattr)
 			if the_file:
-				opus_file = opusmeta_mod.OpusFile (fname, absolute_url + the_file.url)
-				opusmeta.add_file(opus_file)
-		return opusmeta
+				opus_file = opusmeta_mod.OpusFile (fname, settings.NEUMA_BASE_URL + the_file.url)
+				coll_item.add_file(opus_file)
+		return coll_item
 	
+
+	def to_dict(self, absolute_url):
+		return self.to_collection_item().to_dict()
 	def to_serializable(self, absolute_url):
 		# DEPRECATED
 		return self.to_dict ()
-	
+	def json(self, indent=2):
+		return self.to_collection_item().json()
+
 	def to_json(self, request):
-		"""
-		  Produces a JSON representation (useful for REST services)
-		"""
-		# We need the absolute URL 
-		abs_url = request.build_absolute_uri("/")[:-1]
-		opusmeta = self.to_serializable(abs_url)
-		return opusmeta.to_json()
+		# DEPRECATED
+		return self.json()
 		
 	def create_source_with_file(self, source_ref, source_type_code,
 							url, file_path=None, 
@@ -1665,7 +1627,7 @@ class OpusSource (models.Model):
 		return "(" + self.opus.ref + ") " + self.ref
 
 	
-	def to_serializable(self, abs_url):
+	def to_dict(self, abs_url):
 		"""
 		  Create an object that can be serialized for JSON exports
 		"""
@@ -1682,6 +1644,8 @@ class OpusSource (models.Model):
 		if self.iiif_manifest:
 			source_dict.has_iiif_manifest =  True	
 		return source_dict
+	def to_serialisable(self, abs_url):
+		return self.to_dict()
 
 
 	def file_rest_url (self):

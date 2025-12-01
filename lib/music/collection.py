@@ -71,8 +71,10 @@ class CollectionItem:
 		A collection item (eq. to an Opus in Neuma)
 	'''
 	
-	def __init__(self, url, collection_ref, ref, title, composer, 
-				description=None):
+	def __init__(self, url, collection_ref, ref, 
+				title, composer, 
+				description,
+				metadata, features):
 		self.url = url
 		self.ref = ref
 		self.local_ref =  local_ref(ref)
@@ -84,13 +86,12 @@ class CollectionItem:
 			self.composer = None
 		self.description = description
 		self.sources = []
-		self.features = []
+		self.metadata = metadata
+		self.features = features
 		self.files = []
 
 	def add_source (self, source):
 		self.sources.append(source)	
-	def add_feature (self, feature):
-		self.features.append(feature)
 	def add_file (self, the_file):
 		self.files.append(the_file)
 

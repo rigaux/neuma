@@ -190,7 +190,6 @@ def iiif_manifest (request, opus_ref):
 	""" 
 		Find a source and return its IIIF manifest
 	"""
-
 	opus = Opus.objects.get(ref=opus_ref)
 	if "source_type" in request.GET:
 		# Check that we received sth that makes sense....
@@ -199,24 +198,19 @@ def iiif_manifest (request, opus_ref):
 		# Default : we produce the collection of 
 		source_type = SourceType.STYPE_SYNC
 	
+	# Convert to a collection item 
+	coll_item = opus.to_collection_item()
+
 	# Find the source given the type
 	sync_source = opus.get_source_with_type(source_type)
 	if sync_source is None:
 		# Not found
 		return HttpResponseNotFound("<h1>Source {source_type} not found</h1>")
 	else:
-		return HttpResponse(json.dumps({"test": "ok"}), content_type = "application/json")
-
-		print (f"We found a sync source {sync_source.source_file.path} for opus {opus.ref}")
-		if sync_source.source_file is None:
-			print (f"No file for this source. ignored")
-			return HttpResponseNotFound("<h1>No manifestnot found</h1>")
-		else:
-			with open(sync_source.source_file.path, "r") as f:
-				content = f.read()
-			return  HttpResponse(content, content_type = "application/json")
-
-	return  HttpResponse(iiif_collection.json(2), content_type = "application/json")
+		print (f"We found a sync source for opus {opus.ref}")
+		# OK we can proceed
+		
+	return  HttpResponse(coll_item.json(), content_type = "application/json")
 
 def upload_corpus_zip (request, corpus_ref):
 	""" Upload a zip file with a set of XML files"""
@@ -382,7 +376,7 @@ class OpusView(NeumaView):
 		context["opus_file_url"] = reverse("rest:opus_file_request", kwargs={"full_neuma_ref": opus.ref})
 		
 		# get meta values 
-		context["meta_values"] = opus.get_metas()
+		context["meta_values"] = opus.metadata
 		
 		# Add the analytic models
 		context['analytic_models'] = AnalyticModel.objects.all()

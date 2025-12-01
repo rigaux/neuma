@@ -11,7 +11,11 @@ import lib.iiif.IIIF3 as iiif3_mod
 	Utility functions that create ad-hoc manifests	
 """
 
-def corpus_collection (coll):
+def create_collection (coll):
+	"""
+	  We receive a Neuma Collection (lib/music/collection.py)
+	  from which we produce a manifest
+	"""
 	title_prop = iiif3_mod.Property (coll.short_title)
 	collection = iiif3_mod.Collection(coll.url, title_prop)
 	
@@ -54,3 +58,16 @@ def corpus_collection (coll):
 
 	return collection
 	
+
+def create_combined_manifest (item, audio_source, image_source):
+	"""
+	  Create a combined manifest from an audio + a video source
+	"""
+	title_prop = iiif3_mod.Property (item.short_title)
+	collection = iiif3_mod.Collection(item.url, title_prop)
+	
+	if item.description is not None:
+		summary_prop = iiif3_mod.Property (coll.description)
+		collection.set_summary (summary_prop)
+	if item.licence is not None:
+		collection.set_rights (coll.licence["url"])
