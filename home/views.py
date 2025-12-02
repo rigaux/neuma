@@ -253,7 +253,6 @@ def iiif_manifest (request, opus_ref):
 		audio_source =  OpusSource.objects.get(opus=opus,
 						ref=source_mod.OpusSource.AUDIO_REF)
 
-
 	#return  HttpResponse(audio_source.json(), content_type = "application/json")
 	#return  HttpResponse(image_source.json(), content_type = "application/json")
 

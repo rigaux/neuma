@@ -941,7 +941,7 @@ class Opus(models.Model):
 			
 		# We create the content list
 		content_list_id = opus_url+"/list-media"
-		content_list = iiif3_mod.AnnotationList(content_list_id,"List of source media (audio and images)")
+		content_list = iiif3_mod.AnnotationList(content_list_id)
 		
 		# The audio file is in the URL of the source. At some point
 		# it will be more consistent to use this URL to point to
@@ -951,14 +951,16 @@ class Opus(models.Model):
 			summary_audio = iiif3_mod.Property (audio_source.description)
 		else:
 			summary_source = None
-		if audio_source.source_type.code == SourceType.STYPE_MP3:
-			content_list.add_audio_item (f"{opus_url}/audio", canvas, audio_source.url, 
-							audio_source.source_type.mime_type, 
-							label_audio, summary_audio, duration)
+		
+		if audio_source.source_type == "MP3":
+			mpeg_type = iiif3_mod.Annotation.SOUND_TYPE
+			mpeg_id = f"{opus_url}/audio"
 		else:
-			content_list.add_video_item (f"{opus_url}/video", canvas, audio_source.url, 
-							audio_source.source_type.mime_type, 
-							label_audio,  summary_audio, duration)
+			mpeg_type = iiif3_mod.Annotation.VIDEO_TYPE
+			mpeg_id = f"{opus_url}/video"
+		
+		content_list.add_audio_item (mpeg_id, mpeg_type, canvas, 
+				audio_source.url, audio_source.source_type.mime_type, duration)
 			
 		if iiif_source.description is not None:
 			summary_image = iiif3_mod.Property (iiif_source.description)
@@ -1044,7 +1046,7 @@ class Opus(models.Model):
 		canvas.add_content_list (content_list)
 
 		# Next we add annotations to link 
-		synchro_list = iiif3_mod.AnnotationList(opus_url+"/synchro","Synchronisation list")
+		synchro_list = iiif3_mod.AnnotationList(opus_url+"/synchro")
 
 		i_measure = 0
 		for measure_ref in list(sorted_images.keys()):
