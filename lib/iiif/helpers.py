@@ -169,7 +169,7 @@ def create_combined_manifest (item, sync_source, audio_source,
 	for measure_ref in list(sorted_images.keys()):
 		i_measure += 1
 		if measure_ref in sorted_audio:
-			annot_image = sorted_audio[measure_ref]
+			annot_image = sorted_images[measure_ref]
 			annot_audio = sorted_audio[measure_ref]
 			time_frame = annot_audio.body.selector_value
 			polygon = annot_image.body.selector_value.replace(")("," ").replace("P","").replace("((","").replace("))","")
