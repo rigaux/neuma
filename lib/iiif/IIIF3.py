@@ -122,6 +122,7 @@ class Manifest ():
 	'''
 	
 	def __init__(self, id, label) :
+		self.id = id
 		self.prezi_manifest = iiif_prezi3.Manifest(id=id, 
 					label=label.to_dict())
 		self.prezi_manifest.items = []
