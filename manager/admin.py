@@ -3,7 +3,7 @@ from django.contrib import admin
 from mptt.admin import MPTTModelAdmin
 
 from guardian.admin import GuardedModelAdmin
-from .models import (Corpus, Opus, OpusMeta, Upload, 
+from .models import (Corpus, Opus, Upload, 
 					AnalyticModel, Bookmark, Config,
 					AnalyticConcept, Annotation, Resource, 
 					Descriptor,  Organization, Licence, Person, Image,
@@ -18,9 +18,6 @@ class OpusAdmin(GuardedModelAdmin):
 class OpusSourceAdmin(GuardedModelAdmin):
     search_fields = ("opus__ref", "ref",  "url")
 
-
-class OpusMetaAdmin(GuardedModelAdmin):
-    search_fields = ("meta_key", "meta_value")
 
 
 class UploadAdmin(GuardedModelAdmin):
@@ -43,7 +40,6 @@ admin.site.register(Corpus, CorpusAdmin)
 admin.site.register(Upload,UploadAdmin)
 admin.site.register(Bookmark, BookmarAdmin)
 admin.site.register(Opus, OpusAdmin)
-admin.site.register(OpusMeta, OpusMetaAdmin)
 admin.site.register(AnalyticModel, AnalyticModelAdmin)
 admin.site.register(SourceType)
 admin.site.register(OpusSource,OpusSourceAdmin)

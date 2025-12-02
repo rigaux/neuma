@@ -13,7 +13,7 @@ from elasticsearch.helpers import bulk
 import json
 from operator import itemgetter
 
-from manager.models import Corpus, Opus, OpusMeta
+from manager.models import Corpus, Opus
 from music import *
 from .Sequence import Sequence
 from .MusicSummary import MusicSummary
@@ -109,7 +109,7 @@ class IndexWrapper:
 			)
 			
 			# Add features if any
-			for meta in opus.get_metas ():
+			for meta in opus.metadata:
 				if meta.meta_key == OpusMeta.MK_KEY_TONIC:
 					opus_index.key = meta.meta_value
 				if meta.meta_key == OpusMeta.MK_KEY_MODE:

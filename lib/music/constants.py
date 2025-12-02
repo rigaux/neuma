@@ -75,3 +75,55 @@ COLOR_VOICE5 = "black"
 INDEX_ERROR_COLOR= 8
 
 COLORS=[COLOR_VOICE1, COLOR_VOICE2, COLOR_VOICE3, COLOR_VOICE4,  COLOR_VOICE5]
+
+# List of allowed meta keys, 
+MK_COLLECTION = "collection"
+MK_OFFICE = "office"
+MK_FETE = "fete"
+MK_MODE = "mode"
+MK_GENRE = "genre"
+MK_YEAR = "year"
+MK_SOLENNITE = "solennite"
+MK_TEXTE = "texte"
+MK_KEY_TONIC = "key_tonic_name"
+MK_KEY_MODE = "key_mode"
+MK_METER = "meter"	
+MK_NUM_OF_PARTS = "num_of_parts"
+MK_NUM_OF_MEASURES = "num_of_measures"
+MK_NUM_OF_NOTES = "num_of_notes"
+ML_INSTRUMENTS = "instruments"
+MK_LOWEST_PITCH_EACH_PART = "lowest_pitch_each_part"
+MK_HIGHEST_PITCH_EACH_PART = "highest_pitch_each_part"
+MK_MOST_COMMON_PITCHES = "most_common_pitches"
+MK_AVE_MELODIC_INTERVAL = "average_melodic_interval"
+MK_DIRECTION_OF_MOTION = "direction_of_motion"
+MK_MOST_COMMON_NOTE_QUARTER_LENGTH = "most_common_note_quarter_length"
+MK_RANGE_NOTE_QUARTER_LENGTH = "range_note_quarter_length"
+MK_INIT_TIME_SIG = "initial_time_signature"
+	
+# Descriptive infos for meta pairs
+META_KEYS = {
+		MK_COLLECTION: {"displayed_label": "Collection"},
+		MK_OFFICE: {"displayed_label": "Office"},
+		MK_FETE: {"displayed_label": "Fête"},
+		MK_MODE: {"displayed_label": "Mode"},
+		MK_GENRE: {"displayed_label": "Genre"},
+		MK_SOLENNITE: {"displayed_label": "Degré de solennité"},
+		MK_TEXTE: {"displayed_label": "Texte"},
+		MK_KEY_TONIC: {"displayed_label": "Key Tonic Name"},
+		MK_KEY_MODE: {"displayed_label":"Key Mode"},
+		MK_METER: {"displayed_label":"Meter"},
+		MK_YEAR: {"displayed_label":"Year"},
+		MK_NUM_OF_PARTS: {"displayed_label": "Number of parts"},
+		MK_NUM_OF_MEASURES: {"displayed_label": "Number of measures"},
+		MK_NUM_OF_NOTES: {"displayed_label": "Number of notes"},
+		ML_INSTRUMENTS: {"displayed_label": "Instruments"},
+		MK_LOWEST_PITCH_EACH_PART: {"displayed_label": "Lowest fpitch each part"},
+		MK_HIGHEST_PITCH_EACH_PART: {"displayed_label": "Highest pitch each part"},
+		MK_MOST_COMMON_PITCHES: {"displayed_label": "Most common pitches"},
+		MK_AVE_MELODIC_INTERVAL: {"displayed_label": "Average melodic interval"},
+		MK_DIRECTION_OF_MOTION: {"displayed_label": "Direction of motion"},
+		MK_MOST_COMMON_NOTE_QUARTER_LENGTH: {"displayed_label": "Most common note quarter length"},
+		MK_RANGE_NOTE_QUARTER_LENGTH: {"displayed_label": "Range of note quarter length"},
+		MK_INIT_TIME_SIG:{"displayed_label": "Initial time signature"}
+	}
