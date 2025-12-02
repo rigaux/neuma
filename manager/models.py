@@ -1279,7 +1279,6 @@ class Opus(models.Model):
 		"""
 		try:
 			source = OpusSource.objects.get(opus=self,ref=source_ref)
-			description = f"{source_type_code} file updated on {date.today()}", 
 		except OpusSource.DoesNotExist:
 			description = f"{source_type_code} file created on {date.today()}", 
 			source = OpusSource (opus=self,ref=source_ref,
