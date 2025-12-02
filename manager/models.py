@@ -1809,7 +1809,7 @@ class OpusSource (models.Model):
 		
 		audio_manifest = source_mod.AudioManifest.from_json (json.loads(self.manifest.read()))
 		for tframe in audio_manifest.time_frames:
-				measure = "m" + str(tframe.id)
+				measure = str(tframe.id)
 				time_frame = "t=" + str(tframe.begin) + "," + str(tframe.end)
 				annotation = annot_mod.Annotation.create_annot_from_xml_to_audio(creator, self.opus.musicxml.url, 
 								measure, self.url, time_frame, 
