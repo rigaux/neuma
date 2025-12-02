@@ -132,7 +132,7 @@ def create_combined_manifest (item, sync_source, audio_source,
 	#for page_id, measure_range  in pages_measures.items():
 	#	print (f"Page {page_id}. Range {measure_range}")
 
-	# We should now the first page of music
+	# We should know the first page of music
 	if "first_page_of_music" in image_source.metadata:
 		first_page_of_music = image_source.metadata["first_page_of_music"]
 	else:
@@ -162,25 +162,23 @@ def create_combined_manifest (item, sync_source, audio_source,
 			#if i_img > 2:
 			#	break
 
-		canvas.add_content_list (content_list)
+	canvas.add_content_list (content_list)
+	# Next we add annotations to link 
+	synchro_list = iiif3_mod.AnnotationList(item.id+"/synchro")
+	i_measure = 0
+	for measure_ref in list(sorted_images.keys()):
+		i_measure += 1
+		if measure_ref in sorted_audio:
+			annot_image = sorted_audio[measure_ref]
+			annot_audio = sorted_audio[measure_ref]
+			time_frame = annot_audio.body.selector_value
+			polygon = annot_image.body.selector_value.replace(")("," ").replace("P","").replace("((","").replace("))","")
+			#print (f"Found both annotations for measure {measure_ref}. Region {polygon} Time frame {time_frame}")
+			synchro_list.add_synchro(canvas, item.id + "/"+measure_ref, content_list_id, polygon, time_frame)
+		#if i_measure > 3:
+		#	break
 
-		# Next we add annotations to link 
-		synchro_list = iiif3_mod.AnnotationList(item.id+"/synchro")
-		i_measure = 0
-		for measure_ref in list(sorted_images.keys()):
-			i_measure += 1
-			if measure_ref in sorted_audio:
-				annot_image = sorted_audio[measure_ref]
-				annot_audio = sorted_audio[measure_ref]
-				time_frame = annot_audio.body.selector_value
-				polygon = annot_image.body.selector_value.replace(")("," ").replace("P","").replace("((","").replace("))","")
-				#print (f"Found both annotations for measure {measure_ref}. Region {polygon} Time frame {time_frame}")
-				synchro_list.add_synchro(canvas, item.id + "/"+measure_ref, content_list_id, polygon, time_frame)
-			#if i_measure > 3:
-			#	break
-
-		manifest.add_canvas (canvas)
-
+	manifest.add_canvas (canvas)
 	return manifest
 
 def add_descriptive_properties(iiif_object, summary, thumbnail,
