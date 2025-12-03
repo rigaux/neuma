@@ -254,7 +254,7 @@ class AudioManifest:
 			measure_no += 1
 			current_tstamp = tstamp
 
-	def to_json(self):
+	def to_dict(self):
 		json_frames = []
 		for frame in self.time_frames:
 			json_frames.append (frame.to_json())

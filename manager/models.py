@@ -1717,8 +1717,8 @@ class OpusSource (models.Model):
 			audio_manifest.load_from_dezrann(self.source_file.path)
 		else:
 			raise Exception (f"Source::convert_file_to_audio unknown file extension '{extension}'")
-		# And we replace the file		
-		self.source_file.save("manifest.json", 
+		# And we create the manifest	
+		self.manifest.save("manifest.json", 
 					ContentFile(json.dumps(audio_manifest.to_dict())))
 					
 		# I makes sense to re-compute annotations
@@ -1742,7 +1742,7 @@ class OpusSource (models.Model):
 		
 		audio_manifest = source_mod.AudioManifest.from_json (json.loads(self.manifest.read()))
 		for tframe in audio_manifest.time_frames:
-				measure = "m" + str(tframe.id)
+				measure = str(tframe.id)
 				time_frame = "t=" + str(tframe.begin) + "," + str(tframe.end)
 				annotation = annot_mod.Annotation.create_annot_from_xml_to_audio(creator, self.opus.musicxml.url, 
 								measure, self.url, time_frame, 
