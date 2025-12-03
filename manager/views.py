@@ -66,7 +66,7 @@ def load_images(request):
 	remote_dir = "imgs%2F" # Images are stored there in the IIIF server 
 	for entry in os.scandir(directory):  
 		if entry.is_file():  # check if it's a file
-			if Path(entry.path).suffix in [".jpg", ".jpeg"]:
+			if Path(entry.path).suffix in [".svg", ".png", ".jpg", ".jpeg"]:
 				file_id = Path(entry.path).stem
 				file_name = Path(entry.path).name
 				
