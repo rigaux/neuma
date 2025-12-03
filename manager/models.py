@@ -133,7 +133,7 @@ class Image(models.Model):
 		verbose_name_plural = _("Images")
 
 	def url_default(self):
-		return self.iiif_url + "/full/max/0/default.jpg"
+		return self.iiif_url + "/full/max/0/default.png"
 
 	def to_dict (self):
 		return {"id": self.iiif_id, "url": self.iiif_url,
