@@ -105,7 +105,6 @@ class IndexWrapper:
 				summary = msummary_for_es,
 				title=opus.title,
 				composer=opus.composer,
-				lyricist=opus.lyricist,
 			)
 			
 			# Add features if any
@@ -437,7 +436,6 @@ class OpusIndex(Document):
 	ref = Text()
 	local_ref = Text()	
 	title = Text()
-	lyricist = Text()
 	composer = Text()
 	
 	# Features

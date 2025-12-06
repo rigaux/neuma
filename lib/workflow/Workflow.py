@@ -1,7 +1,8 @@
 
 import zipfile, os.path, io, json, sys, shutil
 
-from manager.models import Corpus, Opus, Descriptor, OpusMeta, OpusSource
+from manager.models import (Corpus, Opus, Descriptor, 
+		OpusSource)
 import os
 import re
 import subprocess
@@ -14,11 +15,10 @@ import ast
 from django.conf import settings
 
 # For computing score diffs
-from lib.musicdiff import DetailLevel
-from musicdiff.annotation import AnnScore
-from musicdiff.comparison import Comparison
-from musicdiff.visualization import Visualization
-
+#from lib.musicdiff import DetailLevel
+#from musicdiff.annotation import AnnScore
+#from musicdiff.comparison import Comparison
+#from musicdiff.visualization import Visualization
 
 
 import logging
@@ -56,6 +56,7 @@ class Workflow:
 	def __init__(self) :
 		 return
 	
+	"""
 	@staticmethod
 	def compute_opus_diff(opus, 
 						detail= DetailLevel.GeneralNotesOnly, show_pdf=False):
@@ -128,7 +129,7 @@ class Workflow:
 			opus_diff.save()
 			
 		return len(diff_list)
-
+	"""
 	@staticmethod
 	def index_corpus(corpus, recursion=True):
 		"""

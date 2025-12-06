@@ -267,7 +267,7 @@ def iiif_manifest (request, opus_ref):
 	# Get the images URLs from the IIIF image manifest
 	print (f"Take the image manifest from the source")	
 	if not (image_source.iiif_manifest) or image_source.iiif_manifest == {}:
-		raise Exception (f"Missing manifest in the IIIF image source for opus {self.ref}. Synchronization aborted")
+		raise Exception (f"Missing manifest in the IIIF image source for opus {opus.ref}. Synchronization aborted")
 		return
 	with open(image_source.iiif_manifest.path, "r") as f:
 		iiif_doc = iiif2_mod.Document(json.load(f))

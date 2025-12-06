@@ -64,11 +64,11 @@ class Collection:
 				"organization": self.organization,
 				"licence":  self.licence,
 				"thumbnail":  self.thumbnail,
-				"composer": self.composer.json()
+				"composer": self.composer
 		}
 
 	def json(self, indent=2):
-		return json.dumps (self.to_dict(), indent=indent)
+		return json.dumps (self.to_dict(), ensure_ascii=False, indent=indent)
 
 class CollectionItem:
 	'''
@@ -119,7 +119,7 @@ class CollectionItem:
 		return item
 
 	def json(self, indent=2):
-		return json.dumps (self.to_dict(), indent=indent)
+		return json.dumps (self.to_dict(), ensure_ascii=False, indent=indent)
 
 def local_ref(ref):
 	"""

@@ -88,7 +88,7 @@ var tabNames = [
  			<dt>{% trans "URL" %}</dt>
 			<dd><a target="_blank" href="{{source.url}}">{{source.url}}</a></dd>
 		{% endif %} 
-  {% if source.ref == 'iiif' %}
+  {% if source.iiif_manifest  %}
   <dt>{% trans "IIIF Manifest" %}</dt>
   <dd>  <dd><a target="_blank" href="{{source.iiif_manifest.url}}">Show</a></dd>
 </dd>
@@ -144,7 +144,7 @@ var tabNames = [
 	 {% if source.manifest %}      
 	 <li><a target="_blank" href="{{source.manifest.url}}">Show the source manifest</a></li>
 	 {% endif %}  
-	 {% if source.ref == 'iiif' %}
+	 {% if source.iiif_manifest  %}
 	<li><a target="_blank" href="{{source.iiif_manifest.url}}">Show the IIIF manifest</a></li>
 	   {% endif %}
     </ul>

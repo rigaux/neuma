@@ -210,6 +210,14 @@ class Person (models.Model):
 			"year_death": self.year_death,
 			"dbpedia_uri": self.dbpedia_uri			
 			}
+	@staticmethod
+	def from_dict(pers_dict):
+		person = Person(first_name = pers_dict["first_name"])
+		person.last_name = pers_dict["last_name"]
+		person.year_birth = pers_dict["year_birth"]
+		person.year_death = pers_dict["year_death"]
+		person.dbpedia_uri = pers_dict["dbpedia_uri"]
+
 	def json (self):
 		return json.dumps(self.to_dict())
 
@@ -368,9 +376,9 @@ class Corpus(models.Model):
 				
 		return collection
 	def to_dict(self):
-		return self.to_collection.to_dict()
+		return self.to_collection().to_dict()
 	def json(self):
-		return self.to_collection.json()
+		return self.to_collection().json()
 	def to_json(self):
 		return self.json()
 
@@ -413,7 +421,7 @@ class Corpus(models.Model):
 		zf = zipfile.ZipFile(s, "w")
 	
 		# Add a JSON file with meta data
-		zf.writestr("corpus.json", json.dumps(self.to_json(), ensure_ascii=False))
+		zf.writestr("corpus.json", self.json())
 		# Write the cover file
 		if self.cover is not None:
 			try:
@@ -462,12 +470,8 @@ class Corpus(models.Model):
 				#source_file = opus.local_ref() +  '.source_files.zip'
 				zf.writestr( source_file, source_bytes.getvalue())
 
-			# Composer at the corpus level ? Then each opus inherits the composer
-			if self.composer is not None:
-				opus.add_meta(OpusMeta.MK_COMPOSER, self.composer.dbpedia_uri)
-				opus.save()
 			# Add a JSON file with meta data
-			opus_json = json.dumps(opus.to_json(request), ensure_ascii=False)
+			opus_json = opus.json(request)
 			zf.writestr(opus.local_ref() + ".json", opus_json)
 		zf.close()
 		
@@ -516,7 +520,7 @@ class Corpus(models.Model):
 		# Sanity
 		if not found_corpus_data:
 			logger.warning ("Missing corpus JSON file. Producing a skeleton with ref %s" % zip_name)
-			corpus_dict = {"ref": zip_name, 
+			corpus_dict = {"local_ref": zip_name, 
 				 "title": zip_name, 
 				 "short_title": zip_name, 
 				 "description": zip_name, 
@@ -529,9 +533,9 @@ class Corpus(models.Model):
 			logger.warning ("Missing cover for corpus " + corpus_dict['ref'])
 			
 		# Get the corpus, or create it
-		logger.info ("Importing corpus %s in %s" % (corpus_dict['ref'], parent_corpus.ref) )
-		print ("Importing corpus %s in %s" % (corpus_dict['ref'], parent_corpus.ref) )
-		full_corpus_ref = Corpus.make_ref_from_local_and_parent(corpus_dict['ref'], parent_corpus.ref)
+		logger.info ("Importing corpus %s in %s" % (corpus_dict['local_ref'], parent_corpus.ref) )
+		print ("Importing corpus %s in %s" % (corpus_dict['local_ref'], parent_corpus.ref) )
+		full_corpus_ref = Corpus.make_ref_from_local_and_parent(corpus_dict['local_ref'], parent_corpus.ref)
 		try:
 			corpus = Corpus.objects.get(ref=full_corpus_ref)
 		except Corpus.DoesNotExist as e:
@@ -607,13 +611,12 @@ class Corpus(models.Model):
 									sfile_content = source_zip.read(fname)
 									print (f"Saving source file {fname}")
 									source.source_file.save(fname, ContentFile(sfile_content))
-									source.save()
 								if base == source.ref + "_mnf":
 									# The file contains the source manifest
 									print ("Import manifest")
 									manifest_content = source_zip.read(fname)
 									source.manifest.save(fname, ContentFile(manifest_content))
-									source.save()
+							source.save()
 
 				# OK, we loaded metada : save
 				opus.mei = None
@@ -913,8 +916,9 @@ class Opus(models.Model):
 			if (dict_opus["description"] != None):
 				self.description = dict_opus["description"]
 		if ("composer" in dict_opus.keys()):
-			if (dict_opus["composer"] != None):
-				self.composer = dict_opus["composer"]
+			if isinstance(dict_opus["composer"], dict):
+				# This shoud be a JSON dump of a person
+				composer = Person.from_dict(dict_opus["composer"])
 				
 		# Saving before adding related objects
 		self.save()
@@ -1099,7 +1103,7 @@ class Opus(models.Model):
 			source = OpusSource (opus=self,ref=source_ref,
 								url = url)
 		source.url = url 
-		source.description = description
+		#source.description = description
 		source.source_type = SourceType.objects.get(code=source_type_code)
 		source.save()
 		
