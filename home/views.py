@@ -571,10 +571,6 @@ class SourceView(NeumaView):
 			# Convert the dezrann file to a manifest
 			audio_manifest = context['source'].convert_file_to_audio_manifest()			
 			context['message'] = 'The manifest has been built'
-		if 'rebuild_combined_manifest' in request.GET:
-			# Create a combined manifest
-			combined_manifest = context['source'].rebuild_combined_manifest()			
-			context['message'] = 'The combined manifest has been rebuilt'
 		return self.render_to_response(context)
 
 class OpusEditView(NeumaView):

@@ -11,7 +11,4 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.RemoveField(model_name="opus", name="composer",),
-        migrations.RemoveField(model_name="opusdiff", name="mei_omr",),
-        migrations.RemoveField(model_name="opusdiff", name="mei_ref",),
-        migrations.AlterModelTable(name="opusdiff", table="OpusDiff",),
     ]

@@ -10,10 +10,4 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RenameField(
-            model_name="opusdiff", old_name="musicxml", new_name="mei_omr",
-        ),
-        migrations.RenameField(
-            model_name="opusdiff", old_name="mei", new_name="mei_ref",
-        ),
     ]

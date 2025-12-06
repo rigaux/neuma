@@ -65,11 +65,6 @@ class Migration(migrations.Migration):
             field=models.ForeignKey(null=True, on_delete=django.db.models.deletion.PROTECT, to=settings.AUTH_USER_MODEL),
         ),
         migrations.AlterField(
-            model_name='audio',
-            name='opus',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, to='manager.Opus'),
-        ),
-        migrations.AlterField(
             model_name='kmeans',
             name='measure',
             field=models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, to='manager.SimMeasure'),

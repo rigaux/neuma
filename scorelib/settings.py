@@ -211,6 +211,9 @@ NEUMA_EXTERNAL_CORPUS_REF = "external"
 NEUMA_QUALITY_CORPUS_REF = "qualeval"
 NEUMA_COLLABSCORE_CORPUS_REF = "all:collabscore"
 
+# Image to use by default
+DEFAULT_IMAGE="soundwave"
+
 # Used everywhere, to know which kind of object we are dealing with
 CORPUS_TYPE = "corpus"
 OPUS_TYPE = "opus"

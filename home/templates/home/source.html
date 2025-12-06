@@ -200,9 +200,6 @@ var tabNames = [
 		{% if source.source_type.code == 'MP3' or source.source_type.code == 'MP4' %}        
 		   <li><a href="{% url 'home:source' opus.ref source.ref %}?convert_file_to_manifest=1">Convert synchro file to manifest</li>
 		{% endif %}
-	{% if source.source_type.code == 'SYNC' %}        
-	   <li><a href="{% url 'home:source' opus.ref source.ref %}?rebuild_combined_manifest=1">Re-build the combined manifest</li>
-	{% endif %}
 		</ul>
 	
 </div>

@@ -13,43 +13,4 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.CreateModel(
-            name="OpusDiff",
-            fields=[
-                (
-                    "id",
-                    models.AutoField(
-                        auto_created=True,
-                        primary_key=True,
-                        serialize=False,
-                        verbose_name="ID",
-                    ),
-                ),
-                (
-                    "musicxml",
-                    models.FileField(
-                        blank=True,
-                        null=True,
-                        storage=manager.utils.OverwriteStorage(),
-                        upload_to=manager.models.OpusDiff.upload_path,
-                    ),
-                ),
-                (
-                    "mei",
-                    models.FileField(
-                        blank=True,
-                        max_length=255,
-                        null=True,
-                        storage=manager.utils.OverwriteStorage(),
-                        upload_to=manager.models.OpusDiff.upload_path,
-                    ),
-                ),
-                (
-                    "opus",
-                    models.ForeignKey(
-                        on_delete=django.db.models.deletion.CASCADE, to="manager.opus"
-                    ),
-                ),
-            ],
-        ),
     ]

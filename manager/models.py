@@ -30,7 +30,6 @@ from django.contrib.auth.models import User
 from django.db.models import Count
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
-
 #from django.urls import reverse_lazy
 from django.conf import settings
 # For tree models
@@ -61,7 +60,6 @@ import lib.iiif.IIIF3 as iiif3_mod
 import lib.collabscore.parser as parser_mod
 from lib.collabscore.parser import CollabScoreParser, OmrScore
 from lib.collabscore.editions import Edition
-
 
 # Get an instance of a logger
 # See https://realpython.com/python-logging/
@@ -145,7 +143,7 @@ class Image(models.Model):
 
 	@staticmethod
 	def default_image():
-		return Image.objects.get(iiif_id="noimage")
+		return Image.objects.get(iiif_id=settings.DEFAULT_IMAGE)
 
 class Organization (models.Model):
 	''' 
@@ -186,7 +184,6 @@ class Person (models.Model):
 	def __str__(self):  # __unicode__ on Python 2
 		return self.first_name  + "  " + self.last_name
 	
-
 	def name_and_dates (self):
 		# Normalized representation of a person' 
 		full_name = str(self)
@@ -256,15 +253,14 @@ class Corpus(models.Model):
 		'''Set the path where corpus-related files must be stored'''
 		return 'corpora/%s/%s' % (self.ref.replace(settings.NEUMA_ID_SEPARATOR, "/"), filename)
 	cover = models.FileField(upload_to=upload_path,null=True,storage=OverwriteStorage())
+
 	def __init__(self, *args, **kwargs):
 		super(Corpus, self).__init__(*args, **kwargs)
-
 		# Non persistent fields
 		self.children = []
 
 	class Meta:
 		db_table = "Corpus"
-
 #		permissions = (
 #			('view_corpus', 'View corpus')
 #			('import_corpus', 'Import corpus'),
@@ -383,16 +379,12 @@ class Corpus(models.Model):
 
 	def get_direct_children(self):
 		return self.get_children(False)
-
 	def get_nb_children(self):
 		return Corpus.objects.filter(parent=self).count()
-
 	def get_nb_opera(self):
 		return Opus.objects.filter(corpus=self).count()
-
 	def get_nb_opera_and_descendants(self):
 		return Opus.objects.filter(ref__startswith=self.ref).count()
-
 	def get_opera(self):
 		return Opus.objects.filter(corpus=self).order_by('ref')
 
@@ -741,7 +733,6 @@ class Corpus(models.Model):
 				print ("Opus ref " + opus_ref + " imported in corpus " + corpus.ref+ "\n")
 		return list_imported
 	
-	
 	def stats_editions(self):
 		# Group all opus editions by type and return a dict with 
 		# stats on each edition type
@@ -760,19 +751,14 @@ class Corpus(models.Model):
 					else:
 						stats_corpus[edition_name] = 1
 		return stats_corpus
-
 ####################################################
-
-
 
 class Opus(models.Model):
 	corpus = models.ForeignKey(Corpus,on_delete=models.CASCADE)
 	title = models.CharField(max_length=255)
 	description = models.TextField(null=True, blank=True)
-	lyricist = models.CharField(max_length=255,null=True, blank=True)
 	composer = models.ForeignKey(Person, null=True,blank=True,on_delete=models.PROTECT)
 	ref = models.CharField(max_length=255,unique=True)
-	external_link  = models.CharField(max_length=255,null=True, blank=True)
 	# We can enrich the Opus description with free data
 	metadata = models.JSONField(blank=True,default=list)
 	# Feature = computed property (eg tonality)
@@ -790,8 +776,6 @@ class Opus(models.Model):
 	def __init__(self, *args, **kwargs):
 		super(Opus, self).__init__(*args, **kwargs)
 		# Non persistent fields
-		# self.stats = self.statsDic()
-		self.histogram_cache={}
 
 	# List of files associated to an Opus
 	musicxml = models.FileField(upload_to=upload_path,null=True,blank=True,storage=OverwriteStorage())
@@ -894,182 +878,6 @@ class Opus(models.Model):
 			source = self.add_source (source_dict)
 			source.source_file.save("ref_mei.xml", File(self.mei))
 
-	def create_sync_source(self, iiif_source, audio_source):
-		print (f"Create synchronization source for opus {self.ref} between source {iiif_source.ref} and source {audio_source.ref}")
-		base_url =settings.NEUMA_BASE_URL
-		opus_url = base_url + self.ref
-		
-		#image_url = "https://gallica.bnf.fr/iiif/ark:/12148/bpt6k11620688/f2/full/full/0/native.jpg"
-		#audio_url =  "https://openapi.bnf.fr/iiif/audio/v3/ark:/12148/bpt6k88448791/3.audio"
-
-		if "duration" in audio_source.metadata:
-			duration = audio_source.metadata["duration"]
-		else:
-			print (f"Create_combined_manifest WARNING: no duration in metadata. Assuling a default value...")
-			duration = 180
-			
-		print (f"Take the image manifest from the source")	
-		with open(iiif_source.iiif_manifest.path, "r") as f:
-			iiif_doc = iiif2_mod.Document(json.load(f))
-
-		# Create the combined manifest
-		title_prop = iiif3_mod.Property (self.title)
-		manifest = iiif3_mod.Manifest(opus_url, title_prop)
-		# Add a description/summary
-		if self.description is not None:
-			summary_prop = iiif3_mod.Property (self.description)
-			manifest.set_summary (summary_prop)
-		# Add metadata
-		title_meta =  iiif3_mod.Metadata (iiif3_mod.Property("title"), 
-										iiif3_mod.Property(self.title))
-		manifest.add_metadata (title_meta)
-		if self.get_composer() is not None:
-			composer_meta =  iiif3_mod.Metadata (iiif3_mod.Property("creator"), 
-										iiif3_mod.Property(self.get_composer().name_and_dates()))
-			manifest.add_metadata (composer_meta)
-			
-		# One single canvas 
-		canvas = iiif3_mod.Canvas (opus_url+"/canvas", "Combined image-audio canvas")
-
-		# The height and width of the canvas are those of the first image.
-		# Unclear, should be clarified
-		images = iiif_doc.get_images()
-		for img in images:
-			canvas.prezi_canvas.height = img.height
-			canvas.prezi_canvas.width = img.width
-			break
-			
-		# We create the content list
-		content_list_id = opus_url+"/list-media"
-		content_list = iiif3_mod.AnnotationList(content_list_id)
-		
-		# The audio file is in the URL of the source. At some point
-		# it will be more consistent to use this URL to point to
-		# the audio manifest, and the file URL will have to be extracted
-		label_audio = iiif3_mod.Property ("Source audio/vidéo")
-		if audio_source.description is not None:
-			summary_audio = iiif3_mod.Property (audio_source.description)
-		else:
-			summary_source = None
-		
-		if audio_source.source_type == "MP3":
-			mpeg_type = iiif3_mod.Annotation.SOUND_TYPE
-			mpeg_id = f"{opus_url}/audio"
-		else:
-			mpeg_type = iiif3_mod.Annotation.VIDEO_TYPE
-			mpeg_id = f"{opus_url}/video"
-		
-		content_list.add_audio_item (mpeg_id, mpeg_type, canvas, 
-				audio_source.url, audio_source.source_type.mime_type, duration)
-			
-		if iiif_source.description is not None:
-			summary_image = iiif3_mod.Property (iiif_source.description)
-		else:
-			summary_image = None
-
-		# Get the images URLs from the IIIF image manifest
-		if not (iiif_source.iiif_manifest) or iiif_source.iiif_manifest == {}:
-			raise Exception (f"Missing manifest in the IIIF image source for opus {self.ref}. Synchronization aborted")
-			return
-
-		# Get annotations both are dictionary indexed by the measure id
-		annotations_images = Annotation.for_opus_and_concept(self,
-					IREGION_MEASURE_CONCEPT)
-		annotations_audio = Annotation.for_opus_and_concept(self,
-					TFRAME_MEASURE_CONCEPT)
-		sorted_images = dict(natsorted(annotations_images.items())) 
-		sorted_audio = dict(natsorted(annotations_audio.items())) 
-
-		# We need the time duration of each page wrt to the audio. The source
-		# of the body tells us the page Id
-		
-		# First we create a dict of pages and measures range
-		pages_measures = {}
-#		for measure_ref in list(sorted_audio.keys()):
-		for measure_ref, annot_image in sorted_images.items():
-			no_measure = int(measure_ref.replace ("m",""))
-			if  annot_image.body.source not in  pages_measures.keys():
-				# print (f"Found a new page {annot_image.body.source}.")
-				pages_measures[annot_image.body.source] = {"first_measure" : no_measure,
-										"start_at": None, "stop_at": None}
-			else:
-				pages_measures[annot_image.body.source]["last_measure"] = no_measure
-
-		# Now we scan the audio annotations and aggregate the time ranges
-		for measure_ref, audio_annot in sorted_audio.items():
-			no_measure = int(measure_ref.replace ("m",""))
-			# extract time range
-			t_range = audio_annot.body.selector_value.replace("t=","").split(",")
-			# 	Find the page of the measure
-			for page_id, measure_range  in pages_measures.items():
-				if (no_measure >= measure_range["first_measure"] 
-				      and no_measure <= measure_range["last_measure"]):
-					#print (f"Measure {no_measure} is in page {page_id}")
-					if measure_range["start_at"] is None:
-						measure_range["start_at"] = t_range[0]
-					else:
-						measure_range["stop_at"] = t_range[1]
-						
-		for page_id, measure_range  in pages_measures.items():
-			print (f"Page {page_id}. Range {measure_range}")
-
-		# We should now the first page of music
-		if "first_page_of_music" in iiif_source.metadata:
-			first_page_of_music = iiif_source.metadata["first_page_of_music"]
-		else:
-			first_page_of_music = 1
-		if "last_page_of_music" in iiif_source.metadata:
-			last_page_of_music = iiif_source.metadata["last_page_of_music"]
-		else:
-			last_page_of_music = 99999
-		images = iiif_doc.get_images()
-		i_img= 0
-		for img in images:
-			i_img += 1
-			if i_img >= first_page_of_music and i_img <= last_page_of_music :
-				if img.url in pages_measures.keys():
-					start_at = pages_measures[img.url]['start_at']
-					stop_at = pages_measures[img.url]['stop_at']
-					t_range = f"t={start_at},{stop_at}"
-				else:
-					# THIS SHOULD NOT HAPPEN
-					raise Exception(f"Unable to find annotations on image {img.url} when creating the sync manifest")
-					t_range=""
-				target = canvas.id + "#" + t_range
-				print (f"Image {img.native}. URL {img.url} Time range {t_range} Width {img.width} Height {img.height}")
-				label_image = iiif3_mod.Property (f"Page {i_img}")
-				content_list.add_image_item (f"{opus_url}/img{i_img}", target, img.native, "application/jpg", 
-						img.height, img.width, label_image, summary_image)
-			#if i_img > 2:
-			#	break
-
-		canvas.add_content_list (content_list)
-
-		# Next we add annotations to link 
-		synchro_list = iiif3_mod.AnnotationList(opus_url+"/synchro")
-
-		i_measure = 0
-		for measure_ref in list(sorted_images.keys()):
-			i_measure += 1
-			if measure_ref in annotations_audio:
-				annot_image = annotations_images[measure_ref]
-				annot_audio = annotations_audio[measure_ref]
-				time_frame = annot_audio.body.selector_value
-				polygon = annot_image.body.selector_value.replace(")("," ").replace("P","").replace("((","").replace("))","")
-				#print (f"Found both annotations for measure {measure_ref}. Region {polygon} Time frame {time_frame}")
-				synchro_list.add_synchro(canvas, opus_url + "/"+measure_ref, content_list_id, polygon, time_frame)
-			#if i_measure > 3:
-			#	break
-
-		manifest.add_canvas (canvas)
-		
-		manifest_fname = "/tmp/combined_manifest.json"
-		with open(manifest_fname, "w") as manifest_file:
-				manifest_file.write(manifest.json (2))
-		self.create_source_with_file(source_mod.OpusSource.SYNC_REF, 
-								SourceType.STYPE_SYNC, "", 
-								manifest_fname, "combined_manifest.json", "rb")
-
 	def load_from_dict(self, corpus, dict_opus, files={}, opus_url=""):
 		"""Load content from a dictionary.
 
@@ -1093,9 +901,6 @@ class Opus(models.Model):
 		if ("description" in dict_opus.keys()):
 			if (dict_opus["description"] != None):
 				self.description = dict_opus["description"]
-		if ("lyricist" in dict_opus.keys()):
-			if (dict_opus["lyricist"] != None):
-				self.lyricist = dict_opus["lyricist"]
 		if ("composer" in dict_opus.keys()):
 			if (dict_opus["composer"] != None):
 				self.composer = dict_opus["composer"]
@@ -1220,7 +1025,6 @@ class Opus(models.Model):
 	
 	def __str__(self):			  # __unicode__ on Python 2
 		return self.title
-
 
 	def delete_index(self):
 		#
@@ -1447,20 +1251,6 @@ class Opus(models.Model):
 					db_annot.save()
 
 		return score
-
-#
-# NOT LONGER USED BUT ERROR WHEN TRYING TO REMOVE
-class OpusDiff(models.Model):
-	opus = models.ForeignKey(Opus,on_delete=models.CASCADE)
-
-	class Meta:
-		db_table = "OpusDiff"
-	def upload_path(self, filename):
-		'''Set the path where opus-related files must be stored'''
-		return 'corpora/%s/%s' % (self.ref.replace(settings.NEUMA_ID_SEPARATOR, "/"), filename)
-
-	def __init__(self, *args, **kwargs):
-		super(OpusDiff, self).__init__(*args, **kwargs)
 
 class Descriptor(models.Model):
 	'''A descriptor is a textual representation for some musical feature, used for full text indexing'''
@@ -1755,25 +1545,6 @@ class OpusSource (models.Model):
 						db_annot.body.save()
 					db_annot.save()
 
-	def rebuild_combined_manifest(self):
-		"""
-		  Build a combined manifest from an image and audio source
-		"""
-		if "image_source" in self.metadata:
-			image_source = OpusSource.objects.get(opus=self.opus,ref=self.metadata["image_source"])
-		else:
-			# By default we take the source with ref iiiif
-			image_source =  OpusSource.objects.get(opus=self.opus,ref=source_mod.OpusSource.IIIF_REF)
-			print (f"OpusSource::rebuild_combined_manifest Warning: the 'image_source' field is undefined. taking 'iiif' by default")
-		if "audio_source" in self.metadata:
-			audio_source = OpusSource.objects.get(opus=self.opus,ref=self.metadata["audio_source"])
-		else:
-			# By default we take the source with ref audio
-			audio_source =  OpusSource.objects.get(opus=self.opus,ref=source_mod.OpusSource.AUDIO_REF)
-			print (f"OpusSource::rebuild_combined_manifest Warning: the 'audio_source' field is undefined. taking 'audio' by default")
-		
-		self.opus.create_sync_source(image_source, audio_source)
-
 	def stats_editions(self):
 		# Group editions by type and return a dict with 
 		# stats on each edition type
@@ -1797,7 +1568,6 @@ class Bookmark(models.Model):
 
 	class Meta:
 		db_table = "Bookmark"
-
 		
 class Upload (models.Model):
 	'''Storage and desription of ZIP file containing
@@ -1820,27 +1590,6 @@ class Upload (models.Model):
 	def __str__(self):  # __unicode__ on Python 2
 		return "(" + self.corpus.ref + ") " + self.zip_file.name
 
-class Audio (models.Model):
-	'''Storage of audio files associated to an opus'''
-	opus = models.ForeignKey(Opus,on_delete=models.PROTECT)
-	filename = models.TextField()
-	description =   models.TextField()
-	creation_timestamp = models.DateTimeField('Created', auto_now_add=True)
-	update_timestamp = models.DateTimeField('Updated', auto_now=True)
-
-	def upload_path(self, filename):
-		'''Set the path where audio files must be stored'''
-		audio_ref = self.opus.ref.replace(settings.NEUMA_ID_SEPARATOR, "-")
-		return 'audio_files/' + audio_ref + '/' + self.filename
-	audio_file = models.FileField(upload_to=upload_path,null=True,storage=OverwriteStorage())
-
-	class Meta:
-		db_table = "Audio"	
-
-	def __str__(self):  # __unicode__ on Python 2
-		return "(" + self.opus.ref + ") " + self.filename
-
-
 class AnalyticModel(models.Model):
 	"""Analytic model = a set of concepts used to interpret a music language"""
 	code = models.CharField(max_length=30,unique=True)
@@ -1852,7 +1601,6 @@ class AnalyticModel(models.Model):
 		
 	def __str__(self):			  # __unicode__ on Python 2
 		return self.name
-
 
 class AnalyticConcept(MPTTModel):
 	model = models.ForeignKey(AnalyticModel,on_delete=models.CASCADE)

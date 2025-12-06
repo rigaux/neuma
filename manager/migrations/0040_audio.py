@@ -15,19 +15,4 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.CreateModel(
-            name='Audio',
-            fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('filename', models.TextField()),
-                ('description', models.TextField()),
-                ('creation_timestamp', models.DateTimeField(auto_now_add=True, verbose_name='Created')),
-                ('update_timestamp', models.DateTimeField(auto_now=True, verbose_name='Updated')),
-                ('audio_file', models.FileField(null=True, storage=manager.utils.OverwriteStorage(), upload_to=manager.models.Audio.upload_path)),
-                ('opus', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='manager.Opus')),
-            ],
-            options={
-                'db_table': 'Audio',
-            },
-        ),
     ]
