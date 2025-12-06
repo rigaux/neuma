@@ -22,7 +22,7 @@ SHOW_MANIFEST = "show"
 SPLIT_TIMEFRAME = "split"
 MERGE_TIMEFRAMES = "merge"
 CONVERT_FROM_AUDACITY = "cnv_audacity"
-
+MEASURE_NUMBERING = "meas_numbering"
 #
 # Example: 
 #   python3 synchro_audio.py -i data/EtqPelleasa2s1.txt -a cnv_audacity -o pelleas.json
@@ -83,7 +83,7 @@ def main(argv=None):
 		print (f"Action: merge time frames from object {args.object_ref}")
 		audio_mnf.merge_tframes (args.object_ref)
 		output = open(args.output_file, 'w', encoding='utf-8')
-		json.dump (audio_mnf.to_json(), output, indent=4)
+		json.dump (audio_mnf.to_dict(), output, indent=4)
 		print (f"Manifest after merge of {args.object_ref} has been written in {args.output_file}")
 	elif action == CONVERT_FROM_AUDACITY:
 		if args.output_file is None:
@@ -91,8 +91,16 @@ def main(argv=None):
 		audio_mnf = source_mod.AudioManifest ("","")
 		audio_mnf.load_from_audacity (args.input_file)
 		output = open(args.output_file, 'w', encoding='utf-8')
-		json.dump (audio_mnf.to_json(), output, indent=4)
+		json.dump (audio_mnf.to_dict(), output, indent=4)
 		print (f"Manifest has been loaded from {args.input_file} and written to {args.output_file}")
+	if action == MEASURE_NUMBERING:
+		print (f"Action: show the content of an audio manifest")
+		with open(args.input_file) as manifest_file:
+			synchro_data = json.load (manifest_file)
+			audio_mnf = source_mod.AudioManifest.from_json(synchro_data)
+			audio_mnf.measure_numbering()
+			output = open(args.output_file, 'w', encoding='utf-8')
+			json.dump (audio_mnf.to_dict(), output, indent=4)
 	else:
 		sys.exit (f"Unknown action {action}")
 		

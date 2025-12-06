@@ -64,8 +64,9 @@ class Provider ():
 		self.logo = logo
 		self.prezi_provider = iiif_prezi3.Provider(id=id, 
 					label=label.to_dict(), 
-					logo=logo.prezi_body,
 					homepage=homepage.prezi_homepage)
+		if logo is not None:
+			self.prezi_provider.logo = logo.prezi_body
 
 class Collection ():
 

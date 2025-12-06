@@ -165,8 +165,12 @@ class Organization (models.Model):
 		return self.name
 	
 	def to_dict (self):
+		if self.logo is not None:
+			dict_logo = self.logo.to_dict()
+		else:
+			dict_logo = None
 		return {"name": self.name,
-			"logo": self.logo.to_dict(),
+			"logo": dict_logo,
 			"homepage": self.homepage
 			}
 
@@ -319,7 +323,14 @@ class Corpus(models.Model):
 			Get the URL to the Web corpus page, taken from urls.py
 		"""
 		return reverse('home:corpus', args=[self.ref])
-
+	def get_iiif_collection_url(self):
+		"""
+			Get the URL to the Web corpus page, taken from urls.py
+		"""
+		return settings.NEUMA_BASE_URL + reverse('home:iiif_collection', args=[self.ref])[1:]
+	def is_collabscore_corpus(self):
+		return "collabscore" in self.ref
+	
 	def load_from_dict(self, dict_corpus):
 
 		"""Load content from a dictionary."""

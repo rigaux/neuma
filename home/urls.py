@@ -27,6 +27,7 @@ urlpatterns = [
 	re_path(r'^keyboard', TemplateView.as_view(template_name="home/keyboard.html"), name='keyboard'),
 	# ex: /main/corpus/sequentia/
 	path('corpus/<str:corpus_ref>/iiif_collection.json', views.iiif_collection, name='iiif_collection'),
+	path('corpus/<str:corpus_ref>/_player', views.corpus_player, name='corpus_player'),
 	path('corpus/<str:corpus_ref>/_export_zip/', views.export_corpus_as_zip , name='corpus_export_zip'),
 	re_path(r'^corpus/(?P<corpus_ref>.+)/_upload_zip/$', views.upload_corpus_zip , name='upload_corpus_zip'),
 	re_path(r'^corpus/(?P<corpus_ref>.+)/_create_child/$', CorpusEditView.as_view(template_name="home/corpus_edit.html"), name='create_corpus_child'),

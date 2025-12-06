@@ -129,6 +129,14 @@ class CorpusView(NeumaView):
 
 		return context
 
+
+def corpus_player (request, corpus_ref):
+	""" Display the IIIF player"""
+	
+	corpus = Corpus.objects.get(ref=corpus_ref)
+	context = {"corpus": corpus}
+	return render(request, 'home/corpus_player.html', context)
+
 def show_licence (request, licence_code):
 	""" Show a licence"""
 	

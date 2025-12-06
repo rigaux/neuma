@@ -199,10 +199,13 @@ def add_descriptive_properties(iiif_object, summary, thumbnail,
 		iiif_object.set_required_statement (require_stmt_prop)
 	if organization is not None:
 		label_prop = iiif3_mod.Property (organization["name"])
-		logo_prop =  iiif3_mod.ImageBody (organization["logo"]["url_default"], 
+		if organization["logo"] is not None:
+			logo_prop =  iiif3_mod.ImageBody (organization["logo"]["url_default"], 
 				organization["logo"]["width"], 
 				organization["logo"]["height"],
 				organization["logo"]["url"])
+		else:
+			logo_prop =None
 		hp_prop = iiif3_mod.Property (organization["name"])
 		homepage_prop =  iiif3_mod.Homepage (
 			id=organization["homepage"], label=hp_prop

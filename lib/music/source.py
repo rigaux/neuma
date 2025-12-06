@@ -170,7 +170,13 @@ class AudioManifest:
 		# Insert a new time frame. 
 		# Maybe add some controls
 		self.time_frames.append(tframe)
-		
+	
+	def measure_numbering (self):
+		# Change the tframe id from x to "mx" (ex, 1 => "m1")
+		for tframe in self.time_frames:
+			if isinstance(tframe.id, int):
+				tframe.id = "m" + str(tframe.id)
+			
 	def split_tframe (self, object_id, new_id):
 		# Split a time frame in two
 		found = False
@@ -262,7 +268,11 @@ class AudioManifest:
 					"source_ref": self.source_ref,
 					"nb_frames": len(self.time_frames),
 					"time_frames": json_frames}
-
+	def json(self):
+		return json.dumps(self.to_dict())
+	def to_json(self):
+		return self.json()
+		
 	def show(self):
 		print (f"\nAudio manifest for Opus {self.opus_ref} and source {self.source_ref}")
 		print (f"Nb time frames {len(self.time_frames)}")
