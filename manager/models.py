@@ -339,28 +339,43 @@ class Corpus(models.Model):
 	def is_collabscore_corpus(self):
 		return "collabscore" in self.ref
 	
-	def load_from_dict(self, dict_corpus):
-
+	def from_dict(self, dict_corpus):
 		"""Load content from a dictionary."""
-		self.title = dict_corpus["title"]
-		self.short_title = dict_corpus["short_title"]
-		self.description = dict_corpus["description"]
-		self.short_description = dict_corpus["short_description"]
-		self.is_public = dict_corpus["is_public"]
-		if "licence_code" in dict_corpus:
+		
+		# First convert the dict to a collection
+		collection = collection_mod.Collection.from_dict(dict_corpus)
+		# Then load from the collection
+		self.from_collection(collection)
+
+	def from_collection(self, collection):
+		"""Load content from a collection."""
+		self.title = collection.title
+		self.short_title = collection.short_title
+		self.description = collection.description
+		self.short_description = collection.short_description
+		self.is_public = collection.is_public
+		self.copyright = collection.copyright
+		self.supervisors = collection.supervisors
+		if collection.licence is not None:  
 			try:
-				self.licence = Licence.objects.get(code=dict_corpus["licence_code"])
+				self.licence = Licence.objects.get(code=collection.licence["code"])
 			except Licence.DoesNotExist:
-				print ("Unknown licence. Ignored. Did you run setup_neuma?")
-		if "composer" in dict_corpus:
+				print (f"Unknown licence {collection.licence['code']}. Ignored. Did you run setup_neuma?")
+		if collection.composer is not None:  
 			try:
-				self.composer = Person.objects.get(dbpedia_uri=dict_corpus["composer"])
+				self.composer = Person.objects.get(dbpedia_uri=collection.composer["dbpedia_uri"])
 			except Person.DoesNotExist:
-				print (f"Unknown composer {dict_corpus['composer']}. Ignored. Did you run setup_neuma?")
-		if "copyright" in dict_corpus:
-			self.copyright = dict_corpus["copyright"]
-		if "supervisors" in dict_corpus:
-			self.supervisors = dict_corpus["supervisors"]
+				print (f"Unknown composer {collection.composer['dbpedia_uri']}. Ignored. Did you run setup_neuma?")
+		if collection.thumbnail is not None:  
+			try:
+				self.thumbnail = Image.objects.get(iiif_id=collection.thumbnail["id"])
+			except Image.DoesNotExist:
+				print (f"Unknown image {collection.thumbnail["id"]}. Ignored. Did you run setup_neuma?")
+		if collection.organization is not None:  
+			try:
+				self.organization = Organization.objects.get(homepage=collection.organization["homepage"])
+			except Image.DoesNotExist:
+				print (f"Unknown organization {collection.organization["homepage"]}. Ignored.")
 		return
 	
 	def to_collection(self):
@@ -471,7 +486,7 @@ class Corpus(models.Model):
 				zf.writestr( source_file, source_bytes.getvalue())
 
 			# Add a JSON file with meta data
-			opus_json = opus.json(request)
+			opus_json = opus.json()
 			zf.writestr(opus.local_ref() + ".json", opus_json)
 		zf.close()
 		
@@ -541,8 +556,9 @@ class Corpus(models.Model):
 		except Corpus.DoesNotExist as e:
 			# Create this corpus
 			corpus = Corpus (parent=parent_corpus, ref=full_corpus_ref)
+	
 		# Load / replace content from the dictionary
-		corpus.load_from_dict(corpus_dict)
+		corpus.from_dict(corpus_dict)
 		corpus.save()
 		# Take the cover image
 		if found_cover :
@@ -595,7 +611,8 @@ class Corpus(models.Model):
 					logger.info ("Found JSON metadata file %s" % opus_files_desc["json"])
 					json_file = zfile.open(opus_files_desc["json"])
 					json_doc = json_file.read()
-					opus.load_from_dict (corpus, json.loads(json_doc.decode('utf-8')))
+
+					opus.from_dict (corpus, json.loads(json_doc.decode('utf-8')))
 					
 					# Check whether a source file exists for each source
 					for source in opus.opussource_set.all():
@@ -752,7 +769,7 @@ class Corpus(models.Model):
 		# stats on each edition type
 		stats_corpus = {"nb_opera": self.get_nb_opera(), "nb_annotated": 0}
 		for opus in self.get_opera():
-			iiif_source = opus.get_source(source_mod.OpusSource.IIIF_REF)
+			iiif_source = opus.get_source(source_mode.ItemSource.IIIF_REF)
 			if iiif_source is not None:
 				stats_opus = iiif_source.stats_editions()
 				if not stats_opus:
@@ -843,25 +860,28 @@ class Opus(models.Model):
 			self.metadata.append({"key": mkey, "value": mvalue})
 		self.save()
 
-	def add_source (self,source_dict):
-		"""Add a source to the opus"""
+	def add_opus_source (self, new_source):
+		"""Add a source to the opus 
+			from a serializable source item"""
 		
+		if new_source is None:
+			# Pb....
+			return 
 		# Search if exists
 		try:
-			source = OpusSource.objects.get(opus=self,ref=source_dict["ref"])
-			source.description = source_dict["description"]
-			source.url=source_dict["url"]
+			old_source = OpusSource.objects.get(opus=self,ref=new_source.ref)
+			# Oups it already exists: we update the values
+			old_source.description = new_source.description
+			old_source.url=new_source.url
+			# And more....
+			old_source.save()
+			return old_source
 		except OpusSource.DoesNotExist as e:
-			stype = SourceType.objects.get(code=source_dict["source_type"])
-			source = OpusSource(opus=self,
-							ref=source_dict["ref"],
-							description=source_dict["description"],
-							source_type=stype,
-							url=source_dict["url"])
+			# Ok we can save the new source, which is then added to the Opus
+			source.save()
+			return source
 		except Exception as e:
-			print (f"Error when adding source {source_dict['ref']} to opus {self.ref}: {e}")
-		source.save()
-		return source
+			print (f"Error when adding source {new_source.ref} to opus {self.ref}: {e}")
 
 	def get_source (self, source_ref):
 		"""Get  a source from the opus"""
@@ -889,88 +909,10 @@ class Opus(models.Model):
 						"source_type": SourceType.STYPE_MEI,
 						"description": "Référence MEI",
 						"url": ""}
-			source = self.add_source (source_dict)
+			item_source = source_mode.ItemSource.from_dict(source_dict)
+			opus_source = OpusSource.from_item_source(item_source)
+			source = self.add_opus_source (opus_source)
 			source.source_file.save("ref_mei.xml", File(self.mei))
-
-	def load_from_dict(self, corpus, dict_opus, files={}, opus_url=""):
-		"""Load content from a dictionary.
-
-		The dictionary is commonly a decrypted JSON object, coming
-		either from the Neuma REST API or from ElasticSearch
-
-		"""
-		# The id can be named id or _id
-		if ("local_ref" in dict_opus.keys()):
-			self.ref = Corpus.make_ref_from_local_and_parent(dict_opus["local_ref"].strip(), corpus.ref)
-		elif ("ref" in dict_opus.keys()):
-			self.ref = Corpus.make_ref_from_local_and_parent(dict_opus["ref"].strip(), corpus.ref)
-		elif ("_ref" in dict_opus.keys()):
-			self.ref = Corpus.make_ref_from_local_and_parent(dict_opus["_ref"].strip(), corpus.ref)
-		else:
-			logger.warning('Missing ref field in an Opus dictionary. Keeping the default ref...')
-
-		self.corpus = corpus
-		self.title = dict_opus["title"]
-
-		if ("description" in dict_opus.keys()):
-			if (dict_opus["description"] != None):
-				self.description = dict_opus["description"]
-		if ("composer" in dict_opus.keys()):
-			if isinstance(dict_opus["composer"], dict):
-				# This shoud be a JSON dump of a person
-				composer = Person.from_dict(dict_opus["composer"])
-				
-		# Saving before adding related objects
-		self.save()
-
-		if ("features" in dict_opus.keys()):
-			if (dict_opus["features"] != None):
-				for m in dict_opus["features"]:
-					self.add_meta (m["feature_key"], m["feature_value"])
-		if ("sources" in dict_opus.keys() 
-		         and type(dict_opus["sources"]) in {list} ):
-			if (dict_opus["sources"] != None):
-				for source in dict_opus["sources"]:
-					self.add_source (source)
-
-		# Cas ou la source contient une réf Gallica
-		if ("sources" in dict_opus.keys() 
-		         and isinstance(dict_opus["sources"], str)):
-			source_dict = {"ref": "iiif", 
-						"source_type": "JPEG",
-						"description": "Lien Gallica",
-						"url": dict_opus["sources"]}
-			self.add_source (source_dict)
-			print ("Source Gallica: " + dict_opus["sources"] )
-
-		# Get the Opus files
-		for fname, desc  in files.items():
-			if (fname in Opus.FILE_NAMES):
-				print ("Found " + fname + " at URL " + opus_url + fname)
-				# Take the score
-				file_temp = NamedTemporaryFile()
-				f = urlopen(opus_url + fname)
-				content = f.read()
-				file_temp.write(content)
-				file_temp.flush()
-				getattr(self, Opus.FILE_NAMES[fname]).save(fname, File(file_temp))
-
-		# Get the sequence file if any
-		if opus_url != "":
-			print ("Try to import sequence file")
-			try:
-				f = urlopen(opus_url + "sequence.json")
-				content = f.read().decode("utf-8")
-				# test that we got it
-				jseq = json.loads(content)
-				if "status" in jseq.keys():
-					print ("Something wrong. Received message: " + jseq["message"])
-				else:
-					self.music_summary = content
-			except:
-				print("Something wrong when getting "  + opus_url + "sequence.json")
-
-		return
 
 	def get_score(self):
 		"""Get a score object from an XML document"""
@@ -1002,7 +944,6 @@ class Opus(models.Model):
 	def unfreeze(self,filepath="./"):
 		score = m21.converter.thaw(filepath)
 		return score
-
 
 	@staticmethod
 	def createFromMusicXML(corpus, reference, mxml_content):
@@ -1050,6 +991,7 @@ class Opus(models.Model):
 		result = opus.delete()
 		return result
 
+		
 	def to_collection_item(self):
 		" Produce a Collection item from the Opus data"
 		
@@ -1076,6 +1018,69 @@ class Opus(models.Model):
 				coll_item.add_file(opus_file)
 		return coll_item
 	
+	def from_dict (self, corpus, dict_opus, files={}, opus_url=""):
+		"""Load content from a dictionary.
+
+		The dictionary is commonly a decrypted JSON object, coming
+		either from the Neuma REST API or from ElasticSearch
+
+		"""
+		# First create a collection item from the dictionary
+		item = collection_mod.CollectionItem.from_dict(dict_opus)
+		# Then load the opus from the item
+		self.from_collection_item(item)
+		
+	def from_collection_item (self, item):
+		" Feed an opus from data in a coll. item"
+		
+		# We create the full ref from the local ref and the current corpus
+		self.ref = Corpus.make_ref_from_local_and_parent(item.local_ref.strip(), self.corpus.ref)
+		self.title = item.title
+		self.description = item.description
+		if item.composer is not None:  
+			try:
+				self.composer = Person.objects.get(dbpedia_uri=item.composer["dbpedia_uri"])
+			except Person.DoesNotExist:
+				print (f"Unknown composer {item.composer['dbpedia_uri']}. Ignored. Did you run setup_neuma?")
+		self.features = item.features
+		
+		self.metadata = item.metadata
+		
+		"""f ("sources" in dict_opus.keys() 
+				and type(dict_opus["sources"]) in {list} ):
+			if (dict_opus["sources"] != None):
+				pass
+		"""
+		for item_source in item.sources:
+			opus_source = OpusSource.from_item_source(self, item_source)
+			self.add_opus_source (opus_source)
+
+		""" Cas particulier d'un import du fichier IReMus.
+		    Ne plus utiliser. Si n"cessaire faire une conversion
+		    au préalable
+		if ("sources" in dict_opus.keys() 
+		         and isinstance(dict_opus["sources"], str)):
+			source_dict = {"ref": "iiif", 
+						"source_type": "JPEG",
+						"description": "Lien Gallica",
+						"url": dict_opus["sources"]}
+			self.add_source (source_dict)
+			print ("Source Gallica: " + dict_opus["sources"] )
+		"""
+		
+		# Get the Opus files
+		"""for fname, desc  in files.items():
+			if (fname in Opus.FILE_NAMES):
+				print ("Found " + fname + " at URL " + opus_url + fname)
+				# Take the score
+				file_temp = NamedTemporaryFile()
+				f = urlopen(opus_url + fname)
+				content = f.read()
+				file_temp.write(content)
+				file_temp.flush()
+				getattr(self, Opus.FILE_NAMES[fname]).save(fname, File(file_temp))
+		"""
+		return
 
 	def to_dict(self, absolute_url):
 		return self.to_collection_item().to_dict()
@@ -1083,7 +1088,7 @@ class Opus(models.Model):
 		# DEPRECATED
 		return self.to_dict ()
 	def json(self, indent=2):
-		return self.to_collection_item().json()
+		return self.to_collection_item().json(indent)
 
 	def to_json(self, request):
 		# DEPRECATED
@@ -1119,7 +1124,7 @@ class Opus(models.Model):
 		with open(mxml_file) as f:
 			self.musicxml = File(f,name="score.xml")
 			self.save()
-		return  self.create_source_with_file(source_mod.OpusSource.MUSICXML_REF, 
+		return  self.create_source_with_file(source_mode.ItemSource.MUSICXML_REF, 
 					SourceType.STYPE_MXML, "", mxml_file, "score.xml")
 
 	def replace_mei (self, mei_file):
@@ -1155,7 +1160,7 @@ class Opus(models.Model):
 		dmos_source =None
 		editions = []
 		for source in self.opussource_set.all ():
-			if source.ref == source_mod.OpusSource.IIIF_REF:
+			if source.ref == source_mode.ItemSource.IIIF_REF:
 				dmos_source = source
 				if dmos_source.source_file:
 					dmos_data = json.loads(dmos_source.source_file.read())
@@ -1195,14 +1200,14 @@ class Opus(models.Model):
 			print ("Produce MIDI file")
 			midi_file = "/tmp/score.midi"
 			score.write_as_midi (midi_file)
-			self.create_source_with_file(source_mod.OpusSource.MIDI_REF, 
+			self.create_source_with_file(source_mode.ItemSource.MIDI_REF, 
 									SourceType.STYPE_MIDI,
 							"", midi_file, "score.midi", "rb")
 		
 			# Compute and store the score manifest in the IIIF source
 			iiif_source = None
 			for source in self.opussource_set.all ():
-				if source.ref == source_mod.OpusSource.IIIF_REF:
+				if source.ref == source_mode.ItemSource.IIIF_REF:
 					iiif_source = source
 					
 			if iiif_source is None:
@@ -1405,7 +1410,7 @@ class OpusSource (models.Model):
 		# Following IIIF principles, the ID is a dereferencable URL
 		source_id = settings.NEUMA_BASE_URL + reverse('home:source', args=[self.opus.ref,self.ref])
 
-		item_source = source_mod.OpusSource(source_id,
+		item_source = source_mod.ItemSource(source_id,
 					self.ref, self.source_type.code, 
 					self.source_type.mime_type, 
 					self.url, self.metadata,
@@ -1422,9 +1427,46 @@ class OpusSource (models.Model):
 			item_source.has_iiif_manifest =  True	
 		return item_source
 
+	@staticmethod
+	def from_item_source(opus, item_source):
+		"""
+		  Create a DB source from a serializable source item 
+		"""
+		
+		print (f"Searching source type {item_source.source_type}")
+		try:
+			source_type = SourceType.objects.get(code=item_source.source_type)
+		except SourceType.DoesNotExist:
+			print (f"Unknown source type {item_source.source_type}. Ignored. Did you run setup_neuma?")
+			return None
+
+		source = OpusSource(opus=opus,
+							ref=item_source.ref,
+							description=item_source.description,
+							source_type=source_type,
+							url=item_source.url,
+							metadata=item_source.metadata
+							)
+		if item_source.licence is not None:
+			try:
+				source.licence = Licence.objects.get(code=item_source.licence["code"])
+			except Licence.DoesNotExist:
+				print (f"Unknown licence {item_source.licence['code']}. Ignored. Did you run setup_neuma?")
+		if item_source.thumbnail is not None:  
+			try:
+				source.thumbnail = Image.objects.get(iiif_id=item_source.thumbnail["id"])
+			except Image.DoesNotExist:
+				print (f"Unknown image {item_source.thumbnail["id"]}. Ignored. Did you run setup_neuma?")
+		if item_source.organization is not None:  
+			try:
+				source.organization = Organization.objects.get(homepage=item_source.organization["homepage"])
+			except Image.DoesNotExist:
+				print (f"Unknown organization {item_source.organization["homepage"]}. Ignored.")
+
+		return source
+
 	def to_dict(self):
 		return self.to_item_source().to_dict()
-		
 	def to_serialisable(self, abs_url):
 		# Deprecated
 		return self.to_dict()
@@ -1469,7 +1511,7 @@ class OpusSource (models.Model):
 		if page_range == {}:
 			page_range = {"page_min": 0, "page_max": 999999}
 
-		if not (self.ref == source_mod.OpusSource.IIIF_REF):
+		if not (self.ref == source_mode.ItemSource.IIIF_REF):
 			raise Exception ("Can  only apply editions to an IIIF source ")
 		if self.source_file:
 			dmos_data = json.loads(self.source_file.read())
@@ -1496,7 +1538,7 @@ class OpusSource (models.Model):
 		#self.opus.replace_mei (mei_file)
 
 		# Return a temporary source, it can be the result a the REST service
-		tmp_src = self.opus.create_source_with_file(source_mod.OpusSource.TMP_REF, 
+		tmp_src = self.opus.create_source_with_file(source_mode.ItemSource.TMP_REF, 
 									SourceType.STYPE_MXML,
 							"", mxml_file, "tmp.xml")
 

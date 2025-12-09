@@ -14,9 +14,9 @@ from pip._vendor.distlib import manifest
  A class used to represent a source (multimedia document) associated to an Opus
 '''
 
-class OpusSource:
+class ItemSource:
 	'''
-		A source (digital document referring to an Opus)
+		A source (digital document representation of a collection item)
 	'''
 	
 	# Codes for normalized references
@@ -28,11 +28,15 @@ class OpusSource:
 	MIDI_REF = "midi"
 	MUSICXML_REF = "musicxml"
 	TMP_REF = "tmp"
-		
+	
+	FROM_OBJECT="from_obj"
+	FROM_DICT="from_dict"
+
 	def __init__(self, id, ref, source_type, mime_type, 
 				url, metadata={}, licence=None, 
 				copyright=None, thumbnail=None, 
-				organization=None):
+				organization=None, description=None,
+				mode=FROM_OBJECT):
 		self.id = id
 		self.ref = ref
 		self.source_type = source_type
@@ -42,18 +46,28 @@ class OpusSource:
 		self.file_path = None
 		self.has_manifest = False
 		self.has_iiif_manifest = False
-		self.description = ""
+		self.description = description
 		self.images = []
 		if licence is not None:
-			self.licence = licence.to_dict()
+			if mode == ItemSource.FROM_OBJECT:
+				self.licence = licence.to_dict()
+			else:
+				self.licence = licence
 		else:
 			self.licence = None
 		if thumbnail is not None:
-			self.thumbnail = thumbnail.to_dict()
+			if mode == ItemSource.FROM_OBJECT:
+				self.thumbnail = thumbnail.to_dict()
+			else:
+				self.thumbnail = thumbnail
 		else:
 			self.thumbnail = None
 		if organization is not None:
-			self.organization = organization.to_dict()
+			if mode == ItemSource.FROM_OBJECT:
+				self.organization = organization.to_dict()
+			else:
+				self.organization = organization
+				
 		else:
 			self.organization = None
 		self.copyright = copyright
@@ -96,6 +110,23 @@ class OpusSource:
 			for img in self.images:
 				source_dict["images"].append(img.to_dict())
 		return source_dict
+
+	@staticmethod
+	def from_dict (source_dict):
+				
+		return ItemSource (source_dict["id"], 
+					source_dict["ref"], 
+					source_dict["source_type"], 
+					source_dict["mime_type"], 
+					source_dict["url"], 
+					source_dict["metadata"], 
+					source_dict["licence"], 
+					source_dict["copyright"], 
+					source_dict["thumbnail"], 
+					source_dict["organization"], 
+					source_dict["description"],
+					ItemSource.FROM_DICT
+					)
 
 	def json(self):
 		return json.dumps(self.to_dict())

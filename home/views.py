@@ -252,14 +252,14 @@ def iiif_manifest (request, opus_ref):
 	else:
 		# By default we take the source with ref iiiif
 		image_source =  OpusSource.objects.get(opus=opus,
-				ref=source_mod.OpusSource.IIIF_REF)
+				ref=source_mod.ItemSource.IIIF_REF)
 		print (f"iiif_combined_manifest Warning: the 'image_source' field is undefined. taking 'iiif' by default")
 	if "audio_source" in sync_source.metadata:
 		audio_source = OpusSource.objects.get(opus=opus,ref=sync_source.metadata["audio_source"])
 	else:
 		# By default we take the source with ref audio
 		audio_source =  OpusSource.objects.get(opus=opus,
-						ref=source_mod.OpusSource.AUDIO_REF)
+						ref=source_mod.ItemSource.AUDIO_REF)
 
 	#return  HttpResponse(audio_source.json(), content_type = "application/json")
 	#return  HttpResponse(image_source.json(), content_type = "application/json")
@@ -289,13 +289,13 @@ def iiif_manifest (request, opus_ref):
 							sorted_images, sorted_audio)
 
 	# Add some links to other sources
-	musicxml_source = opus.get_source(source_mod.OpusSource.MUSICXML_REF)
+	musicxml_source = opus.get_source(source_mod.ItemSource.MUSICXML_REF)
 	if musicxml_source is not None:
 		rest_url = settings.NEUMA_BASE_URL + musicxml_source.file_rest_url()
 		musixml_meta =  iiif3_mod.Metadata (iiif3_mod.Property("MusicXML"), 
 								iiif3_mod.Property(rest_url))
 		iiif_manifest.add_metadata (musixml_meta)
-	mei_source = opus.get_source(source_mod.OpusSource.MEI_REF)
+	mei_source = opus.get_source(source_mod.ItemSource.MEI_REF)
 	if mei_source is not None:
 		rest_url = settings.NEUMA_BASE_URL + mei_source.file_rest_url()
 		mei_meta =  iiif3_mod.Metadata (iiif3_mod.Property("MEI"), 

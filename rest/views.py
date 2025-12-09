@@ -793,12 +793,12 @@ class SourceFile (APIView):
 				source.source_file.save(filename, filecontent)
 		
 		# Special case DMOS: parse the file and create XML files
-		if source_ref==source_mod.OpusSource.IIIF_REF:
+		if source_ref==source_mod.ItemSource.IIIF_REF:
 			print ("Parsing DMOS in asynchronous mode")
 			parse_dmos.delay(opus.ref)
 			
 		# Special case audio: parse the file and create annotations
-		if source_ref==source_mod.OpusSource.AUDIO_REF:
+		if source_ref==source_mod.ItemSource.AUDIO_REF:
 			# Convert the file (and create annotations)
 			audio_manifest = source.convert_file_to_audio_manifest()			
 			
