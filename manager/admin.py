@@ -13,11 +13,10 @@ class CorpusAdmin(GuardedModelAdmin):
     search_fields = ("ref", "title", "description")
 
 class OpusAdmin(GuardedModelAdmin):
-    search_fields = ("ref", "title", "composer")
+    search_fields = ("ref", "title", "description", "composer__last_name")
  
 class OpusSourceAdmin(GuardedModelAdmin):
     search_fields = ("opus__ref", "ref",  "url")
-
 
 
 class UploadAdmin(GuardedModelAdmin):

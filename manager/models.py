@@ -880,6 +880,12 @@ class Opus(models.Model):
 			# Oups it already exists: we update the values
 			old_source.description = new_source.description
 			old_source.url=new_source.url
+			if new_source.thumbnail is not None:
+				old_source.thumbnail=new_source.thumbnail
+			if new_source.licence is not None:
+				old_source.licence=new_source.licence
+			if new_source.organization is not None:
+				old_source.organization=new_source.organization
 			# And more....
 			old_source.save()
 			return old_source
@@ -1437,7 +1443,7 @@ class OpusSource (models.Model):
 		  Create a DB source from a serializable source item 
 		"""
 		
-		print (f"Searching source type {item_source.source_type}")
+		#print (f"Searching source type {item_source.source_type}")
 		try:
 			source_type = SourceType.objects.get(code=item_source.source_type)
 		except SourceType.DoesNotExist:
@@ -1459,6 +1465,7 @@ class OpusSource (models.Model):
 		if item_source.thumbnail is not None:  
 			try:
 				source.thumbnail = Image.objects.get(iiif_id=item_source.thumbnail["id"])
+				print (f"Thumbnail found for source {item_source.thumbnail['id']}")
 			except Image.DoesNotExist:
 				print (f"Unknown image {item_source.thumbnail['id']}. Ignored. Did you run setup_neuma?")
 		if item_source.organization is not None:  
