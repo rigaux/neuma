@@ -38,8 +38,8 @@ def create_combined_manifest (item, sync_source, audio_source,
 	"""
 	  Create a combined manifest from an audio + a video source
 	"""
-	title_prop = iiif3_mod.Property (item.title)
-	collection = iiif3_mod.Collection(item.id, title_prop)
+	#title_prop = iiif3_mod.Property (item.title)
+	#collection = iiif3_mod.Collection(item., title_prop)
 	
 	if "duration" in audio_source.metadata:
 		duration = audio_source.metadata["duration"]
@@ -49,7 +49,7 @@ def create_combined_manifest (item, sync_source, audio_source,
 
 	# Create the combined manifest
 	title_prop = iiif3_mod.Property (item.title)
-	manifest = iiif3_mod.Manifest(item.id, title_prop)
+	manifest = iiif3_mod.Manifest(item.url, title_prop)
 	# Add a description/summary
 	add_descriptive_properties(manifest, sync_source.description, 
 				sync_source.thumbnail, sync_source.licence, 
@@ -65,7 +65,7 @@ def create_combined_manifest (item, sync_source, audio_source,
 		manifest.add_metadata (composer_meta)
 
 	# One single canvas 
-	canvas = iiif3_mod.Canvas (item.id+"/canvas", 
+	canvas = iiif3_mod.Canvas (item.url+"/canvas", 
 			"Combined image-audio canvas")
 
 	# The height and width of the canvas are those of the first image.
@@ -76,7 +76,7 @@ def create_combined_manifest (item, sync_source, audio_source,
 		break
 			
 	# We create the content list
-	content_list_id = item.id+"/list-media"
+	content_list_id = item.url+"/list-media"
 	content_list = iiif3_mod.AnnotationList(content_list_id)
 		
 	# The audio file is in the URL of the source. At some point
@@ -84,10 +84,10 @@ def create_combined_manifest (item, sync_source, audio_source,
 	# the audio manifest, and the file URL will have to be extracted
 	if audio_source.source_type == "MP3":
 		mpeg_type = iiif3_mod.Annotation.SOUND_TYPE
-		mpeg_id = f"{item.id}/audio"
+		mpeg_id = f"{item.url}/audio"
 	else:
 		mpeg_type = iiif3_mod.Annotation.VIDEO_TYPE
-		mpeg_id = f"{item.id}/video"
+		mpeg_id = f"{item.url}/video"
 		
 	mpeg_item = content_list.add_audio_item (mpeg_id, mpeg_type, canvas, 
 				audio_source.url, audio_source.mime_type, duration)
@@ -157,14 +157,14 @@ def create_combined_manifest (item, sync_source, audio_source,
 			target = canvas.id + "#" + t_range
 			#print (f"Image {img.native}. URL {img.url} Time range {t_range} Width {img.width} Height {img.height}")
 			label_image = iiif3_mod.Property (f"Page {i_img}")
-			content_list.add_image_item (f"{item.id}/img{i_img}", target, img.native, "application/jpg", 
+			content_list.add_image_item (f"{item.url}/img{i_img}", target, img.native, "application/jpg", 
 						img.height, img.width, label_image, summary_image)
 			#if i_img > 2:
 			#	break
 
 	canvas.add_content_list (content_list)
 	# Next we add annotations to link 
-	synchro_list = iiif3_mod.AnnotationList(item.id+"/synchro")
+	synchro_list = iiif3_mod.AnnotationList(item.url+"/synchro")
 	i_measure = 0
 	for measure_ref in list(sorted_images.keys()):
 		i_measure += 1
@@ -174,7 +174,7 @@ def create_combined_manifest (item, sync_source, audio_source,
 			time_frame = annot_audio.body.selector_value
 			polygon = annot_image.body.selector_value.replace(")("," ").replace("P","").replace("((","").replace("))","")
 			#print (f"Found both annotations for measure {measure_ref}. Region {polygon} Time frame {time_frame}")
-			synchro_list.add_synchro(canvas, item.id + "/"+measure_ref, content_list_id, polygon, time_frame)
+			synchro_list.add_synchro(canvas, item.url + "/"+measure_ref, content_list_id, polygon, time_frame)
 		#if i_measure > 3:
 		#	break
 

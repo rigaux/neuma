@@ -479,6 +479,10 @@ class Corpus(models.Model):
 					nb_source_files += 1
 					source_compressor.write(source.manifest.path, 
 							source.ref + "_mnf." + source.manifest.path.split(".")[-1])
+				if source.iiif_manifest:
+					nb_source_files += 1
+					source_compressor.write(source.iiif_manifest.path, 
+							source.ref + "_iiif_mnf." + source.iiif_manifest.path.split(".")[-1])
 			source_compressor.close()
 			if nb_source_files > 0:
 				source_file = opus.local_ref() +  '.szip'
@@ -599,7 +603,6 @@ class Corpus(models.Model):
 				print ("Import opus with ref " + opus_ref + " in corpus " +  corpus_dict['ref'])
 				try:
 					opus = Opus.objects.get(ref=full_opus_ref)
-					
 				except Opus.DoesNotExist as e:
 					# Create the Opus
 					opus = Opus(corpus=corpus, ref=full_opus_ref, title=opus_ref)
@@ -611,7 +614,6 @@ class Corpus(models.Model):
 					logger.info ("Found JSON metadata file %s" % opus_files_desc["json"])
 					json_file = zfile.open(opus_files_desc["json"])
 					json_doc = json_file.read()
-
 					opus.from_dict (corpus, json.loads(json_doc.decode('utf-8')))
 					
 					# Check whether a source file exists for each source
@@ -633,6 +635,11 @@ class Corpus(models.Model):
 									print ("Import manifest")
 									manifest_content = source_zip.read(fname)
 									source.manifest.save(fname, ContentFile(manifest_content))
+								if base == source.ref + "_iiif_mnf":
+									# The file contains the IIIF source manifest
+									print ("Import IIIF manifest")
+									manifest_content = source_zip.read(fname)
+									source.iiif_manifest.save(fname, ContentFile(manifest_content))
 							source.save()
 
 				# OK, we loaded metada : save
@@ -769,7 +776,7 @@ class Corpus(models.Model):
 		# stats on each edition type
 		stats_corpus = {"nb_opera": self.get_nb_opera(), "nb_annotated": 0}
 		for opus in self.get_opera():
-			iiif_source = opus.get_source(source_mode.ItemSource.IIIF_REF)
+			iiif_source = opus.get_source(source_mod.ItemSource.IIIF_REF)
 			if iiif_source is not None:
 				stats_opus = iiif_source.stats_editions()
 				if not stats_opus:
@@ -878,8 +885,8 @@ class Opus(models.Model):
 			return old_source
 		except OpusSource.DoesNotExist as e:
 			# Ok we can save the new source, which is then added to the Opus
-			source.save()
-			return source
+			new_source.save()
+			return new_source
 		except Exception as e:
 			print (f"Error when adding source {new_source.ref} to opus {self.ref}: {e}")
 
@@ -909,7 +916,7 @@ class Opus(models.Model):
 						"source_type": SourceType.STYPE_MEI,
 						"description": "Référence MEI",
 						"url": ""}
-			item_source = source_mode.ItemSource.from_dict(source_dict)
+			item_source = source_mod.ItemSource.from_dict(source_dict)
 			opus_source = OpusSource.from_item_source(item_source)
 			source = self.add_opus_source (opus_source)
 			source.source_file.save("ref_mei.xml", File(self.mei))
@@ -1045,12 +1052,8 @@ class Opus(models.Model):
 		self.features = item.features
 		
 		self.metadata = item.metadata
-		
-		"""f ("sources" in dict_opus.keys() 
-				and type(dict_opus["sources"]) in {list} ):
-			if (dict_opus["sources"] != None):
-				pass
-		"""
+		# Mandatory before instanciating a source
+		self.save()
 		for item_source in item.sources:
 			opus_source = OpusSource.from_item_source(self, item_source)
 			self.add_opus_source (opus_source)
@@ -1069,7 +1072,9 @@ class Opus(models.Model):
 		"""
 		
 		# Get the Opus files
-		"""for fname, desc  in files.items():
+		for f  in item.files:
+			fname = f["name"]
+			url = f["url"]
 			if (fname in Opus.FILE_NAMES):
 				print ("Found " + fname + " at URL " + opus_url + fname)
 				# Take the score
@@ -1079,7 +1084,6 @@ class Opus(models.Model):
 				file_temp.write(content)
 				file_temp.flush()
 				getattr(self, Opus.FILE_NAMES[fname]).save(fname, File(file_temp))
-		"""
 		return
 
 	def to_dict(self, absolute_url):
@@ -1124,7 +1128,7 @@ class Opus(models.Model):
 		with open(mxml_file) as f:
 			self.musicxml = File(f,name="score.xml")
 			self.save()
-		return  self.create_source_with_file(source_mode.ItemSource.MUSICXML_REF, 
+		return  self.create_source_with_file(source_mod.ItemSource.MUSICXML_REF, 
 					SourceType.STYPE_MXML, "", mxml_file, "score.xml")
 
 	def replace_mei (self, mei_file):
@@ -1160,7 +1164,7 @@ class Opus(models.Model):
 		dmos_source =None
 		editions = []
 		for source in self.opussource_set.all ():
-			if source.ref == source_mode.ItemSource.IIIF_REF:
+			if source.ref == source_mod.ItemSource.IIIF_REF:
 				dmos_source = source
 				if dmos_source.source_file:
 					dmos_data = json.loads(dmos_source.source_file.read())
@@ -1200,14 +1204,14 @@ class Opus(models.Model):
 			print ("Produce MIDI file")
 			midi_file = "/tmp/score.midi"
 			score.write_as_midi (midi_file)
-			self.create_source_with_file(source_mode.ItemSource.MIDI_REF, 
+			self.create_source_with_file(source_mod.ItemSource.MIDI_REF, 
 									SourceType.STYPE_MIDI,
 							"", midi_file, "score.midi", "rb")
 		
 			# Compute and store the score manifest in the IIIF source
 			iiif_source = None
 			for source in self.opussource_set.all ():
-				if source.ref == source_mode.ItemSource.IIIF_REF:
+				if source.ref == source_mod.ItemSource.IIIF_REF:
 					iiif_source = source
 					
 			if iiif_source is None:
@@ -1511,7 +1515,7 @@ class OpusSource (models.Model):
 		if page_range == {}:
 			page_range = {"page_min": 0, "page_max": 999999}
 
-		if not (self.ref == source_mode.ItemSource.IIIF_REF):
+		if not (self.ref == source_mod.ItemSource.IIIF_REF):
 			raise Exception ("Can  only apply editions to an IIIF source ")
 		if self.source_file:
 			dmos_data = json.loads(self.source_file.read())
@@ -1538,7 +1542,7 @@ class OpusSource (models.Model):
 		#self.opus.replace_mei (mei_file)
 
 		# Return a temporary source, it can be the result a the REST service
-		tmp_src = self.opus.create_source_with_file(source_mode.ItemSource.TMP_REF, 
+		tmp_src = self.opus.create_source_with_file(source_mod.ItemSource.TMP_REF, 
 									SourceType.STYPE_MXML,
 							"", mxml_file, "tmp.xml")
 

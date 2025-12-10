@@ -63,7 +63,7 @@ class Command(BaseCommand):
 			exit(1)
 			
 
-		print ("Do not forget to index the new corpus (run scan_corpus with 'index' action)")
+		print ("Import finished")
  
  
 def query_yes_no(question, default="yes"):

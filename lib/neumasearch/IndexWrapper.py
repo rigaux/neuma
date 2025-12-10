@@ -104,7 +104,7 @@ class IndexWrapper:
 				local_ref=opus.local_ref(),
 				summary = msummary_for_es,
 				title=opus.title,
-				composer=opus.composer,
+				composer=opus.composer.name_and_dates()
 			)
 			
 			# Add features if any
