@@ -94,7 +94,7 @@ def main(argv=None):
 		json.dump (audio_mnf.to_dict(), output, indent=4)
 		print (f"Manifest has been loaded from {args.input_file} and written to {args.output_file}")
 	if action == MEASURE_NUMBERING:
-		print (f"Action: show the content of an audio manifest")
+		print (f"Action: assign a measure number to the old audi manifest format")
 		with open(args.input_file) as manifest_file:
 			synchro_data = json.load (manifest_file)
 			audio_mnf = source_mod.AudioManifest.from_json(synchro_data)
