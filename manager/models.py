@@ -1460,12 +1460,12 @@ class OpusSource (models.Model):
 			try:
 				source.thumbnail = Image.objects.get(iiif_id=item_source.thumbnail["id"])
 			except Image.DoesNotExist:
-				print (f"Unknown image {item_source.thumbnail["id"]}. Ignored. Did you run setup_neuma?")
+				print (f"Unknown image {item_source.thumbnail['id']}. Ignored. Did you run setup_neuma?")
 		if item_source.organization is not None:  
 			try:
 				source.organization = Organization.objects.get(homepage=item_source.organization["homepage"])
 			except Image.DoesNotExist:
-				print (f"Unknown organization {item_source.organization["homepage"]}. Ignored.")
+				print (f"Unknown organization {item_source.organization['homepage']}. Ignored.")
 
 		return source
 
