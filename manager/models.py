@@ -370,12 +370,12 @@ class Corpus(models.Model):
 			try:
 				self.thumbnail = Image.objects.get(iiif_id=collection.thumbnail["id"])
 			except Image.DoesNotExist:
-				print (f"Unknown image {collection.thumbnail["id"]}. Ignored. Did you run setup_neuma?")
+				print (f"Unknown image {collection.thumbnail['id']}. Ignored. Did you run setup_neuma?")
 		if collection.organization is not None:  
 			try:
 				self.organization = Organization.objects.get(homepage=collection.organization["homepage"])
 			except Image.DoesNotExist:
-				print (f"Unknown organization {collection.organization["homepage"]}. Ignored.")
+				print (f"Unknown organization {collection.organization['homepage']}. Ignored.")
 		return
 	
 	def to_collection(self):
