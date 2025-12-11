@@ -177,6 +177,8 @@ class AudioManifest:
 	# Patterns used to generate the ids of objects referred to in frames
 	MEASURE_REF_PATTERN = "measure"
 	NO_REF_PATTERN = "none"
+	# Last possible timestamp
+	INFINITY= 99999
 
 	def __init__(self, opus_ref, source_ref, ref_pattern="measure") :
 		self.opus_ref = opus_ref
@@ -278,6 +280,10 @@ class AudioManifest:
 				self.insert_timeframe(audio_frame)
 				measure_no += 1
 				current_tstamp = tstamp
+			# Insert a last frame from the last measure, 
+			object_ref = f"m{measure_no}"
+			audio_frame = AudioFrame (object_ref, current_tstamp, AudioManifest.INFINITY)
+			
 
 	def load_from_dezrann(self, marker_file):
 		with open(marker_file) as sync_file:

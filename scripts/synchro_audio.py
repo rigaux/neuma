@@ -71,7 +71,7 @@ def main(argv=None):
 		print (f"Action: split time frame for object {args.object_ref}")
 		audio_mnf.split_tframe (args.object_ref, args.new_ref)
 		output = open(args.output_file, 'w', encoding='utf-8')
-		json.dump (audio_mnf.to_json(), output, indent=4)
+		json.dump (audio_mnf.to_dict(), output, indent=4)
 		print (f"Manifest after split of {args.object_ref} has been written in {args.output_file}")
 	elif action == MERGE_TIMEFRAMES:
 		if args.object_ref is None:
@@ -93,7 +93,7 @@ def main(argv=None):
 		output = open(args.output_file, 'w', encoding='utf-8')
 		json.dump (audio_mnf.to_dict(), output, indent=4)
 		print (f"Manifest has been loaded from {args.input_file} and written to {args.output_file}")
-	if action == MEASURE_NUMBERING:
+	elif action == MEASURE_NUMBERING:
 		print (f"Action: assign a measure number to the old audi manifest format")
 		with open(args.input_file) as manifest_file:
 			synchro_data = json.load (manifest_file)
