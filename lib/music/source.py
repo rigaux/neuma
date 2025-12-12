@@ -28,6 +28,7 @@ class ItemSource:
 	MIDI_REF = "midi"
 	MUSICXML_REF = "musicxml"
 	TMP_REF = "tmp"
+	MEI_GROUND_TRUTH_REF = "ref_mei"
 	
 	FROM_OBJECT="from_obj"
 	FROM_DICT="from_dict"
@@ -217,7 +218,7 @@ class AudioManifest:
 		for tframe in self.time_frames:
 			if tframe.id == object_id:
 				found = True
-				#print (f"Found time frame {tframe} at pos {pos}. Split !")
+				print (f"Found time frame {tframe} at pos {pos}. Split !")
 				mid_ts = tframe.begin + tframe.length () / 2
 				new_tframe = AudioFrame (new_id, mid_ts, tframe.end)
 				tframe.end = mid_ts

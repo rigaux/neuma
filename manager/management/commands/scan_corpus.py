@@ -32,11 +32,11 @@ TITLE_ACTION="title"
 CPTDIST="cptdist"
 QUALEVAL="qualeval"
 FIX_PERMISSIONS_ACTION="fix_permissions"
-CPT_GRAMMAR="cptgrammar"
 DESCRIPTORJSON_ACTION="descriptorjson"
 ANALYZE_CORPUS_ACTION = "analyze"
 ANALYZE_OPUS_ACTION = "analyze_opus"
 COPY_DMOS_ACTION = "copy_dmos"
+EXPORT_TO_MUSICDIFF_ACTION = "export_musicdiff"
 
 EXTRACT_FEATURES_ACTION = "extract_features"
 
@@ -62,12 +62,21 @@ class Command(BaseCommand):
 			index_wrapper = IndexWrapper()
 			index_wrapper.delete_index()
 			return 
-		if action == INDEX_ALL_ACTION:
+		elif action == INDEX_ALL_ACTION:
 			corpora = Corpus.objects.all()
 			for c in corpora:
 				if not c.parent_ref(c.ref):
 					Workflow.index_corpus(c)
 			return 
+		elif action == EXPORT_TO_MUSICDIFF_ACTION:
+			# Export the reference and computed MEI to 'ground-truth'
+			# and 'predicted' dirs of the utilities 
+			try:
+				corpus = Corpus.objects.get(ref=options['corpus_ref'])
+				Workflow.export_to_musicdiff(corpus)
+			except Corpus.DoesNotExist:
+				raise CommandError('Corpus "%s" does not exist' % options['corpus_ref'])
+			return "Done"
 		elif action == PROPAGATE_ACTION:
 			root_corpus = Corpus(ref=settings.NEUMA_ROOT_CORPUS_REF)
 			Workflow.propagate(root_corpus)
@@ -152,11 +161,6 @@ class Command(BaseCommand):
 					Workflow.copy_dmos(corpus, corpus_target)
 				except Corpus.DoesNotExist:
 					raise CommandError('Corpus "%s" does not exist' % options['corpus_target'])
-				print("Done. ")
-
-			elif action == CPT_GRAMMAR:
-				"""Evaluate the quality of a corpus"""
-				Workflow.compute_grammar(corpus)
 				print("Done. ")
 			elif action == FIX_PERMISSIONS_ACTION:
 				group_editor = Group.objects.get(name=settings.EDITOR_GROUP)

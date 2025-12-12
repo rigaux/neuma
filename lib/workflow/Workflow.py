@@ -31,7 +31,6 @@ from xml.dom import minidom
 
 from lib.music.Score import *
 import lib.music.source as source_mod
-
 from lib.neumasearch.MusicSummary import MusicSummary
 from neumasearch.IndexWrapper import IndexWrapper
 
@@ -702,6 +701,32 @@ class Workflow:
 			Workflow.index_opus(opus)
 		return list_imported
 	
+	@staticmethod 
+	def export_to_musicdiff(corpus):
+		PATH_TO_UTILITIES="../utilities/diff"
+		print (f"Exporting ground truth/predicted MEI from corpus '{corpus.ref}' to {PATH_TO_UTILITIES}'")
+		i_opus = 0
+		for opus in corpus.get_opera():
+			i_opus += 1
+			print (f"Exporting opus {opus.ref}")
+			ground_truth_src = opus.get_source(source_mod.ItemSource.MEI_GROUND_TRUTH_REF)
+			predicted_src = opus.get_source(source_mod.ItemSource.MEI_REF)
+			if ground_truth_src is None:
+				print (f"No ground MEI for opus {opus.ref}. Export aborted")	
+				continue
+			if predicted_src is None:
+				print (f"No predicted MEI for opus {opus.ref}. Export aborted")	
+				continue
+			gt_origin = ground_truth_src.source_file.path
+			gt_dest  = f"{PATH_TO_UTILITIES}/ground_truth/{opus.local_ref()}.mei"
+			print (f"Moving ground truth file {gt_origin} to {gt_dest}")
+			shutil.copyfile(gt_origin, gt_dest)
+			predicted_origin = ground_truth_src.source_file.path
+			predicted_dest  = f"{PATH_TO_UTILITIES}/predicted/{opus.local_ref()}.mei"
+			print (f"Moving ground truth file {predicted_origin} to {predicted_dest}")
+			shutil.copyfile(predicted_origin, predicted_dest)
+		print (f"{i_opus} opus have been exported")
+
 	@staticmethod 
 	def copy_dmos(source, target):
 		print (f"Copy DMOS files from corpus '{source.ref}' to corpus '{target.ref}'")
