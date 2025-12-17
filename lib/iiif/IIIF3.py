@@ -30,6 +30,12 @@ class Property ():
 	def to_dict(self):
 		return {self.lang : self.strings}
 
+	@staticmethod 
+	def from_dict(prop_dict):
+		for key, vals in prop_dict.items():
+			return Property (vals, key)
+			# We ignore multiple languages...
+	
 class Metadata ():
 	'''
 		IIIF metadata model: a label/value pair, each being a property
@@ -124,6 +130,10 @@ class Manifest ():
 	
 	def __init__(self, id, label) :
 		self.id = id
+		#List of Canvas objects
+		self.canvases = []
+		
+		# Parallel prezi structure. never shown !
 		self.prezi_manifest = iiif_prezi3.Manifest(id=id, 
 					label=label.to_dict())
 		self.prezi_manifest.items = []
@@ -135,6 +145,12 @@ class Manifest ():
 	def add_canvas (self, canvas):
 		self.prezi_manifest.items.append (canvas.prezi_canvas)
 
+	# Accessors
+	def get_canvases (self):
+		return self.canvases
+		
+
+	# Update methods
 	def set_label (self, label):
 		self.prezi_manifest.label = label.to_dict()
 	def set_summary (self, summary):
@@ -149,26 +165,88 @@ class Manifest ():
 		self.prezi_manifest.requiredStatement = required_stmt.to_dict()
 	def add_metadata (self, metadata):
 		self.prezi_manifest.metadata.append(metadata.to_dict())
-		
+
+	@staticmethod
+	def load_from_dict(manifest_dict):
+		label = Property.from_dict(manifest_dict["label"])
+		manifest = Manifest (id=manifest_dict["id"],
+							label=label)
+		# Load the prezi manifest from the unpacked dictionnary
+		manifest.prezi_manifest = iiif_prezi3.Manifest(**manifest_dict)
+
+		# Feed the proxy structure from the Prezi one
+		for item in manifest.prezi_manifest.items:
+			if item.type == "Canvas":
+				canvas = Canvas.load_from_dict(item)
+				manifest.canvases.append(canvas)
+
+		return manifest
+
 class Canvas ():
 	
 	def __init__(self, id, label) :
 		self.id = id
-		self.prezi_canvas = iiif_prezi3.Canvas (id=id, label={"en":[label]})
-
+		self.annotations_lists = []
+		self.contents_lists = []
+		self.prezi_canvas = iiif_prezi3.Canvas (id=id, 
+								label=label.to_dict())
+			
+	# A content is a reference to a media 
 	def add_content_list (self, list):
 		self.prezi_canvas.add_item (list.prezi_annotation_page)
 
+	# Annotations add infos on contents
 	def add_annotation_list (self, list):
 		self.prezi_canvas.add_annotation (list.prezi_annotation_page)
+	
+		# Accessors
+	def get_content_lists (self):
+		return self.contents_lists
 
+	@staticmethod 
+	def load_from_dict(prezi_item):
+		label = Property.from_dict(prezi_item.label)
+		canvas = Canvas (id=prezi_item.id, label=label)
+		canvas.prezi_canvas = prezi_item
+		
+		# Load content pages (found in the sub-items list)
+		for a in canvas.prezi_canvas.items:
+			if a.type == "AnnotationPage":
+				content_list = AnnotationList.load_from_dict(a)
+				content_list.prezi_annotation_page = a
+				canvas.contents_lists.append(content_list)
+
+		# We should load annotations as well (found in the sub-annotations 
+		# list)). TO DO
+		return canvas
 
 class AnnotationList():
 
 	def __init__(self, id) :
 		self.id = id
+		self.annotations = []
 		self.prezi_annotation_page = iiif_prezi3.AnnotationPage (id=id)
 
+	@staticmethod 
+	def load_from_dict(prezi_annot_list):
+		alist = AnnotationList(id=prezi_annot_list.id)
+		alist.prezi_annotation_page = prezi_annot_list
+		alist.load_annotations()
+		return alist
+		
+	def load_annotations (self, motivation="painting"):
+		# Load annotations
+		for prezi_annot in self.prezi_annotation_page.items:
+			print (f"Motivation {prezi_annot.motivation}")
+			if prezi_annot.motivation == motivation:
+				body = Body.load_from_dict (prezi_annot.body)
+				annot = Annotation (prezi_annot.id, 
+								prezi_annot.target, 
+								body,
+								prezi_annot.motivation) 
+				self.annotations.append(annot)
+		return self.annotations
+	
 	def add_audio_item (self, annot_id, annot_type, canvas, audio_uri, format, 
 							duration):
 							
@@ -274,6 +352,11 @@ class Body:
 		self.id = id
 		self.prezi_body = iiif_prezi3.AnnotationBody(id=id, type=type)
 
+	@staticmethod
+	def load_from_dict(prezi_body):
+		body =  Body (id=prezi_body.id, type=prezi_body.type)
+		body.prezi_body = prezi_body
+		return body
 class TextualBody(Body):
 	'''
 	   The body value is simply a text

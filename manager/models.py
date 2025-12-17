@@ -794,6 +794,7 @@ class Corpus(models.Model):
 class Opus(models.Model):
 	corpus = models.ForeignKey(Corpus,on_delete=models.CASCADE)
 	title = models.CharField(max_length=255)
+	subtitle = models.CharField(max_length=255, null=True,blank=True)
 	description = models.TextField(null=True, blank=True)
 	composer = models.ForeignKey(Person, null=True,blank=True,on_delete=models.PROTECT)
 	ref = models.CharField(max_length=255,unique=True)
@@ -1015,7 +1016,8 @@ class Opus(models.Model):
 		coll_item = collection_mod.CollectionItem (
 						item_id, 
 						self.corpus.ref, self.ref,
-						self.title, self.get_composer(), 
+						self.title, self.subtitle,
+						self.get_composer(), 
 						self.description, self.metadata,
 						self.features)
 			

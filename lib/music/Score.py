@@ -167,11 +167,11 @@ class Score:
 		converter.freeze(self.m21_score, fp=filename)
 
 
-	def cnv_write_as_mei(self, mxml_file,  mei_name):
+	def write_as_mei(self, mxml_file,  mei_name):
 			''' Produce the MEI encoding from MusicXML thanks to Converter21'''
 			self.m21_score.write ("mei", mei_name)
 
-	def write_as_mei(self, mxml_file, mei_name):
+	def vrv_write_as_mei(self, mxml_file, mei_name):
 			''' Produce the MEI encoding from MusicXML thanks to Verovio'''
 			# Verovio converter. Works fine, and takes into account
 			# post editions on the MusicXML file

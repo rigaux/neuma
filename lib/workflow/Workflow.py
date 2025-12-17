@@ -702,6 +702,34 @@ class Workflow:
 		return list_imported
 	
 	@staticmethod 
+	def convert_gallica(corpus):
+		GALLICA_V3_PREFIX="https://openapi.bnf.fr/iiif/presentation/v3/ark:/"
+		GALLICA_BASEURL = 'https://gallica.bnf.fr/iiif/ark:/'
+		GALLICA_UI_BASEURL = 'https://gallica.bnf.fr/ark:/'
+		i_opus = 0
+		for opus in corpus.get_opera():
+			i_opus += 1
+			print (f"Looking at opus {opus.ref}")
+			iiif_src = opus.get_source(source_mod.ItemSource.IIIF_REF)
+			if iiif_src is None:
+				print (f"No IIIF source for opus {opus_ref}. Conversion aborted")	
+				continue
+			if iiif_src.url.startswith(GALLICA_BASEURL):
+				split_url = iiif_src.url.split(GALLICA_UI_BASEURL, 1)
+				doc_ref = split_url[1]
+				v3_link = GALLICA_V3_PREFIX + doc_ref + "/manifest.json"
+				print (f"\nConverting  link {iiif_src.url}. Document ref is {doc_ref}")
+				print (f"V3 link {v3_link}")
+				iiif_src.url = v3_link
+				iiif_src.is_iiif = True
+				iiif_src.save()
+			else:
+				print(f"{iiif_src.url} is not a Galliv V2 URL. Conversion already done? Ignored")
+
+		print (f"{i_opus} opus have been converted")
+
+
+	@staticmethod 
 	def export_to_musicdiff(corpus):
 		PATH_TO_UTILITIES="../utilities/diff"
 		print (f"Exporting ground truth/predicted MEI from corpus '{corpus.ref}' to {PATH_TO_UTILITIES}'")
@@ -721,7 +749,8 @@ class Workflow:
 			gt_dest  = f"{PATH_TO_UTILITIES}/ground_truth/{opus.local_ref()}.mei"
 			print (f"Moving ground truth file {gt_origin} to {gt_dest}")
 			shutil.copyfile(gt_origin, gt_dest)
-			predicted_origin = ground_truth_src.source_file.path
+			
+			predicted_origin = predicted_src.source_file.path
 			predicted_dest  = f"{PATH_TO_UTILITIES}/predicted/{opus.local_ref()}.mei"
 			print (f"Moving ground truth file {predicted_origin} to {predicted_dest}")
 			shutil.copyfile(predicted_origin, predicted_dest)

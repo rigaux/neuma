@@ -37,6 +37,7 @@ ANALYZE_CORPUS_ACTION = "analyze"
 ANALYZE_OPUS_ACTION = "analyze_opus"
 COPY_DMOS_ACTION = "copy_dmos"
 EXPORT_TO_MUSICDIFF_ACTION = "export_musicdiff"
+CONVERT_GALLICA = "convert_gallica"
 
 EXTRACT_FEATURES_ACTION = "extract_features"
 
@@ -74,6 +75,14 @@ class Command(BaseCommand):
 			try:
 				corpus = Corpus.objects.get(ref=options['corpus_ref'])
 				Workflow.export_to_musicdiff(corpus)
+			except Corpus.DoesNotExist:
+				raise CommandError('Corpus "%s" does not exist' % options['corpus_ref'])
+			return "Done"
+		elif action == CONVERT_GALLICA:
+			# Import the V3 manifest from Gallica, given the document id
+			try:
+				corpus = Corpus.objects.get(ref=options['corpus_ref'])
+				Workflow.convert_gallica(corpus)
 			except Corpus.DoesNotExist:
 				raise CommandError('Corpus "%s" does not exist' % options['corpus_ref'])
 			return "Done"

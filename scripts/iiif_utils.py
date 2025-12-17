@@ -1,7 +1,7 @@
 
 import time
 import sys, os
-import socket
+import socket, requests
 import argparse
 from pathlib import Path
 
@@ -19,7 +19,7 @@ sys.path.append("..")
 from lib.collabscore.parser import CollabScoreParser, OmrScore
 
 import lib.iiif.IIIF2 as iiif_proxy
-
+import lib.iiif.IIIF3 as iiif_v3
 import lib.music.source as source_mod
 
 
@@ -148,25 +148,29 @@ def main(argv=None):
 		fh.close()
 		print(f"Manifest has been written to {output_file}")
 	else:
-		#print ("TESTING THE IIIF API")
+		print ("TESTING THE IIIF API")
 		
+		# Try to read a V3 manifest and extracts data
+		
+		
+		v3_manifest_url = "https://openapi.bnf.fr/iiif/presentation/v3/ark:/12148/bpt6k11620473/manifest.json"
+		v3_manifest = requests.get(v3_manifest_url).json()
+		manifest = iiif_v3.Manifest.load_from_dict(v3_manifest)
+		
+		for canvas in manifest.get_canvases():
+			print (f"\tFound canvas {canvas.id}")
+			for annotation_list in canvas.get_content_lists():
+				print (f"\t  Found content list {annotation_list.prezi_annotation_page.id}")
+				for annot in annotation_list.annotations:
+					print (f"\t\tAnnotation {annot.id}")
+		return 
 		#source_url = f"https://neuma.huma-num.fr/home/opus/all:collabscore:saintsaens-audio:asciano"
-		source_url = "http://test.fr/asciano"
-		image_url = "https://gallica.bnf.fr/iiif/ark:/12148/bpt6k11620688/f2/full/full/0/native.jpg"
-		image2_url = "https://gallica.bnf.fr/iiif/ark:/12148/bpt6k11620688/f3/full/full/0/native.jpg"
-		audio_url =  "https://openapi.bnf.fr/iiif/audio/v3/ark:/12148/bpt6k88448791/3.audio"
+		#source_url = "http://test.fr/asciano"
+		#image_url = "https://gallica.bnf.fr/iiif/ark:/12148/bpt6k11620688/f2/full/full/0/native.jpg"
+		#image2_url = "https://gallica.bnf.fr/iiif/ark:/12148/bpt6k11620688/f3/full/full/0/native.jpg"
+		#audio_url =  "https://openapi.bnf.fr/iiif/audio/v3/ark:/12148/bpt6k88448791/3.audio"
 
-		# First ten seconds: we show polygon1, then 10 following second
-		# we show polygon 2
-		polygon1 = "1221,1589 2151,1589 1221,2266 2161,2266"
-		time_frame1 = "t=0,20"
-		polygon2 = "2151,1589 2766,1589 2161,2266 2775,2266"
-		time_frame2 = "t=20,40"
-
-		duration = 257
-		height = 6174
-		width = 4564
-		manifest = iiif_proxy.Manifest(source_url, "Asciano")
+		manifest = iiif_v3.Manifest(source_url, "Asciano")
 		
 		# One single canvas 
 		canvas = iiif_proxy.Canvas (source_url+"/canvas", "Combined image-audio canvas")

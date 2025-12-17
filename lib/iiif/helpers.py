@@ -48,8 +48,12 @@ def create_combined_manifest (item, sync_source, audio_source,
 		duration = 180
 
 	# Create the combined manifest
-	title_prop = iiif3_mod.Property (item.title)
-	manifest = iiif3_mod.Manifest(item.url, title_prop)
+	if item.subtitle is not None or item.subtitle != "":
+		list_labels =  iiif3_mod.Property ([item.title, item.subtitle])
+	else:
+		list_labels = iiif3_mod.Property (item.title) 
+
+	manifest = iiif3_mod.Manifest(item.url, list_labels)
 	# Add a description/summary
 	add_descriptive_properties(manifest, sync_source.description, 
 				sync_source.thumbnail, sync_source.licence, 
@@ -65,8 +69,9 @@ def create_combined_manifest (item, sync_source, audio_source,
 		manifest.add_metadata (composer_meta)
 
 	# One single canvas 
-	canvas = iiif3_mod.Canvas (item.url+"/canvas", 
-			"Combined image-audio canvas")
+	canvas_label = iiif3_mod.Property ("Combined image-audio canvas")
+
+	canvas = iiif3_mod.Canvas (item.url+"/canvas", canvas_label)
 
 	# The height and width of the canvas are those of the first image.
 	# Unclear, should be clarified

@@ -106,12 +106,13 @@ class CollectionItem:
 	#FROM_DICT="from_dict"
 
 	def __init__(self, url, collection_ref, ref, 
-				title, composer, description,
+				title, subtitle, composer, description,
 				metadata, features, mode=Collection.FROM_OBJECT):
 		self.url = url
 		self.ref = ref
 		self.local_ref =  local_ref(ref)
 		self.title = title
+		self.subtitle = subtitle
 		self.collection_ref = collection_ref
 		if composer is not None:
 			if mode == Collection.FROM_OBJECT:
