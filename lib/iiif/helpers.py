@@ -67,6 +67,10 @@ def create_combined_manifest (item, sync_source, audio_source,
 		composer_meta =  iiif3_mod.Metadata (iiif3_mod.Property("creator"), 
 								iiif3_mod.Property(item.composer["name_and_dates"]))
 		manifest.add_metadata (composer_meta)
+	if item.subtitle is not None :
+		subtitle_meta =  iiif3_mod.Metadata (iiif3_mod.Property("subtitle"), 
+									iiif3_mod.Property (item.subtitle))
+		manifest.add_metadata (subtitle_meta)
 
 	# One single canvas 
 	canvas_label = iiif3_mod.Property ("Combined image-audio canvas")
