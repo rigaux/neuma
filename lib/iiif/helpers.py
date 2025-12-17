@@ -48,7 +48,7 @@ def create_combined_manifest (item, sync_source, audio_source,
 		duration = 180
 
 	# Create the combined manifest
-	if item.subtitle is not None or item.subtitle != "":
+	if item.subtitle is not None and item.subtitle != "":
 		list_labels =  iiif3_mod.Property ([item.title, item.subtitle])
 	else:
 		list_labels = iiif3_mod.Property (item.title) 

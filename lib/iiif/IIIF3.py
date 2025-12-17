@@ -117,9 +117,9 @@ class ManifestRef ():
 	'''
 	
 	def __init__(self, id, label, thumbnail) :
-		label_prop = Property (label)
+		print (f"Received label {label.to_dict()}")
 		self.prezi_manifest = iiif_prezi3.ManifestRef(id=id, 
-					label=label_prop.to_dict(), 
+					label=label.to_dict(), 
 					thumbnail=thumbnail.prezi_body)
 
 class Manifest ():
