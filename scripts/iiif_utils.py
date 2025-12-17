@@ -20,6 +20,8 @@ from lib.collabscore.parser import CollabScoreParser, OmrScore
 
 import lib.iiif.IIIF2 as iiif_proxy
 import lib.iiif.IIIF3 as iiif_v3
+import lib.iiif.helpers as iiif_helpers
+
 import lib.music.source as source_mod
 
 
@@ -77,7 +79,7 @@ def main(argv=None):
 		if not os.path.exists(args.output_dir):
 			sys.exit ("Directory " + args.output_dir + "  does not exist. Please check.")
 
-		now = datetime.now()
+		# Get the sorted list of images on disk
 		print (f"Processing images from {args.input_dir}")	
 		jpegs=[]
 		for fname in os.listdir(args.input_dir):
@@ -88,7 +90,20 @@ def main(argv=None):
 				jpegs.append(fname)
 		# It is assumed that the order of images matches the aphanumerci file name order
 		jpegs.sort()
-	
+
+		manifest = iiif_helpers.create_images_manifest(args.url_prefix,
+								"test manifest",
+								args.path_to_images,
+								jpegs)
+		data = manifest.json()
+		output_file= os.path.join(args.output_dir, 'manifest.json')
+		fh = open(output_file, "w")
+		fh.write(data)
+		fh.close()
+		print(f"Manifest has been written to {output_file}")
+		return 
+		## The following code produces an IIIF V2 manifest. Obsolete
+		now = datetime.now()
 		fac = ManifestFactory()
 		# Where the resources live on the web
 		fac.set_base_prezi_uri(args.url_prefix)
@@ -118,8 +133,6 @@ def main(argv=None):
 			# assumes that the IIIF server is configured with 
 			# BasicLookupStrategy.path_suffix = .jpg
 			image_id = path_to_images + "%2F" + Path (jpg_name).stem
-			# The image path instead feature the extens
-			image_path = path_to_images + "%2F" + jpg_name
 			print (f"File {jpg_name}, image id {image_id}")
 	
 			# Create a canvas with uri slug of page-1, and label of Page 1
@@ -162,7 +175,7 @@ def main(argv=None):
 			for annotation_list in canvas.get_content_lists():
 				print (f"\t  Found content list {annotation_list.prezi_annotation_page.id}")
 				for annot in annotation_list.annotations:
-					print (f"\t\tAnnotation {annot.id}")
+					print (f"\t\tAnnotation {annot.body.id}")
 		return 
 		#source_url = f"https://neuma.huma-num.fr/home/opus/all:collabscore:saintsaens-audio:asciano"
 		#source_url = "http://test.fr/asciano"

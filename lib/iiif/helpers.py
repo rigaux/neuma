@@ -32,6 +32,49 @@ def create_collection (coll):
 	return collection
 	
 
+
+def create_images_manifest (iiif_url_prefix,
+					label, path_to_images, sorted_images):
+	"""
+	  Create a manifest from a list of images
+	"""
+	label_prop = iiif3_mod.Property (label)
+
+	manifest = iiif3_mod.Manifest(iiif_url_prefix, label_prop)
+	
+	# Add a description/summary
+	"""add_descriptive_properties(manifest, sync_source.description, 
+				sync_source.thumbnail, sync_source.licence, 
+				sync_source.copyright, sync_source.organization)
+	"""				
+	# One single canvas 
+	canvas_label = iiif3_mod.Property ("canvas")
+	canvas = iiif3_mod.Canvas (iiif_url_prefix+"/canvas", canvas_label)
+				
+	# We create the content list
+	content_list_id = iiif_url_prefix+"/images"
+	content_list = iiif3_mod.AnnotationList(content_list_id)
+	i_img= 0
+	for img_name in sorted_images:
+		i_img += 1
+		image_id = path_to_images + "%2F" + Path (img_name).stem
+		image_uri = iiif_url_prefix + "/" + image_id + "/full/max/0/default.jpg"
+		print (f"File {img_name}, image id {image_id} image URI {image_uri}")
+		target = canvas.id 
+		#print (f"Image {img.native}. URL {img.url} Time range {t_range} Width {img.width} Height {img.height}")
+		label_image = iiif3_mod.Property (f"Image {i_img}")
+		content_list.add_image_item (f"{iiif_url_prefix}/img{i_img}", 
+						target, image_uri, "application/jpg", 
+						100, 100, 
+						label_image, None)
+		#if i_img > 2:
+		#	break
+
+	canvas.add_content_list (content_list)
+
+	manifest.add_canvas (canvas)
+	return manifest
+
 def create_combined_manifest (item, sync_source, audio_source, 
 						image_source, images,
 						sorted_images, sorted_audio):
