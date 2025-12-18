@@ -81,15 +81,19 @@ def main(argv=None):
 
 		# Get the sorted list of images on disk
 		print (f"Processing images from {args.input_dir}")	
-		jpegs=[]
-		for fname in os.listdir(args.input_dir):
-			basename = os.path.basename(fname)
-			components = os.path.splitext(basename) 
-			extension = components[len(components)-1]
-			if extension == ".jpg":
-				jpegs.append(fname)
+		img_paths = []
+		for img_path in os.scandir(args.input_dir):
+			if Path(img_path).suffix == ".jpg":
+				img_paths.append(Path(img_path))
 		# It is assumed that the order of images matches the aphanumerci file name order
-		jpegs.sort()
+		img_paths.sort()
+		
+		jpegs=[]
+		for fname in img_paths:
+			image = iiif_helpers.ImageFile(fname)
+			jpegs.append(image)
+		# It is assumed that the order of images matches the aphanumerci file name order
+		#jpegs.sort()
 
 		manifest = iiif_helpers.create_images_manifest(args.url_prefix,
 								"test manifest",

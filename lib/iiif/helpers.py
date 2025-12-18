@@ -6,6 +6,23 @@ import argparse
 from pathlib import Path
 
 import lib.iiif.IIIF3 as iiif3_mod
+import PIL as pillow
+
+class ImageFile():
+	"""
+	  Description of an image in a local file
+	""" 
+		
+	def __init__(self, file_path) :
+		self.path = file_path
+		# Use pillow to get width/height
+		pil_img = pillow.Image.open(file_path)
+		self.width, self.height= pil_img.size
+		self.name = os.path.basename(file_path)
+		self.ful_name = Path(file_path).stem
+		self.name = Path(file_path).name
+		self.suffix = Path(file_path).suffix
+
 
 """
 	Utility functions that create ad-hoc manifests	
@@ -32,7 +49,6 @@ def create_collection (coll):
 	return collection
 	
 
-
 def create_images_manifest (iiif_url_prefix,
 					label, path_to_images, sorted_images):
 	"""
@@ -40,7 +56,8 @@ def create_images_manifest (iiif_url_prefix,
 	"""
 	label_prop = iiif3_mod.Property (label)
 
-	manifest = iiif3_mod.Manifest(iiif_url_prefix, label_prop)
+	manifest_id = iiif_url_prefix + "/" + path_to_images
+	manifest = iiif3_mod.Manifest(manifest_id, label_prop)
 	
 	# Add a description/summary
 	"""add_descriptive_properties(manifest, sync_source.description, 
@@ -49,23 +66,23 @@ def create_images_manifest (iiif_url_prefix,
 	"""				
 	# One single canvas 
 	canvas_label = iiif3_mod.Property ("canvas")
-	canvas = iiif3_mod.Canvas (iiif_url_prefix+"/canvas", canvas_label)
+	canvas_id = manifest_id+"/canvas"
+	canvas = iiif3_mod.Canvas (canvas_id, canvas_label)
 				
 	# We create the content list
-	content_list_id = iiif_url_prefix+"/images"
+	content_list_id = canvas_id+"/images"
 	content_list = iiif3_mod.AnnotationList(content_list_id)
 	i_img= 0
-	for img_name in sorted_images:
+	for img in sorted_images:
 		i_img += 1
-		image_id = path_to_images + "%2F" + Path (img_name).stem
+		image_id = path_to_images + "%2F" + img.name
 		image_uri = iiif_url_prefix + "/" + image_id + "/full/max/0/default.jpg"
-		print (f"File {img_name}, image id {image_id} image URI {image_uri}")
-		target = canvas.id 
+		print (f"File {img.name}, image id {image_id} image URI {image_uri}")
 		#print (f"Image {img.native}. URL {img.url} Time range {t_range} Width {img.width} Height {img.height}")
 		label_image = iiif3_mod.Property (f"Image {i_img}")
 		content_list.add_image_item (f"{iiif_url_prefix}/img{i_img}", 
-						target, image_uri, "application/jpg", 
-						100, 100, 
+						canvas.id , image_uri, "application/jpg", 
+						img.width, img.height, 
 						label_image, None)
 		#if i_img > 2:
 		#	break

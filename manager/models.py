@@ -1207,6 +1207,10 @@ class Opus(models.Model):
 			mei_file = "/tmp/" + shortuuid.uuid() + "_mei.xml"
 			omr_score.write_as_mei (mxml_file, mei_file)
 			mei_source = self.replace_mei (mei_file)
+
+			# Write as pickle
+			pickle_file = "/tmp/" + self.local_ref() + ".pickle"
+			omr_score.write_as_pickle (pickle_file)
 		
 			# Generate the MIDI file
 			print ("Produce MIDI file")

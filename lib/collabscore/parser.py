@@ -961,12 +961,15 @@ class OmrScore:
 						alter = staff.accidentals[pitch_class]
 					else: 
 						alter = voice.part.get_current_key_signature().accidental_by_step(pitch_class)
-			
+				
+				# A same note may belong to two voices. Need to add
+				# the voice id in the identifier
+				note_id = "v" + voice.id + "_" + head.id
 				note = score_events.Note(pitch_class, octave, duration, alter, 
 											mnf_staff.number_in_part, 
 											stem_direction=voice_item.direction,
 											note_type=voice_item.duration.note_type,
-											id=head.id,
+											id=note_id,
 											voice=voice)
 				
 				# Check ties
@@ -996,8 +999,9 @@ class OmrScore:
 				for event in events:
 					logger.info (f'\tNote {event.id} {event.pitch_class}{event.octave}-{event.alter}, duration {event.duration.get_value()} to staff {id_staff} with current clef {current_clef}.')
 					last_note_id = event.id
-				# MusicXML does not keep the chord id, so we identify it by the last note id to be able to find it in the XML encoding
-				event = score_events.Chord (duration, mnf_staff.number_in_part, events, id=last_note_id, voice=voice)
+				# Produce a chord id
+				chord_id = "chord_" + last_note_id
+				event = score_events.Chord (duration, mnf_staff.number_in_part, events, id=chord_id, voice=voice)
 				self.add_expression_to_event(events, event, head.articulations)
 			else:
 				# Case of an event with no head: probably a removed event
@@ -1107,7 +1111,6 @@ class OmrScore:
 		
 		print (f"\nWriting as MusicXML in {out_file}")
 		score.write_as_musicxml (out_file)
-		
 		print ("\nApplying post-editions to the MusicXML file\n")
 		Edition.apply_editions_to_file (self.post_editions, out_file)
 		print ("\nPost-editions done\n")
