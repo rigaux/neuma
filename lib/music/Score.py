@@ -629,8 +629,10 @@ class Part:
 			else:
 				# A part staff in a group: the measure is identified wrt the parent part
 				id_measure = Measure.make_measure_id(self.parent_part.id, measure_no)
+				# Using the local part id is necessary to avoid
+				# duplicate IDs in the MEI export. 
+				id_measure = Measure.make_measure_id(self.id, measure_no)
 				
-
 		measure = Measure(self, measure_no, id_measure)
 		
 		""" Sometimes we must add a default signature. useful

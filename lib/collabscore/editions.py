@@ -132,7 +132,7 @@ class Edition:
 					else:
 						parser_mod.logger.warning(f"Part {part.id} assigned to staff {staff_id} in system {system.number} page {page.number}")
 
-	def move_object_to_staff(self, mxml_doc):
+	def move_object_to_staff(self, mxml_doc, format="musicxml"):
 		''' The parameters are: the staff id, and the object id (a note, a rest, a clef...)
 			This is a post-xml correction...
 		'''
@@ -140,9 +140,17 @@ class Edition:
 		object_id = self.target
 		staff_no = self.params["staff_no"]
 		direction = self.params["direction"]
-		
-		object = mxml_doc.find(f".//*[@id = '{object_id}']")
-		if object is not None:
+		if format == "musicxml":
+			object = mxml_doc.find(f".//*[@id = '{object_id}']")
+		else:
+			prefix_map = {"xml": "http://www.w3.org/XML/1998/namespace"}			
+			object = mxml_doc.find(f".//*[@xml:id = '{object_id}']", prefix_map)
+			
+		if object is None:
+			parser_mod.logger.warning(f"Unable to find object '{object_id}' that should be moved to staff {staff_no}")
+			return
+			
+		if format == "musicxml":
 			# Note: staves in MusicXML are numbered internally
 			# to a part. So, if we move a note, it is either
 			# to staff 2 of direction is down, or staff 1 if direction is up
@@ -157,9 +165,22 @@ class Edition:
 				staff_no = 2
 			#parser_mod.logger.warning(f"Moving {direction} object '{object_id}' to staff {staff_no}")
 			staff.text = f"{staff_no}"
-		else:
-			parser_mod.logger.warning(f"Unable to find object '{object_id}' that should be moved to staff {staff_no}")
-		
+		elif format=="mei":
+			# Find the staff ancestor
+			parent = object
+			while parent is not None and etree.QName (parent).localname != "staff":
+				parent = parent.getparent()
+			if parent is None:
+				print ("Unable to find an ancestor 'staff' in the tree")
+				return
+				
+			current_staff_no = parent.get("n")
+			if direction == "up":
+				staff_no = int(current_staff_no) - 1
+			else:
+				staff_no =int(current_staff_no) + 1
+			object.attrib["staff"] = str(staff_no)
+
 		return 
 
 	def append_objects(self, mxml_doc, divisions):
@@ -199,31 +220,42 @@ class Edition:
 		parent.insert(parent.index(element)+1, new_element)
 
 	@staticmethod
-	def apply_editions_to_file(post_editions, xml_file):
+	def apply_editions_to_file(post_editions, xml_file, format="musicxml"):
 		# All post editions apply to the MusicXML file
-		print (f"Open file {xml_file}")
-		mxml_doc = etree.parse(xml_file)
 					
-		# Find the value of "divisions": used to determine XML duration
-		for division_node in mxml_doc.findall(f".//divisions"):
-			divisions = int(division_node.text)
+		if format == "musicxml":
+			print (f"Open file {xml_file}")
+			mxml_doc = etree.parse(xml_file)
+			# Find the value of "divisions": used to determine XML duration
+			for division_node in mxml_doc.findall(f".//divisions"):
+				divisions = int(division_node.text)
 			
-		# First we reinsert objects 
-		for ed in post_editions:
-			if ed.name == Edition.APPEND_OBJECTS:
-				ed.append_objects (mxml_doc, divisions)
+			# First we reinsert objects 
+			for ed in post_editions:
+				if ed.name == Edition.APPEND_OBJECTS:
+					ed.append_objects (mxml_doc, divisions)
 
-		# Then we apply the other editions
-		for ed in post_editions:
-			if ed.name == Edition.MOVE_OBJECT_TO_STAFF:
-				# Assign an object to a staff. Done in the MusicXML file
-				ed.move_object_to_staff (mxml_doc)
-			elif ed.name == Edition.CLEAN_BEAM:
-				# Assign an object to a staff. Done in the MusicXML file
-				ed.clean_beam (mxml_doc)
+			# Then we apply the other editions
+			for ed in post_editions:
+				if ed.name == Edition.MOVE_OBJECT_TO_STAFF:
+					# Assign an object to a staff. Done in the MusicXML file
+					ed.move_object_to_staff (mxml_doc)
+				elif ed.name == Edition.CLEAN_BEAM:
+					# Assign an object to a staff. Done in the MusicXML file
+					ed.clean_beam (mxml_doc)
 	
-		# Write it back
-		mxml_doc.write (xml_file)
+			# Write it back
+			mxml_doc.write (xml_file)
+		elif format == "mei":
+			print (f"Open file {xml_file}")
+			mxml_doc = etree.parse(xml_file)
+			#  Just apply the move object  edition
+			for ed in post_editions:
+				if ed.name == Edition.MOVE_OBJECT_TO_STAFF:
+					# Assign an object to a staff. Done in the MusicXML file
+					ed.move_object_to_staff (mxml_doc, "mei")
+			# Write it back
+			mxml_doc.write (xml_file)
 
 	@staticmethod
 	def add_edition_to_list(editions, edition):

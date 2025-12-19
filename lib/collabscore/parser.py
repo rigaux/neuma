@@ -1110,17 +1110,19 @@ class OmrScore:
 
 	def write_as_musicxml(self, out_file):
 		print ("\nCreate the score from JSON input")
-		score = self.get_score()
-		
+		score = self.get_score()		
 		print (f"\nWriting as MusicXML in {out_file}")
 		score.write_as_musicxml (out_file)
 		print ("\nApplying post-editions to the MusicXML file\n")
 		Edition.apply_editions_to_file (self.post_editions, out_file)
-		print ("\nPost-editions done\n")
+		print ("\nPost-editions on MusicXML done\n")
 
 			
 	def write_as_mei(self, mxml_file, out_file):
 		self.get_score().write_as_mei (mxml_file, out_file)
+		print ("\nApplying post-editions to the MEI file\n")
+		Edition.apply_editions_to_file (self.post_editions, out_file, "mei")
+		print ("\nPost-editions on MEI done\n")
 
 	def write_as_pickle(self, filename):
 		self.get_score().write_as_pickle (filename)
