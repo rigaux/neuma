@@ -37,10 +37,12 @@ class Staff:
 	def reset_accidentals (self):
 		# Used to forget that we ever met an accidental on this staff
 		for pitch_class in self.accidentals.keys():
-			self.accidentals[pitch_class] = score_events.Note.ALTER_NONE		
-	def add_accidental (self, pitch_class, acc):
-		# Record accidentals met in a measure
-		self.accidentals[pitch_class] = acc
+			self.accidentals[pitch_class] = None
+	def add_accidental (self, pitch_class, accid):
+		# Record accidentals met in a measure. 
+		# NB: we copy the accidental to avoid having
+		# its displayStatus changed elsewhere
+		self.accidentals[pitch_class] = score_events.Accidental(accid.name)
 		
 	def set_current_clef (self, clef):
 		if self.current_clef.equals(clef):
@@ -168,9 +170,9 @@ class KeySignature:
 	# Layer over the music21 functions
 	def accidental_by_step(self, pitch):
 		if self.m21_key_signature.accidentalByStep(pitch) is not None:
-			return self.m21_key_signature.accidentalByStep(pitch).name
+			return score_events.Accidental(self.m21_key_signature.accidentalByStep(pitch).name)
 		else:
-			return score_events.Note.ALTER_NONE
+			return None
 
 	def nb_alters(self):
 		if self.nb_sharps > self.nb_flats:

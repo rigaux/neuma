@@ -89,6 +89,12 @@ class Score:
 		self.m21_score.metadata.add('copyright', 'CollabScore project')
 		return
 	
+	def make_accidentals(self):
+		# Apply the "displayType" method to all accidentals
+		# in the score
+		# https://www.music21.org/music21docs/moduleReference/moduleStreamBase.html#music21.stream.base.Stream.makeAccidentals
+		self.m21_score.makeAccidentals()
+	
 	def duration(self):
 		# Music21 conventions
 		return self.m21_score.duration
@@ -482,7 +488,7 @@ class Part:
 				part_staff.reset_accidentals()
 		else:
 			for pitch_class in self.accidentals.keys():
-				self.accidentals[pitch_class] = events.Note.ALTER_NONE		
+				self.accidentals[pitch_class] = None		
 				
 	def add_accidental (self, pitch_class, acc):
 		# Record accidentals met in a measure

@@ -917,6 +917,8 @@ class OmrScore:
 		# Remove in the XML file the pseudo-beam
 		self.post_editions.append( editions_mod.Edition (editions_mod.Edition.CLEAN_BEAM, "score"))
 
+		# Compute accidentals representation
+		score.make_accidentals()
 		self.score = score 			
 		return self.score
 
@@ -951,13 +953,14 @@ class OmrScore:
 				(pitch_class, octave)  = current_clef.decode_pitch (head.height)
 			
 				# Did we just met an accidental?
-				if (head.alter != score_events.Note.ALTER_NONE):
+				if (head.alter != None):
 					logger.info (f'Accidental {head.alter} met on staff {staff.id}')
 					staff.add_accidental (pitch_class, head.alter)
-					alter = head.alter
+					# Copy the accidental with displayed = True
+					alter = score_events.Accidental (head.alter.name, True)
 				else:
-					if staff.accidentals[pitch_class] != score_events.Note.ALTER_NONE:
-						# accidental met on staff
+					if staff.accidentals[pitch_class] != None:
+						# accidental met previously on staff
 						alter = staff.accidentals[pitch_class]
 					else: 
 						alter = voice.part.get_current_key_signature().accidental_by_step(pitch_class)
@@ -1398,7 +1401,7 @@ class Note:
 			self.id =  None
 		self.tied  = "none"
 		self.id_tie = 0
-		self.alter = score_events.Note.ALTER_NONE
+		self.alter = None
 		
 		# A request can be made to change an alteration. Default 0
 		#self.alter_change = 0
@@ -1409,19 +1412,7 @@ class Note:
 		
 		self.articulations = []
 		if "alter" in json_note:
-			alter_label = json_note["alter"]["label"]
-			if alter_label == FLAT_SYMBOL:
-				self.alter = score_events.Note.ALTER_FLAT
-			elif alter_label == DFLAT_SYMBOL:
-				self.alter = score_events.Note.ALTER_DOUBLE_FLAT
-			elif alter_label  == SHARP_SYMBOL:
-				self.alter = score_events.Note.ALTER_SHARP
-			elif alter_label  == DSHARP_SYMBOL:
-				self.alter = score_events.Note.ALTER_DOUBLE_SHARP
-			elif alter_label  == NATURAL_SYMBOL:
-				self.alter = score_events.Note.ALTER_NATURAL
-			else:  
-				logger.warning (f'Unrecognized alter code {alter_label}. Replaced by None')
+			self.alter = score_events.Accidental (json_note["alter"]["label"])
 
 		if "tied" in json_note:
 			self.tied = json_note["tied"]
@@ -1440,15 +1431,15 @@ class Note:
 			#print (f"Head pitch alteration must be  {edition['alter']}")
 			alter = edition['alter']
 			if alter == -1:
-				self.alter = score_events.Note.ALTER_FLAT
+				self.alter = score_events.Accidental ('flat')
 			elif alter == -2:
-				self.alter = score_events.Note.ALTER_DOUBLE_FLAT
+				self.alter = score_events.Accidental ('double-flat')
 			elif alter == 1:
-				self.alter = score_events.Note.ALTER_SHARP
+				self.alter = score_events.Accidental ('sharp')
 			elif alter == 2:
-				self.alter = score_events.Note.ALTER_DOUBLE_SHARP
+				self.alter = score_events.Accidental ('double-sharp')
 			elif alter == 0:
-				self.alter = score_events.Note.ALTER_NATURAL
+				self.alter = score_events.Accidental ('natural')
 
 class Clef:
 	"""

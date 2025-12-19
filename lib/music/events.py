@@ -10,8 +10,35 @@ import lib.music.Score as score_mod
 from lxml import etree
 
 '''
- Classes representing musical event (e.g., pairs (duratioin, value)
+ Classes representing musical event (e.g., pairs (duration, value)
 '''
+
+class Accidental():
+	"""
+	  Represente the deviation from a pitch name.
+	  See https://www.music21.org/music21docs/moduleReference/modulePitch.html#music21.pitch.Accidental
+	"""
+	
+	def __init__(self, name, enforce_display=False) :
+		# Values similar in DMOS and Music21: flat, sharp, etc.
+		self.name = name
+		
+		# m21 representation
+		self.m21_accidental= m21.pitch.Accidental(self.name)
+
+		# In case the accidental must be shown even it is
+		# clear from the context (cautions)
+		if enforce_display:
+			self.m21_accidental.displayStatus = True
+		else:
+			self.m21_accidental.displayStatus = False
+	
+	def set_display_status(self, val):
+		# Change the display status
+		self.m21_accidental.displayStatus = val
+
+	def __repr__(self):
+		return f'Accidental ({self.name}. Displayed {self.m21_accidental.displayStatus})'
 
 class Duration:
 	'''
@@ -33,6 +60,7 @@ class Duration:
 	
 	def __repr__(self):
 		return f'Duration({self.m21_duration.quarterLength})'
+
 
 class Event:
 	'''
@@ -218,19 +246,13 @@ class Note (Event):
 	"""
 	UNDEFINED_STAFF = 0
 	
-	ALTER_FLAT = "-"
-	ALTER_DOUBLE_FLAT = "--"
-	ALTER_SHARP = "#"
-	ALTER_DOUBLE_SHARP = "##"	
-	ALTER_NATURAL = "n"
-	ALTER_NONE = ""
-		
 	# Stem directions (uses music21 codes)
 	SD_UNSPECIFIED = "unspecified"
 	SD_UP = "up"
 	SD_DOWN = "down"
 	
-	def __init__(self, pitch_class, octave, duration,  alter=ALTER_NONE,
+	def __init__(self, pitch_class, octave, duration,  
+				alter=None,
 				no_staff=UNDEFINED_STAFF, tied=False, 
 				stem_direction=None,
 				note_type=None, 
@@ -242,9 +264,12 @@ class Note (Event):
 		self.alter = alter
 		self.pitch_class = pitch_class
 		self.octave = octave
-		self.pitch_name = pitch_class + alter + str(octave)
-		self.alter = alter
+		self.pitch_name = pitch_class + str(octave)
+			
 		self.m21_event = m21.note.Note(self.pitch_name)
+		if self.alter is not None:
+			self.m21_event.pitch.accidental = self.alter.m21_accidental
+
 		self.m21_event.duration = duration.m21_duration
 		self.m21_event.id = self.id
 		self.no_staff = no_staff
@@ -262,7 +287,7 @@ class Note (Event):
 		return
 	
 	def get_code(self):
-		return self.pitch_class + self.alter + str(self.octave) 
+		return self.m21_event
 	def is_note(self):
 		return True
 	def get_no_staff(self):
