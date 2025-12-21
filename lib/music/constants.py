@@ -100,7 +100,7 @@ MK_DIRECTION_OF_MOTION = "direction_of_motion"
 MK_MOST_COMMON_NOTE_QUARTER_LENGTH = "most_common_note_quarter_length"
 MK_RANGE_NOTE_QUARTER_LENGTH = "range_note_quarter_length"
 MK_INIT_TIME_SIG = "initial_time_signature"
-	
+
 # Descriptive infos for meta pairs
 META_KEYS = {
 		MK_COLLECTION: {"displayed_label": "Collection"},

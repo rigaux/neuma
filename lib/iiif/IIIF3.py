@@ -5,6 +5,23 @@ import socket
 import argparse
 from pathlib import Path
 
+# Known IIIF services
+GALLICA_IIIFV2= "https://gallica.bnf.fr/iiif/"
+GALLICA_UI_BASEURL = "https://gallica.bnf.fr/"
+GALLICA_IIIFV3="https://openapi.bnf.fr/iiif/image/v3/"
+CNAM_IIIFV2="https://deptfod.cnam.fr/ImageS/iiif/2/"
+CNAM_IIIFV3="https://deptfod.cnam.fr/ImageS/iiif/3/"
+
+KNOWN_SERVICES=[GALLICA_IIIFV2,GALLICA_IIIFV3,CNAM_IIIFV2,CNAM_IIIFV3]
+
+def decompose_url(iiif_url):
+	# Try to get a document id from an IIIF uri, exploring the knwon services
+	# Return a pair (service, id)
+	for service in KNOWN_SERVICES:
+		if iiif_url.startswith(service):
+			return service, iiif_url.replace(service, '')
+	raise Exception (f"Unable to analyse the IIIF URL {iiif_url}. Unknown service?")
+
 #
 # Classes that encapsulate the IIIF Prezi3 implementation
 #   Github: https://github.com/iiif-prezi/iiif-prezi3
@@ -35,7 +52,28 @@ class Property ():
 		for key, vals in prop_dict.items():
 			return Property (vals, key)
 			# We ignore multiple languages...
+
+class Service ():
+	'''
+		IIIF metadata model: an IIIF service
+	'''
 	
+	def __init__(self, id, type="ImageService3") :
+		self.id = id
+		self.type  = type
+		
+		# Decompose the service ID 
+		self.server_url, self.doc_id = decompose_url(id)
+		#??
+		#self.prezi_service = iiif_prezi3.ServiceV3()
+	
+	def to_dict(self):
+		return {"id": self.id,
+				"type" : self.type}
+	@staticmethod 
+	def from_dict(service_dict):
+		return Service (service_dict.id)
+
 class Metadata ():
 	'''
 		IIIF metadata model: a label/value pair, each being a property
@@ -144,12 +182,19 @@ class Manifest ():
 	
 	def add_canvas (self, canvas):
 		self.prezi_manifest.items.append (canvas.prezi_canvas)
-
+	def nb_canvases(self):
+		return len(self.canvases)
 	# Accessors
 	def get_canvases (self):
 		return self.canvases
+	def get_images(self):	
+		images = []
+		for canvas in self.canvases:
+			for annotation_list in canvas.get_content_lists():
+				for annot in annotation_list.annotations:
+					images.append(annot.body)
+		return images
 		
-
 	# Update methods
 	def set_label (self, label):
 		self.prezi_manifest.label = label.to_dict()
@@ -237,7 +282,6 @@ class AnnotationList():
 	def load_annotations (self, motivation="painting"):
 		# Load annotations
 		for prezi_annot in self.prezi_annotation_page.items:
-			print (f"Motivation {prezi_annot.motivation}")
 			if prezi_annot.motivation == motivation:
 				body = Body.load_from_dict (prezi_annot.body)
 				annot = Annotation (prezi_annot.id, 
@@ -347,16 +391,37 @@ class Body:
 	   This is a super-class, sub-typed for each type of body
 	'''
 	
-	def __init__(self, id, type):
+	def __init__(self, id, type, service=None):
 		self.type = "generic_body"
 		self.id = id
+		self.service = service
+		
 		self.prezi_body = iiif_prezi3.AnnotationBody(id=id, type=type)
-
+		if service is not None:
+			self.prezi_body.service = service.to_dict()
+			
 	@staticmethod
 	def load_from_dict(prezi_body):
-		body =  Body (id=prezi_body.id, type=prezi_body.type)
+		if prezi_body.type == "Image":
+			if prezi_body.service is not None:
+				# We just take the first service
+				service = Service.from_dict(prezi_body.service[0])
+			else: 
+				service = None
+				
+			body =  ImageBody (prezi_body.id, 
+						prezi_body.width, prezi_body.height,
+						service)
+		else:
+			# TO DO: adjust to the other body types
+			body =  Body (id=prezi_body.id, type=prezi_body.type)
+			
 		body.prezi_body = prezi_body
 		return body
+	
+	def get_service(self):
+		return self.service
+
 class TextualBody(Body):
 	'''
 	   The body value is simply a text
@@ -378,13 +443,18 @@ class ImageBody(Body):
 	'''
 	
 	def __init__(self, id, width, height, service=None) :
-		super().__init__(id, Annotation.IMAGE_TYPE)
+		super().__init__(id, Annotation.IMAGE_TYPE, service)
+		self.width = width
+		self.height = height
+		self.id = id
+		# An IIIF id is always a dereferencable URL
+		self.url = id
 		self.prezi_body.width=width
 		self.prezi_body.height=height
 		self.prezi_body.format="image/jpeg"
-		if service is not None:
-			# Add the service ref
-			self.prezi_body.service = {"id": service, "type": "ImageService3"}
+		
+		# Add the service ref TODO : create a proper representation of the service
+		#self.prezi_body.service = {"id": service, "type": "ImageService3"}
 
 	def __str__ (self):
 		return self.id

@@ -403,11 +403,13 @@ class Corpus(models.Model):
 			child.get_children(recursive)
 		return self.children
 	
-	def parse_dmos(self, just_annotations = False, just_score=False):
+	def parse_dmos(self, dmos_source_ref, iiif_source_ref, 
+					just_annotations = False, just_score=False):
 		for opus in Opus.objects.filter(corpus=self).order_by("ref"):
-			print (f"\n\nProcessing opus {opus.ref}")
+			print (f"\n\nProcessing DMOS source {dmos_source_ref} in opus {opus.ref}.")
 			try:
-				opus.parse_dmos(just_annotations, just_score)
+				opus.parse_dmos(dmos_source_ref, iiif_source_ref,
+					just_annotations, just_score)
 			except Exception as e:
 				print (f"Error when trying to convert DMOS file for opus {opus.ref}:{e}")
 
@@ -855,10 +857,22 @@ class Opus(models.Model):
 		last_pos = self.ref.rfind(settings.NEUMA_ID_SEPARATOR)
 		return self.ref[last_pos+1:]
 
+	def add_feature (self, mkey, mvalue):
+		"""Add a (key, value) pair as an ad-hoc attribute"""
+		# The key must belongs to the list of pre-deefined accepted values
+		if mkey not in constants_mod.META_KEYS:
+			raise Exception(f"Sorry, the key {mkey} does not belong to the accepted feature keys")
+		# Search if exists
+		if mkey in self.features:
+			self.features[mkey] = mvalue 
+		else:
+			self.features.append({"key": mkey, "value": mvalue})
+		self.save()
+
 	def add_meta (self, mkey, mvalue):
 		"""Add a (key, value) pair as an ad-hoc attribute"""
 		# The key must belongs to the list of pre-deefined accepted values
-		if mkey not in OpusMeta.META_KEYS:
+		if mkey not in constants_mod.META_KEYS:
 			raise Exception(f"Sorry, the key {mkey} does not belong to the accepted meta keys")
 		
 		# Search if exists
@@ -1147,14 +1161,18 @@ class Opus(models.Model):
 		return self.create_source_with_file("mei", SourceType.STYPE_MEI,
 							"", mei_file, "score.mei")
 
-	def parse_dmos(self, just_annotations = False, just_score=False):
+	def parse_dmos(self, dmos_source_ref, iiif_source_ref, 
+					just_annotations = False, just_score=False):
+		"""
+		  Parse a DMOS file containing OMR extraction of
+		  images in a IIIF image source
+		"""
 		dmos_dir = os.path.join("file://" + settings.BASE_DIR, 'static/json/', 'dmos')
 		
 		# In case we just want to test annotations
 		
-
 		parser_mod.logger.warning ("")
-		parser_mod.logger.warning (f"Parsing DMOS file for opus {self.ref}, {self.title}")
+		parser_mod.logger.warning (f"Parsing DMOS source {dmos_source_ref} for IIIF source {iiif_source_ref} for opus {self.ref}, {self.title}")
 		parser_mod.logger.warning ("")
 		# Where is the schema?
 		schema_dir = os.path.join(dmos_dir, 'schema/')
@@ -1171,14 +1189,22 @@ class Opus(models.Model):
 		dmos_data = None
 		dmos_source =None
 		editions = []
-		for source in self.opussource_set.all ():
-			if source.ref == source_mod.ItemSource.IIIF_REF:
-				dmos_source = source
-				if dmos_source.source_file:
-					dmos_data = json.loads(dmos_source.source_file.read())
-				for json_edition in dmos_source.operations:
-					editions.append (Edition.from_json(json_edition))
-
+		dmos_source = self.get_source (dmos_source_ref)
+		if dmos_source is None:
+			print (f"Unable to find DMOS source {dmos_source_ref}")
+			return None
+		iiif_source = self.get_source (iiif_source_ref)
+		if iiif_source is None:
+			print (f"Unable to find IIIF source {iiif_source_ref}")
+			return None
+		if dmos_source.source_file:
+			dmos_data = json.loads(dmos_source.source_file.read())
+		else:
+			print (f"Unable to find the DMOS file in source {dmos_source_ref}")
+			return None
+			
+		for json_edition in dmos_source.operations:
+				editions.append (Edition.from_json(json_edition))
 		if dmos_data == None:
 			print ("Unable to find the DMOS file ??")
 			return "Unable to find the DMOS file ??"
@@ -1201,17 +1227,14 @@ class Opus(models.Model):
 			mxml_file = "/tmp/" + shortuuid.uuid() + ".xml"
 			omr_score.write_as_musicxml (mxml_file)
 			mxml_source = self.replace_musicxml(mxml_file)
-		
 			# Generate and store the MEI file as a source and main file
 			# Create the file
 			mei_file = "/tmp/" + shortuuid.uuid() + "_mei.xml"
 			omr_score.write_as_mei (mxml_file, mei_file)
 			mei_source = self.replace_mei (mei_file)
-
-			# Write as pickle
+			# Write as pickle (for debugging)
 			pickle_file = "/tmp/" + self.local_ref() + ".pickle"
 			omr_score.write_as_pickle (pickle_file)
-		
 			# Generate the MIDI file
 			print ("Produce MIDI file")
 			midi_file = "/tmp/score.midi"
@@ -1219,46 +1242,34 @@ class Opus(models.Model):
 			self.create_source_with_file(source_mod.ItemSource.MIDI_REF, 
 									SourceType.STYPE_MIDI,
 							"", midi_file, "score.midi", "rb")
-		
-			# Compute and store the score manifest in the IIIF source
-			iiif_source = None
-			for source in self.opussource_set.all ():
-				if source.ref == source_mod.ItemSource.IIIF_REF:
-					iiif_source = source
-					
-			if iiif_source is None:
-				raise Exception (f"Unable to find the IIIF source in Opus {self.id} ")
-
+	
 			# Get the IIIF manifest for image infos
+			# New version: we always refresh the IIIF manifest
+			#if True :
 			if not (iiif_source.iiif_manifest) or iiif_source.iiif_manifest == {}:
-				# Special case: we know the Gallica URL, from which
-				# we can get the manifest
-				# Take the manifest
-				docid = iiif2_mod.Proxy.decompose_gallica_ref(iiif_source.url)
-				req_url = "".join([iiif2_mod.GALLICA_BASEURL, docid, '/manifest.json'])
-				print (f"Get the IIIF manifest at URL {req_url} from Gallica")
-				r = requests.get(req_url)
+				# Get the manifest
+				print (f"Get the IIIF manifest at URL {iiif_source.url}")
+				r = requests.get(iiif_source.url)
 				r.raise_for_status()
-				iiif_manifest = r.json()
-				iiif_doc = iiif2_mod.Document(iiif_manifest)
-				iiif_source.iiif_manifest = ContentFile(json.dumps(iiif_manifest), name="iiif_manifest.json")
+				# It should alway be a V3 manifest
+				iiif_manifest = iiif3_mod.Manifest.load_from_dict(r.json())
+				# Save locally
+				iiif_source.iiif_manifest = ContentFile(iiif_manifest.json(), name="iiif_manifest.json")
+				iiif_source.save()
 			else:
 				print (f"Take the manifest from the source")
-				
 				with open(iiif_source.iiif_manifest.path, "r") as f:
-					iiif_doc = iiif2_mod.Document(json.load(f))
+					iiif_manifest = iiif3_mod.Manifest.load_from_dict(json.load(f))
 			
-			print (f"Got the IIIF manifest. Nb canvases {iiif_doc.nb_canvases}")
-			images = iiif_doc.get_images()
-			#for img in images:
-			#	print (f"Image {img.url} Width {img.width} Height {img.height}")				
-			omr_score.manifest.add_image_info (images) 
+			print (f"Got the IIIF manifest. Nb canvases {iiif_manifest.nb_canvases()}")
+			omr_score.manifest.add_image_info (iiif_manifest.get_images()) 
 
 			iiif_source.manifest.id = iiif_source.full_ref()
 			print (f"Save the manifest with id {iiif_source.manifest.id}")
 			iiif_source.manifest = ContentFile(json.dumps(omr_score.manifest.to_json()), name="score_manifest.json")
-			iiif_source.metadata["first_page_of_music"] = omr_score.manifest.first_music_page
-			iiif_source.metadata["last_page_of_music"] = omr_score.manifest.last_music_page
+			iiif_source.add_meta("first_page_of_music", omr_score.manifest.first_music_page)
+			iiif_source.add_meta("last_page_of_music", omr_score.manifest.last_music_page)
+			iiif_source.add_meta("nb_parts", omr_score.manifest.nb_parts())
 			iiif_source.save()
 		
 			# Now we know the full url of the MEI document
@@ -1331,6 +1342,14 @@ class SourceType (models.Model):
 
 	def __str__(self):  # __unicode__ on Python 2
 		return self.description + " (" + self.code + ")"
+
+class SourceMetaKeys (models.TextChoices):
+	"""
+		List of allowed keys for meta key/value pairs in a source
+	"""
+	FIRST_PAGE_OF_MUSIC = "first_page_of_music", _("First page of music")
+	LAST_PAGE_OF_MUSIC = "last_page_of_music", _("Last page of music")
+	NB_PARTS = "nb_parts", _("Number of parts")
 
 class OpusSource (models.Model):
 	'''A link to a source that contains the representation of an Opus.
@@ -1495,6 +1514,15 @@ class OpusSource (models.Model):
 	def to_json(self, request):
 		# DEPRECATED
 		return self.json()
+
+	def add_meta (self, mkey, mvalue):
+		"""Add a (key, value) pair as an ad-hoc attribute"""
+		# The key must belongs to the list of pre-deefined accepted values
+		if mkey not in SourceMetaKeys.values:
+			raise Exception(f"Sorry, the key {mkey} does not belong to the accepted meta keys")
+		
+		self.metadata[mkey] = mvalue 
+		self.save()
 
 	def file_rest_url (self):
 		return reverse ('rest:handle_source_file_request', args=[self.opus.ref, self.ref])

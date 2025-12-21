@@ -36,7 +36,7 @@ DESCRIPTORJSON_ACTION="descriptorjson"
 ANALYZE_CORPUS_ACTION = "analyze"
 ANALYZE_OPUS_ACTION = "analyze_opus"
 COPY_DMOS_ACTION = "copy_dmos"
-EXPORT_TO_MUSICDIFF_ACTION = "export_musicdiff"
+EXPORT_TO_DATASET_ACTION = "export_dataset"
 CONVERT_GALLICA = "convert_gallica"
 
 EXTRACT_FEATURES_ACTION = "extract_features"
@@ -69,12 +69,13 @@ class Command(BaseCommand):
 				if not c.parent_ref(c.ref):
 					Workflow.index_corpus(c)
 			return 
-		elif action == EXPORT_TO_MUSICDIFF_ACTION:
+		elif action == EXPORT_TO_DATASET_ACTION:
 			# Export the reference and computed MEI to 'ground-truth'
 			# and 'predicted' dirs of the utilities 
+			# python3 manage.py scan_corpus -a export_dataset -c all:collabscore:saintsaens-ref
 			try:
 				corpus = Corpus.objects.get(ref=options['corpus_ref'])
-				Workflow.export_to_musicdiff(corpus)
+				Workflow.export_to_dataset(corpus)
 			except Corpus.DoesNotExist:
 				raise CommandError('Corpus "%s" does not exist' % options['corpus_ref'])
 			return "Done"
@@ -152,10 +153,7 @@ class Command(BaseCommand):
 				"""
 				Extract features and metadata info from the corpus and save in database
 				"""
-				try:
-					Workflow.extract_features_from_corpus(corpus)
-				except corpus.DoesNotExist:
-					raise CommandError('corpus "%s" does not exist' % corpusref)
+				Workflow.extract_features_from_corpus(corpus)
 			elif action == QUALEVAL:
 				"""Evaluate the quality of a corpus"""
 				opera = corpus.get_opera()

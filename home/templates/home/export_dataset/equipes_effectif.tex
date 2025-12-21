@@ -1,0 +1,30 @@
+
+\begin{small}
+\begin{longtable}{l|r|r|r|p{0.8cm}|p{0.8cm}|r|r|r|r}
+ Acronyme &  Nb &  Perm. &  Emérites &  Prof. Cnam &
+ Prof. Univ. &  MCF &  dont HDR & Associé &  Doct. 
+ \\ \hline
+{% for e in equipes %}
+{{e.acronyme}} &   
+{{e.nb_membres}} &  
+{{e.nb_permanents}} &  
+{{e.nb_emerite}} &  
+{{e.nb_prof_cnam}} &
+{{e.nb_prof}} &
+{{e.nb_mcf}} &
+{{e.nb_hdr}} &
+{{e.nb_associe}} &
+{{e.nb_doctorant}}  \\
+{% endfor %}
+\hline
+Total & {{ staff_cedric.nb_membres }} &
+{{ staff_cedric.nb_permanents }} &
+{{ staff_cedric.nb_emerites}} &
+{{ staff_cedric.nb_profs_cnam }} &
+{{ staff_cedric.nb_profs }} &
+{{ staff_cedric.nb_mcfs }} &
+{{ staff_cedric.nb_hdr }} &
+{{ staff_cedric.nb_associes }} &   
+{{ staff_cedric.nb_doctorants }} 
+\end{longtable}
+\end{small}

@@ -4,7 +4,7 @@ import csv
 import lib.music.Score as score_mod
 import lib.music.notation as notation_mod
 
-import lib.iiif.IIIF2 as iiif2_mod
+import lib.iiif.IIIF3 as iiif3_mod
 
 from lib.music.Score import Part
 from collections import OrderedDict
@@ -73,6 +73,8 @@ class ItemSource:
 			self.organization = None
 		self.copyright = copyright
 
+	"""
+	Still used ??
 	def get_iiif_manifest(self):
 		# IIIF extraction: only for sources of type IIIF_REF
 		if self.ref == self.IIIF_REF:
@@ -87,7 +89,8 @@ class ItemSource:
 					self.images.append(canvas.get_image(0))
 			except Exception as ex:
 				score_mod.logger.info(str(ex))
-		
+	"""
+	
 	def to_dict (self):
 		source_dict =  {
 			"id": self.id,
@@ -359,50 +362,52 @@ class Manifest:
 		raise score_mod.CScoreModelError (f"Searching a non existing page : {nb}" )
 
 	def add_image_info(self, images):
-		# Enrich the manifest with info coming from IIIF
+		"""
+			Enrich the manifest with info coming from IIIF.
+			images is a list of ImageBody object to the IIIF3 wrapper
+		"""
 		
 		# First get the position of the first and last pages in the 
 		# image list: this is the first page that contains music
-		images_url = []
+		ids_in_manifest = []
 		for image in images:
-			images_url.append(image.url)
-		try:
-			self.first_music_page = images_url.index (self.pages[0].url) + 1
-		except ValueError:
-			raise Exception(f"Manifest::add_image_info. Image {self.pages[0].url} is not in the list of Manifest images ")
-		try:
-			self.last_music_page = images_url.index (self.pages[-1].url) + 1
-		except ValueError:
-			raise Exception(f"Manifest::add_image_info. Image {self.pages[-1].url} is not in the list of Manifest images ")
-
-		# Next, find the dimension of images		
+			# In DMOS, we find IIIF image service ids
+			if image.service is None:
+				raise Exception("Unable to get image info from the IIIF manifest: missing service")
+			ids_in_manifest.append(image.service.doc_id)
+			
+		# Same thing in the DMOS list of pages
+		ids_in_pages =[]
 		for page in self.pages:
-			#print (f"Searching for the image of page {page.url}")
-			image_found = False
+			dmos_service, dmos_id = iiif3_mod.decompose_url(page.url)
+			ids_in_pages.append (dmos_id)
+			# Find the dimension of images		
 			for img in images:
-				if page.url == img.url:
-					image_found = True
+				iiif_service, iiif_id = iiif3_mod.decompose_url(image.service.id)			
+				if dmos_id == iiif_id:
 					page.width = img.width
 					page.height = img.height
+			
+		try:
+			self.first_music_page = ids_in_manifest.index (ids_in_pages[0]) + 1
+		except ValueError:
+			raise Exception(f"Manifest::add_image_info. Image {ids_in_pages[0]} is not in the list of Manifest images ")
+		try:
+			self.last_music_page = ids_in_manifest.index (ids_in_pages[-1]) + 1
+		except ValueError:
+			raise Exception(f"Manifest::add_image_info. Image {ids_in_pages[0][-1].url} is not in the list of Manifest images ")
 
-	def clean_pages_url(self):	
-		"""
-		  Normalize the IIIF URLs
-		"""
-		for page in self.pages:
-			page.url = iiif2_mod.Proxy.find_page_id(page.url)
-
+		print (f"First and last pages : {self.first_music_page} {self.last_music_page}")
+	
 	def add_part(self, part):
 		self.parts[part.id] = part
 
 	def part_exists(self, id_part):
 		return (id_part in self.parts.keys())
-
 	def get_part(self, id_part):
 		if not (id_part in self.parts.keys()):
 			raise score_mod.CScoreModelError ("Searching a non existing part : " + id_part )		
 		return self.parts[id_part]
-			
 	def get_parts(self):
 		# Beware: depending on the order with which parts are discovered,
 		# Part1 might appear before Part2 or the opposite: we sort
@@ -420,7 +425,8 @@ class Manifest:
 		# Finally we reverse: DMOS gives the parts bottom-up
 		sorted_parts.reverse()
 		return sorted_parts
-
+	def nb_parts(self):
+		return len(self.parts)
 
 	@staticmethod
 	def from_json (json_mnf):

@@ -116,6 +116,15 @@ var tabNames = [
   
   </dl>
   
+
+         
+    <h4>{% trans "Metadata"%}</h4>
+    
+      <ul>
+		{% for meta in opus.metadata %}
+		    <li><b>{{meta.key}}</b>: {{meta.value}}</li>
+         {% endfor %}
+      </ul>
          
     <h4>{% trans "Sources"%}</h4>
     
@@ -390,9 +399,9 @@ function displaySource(src, type, target) {
  <div>
     
 <dl class="description">
-    {% for meta_val in meta_values %} 
-         <dt>  {{meta_val.displayed_label}}</dt>
-    <dd>{{meta_val.meta_value}}</dd>
+    {% for feature in opus.features %} 
+         <dt>  {{feature.key}} </dt>
+    <dd>{{feature.value}}</dd>
     {% endfor %}
 </dl>
   </div>

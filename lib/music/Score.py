@@ -172,7 +172,6 @@ class Score:
 		''' Produce a dump of the Music21 code'''
 		converter.freeze(self.m21_score, fp=filename)
 
-
 	def write_as_mei(self, mxml_file,  mei_name):
 			''' Produce the MEI encoding from MusicXML thanks to Converter21'''
 			self.m21_score.write ("mei", mei_name)

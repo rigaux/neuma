@@ -17,6 +17,8 @@ class Command(BaseCommand):
 
 	def add_arguments(self, parser):
 		parser.add_argument('-o', dest='object_ref')
+		parser.add_argument('-d', dest='dmos_source_ref')
+		parser.add_argument('-i', dest='iiif_source_ref')
 		parser.add_argument('-no_annotations', dest='no_annot')
 		parser.add_argument('-no_score', dest='no_score')
 
@@ -24,6 +26,12 @@ class Command(BaseCommand):
 			
 		if options['object_ref'] is None:
 			print ("You MUST provide the ref of the object (opus or corpus")
+			exit(1)
+		if options['dmos_source_ref'] is None:
+			print ("You MUST provide the DMOS source ref ")
+			exit(1)
+		if options['iiif_source_ref'] is None:
+			print ("You MUST provide the DMOS source ref ")
 			exit(1)
 			
 		if options['no_annot'] is None:
@@ -44,12 +52,14 @@ class Command(BaseCommand):
 		
 		try:
 			opus = Opus.objects.get(ref=options['object_ref'])
-			opus.parse_dmos(just_annotations, just_score)		 
+			opus.parse_dmos(options['dmos_source_ref'], options['iiif_source_ref'],
+						just_annotations, just_score)		 
 		except Opus.DoesNotExist:
 			print(f"Opus with ref {options['object_ref']} does not exist. Searching a corpus" )
 			try:
 				corpus = Corpus.objects.get(ref=options['object_ref'])
-				corpus.parse_dmos(just_annotations, just_score)
+				corpus.parse_dmos(options['dmos_source_ref'], options['iiif_source_ref'],
+								just_annotations, just_score)
 			except Corpus.DoesNotExist:
 				raise CommandError(f"No such object {options['object_ref']} " )
 				exit(1)

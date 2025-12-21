@@ -6,9 +6,11 @@ from manager.models import (Corpus, Opus, Descriptor,
 import os
 import re
 import subprocess
+
+
 from django.core.files import File
 from django.core.files.base import ContentFile
-
+from django.template.response import SimpleTemplateResponse
 
 import ast
 
@@ -28,9 +30,10 @@ logger = logging.getLogger(__name__)
 from django.contrib.auth.models import User
 from xml.dom import minidom
 
-
 from lib.music.Score import *
 import lib.music.source as source_mod
+import lib.music.constants as constants_mod
+
 from lib.neumasearch.MusicSummary import MusicSummary
 from neumasearch.IndexWrapper import IndexWrapper
 
@@ -285,6 +288,7 @@ class Workflow:
 
 		for opus in Opus.objects.filter(corpus__ref=corpus.ref):
 			Workflow.extract_features_from_opus(opus)
+			break
 
 		# Recursive call
 		if recursion:
@@ -299,25 +303,32 @@ class Workflow:
 		Extract features from opus. 
 		First get m21 stream from the original score of the opus, then extract features.
 		'''
-		try:
-			#score = opus.get_score()
-			if opus.mei:
-				#print ("Load from MEI")
-				with open (opus.mei.path, "r") as meifile:
-					meiString = meifile.read()
-					conv = m21.mei.MeiToM21Converter(meiString)
-					m21_score = conv.run()
-			elif opus.musicxml:
-				#print ("Load from MusicXML")
-				m21_score = m21.converter.parse(opus.musicxml.path)
-			else:
-				print("Exception caused by file format or when trying to access m21 object of opus " + opus.ref)
+		#score = opus.get_score()
+		if opus.mei:
+			#print ("Load from MEI")
+			with open (opus.mei.path, "r") as meifile:
+				meiString = meifile.read()
+				conv = m21.mei.MeiToM21Converter(meiString)
+				m21_score = conv.run()
+		elif opus.musicxml:
+			#print ("Load from MusicXML")
+			m21_score = m21.converter.parse(opus.musicxml.path)
+		else:
+			print("Exception caused by file format or when trying to access m21 object of opus " + opus.ref)
 			
-			# Extract features with m21 and save in database
-			info = Workflow.extract_features_with_m21(opus, m21_score)
-						
-		except  Exception as ex:
-			print ("Exception when trying to extract info from opus " + opus.ref + " Message:" + str(ex))
+		# Extract features with m21 and save in database
+		info = Workflow.extract_features_with_m21(opus, m21_score)
+		for item in info:
+			opus.add_feature(item, info[item])
+			# print("added", item)
+			opus.metadata = []
+
+		# Loop on the sources and extract metadata
+		for source in opus.opussource_set.all ():
+			if not source.is_iiif:
+				print (f"Source {source.ref} is not IIIF. Ignored")
+				continue
+			print (f"\t extract metadata from source {source.ref}")
 
 		# TODO: Store the descriptors in ElasticSearch
 		#index_wrapper = IndexWrapper()
@@ -328,7 +339,7 @@ class Workflow:
 	@staticmethod
 	def extract_features_with_m21(opus, m21_score, forced=False):
 		"""
-		EXTRACT A LIST OF FEATURES FROM OPUS AND SAVE IN OPUSMETA
+		EXTRACT A LIST OF FEATURES FROM OPUS AND SAVE IN metadata
 		"""
 		print ("Producting features from opus " + opus.ref)
 
@@ -336,18 +347,18 @@ class Workflow:
 		
 		# Get the current meta values. We do not want to compute twice,
 		# except if "forced" recomputation
-		opus_metas = []
-		for m in opus.get_metas():
-			opus_metas.append(m.meta_key)
-		if not (OpusMeta.MK_KEY_TONIC in opus_metas) or forced:
+		existing_keys = []
+		for f in opus.features:
+			existing_keys.append(f["key"])
+		if not (constants_mod.MK_KEY_TONIC in existing_keys) or forced:
 			key = m21_score.analyze('key')
 			info["key_tonic_name"] = key.tonic.name
 			info["key_mode"] = key.mode
 
-		if not (OpusMeta.MK_NUM_OF_PARTS in opus_metas) or forced:
+		if not (constants_mod.MK_NUM_OF_PARTS in existing_keys) or forced:
 			info["num_of_parts"] = len(m21_score.getElementsByClass(m21.stream.Part))
 			
-		if not (OpusMeta.MK_NUM_OF_MEASURES in opus_metas) or forced:
+		if not (constants_mod.MK_NUM_OF_MEASURES in existing_keys) or forced:
 			info["num_of_measures"] = 0
 			for part in m21_score.parts:
 				info["num_of_measures"] += len(part)
@@ -355,7 +366,7 @@ class Workflow:
 		#can not use flatten, need to find another way...
 		#info["num_of_notes"] TODO
 
-		if not (OpusMeta.ML_INSTRUMENTS in opus_metas) or forced:
+		if not (constants_mod.ML_INSTRUMENTS in existing_keys) or forced:
 			info["instruments"] = []
 			# TODO: JSON encode
 			if m21.instrument.partitionByInstrument(m21_score) != None:
@@ -363,7 +374,7 @@ class Workflow:
 					info["instruments"].append(part.getInstrument().instrumentName)
 						
 		# TODO: this needs to be json encoded
-		if not (OpusMeta.MK_LOWEST_PITCH_EACH_PART in opus_metas) or forced:
+		"""if not (constants_mod.MK_LOWEST_PITCH_EACH_PART in opus_metas) or forced:
 			pitchmin_eachpart = {}
 			pitchmax_eachpart = {}
 			p = m21.analysis.discrete.Ambitus()
@@ -379,33 +390,29 @@ class Workflow:
 				info["highest_pitch_each_part"] = json.dumps(pitchmax_eachpart)
 
 		# the followings are float number instead of integer/string
-		if not (OpusMeta.MK_AVE_MELODIC_INTERVAL in opus_metas) or forced:
+		if not (constants_mod.MK_AVE_MELODIC_INTERVAL in opus_metas) or forced:
 			fe = m21.features.jSymbolic.AverageMelodicIntervalFeature(m21_score)
 			info["average_melodic_interval"] = fe.extract().vector[0]
 
-		if not (OpusMeta.MK_DIRECTION_OF_MOTION in opus_metas) or forced:
+		if not (constants_mod.MK_DIRECTION_OF_MOTION in opus_metas) or forced:
 			fe = m21.features.jSymbolic.DirectionOfMotionFeature(m21_score)
 			info["direction_of_motion"] = fe.extract().vector[0]
 
-		if not (OpusMeta.MK_MOST_COMMON_NOTE_QUARTER_LENGTH in opus_metas) or forced:
+		if not (constants_mod.MK_MOST_COMMON_NOTE_QUARTER_LENGTH in opus_metas) or forced:
 			fe = m21.features.native.MostCommonNoteQuarterLength(m21_score)
 			info["most_common_note_quarter_length"] = fe.extract().vector[0]
 
-		if not (OpusMeta.MK_RANGE_NOTE_QUARTER_LENGTH in opus_metas) or forced:
+		if not (constants_mod.MK_RANGE_NOTE_QUARTER_LENGTH in opus_metas) or forced:
 			fe = m21.features.native.RangeOfNoteQuarterLengths(m21_score)
 			info["range_note_quarter_length"] = fe.extract().vector[0]
-
-		if not (OpusMeta.MK_INIT_TIME_SIG in opus_metas) or forced:
+		"""
+		if not (constants_mod.MK_INIT_TIME_SIG in existing_keys) or forced:
 			fe = m21.features.jSymbolic.InitialTimeSignatureFeature(m21_score)
 			#print("\nInitial time signature:", fe.extract().vector)
 			info["initial_time_signature"] = json.dumps(fe.extract().vector)
 
 		 #print("Info:", info)
 		
-		# At last, store in postgres
-		for item in info:
-			opus.add_meta(item, info[item])
-			# print("added", item)
 		return info
 
 	@staticmethod
@@ -730,9 +737,9 @@ class Workflow:
 
 
 	@staticmethod 
-	def export_to_musicdiff(corpus):
-		PATH_TO_UTILITIES="../utilities/diff"
-		print (f"Exporting ground truth/predicted MEI from corpus '{corpus.ref}' to {PATH_TO_UTILITIES}'")
+	def export_to_dataset(corpus):
+		PATH_TO_DATASET="../dataset/"
+		print (f"Exporting ground truth/predicted MEI from corpus '{corpus.ref}' to {PATH_TO_DATASET}'")
 		i_opus = 0
 		for opus in corpus.get_opera():
 			i_opus += 1
@@ -746,15 +753,23 @@ class Workflow:
 				print (f"No predicted MEI for opus {opus.ref}. Export aborted")	
 				continue
 			gt_origin = ground_truth_src.source_file.path
-			gt_dest  = f"{PATH_TO_UTILITIES}/ground_truth/{opus.local_ref()}.mei"
+			gt_dest  = f"{PATH_TO_DATASET}/ground_truth/{opus.local_ref()}.mei"
 			print (f"Moving ground truth file {gt_origin} to {gt_dest}")
 			shutil.copyfile(gt_origin, gt_dest)
 			
 			predicted_origin = predicted_src.source_file.path
-			predicted_dest  = f"{PATH_TO_UTILITIES}/predicted/{opus.local_ref()}.mei"
+			predicted_dest  = f"{PATH_TO_DATASET}/predicted/{opus.local_ref()}.mei"
 			print (f"Moving ground truth file {predicted_origin} to {predicted_dest}")
 			shutil.copyfile(predicted_origin, predicted_dest)
 		print (f"{i_opus} opus have been exported")
+		
+		context = {}
+		context["list_opus"] = []
+		for opus in corpus.get_opera():
+			context["list_opus"].append(opus)
+		t = SimpleTemplateResponse('home/export_dataset/list_opus.tex', context).render()
+		with open(os.path.join(f"{PATH_TO_DATASET}", 'list_opus.tex'), 'w',encoding='utf8') as filehandle:
+			filehandle.write(str(t.rendered_content))
 
 	@staticmethod 
 	def copy_dmos(source, target):

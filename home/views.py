@@ -476,9 +476,6 @@ class OpusView(NeumaView):
 		# We use the service to provide file, in order to avoid caching
 		context["opus_file_url"] = reverse("rest:opus_file_request", kwargs={"full_neuma_ref": opus.ref})
 		
-		# get meta values 
-		context["meta_values"] = opus.metadata
-		
 		# Add the analytic models
 		context['analytic_models'] = AnalyticModel.objects.all()
 		context['analytic_concepts'] = AnalyticConcept.objects.all()

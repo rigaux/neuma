@@ -1,0 +1,15 @@
+
+\begin{small}
+\begin{longtable}{p{3.5cm}|c|p{3.5cm}|l|p{3cm}}
+ Nom &  Inscription &  Direction &  Cotutelle &  Type financement \\
+\hline
+{% for d in doctorants %}
+{{d.prenom}} {{d.nom}} &    
+{{d.date_inscription}} &     
+{{d.direction|safe}} &     
+{{d.cotutelle}} &
+{{d.libelle_financement}}\\
+{% endfor %}
+\hline
+\end{longtable}
+\end{small}

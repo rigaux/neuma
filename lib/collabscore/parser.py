@@ -410,8 +410,10 @@ class OmrScore:
 		
 		# Now we create the groups to detect parts that extend over several staves
 		manifest.create_groups()
+		
 		# Clean pages URL and find the first page of music
-		manifest.clean_pages_url()
+		# A QUOI CA SERT??
+		#manifest.clean_pages_url()
 		
 		#
 		# A QUOI CA SERT ???
@@ -1117,11 +1119,10 @@ class OmrScore:
 		Edition.apply_editions_to_file (self.post_editions, out_file)
 		print ("\nPost-editions on MusicXML done\n")
 
-			
 	def write_as_mei(self, mxml_file, out_file):
 		self.get_score().write_as_mei (mxml_file, out_file)
 		print ("\nApplying post-editions to the MEI file\n")
-		Edition.apply_editions_to_file (self.post_editions, out_file, "mei")
+		#Edition.apply_editions_to_file (self.post_editions, out_file, "mei")
 		print ("\nPost-editions on MEI done\n")
 
 	def write_as_pickle(self, filename):
@@ -1286,7 +1287,7 @@ class Voice:
 	"""
 	
 	def __init__(self, json_voice):
-		self.id = json_voice["id"]
+		self.id = "V" + json_voice["id"]
 		self.id_part =  StaffHeader.make_id_part ( json_voice["id_part"])
 		# Obsolete, since a voice can spread several parts
 		#self.id_staff =  StaffHeader.make_id_staff ( json_voice["id_part"])
