@@ -31,7 +31,7 @@ class Command(BaseCommand):
 			print ("You MUST provide the DMOS source ref ")
 			exit(1)
 		if options['iiif_source_ref'] is None:
-			print ("You MUST provide the DMOS source ref ")
+			print ("You MUST provide the IIIF source ref ")
 			exit(1)
 			
 		if options['no_annot'] is None:

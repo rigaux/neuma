@@ -482,9 +482,12 @@ class Corpus(models.Model):
 					source_compressor.write(source.manifest.path, 
 							source.ref + "_mnf." + source.manifest.path.split(".")[-1])
 				if source.iiif_manifest:
-					nb_source_files += 1
-					source_compressor.write(source.iiif_manifest.path, 
+					if "\{\}" in source.iiif_manifest.path:
+						nb_source_files += 1
+						source_compressor.write(source.iiif_manifest.path, 
 							source.ref + "_iiif_mnf." + source.iiif_manifest.path.split(".")[-1])
+					else:
+						print (f"Error {opus.ref}: iiif_manifest is empty")
 			source_compressor.close()
 			if nb_source_files > 0:
 				source_file = opus.local_ref() +  '.szip'
@@ -1245,8 +1248,8 @@ class Opus(models.Model):
 	
 			# Get the IIIF manifest for image infos
 			# New version: we always refresh the IIIF manifest
-			#if True :
-			if not (iiif_source.iiif_manifest) or iiif_source.iiif_manifest == {}:
+			if True :
+#			if not (iiif_source.iiif_manifest) or iiif_source.iiif_manifest == {}:
 				# Get the manifest
 				print (f"Get the IIIF manifest at URL {iiif_source.url}")
 				r = requests.get(iiif_source.url)
@@ -1267,8 +1270,14 @@ class Opus(models.Model):
 			iiif_source.manifest.id = iiif_source.full_ref()
 			print (f"Save the manifest with id {iiif_source.manifest.id}")
 			iiif_source.manifest = ContentFile(json.dumps(omr_score.manifest.to_json()), name="score_manifest.json")
+			
+			# Add metadata to the source
+			serveur_url, iiif_id = iiif3_mod.decompose_url(iiif_source.url)
 			iiif_source.add_meta("first_page_of_music", omr_score.manifest.first_music_page)
 			iiif_source.add_meta("last_page_of_music", omr_score.manifest.last_music_page)
+			iiif_source.add_meta("nb_pages_of_music", omr_score.manifest.nb_pages_of_music())
+			iiif_source.add_meta("iiif_provider_url", serveur_url)
+			iiif_source.add_meta("iiif_provider_id", iiif_id)
 			iiif_source.add_meta("nb_parts", omr_score.manifest.nb_parts())
 			iiif_source.save()
 		
@@ -1349,6 +1358,9 @@ class SourceMetaKeys (models.TextChoices):
 	"""
 	FIRST_PAGE_OF_MUSIC = "first_page_of_music", _("First page of music")
 	LAST_PAGE_OF_MUSIC = "last_page_of_music", _("Last page of music")
+	NB_PAGES_OF_MUSIC = "nb_pages_of_music", _("Number of music pages")
+	IIIF_PROVIDER_URL = "iiif_provider_url", _("URL of IIIF documents provider")
+	IIIF_PROVIDER_ID = "iiif_provider_id", _("ID of the document at provider")
 	NB_PARTS = "nb_parts", _("Number of parts")
 
 class OpusSource (models.Model):

@@ -1,6 +1,20 @@
 
-{% for opus in list_opus %}
+\begin{table*}[h]
+  \centering
+  \caption{Summary of dataset content}
+  \label{tab-dataset}
   
-\subsection{ {{opus.title|safe}} }
-   
-  {% endfor %}
+
+\begin{tabular}{p{5cm}|p{1cm}|p{5cm}}
+\textbf{Title} & \textbf{Images} & \textbf{\#pages} \\
+\hline
+{% for line in list_opus %}
+{{line.opus.title|safe}} & 
+\href{ {{line.iiif_link|safe}} }{Link}
+ & {{line.nb_music_pages}} \\
+{% endfor %}
+\hline
+Summary &  & {{total_pages}} \\
+\hline
+\end{tabular}
+\end{table*}

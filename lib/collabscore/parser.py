@@ -1415,7 +1415,12 @@ class Note:
 		
 		self.articulations = []
 		if "alter" in json_note:
-			self.alter = score_events.Accidental (json_note["alter"]["label"])
+			alter_code =  json_note["alter"]["label"]
+			if json_note["alter"]["label"] == "dSharp":
+				alter_code = "double-sharp"
+			if json_note["alter"]["label"] == "dFlat":
+				alter_code= "double-flat"
+			self.alter = score_events.Accidental (alter_code)
 
 		if "tied" in json_note:
 			self.tied = json_note["tied"]

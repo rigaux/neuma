@@ -144,7 +144,7 @@ class CollectionItem:
 
 		item["features"] =[]
 		for f in self.features:
-			item["features"].append(f.to_dict())
+			item["features"].append(f)
 		item["sources"] =[]
 		for s in self.sources:
 			item["sources"].append(s.to_dict())

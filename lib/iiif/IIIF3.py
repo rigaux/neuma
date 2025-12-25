@@ -7,19 +7,23 @@ from pathlib import Path
 
 # Known IIIF services
 GALLICA_IIIFV2= "https://gallica.bnf.fr/iiif/"
-GALLICA_UI_BASEURL = "https://gallica.bnf.fr/"
+GALLICA_URL = "https://gallica.bnf.fr/"
 GALLICA_IIIFV3="https://openapi.bnf.fr/iiif/image/v3/"
+GALLICA_PRESENTATION_V3="https://openapi.bnf.fr/iiif/presentation/v3/"
 CNAM_IIIFV2="https://deptfod.cnam.fr/ImageS/iiif/2/"
 CNAM_IIIFV3="https://deptfod.cnam.fr/ImageS/iiif/3/"
 
-KNOWN_SERVICES=[GALLICA_IIIFV2,GALLICA_IIIFV3,CNAM_IIIFV2,CNAM_IIIFV3]
+KNOWN_SERVICES=[GALLICA_IIIFV2,GALLICA_PRESENTATION_V3,GALLICA_IIIFV3,CNAM_IIIFV2,CNAM_IIIFV3]
 
 def decompose_url(iiif_url):
 	# Try to get a document id from an IIIF uri, exploring the knwon services
 	# Return a pair (service, id)
 	for service in KNOWN_SERVICES:
 		if iiif_url.startswith(service):
-			return service, iiif_url.replace(service, '')
+			return service, iiif_url.replace(
+					service, '').replace(
+					"/manifest.json", "").replace(
+					"/info.json", "")
 	raise Exception (f"Unable to analyse the IIIF URL {iiif_url}. Unknown service?")
 
 #

@@ -360,7 +360,9 @@ class Manifest:
 		
 		# Oups should never happpen
 		raise score_mod.CScoreModelError (f"Searching a non existing page : {nb}" )
-
+	def nb_pages_of_music(self):
+		return self.last_music_page - self.first_music_page  + 1
+		
 	def add_image_info(self, images):
 		"""
 			Enrich the manifest with info coming from IIIF.

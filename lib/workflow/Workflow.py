@@ -2,7 +2,7 @@
 import zipfile, os.path, io, json, sys, shutil
 
 from manager.models import (Corpus, Opus, Descriptor, 
-		OpusSource)
+		OpusSource, SourceMetaKeys)
 import os
 import re
 import subprocess
@@ -33,6 +33,7 @@ from xml.dom import minidom
 from lib.music.Score import *
 import lib.music.source as source_mod
 import lib.music.constants as constants_mod
+import lib.iiif.IIIF3 as iiif3_mod
 
 from lib.neumasearch.MusicSummary import MusicSummary
 from neumasearch.IndexWrapper import IndexWrapper
@@ -739,6 +740,7 @@ class Workflow:
 	@staticmethod 
 	def export_to_dataset(corpus):
 		PATH_TO_DATASET="../dataset/"
+		PATH_TO_LATEX="../papers/dlfm26"
 		print (f"Exporting ground truth/predicted MEI from corpus '{corpus.ref}' to {PATH_TO_DATASET}'")
 		i_opus = 0
 		for opus in corpus.get_opera():
@@ -763,13 +765,31 @@ class Workflow:
 			shutil.copyfile(predicted_origin, predicted_dest)
 		print (f"{i_opus} opus have been exported")
 		
-		context = {}
+		context = {"total_pages": 0} 
 		context["list_opus"] = []
 		for opus in corpus.get_opera():
-			context["list_opus"].append(opus)
+			nb_music_pages =  0
+			iiif_link = ""
+			iiif_src = opus.get_source(source_mod.ItemSource.IIIF_REF)
+			if iiif_src is None:
+				print (f"No IIIF source for opus {opus_ref}.")	
+			else:
+				if SourceMetaKeys.NB_PAGES_OF_MUSIC in iiif_src.metadata:
+					nb_music_pages = iiif_src.metadata[SourceMetaKeys.NB_PAGES_OF_MUSIC]
+					context["total_pages"] += nb_music_pages
+				if SourceMetaKeys.IIIF_PROVIDER_ID in iiif_src.metadata:
+					iiif_link = iiif3_mod.GALLICA_URL + iiif_src.metadata[SourceMetaKeys.IIIF_PROVIDER_ID]
+					
+			line = {"opus": opus, "nb_music_pages": nb_music_pages,
+						"iiif_link": iiif_link}
+			context["list_opus"].append(line)
+			
 		t = SimpleTemplateResponse('home/export_dataset/list_opus.tex', context).render()
-		with open(os.path.join(f"{PATH_TO_DATASET}", 'list_opus.tex'), 'w',encoding='utf8') as filehandle:
-			filehandle.write(str(t.rendered_content))
+		target = os.path.join(f"{PATH_TO_LATEX}", 'list_opus.tex')
+		with open(target, 'w',encoding='utf8') as filehandle:
+			content = str(t.rendered_content).replace('{ ', '{').replace(' }', '}')
+			filehandle.write(content)
+		print (f"Data written to file {target}")
 
 	@staticmethod 
 	def copy_dmos(source, target):
