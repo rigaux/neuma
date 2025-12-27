@@ -1266,11 +1266,23 @@ class Opus(models.Model):
 			
 			print (f"Got the IIIF manifest. Nb canvases {iiif_manifest.nb_canvases()}")
 			omr_score.manifest.add_image_info (iiif_manifest.get_images()) 
+			
+			# Trick: ensure that each pages refers to the
+			# IIIF service
+			i_img = 1
+			for image in iiif_manifest.get_images():
+				first_music_page = omr_score.manifest.first_music_page 
+				if (i_img >= first_music_page
+						and i_img <= omr_score.manifest.last_music_page):
+					mnf_page = omr_score.manifest.pages[i_img-first_music_page]
+					mnf_page.set_iiif_service(image.service)
+					print (f"Add image {mnf_page.url} to the source manifest")
+				i_img += 1
 
 			iiif_source.manifest.id = iiif_source.full_ref()
 			print (f"Save the manifest with id {iiif_source.manifest.id}")
 			iiif_source.manifest = ContentFile(json.dumps(omr_score.manifest.to_json()), name="score_manifest.json")
-			
+
 			# Add metadata to the source
 			serveur_url, iiif_id = iiif3_mod.decompose_url(iiif_source.url)
 			iiif_source.add_meta("first_page_of_music", omr_score.manifest.first_music_page)

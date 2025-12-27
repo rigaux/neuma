@@ -5,16 +5,16 @@
   \label{tab-dataset}
   
 
-\begin{tabular}{p{5cm}|p{1cm}|p{5cm}}
-\textbf{Title} & \textbf{Images} & \textbf{\#pages} \\
+\begin{tabular}{p{4cm}|l|p{1cm}|p{5cm}}
+\textbf{Title} & \textbf{Genre} & \textbf{Images} & \textbf{\#pages/systems/meas.} \\
 \hline
 {% for line in list_opus %}
-{{line.opus.title|safe}} & 
+{{line.opus.title|safe}} &  &
 \href{ {{line.iiif_link|safe}} }{Link}
- & {{line.nb_music_pages}} \\
+ & {{line.nb_music_pages}} / {{line.nb_systems}} / {{line.nb_measures}}  \\
 {% endfor %}
 \hline
-Summary &  & {{total_pages}} \\
+Summary &  & & {{total_pages}} / {{total_systems}} / {{total_measures}} \\
 \hline
 \end{tabular}
 \end{table*}

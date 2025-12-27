@@ -371,7 +371,10 @@ class OmrScore:
 			src_page = source_mod.MnfPage(page.page_url, page.no_page, 0, 0,
 										manifest)
 			for system in page.systems:
-				src_system = source_mod.MnfSystem(system.no_system_in_page, src_page,
+				# URL not known at this point. Could be
+				src_system = source_mod.MnfSystem(system.no_system_in_page, 
+												None, 
+												src_page,
 												system.region.to_json())
 				src_page.add_system(src_system)
 				
@@ -402,6 +405,7 @@ class OmrScore:
 				for measure in system.measures:
 					src_measure = source_mod.MnfMeasure(measure.no_measure_in_score, 
 													  measure.no_measure_in_system,
+													  None, # IIIF url not known. Could be
 													  "", # So far we do not know the MEI id
 													  src_system,
 														measure.region.to_json())

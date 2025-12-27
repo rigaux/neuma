@@ -765,7 +765,8 @@ class Workflow:
 			shutil.copyfile(predicted_origin, predicted_dest)
 		print (f"{i_opus} opus have been exported")
 		
-		context = {"total_pages": 0} 
+		context = {"total_pages": 0, "total_systems": 0,
+						"total_measures": 0} 
 		context["list_opus"] = []
 		for opus in corpus.get_opera():
 			nb_music_pages =  0
@@ -773,17 +774,29 @@ class Workflow:
 			iiif_src = opus.get_source(source_mod.ItemSource.IIIF_REF)
 			if iiif_src is None:
 				print (f"No IIIF source for opus {opus_ref}.")	
-			else:
-				if SourceMetaKeys.NB_PAGES_OF_MUSIC in iiif_src.metadata:
-					nb_music_pages = iiif_src.metadata[SourceMetaKeys.NB_PAGES_OF_MUSIC]
-					context["total_pages"] += nb_music_pages
-				if SourceMetaKeys.IIIF_PROVIDER_ID in iiif_src.metadata:
-					iiif_link = iiif3_mod.GALLICA_URL + iiif_src.metadata[SourceMetaKeys.IIIF_PROVIDER_ID]
-					
-			line = {"opus": opus, "nb_music_pages": nb_music_pages,
-						"iiif_link": iiif_link}
-			context["list_opus"].append(line)
+				break
+			if not (iiif_src.iiif_manifest) or iiif_src.iiif_manifest == {}:
+				print (f"No manifest in IIIF source for opus {opus_ref}.")	
+				break
+			# Get the manifest
+			print (f"Take the manifest from the source")
+			with open(iiif_src.manifest.path, "r") as f:
+				manifest = source_mod.Manifest.from_json(json.load(f))
 			
+			if SourceMetaKeys.IIIF_PROVIDER_ID in iiif_src.metadata:
+				iiif_link = iiif3_mod.GALLICA_URL + iiif_src.metadata[SourceMetaKeys.IIIF_PROVIDER_ID]
+					
+			line = {"opus": opus, 
+					"nb_music_pages": manifest.nb_pages_of_music(),
+					"nb_systems":  manifest.nb_systems(),
+					"nb_measures": manifest.nb_measures(),
+					"iiif_link": iiif_link}
+			context["list_opus"].append(line)
+			context["total_pages"] += manifest.nb_pages_of_music()
+			context["total_systems"] += manifest.nb_systems()
+			context["total_measures"] += manifest.nb_measures()
+			break
+	
 		t = SimpleTemplateResponse('home/export_dataset/list_opus.tex', context).render()
 		target = os.path.join(f"{PATH_TO_LATEX}", 'list_opus.tex')
 		with open(target, 'w',encoding='utf8') as filehandle:

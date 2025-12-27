@@ -360,8 +360,19 @@ class Manifest:
 		
 		# Oups should never happpen
 		raise score_mod.CScoreModelError (f"Searching a non existing page : {nb}" )
+
 	def nb_pages_of_music(self):
 		return self.last_music_page - self.first_music_page  + 1
+	def nb_systems(self):
+		nbs = 0
+		for page in self.pages:
+			nbs += page.nb_systems()
+		return nbs
+	def nb_measures(self):
+		nbm = 0
+		for page in self.pages:
+			nbm += page.nb_measures()
+		return nbm
 		
 	def add_image_info(self, images):
 		"""
@@ -514,6 +525,15 @@ class MnfPage:
 		self.systems  = []
 		self.groups = {}
 
+	def nb_systems(self):
+		return len(self.systems)
+		
+	def nb_measures(self):
+		nbm = 0
+		for system in self.systems:
+			nbm +=  system.nb_measures()
+		return nbm
+
 	def add_system(self, system):
 		self.systems.append(system)
 		
@@ -553,20 +573,36 @@ class MnfPage:
 				if not id_part in self.groups.keys():
 					score_mod.logger.info (f"Found a staff group in page {self.url} for part {id_part}")
 					self.groups[id_part] = staves
+	
+	def set_iiif_service(self, service):
+		# Set the URL of the page to the IIIF service,
+		# and propagate to the systems
+		self.url =  service.iiif_url()
+		for system in self.systems:
+			system.set_service (service)
 
 class MnfSystem:
 	'''
 		A system in a page, containing staves
 	'''
 	
-	def __init__(self, number, page, region=None) :
+	def __init__(self, number, url, page, region=None) :
 		self.page = page
+		self.url = url
 		self.number = number
 		self.staves  = []
 		self.measures  = []
 		self.groups = {}
 		self.region = MnfRegion(region)
 
+	def set_service(self, service):
+		# Use a IIIF service to create the system image URL
+		iiif_region =  self.region.xywh()
+		self.url = service.iiif_url(region=iiif_region)
+		print (f"System {self.number}. URL {self.url}")
+		for measure in self.measures:
+			measure.set_service(service)
+			
 	def add_staff(self, staff):
 		self.staves.append(staff)
 		
@@ -577,6 +613,9 @@ class MnfSystem:
 		
 		# Oups should never happpen
 		raise score_mod.CScoreModelError (f"Searching a non existing staff {id_staff} in system {self.number}")
+
+	def nb_measures(self):
+		return len(self.measures)
 
 	def add_measure(self, measure):
 		self.measures.append(measure)
@@ -590,7 +629,8 @@ class MnfSystem:
 
 	@staticmethod
 	def from_json (json_mnf, page):
-		system = MnfSystem(json_mnf["number"], page, json_mnf["region"])
+		system = MnfSystem(json_mnf["number"], json_mnf["url"],
+					page, json_mnf["region"])
 		for json_staff in json_mnf["staves"]:
 			staff = MnfStaff.from_json(json_staff, system)
 			system.add_staff(staff)
@@ -610,6 +650,7 @@ class MnfSystem:
 		for measure in self.measures:
 			measures_json.append(measure.to_json())
 		return {"number": self.number, 
+				"url": self.url,
 				"region": self.region.to_json(),
 				"staves": staves_json,
 				"measures": measures_json
@@ -735,16 +776,25 @@ class MnfMeasure:
 		A measure in a system, covering all the staves
 	'''
 	
-	def __init__(self, no_measure, no_in_system, mei_id, system, region) :
+	def __init__(self, no_measure, no_in_system, url,
+					mei_id, system, region) :
 		self.system = system
 		self.number = no_measure
 		self.number_in_system = no_in_system
+		self.url = url
 		self.mei_id = mei_id
 		self.region = MnfRegion(region)				
-		
+	
+	def set_service(self, service):
+		# Use a IIIF service to create the system image URL
+		iiif_region =  self.region.xywh()
+		self.url = service.iiif_url(region=iiif_region)
+		print (f"\tMeasure {self.number}. URL {self.url}")
+
 	def to_json (self):
 		return {"number": self.number, 
 				"number_in_system": self.number_in_system, 
+				"url": self.url,
 				"mei_id": self.mei_id,
 				"region": self.region.to_json()}
 	
@@ -752,6 +802,7 @@ class MnfMeasure:
 	def from_json (json_measure, system):
 		measure = MnfMeasure(json_measure["number"], 
 							json_measure["number_in_system"], 
+							json_measure["url"], 
 							json_measure["mei_id"], 
 							system, json_measure["region"])
 		return measure
@@ -822,11 +873,31 @@ class MnfRegion:
 			res.append (pt.to_json())
 		return res
 	
+	# Compute the bounding box and return (x, y, w, h)
+	def bb(self):
+		min_x = 32767
+		max_x = 0
+		min_y = 32767
+		max_y= 0
+		for pt in self.contour:
+			if pt.x < min_x:
+				min_x = pt.x
+			if pt.x > max_x:
+				max_x = pt.x
+			if pt.y < min_y:
+				min_y = pt.y
+			if pt.y > max_y:
+				max_y = pt.y
+		return (min_x, min_y, max_x - min_x, max_y - min_y)
+		
 	@staticmethod
 	def from_json (json_region):
 		region = []
 		for json_point in json_region:
 			region.append(MnfPoint(json_point))
 		return MnfRegion(region)
-
-
+	
+	def xywh(self):
+		# Return a string with the IIIF region syntax
+		(x, y, w, h) = self.bb()
+		return f"{x},{y},{w},{h}"

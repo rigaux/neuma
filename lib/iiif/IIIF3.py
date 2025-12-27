@@ -74,9 +74,20 @@ class Service ():
 	def to_dict(self):
 		return {"id": self.id,
 				"type" : self.type}
+
+	def __str__(self):
+		return self.id
+	
 	@staticmethod 
 	def from_dict(service_dict):
 		return Service (service_dict.id)
+
+	def iiif_url(self, region='full', size='max', rotation= 0):
+		if size=='max':
+			return self.id + f"/{region}/{size}/{rotation}/default.jpg"
+		else:		
+			return self.id + f"/{region}/{size}/{rotation}/default.jpg"
+
 
 class Metadata ():
 	'''
@@ -456,12 +467,14 @@ class ImageBody(Body):
 		self.prezi_body.width=width
 		self.prezi_body.height=height
 		self.prezi_body.format="image/jpeg"
+		self.service = service
 		
 		# Add the service ref TODO : create a proper representation of the service
-		#self.prezi_body.service = {"id": service, "type": "ImageService3"}
+		if service is not None:
+			self.prezi_body.service = service.to_dict()
 
 	def __str__ (self):
-		return self.id
+		return f"{self.id} ({self.width}x{self.height})"
 
 	def to_dict(self):
 		return self.prezi_body
