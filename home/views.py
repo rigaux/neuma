@@ -154,6 +154,16 @@ def iiif (request, iiif_id, viewer):
 		return render(request, 'home/univ-viewer.html', context)
 	else:
 		return render(request, 'home/mirador.html', context)
+
+def verovio (request, source_id):
+	""" Display a viewer on a MusicXML or MEI source"""
+	
+	# Format attendu par Gallica
+	source = OpusSource.objects.get(id=source_id)
+
+	context = {"opus_ref": source.opus.ref,
+				"mei_url": source.file_rest_url()}
+	return render(request, 'home/verovio.html', context)
 		
 def export_corpus_as_zip (request, corpus_ref):
 	""" Export the list of XML files of this corpus"""

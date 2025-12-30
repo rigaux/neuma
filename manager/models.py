@@ -1458,6 +1458,12 @@ class OpusSource (models.Model):
 		"""
 		return reverse('home:source', args=[self.opus.ref, self.ref])
 
+	def file_url (self):
+		return settings.NEUMA_BASE_URL + self.source_file.url
+
+	def file_rest_url (self):
+		return reverse ('rest:handle_source_file_request', args=[self.opus.ref, self.ref])
+
 	def full_ref(self):
 		return self.opus.ref + '/_sources/' + self.ref 
 		
@@ -1548,8 +1554,6 @@ class OpusSource (models.Model):
 		self.metadata[mkey] = mvalue 
 		self.save()
 
-	def file_rest_url (self):
-		return reverse ('rest:handle_source_file_request', args=[self.opus.ref, self.ref])
 
 	def decode_editions(self):
 		# Decode the list of JSON editions as a list of objects

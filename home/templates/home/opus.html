@@ -137,11 +137,17 @@ var tabNames = [
             {% if source.url %}      
                 <a target="_blank" href="{{source.url}}">Link to the source</a> |
             {% endif %} 
+			 {% if source.ref == 'ref_mei' or source.ref == 'mei' or source.ref == 'musicxml' %}
+			      | <a href="{% url 'home:show_with_verovio' source.id  %}" target=”_blank”>
+			                   Show (verovio) </a>
+			     <!--| <a href="{% url 'home:iiif_viewer' source.id 'mirador'  %}" target=”_blank”>
+			                   View with Mirador </a> --> 
+			{% endif %}           
           {% if source.ref == 'iiif' %}
               | <a href="{% url 'home:iiif_viewer' source.id 'uv'  %}" target=”_blank”>
-                           View with Universal viewer </a>
-              | <a href="{% url 'home:iiif_viewer' source.id 'mirador'  %}" target=”_blank”>
-                           View with Mirador </a>
+                           Show (Universal viewer)</a>
+             <!--| <a href="{% url 'home:iiif_viewer' source.id 'mirador'  %}" target=”_blank”>
+                           View with Mirador </a> --> 
         {% endif %}           
 		{% if source.source_type.code == 'SYNC' %}
 		  |  Playing the synchronisation with  <a href="https://theseusviewer.org/?iiif-content={{my_url}}{{source.file_rest_url|urlencode}}" target=”_blank”>
@@ -257,7 +263,8 @@ var tabNames = [
 </display-verovio-score>
     {% else %}
 	<!-- We get the score from a REST call. No caching but slow . -->
-	<display-verovio-score opus_ref="{{opus.ref}}" mei_url="{{opus_file_url}}">
+	{{opus.ref}} {{opus_file_url}}
+		<display-verovio-score opus_ref="{{opus.ref}}" mei_url="{{opus_file_url}}">
 </display-verovio-score>
      {% endif %}
 	{% else %}

@@ -20,6 +20,7 @@ urlpatterns = [
 	re_path(r'^contact$', NeumaView.as_view(template_name="home/contact.html"), name='contact'),
 	re_path(r'^testVerovio', NeumaView.as_view(template_name="home/testVerovio.html"), name='contact'),
 	path('iiif/<str:iiif_id>/<str:viewer>', views.iiif, name='iiif_viewer'),
+	path('verovio/<str:source_id>', views.verovio, name='show_with_verovio'),
 	re_path(r'^test', NeumaView.as_view(template_name="home/test.html"), name='test'),
 	re_path(r'^auth', AuthView.as_view(template_name="home/index.html"), name='auth'),
 	re_path(r'^form_login', TemplateView.as_view(template_name="home/form_login.html"), name='form_login'),
