@@ -410,7 +410,7 @@ class Manifest:
 		except ValueError:
 			raise Exception(f"Manifest::add_image_info. Image {ids_in_pages[0][-1].url} is not in the list of Manifest images ")
 
-		print (f"First and last pages : {self.first_music_page} {self.last_music_page}")
+		#print (f"First and last pages : {self.first_music_page} {self.last_music_page}")
 	
 	def add_part(self, part):
 		self.parts[part.id] = part
@@ -446,6 +446,9 @@ class Manifest:
 		manifest = Manifest( json_mnf["id"], json_mnf["url"], 
 							json_mnf["first_music_page"])
 
+		if "last_music_page" in json_mnf:
+			manifest.last_music_page = json_mnf["last_music_page"]
+
 		# First decode the parts
 		for json_part in json_mnf["parts"]:
 			part = MnfPart.from_json(json_part)
@@ -470,6 +473,7 @@ class Manifest:
 			parts_json.append(part.to_json())
 		return {"id": self.id, "url": self.url, 
 			     "first_music_page":self.first_music_page,
+			     "last_music_page":self.last_music_page,
 			     "pages": pages_json, "parts": parts_json}
 
 	def create_groups(self):
@@ -599,7 +603,7 @@ class MnfSystem:
 		# Use a IIIF service to create the system image URL
 		iiif_region =  self.region.xywh()
 		self.url = service.iiif_url(region=iiif_region)
-		print (f"System {self.number}. URL {self.url}")
+		#print (f"System {self.number}. URL {self.url}")
 		for measure in self.measures:
 			measure.set_service(service)
 			
@@ -789,7 +793,7 @@ class MnfMeasure:
 		# Use a IIIF service to create the system image URL
 		iiif_region =  self.region.xywh()
 		self.url = service.iiif_url(region=iiif_region)
-		print (f"\tMeasure {self.number}. URL {self.url}")
+		#print (f"\tMeasure {self.number}. URL {self.url}")
 
 	def to_json (self):
 		return {"number": self.number, 

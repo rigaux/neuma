@@ -3,15 +3,16 @@
   \centering
   \caption{Summary of dataset content}
   \label{tab-dataset}
-  
 
-\begin{tabular}{p{4cm}|l|p{1cm}|p{5cm}}
-\textbf{Title} & \textbf{Genre} & \textbf{Images} & \textbf{\#pages/systems/meas.} \\
+
+\begin{tabular}{p{4cm}|l|p{1cm}|r|r}
+\textbf{Title} & \textbf{Genre} & \textbf{Images} & \textbf{\#pages/systems/meas.} 
+       & \rotatebox[origin=c]{90}{\textbf{Lyrics}} \\
 \hline
 {% for line in list_opus %}
 {{line.opus.title|safe}} &  &
 \href{ {{line.iiif_link|safe}} }{Link}
- & {{line.nb_music_pages}} / {{line.nb_systems}} / {{line.nb_measures}}  \\
+ & {{line.nb_music_pages}} / {{line.nb_systems}} / {{line.nb_measures}} & {{line.with_lyrics}} \\
 {% endfor %}
 \hline
 Summary &  & & {{total_pages}} / {{total_systems}} / {{total_measures}} \\

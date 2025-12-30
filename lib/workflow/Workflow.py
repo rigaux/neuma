@@ -771,6 +771,7 @@ class Workflow:
 		for opus in corpus.get_opera():
 			nb_music_pages =  0
 			iiif_link = ""
+			with_lyrics = False
 			iiif_src = opus.get_source(source_mod.ItemSource.IIIF_REF)
 			if iiif_src is None:
 				print (f"No IIIF source for opus {opus_ref}.")	
@@ -779,23 +780,26 @@ class Workflow:
 				print (f"No manifest in IIIF source for opus {opus_ref}.")	
 				break
 			# Get the manifest
-			print (f"Take the manifest from the source")
+			print (f"Take the manifest of {opus.ref} from the source")
 			with open(iiif_src.manifest.path, "r") as f:
 				manifest = source_mod.Manifest.from_json(json.load(f))
 			
 			if SourceMetaKeys.IIIF_PROVIDER_ID in iiif_src.metadata:
 				iiif_link = iiif3_mod.GALLICA_URL + iiif_src.metadata[SourceMetaKeys.IIIF_PROVIDER_ID]
+			if SourceMetaKeys.WITH_LYRICS in iiif_src.metadata:
+				with_lyrics = iiif_src.metadata[SourceMetaKeys.WITH_LYRICS]
 					
 			line = {"opus": opus, 
 					"nb_music_pages": manifest.nb_pages_of_music(),
 					"nb_systems":  manifest.nb_systems(),
 					"nb_measures": manifest.nb_measures(),
-					"iiif_link": iiif_link}
+					"iiif_link": iiif_link,
+					"with_lyrics": with_lyrics}
 			context["list_opus"].append(line)
 			context["total_pages"] += manifest.nb_pages_of_music()
 			context["total_systems"] += manifest.nb_systems()
 			context["total_measures"] += manifest.nb_measures()
-			break
+			#break
 	
 		t = SimpleTemplateResponse('home/export_dataset/list_opus.tex', context).render()
 		target = os.path.join(f"{PATH_TO_LATEX}", 'list_opus.tex')

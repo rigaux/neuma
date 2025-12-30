@@ -234,6 +234,13 @@ class OmrScore:
 		#self.date = json_data["date"]
 		self.json_data = json_data
 		
+		# We record some information on notational peculiarities
+		self.clef_changes = False
+		self.keysign_changes = False
+		self.with_lyrics = False
+		self.timesign_changes = False
+		self.multi_staves_voice = False
+		
 		# The Score, obtained after a call to get_score
 		self.score = None 
 		
@@ -744,6 +751,7 @@ class OmrScore:
 										self.creator, self.uri, header.clef.id, 
 										page.page_url, header.clef.symbol.region.string_xyhw(), constants_mod.IREGION_SYMBOL_CONCEPT)
 									score.add_annotation (annotation)
+									self.chef_changes = True
 								else:
 									logger.info (f"Clef {clef_staff} found on staff {header.no_staff} without change. Ignored.")									
 
@@ -763,6 +771,7 @@ class OmrScore:
 										self.creator, self.uri, header.time_signature.id, 
 										page.page_url, header.time_signature.region.string_xyhw(), constants_mod.IREGION_SYMBOL_CONCEPT)
 									score.add_annotation (annotation)
+									self.timesign_changes = True
 							#else:
 							#	logger.warning (f"Null region or XML ID for a time signature. No annotation produced")
 
@@ -781,6 +790,7 @@ class OmrScore:
 									score.add_annotation (annotation)
 								else:
 									logger.error (f"Null region or XML ID for a key signature. Ignored")
+								self.keyssign_changes = True
 							else:
 								logger.info (f'Key signature {key_sign} found on staff {header.no_staff} at measure {current_measure_no} without change. Ignored.')
 					
@@ -873,6 +883,7 @@ class OmrScore:
 										move = self.move_to_correct_staff(event, voice_part.main_staff)
 										if move is not None:
 											self.post_editions.append(move)
+											self.multi_staves_voice = True
 									elif event.is_chord():
 										for note in event.notes:
 											move = self.move_to_correct_staff(note, voice_part.main_staff)
@@ -921,7 +932,7 @@ class OmrScore:
 				logger.warning (f"An element over measure limit must be removed but has no id. Ignored")			
 	
 		# Remove in the XML file the pseudo-beam
-		self.post_editions.append( editions_mod.Edition (editions_mod.Edition.CLEAN_BEAM, "score"))
+		self.post_editions.append(editions_mod.Edition (editions_mod.Edition.CLEAN_BEAM, "score"))
 
 		# Compute accidentals representation
 		score.make_accidentals()
@@ -1002,6 +1013,7 @@ class OmrScore:
 				for syl in voice_item.note_attr.syllables:
 					event.add_syllable(syl["text"],nb=i_verse,dashed=syl["followed_by_dash"])
 					i_verse += 1
+					self.lyrics = True
 			elif len(events) > 1:
 				# A chord
 				logger.info (f'Adding a chord with {len(events)} notes.')

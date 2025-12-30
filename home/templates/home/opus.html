@@ -263,7 +263,6 @@ var tabNames = [
 </display-verovio-score>
     {% else %}
 	<!-- We get the score from a REST call. No caching but slow . -->
-	{{opus.ref}} {{opus_file_url}}
 		<display-verovio-score opus_ref="{{opus.ref}}" mei_url="{{opus_file_url}}">
 </display-verovio-score>
      {% endif %}

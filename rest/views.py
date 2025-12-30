@@ -742,23 +742,29 @@ class SourceFile (APIView):
 	def get(self, request, full_neuma_ref, source_ref):
 		source = self.get_object(full_neuma_ref, source_ref)
 		if source.source_file:
-			with open(source.source_file.path, "r") as f:
-				file_name = full_neuma_ref.replace (':','-') + '-' + source.ref
-				if source.source_type.mime_type == "application/xml":
-					file_name += ".xml"
-				if source.source_type.mime_type == "application/json":
-					file_name += ".json"
-				content = f.read()
-				resp = FileResponse(content) 
-				if file_name == "manifest.json":
+			try:
+				with open(source.source_file.path, "r", encoding='utf-8') as f:				
+					content = f.read()
+			except Exception as e:
+				# Try utf16 instead
+				with open(source.source_file.path, "r", encoding='utf-16') as f:				
+					content = f.read()
+						
+			file_name = full_neuma_ref.replace (':','-') + '-' + source.ref
+			if source.source_type.mime_type == "application/xml":
+				file_name += ".xml"
+			if source.source_type.mime_type == "application/json":
+				file_name += ".json"
+			resp = FileResponse(content) 
+			if file_name == "manifest.json":
 					resp['Content-type'] =  "application/json"
-				else:
-					resp['Content-type'] =  source.source_type.mime_type
-				resp["Content-Disposition"] = f"attachment; filename={file_name}"
-				resp['Access-Control-Allow-Origin'] = '*'
-				resp['Access-Control-Allow-Credentials'] = "true"
-				resp['Access-Control-Allow-Methods'] = 'GET, OPTIONS'
-				resp['Access-Control-Allow-Headers'] = 'Access-Control-Allow-Headers, Origin, Accept, ' \
+			else:
+				resp['Content-type'] =  source.source_type.mime_type
+			resp["Content-Disposition"] = f"attachment; filename={file_name}"
+			resp['Access-Control-Allow-Origin'] = '*'
+			resp['Access-Control-Allow-Credentials'] = "true"
+			resp['Access-Control-Allow-Methods'] = 'GET, OPTIONS'
+			resp['Access-Control-Allow-Headers'] = 'Access-Control-Allow-Headers, Origin, Accept, ' \
                                                'X-Requested-With, Content-Type, Access-Control-Request-Method,' \
                                                ' Access-Control-Request-Headers, credentials'	
 			return resp
