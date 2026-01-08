@@ -116,8 +116,8 @@ class OpusSerializer(serializers.ModelSerializer):
 
 	def to_representation(self, instance):
 		# Here, 'instance' is an Opus
-		opusmeta = instance.to_serializable("abs_url")
-		return opusmeta.to_json()
+		
+		return instance.to_dict()
 """
    Ajouter: features, sources et files
 		return {"ref": self.ref,

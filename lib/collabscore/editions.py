@@ -1,5 +1,7 @@
 import sys 
 import lib.collabscore.parser as parser_mod
+import lib.music.file as file_mod
+
 PSEUDO_BEAM_ID = 99999
 
 # for XML editions
@@ -248,12 +250,17 @@ class Edition:
 			mxml_doc.write (xml_file)
 		elif format == "mei":
 			print (f"Open file {xml_file}")
+			mei_file = file_mod.MEI(xml_file)
+			mei_file.set_measures_id()
+			mei_file.write()
+			
 			mxml_doc = etree.parse(xml_file)
 			#  Just apply the move object  edition
 			for ed in post_editions:
 				if ed.name == Edition.MOVE_OBJECT_TO_STAFF:
 					# Assign an object to a staff. Done in the MusicXML file
 					ed.move_object_to_staff (mxml_doc, "mei")
+
 			# Write it back
 			mxml_doc.write (xml_file)
 

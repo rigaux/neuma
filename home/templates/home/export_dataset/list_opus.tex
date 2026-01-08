@@ -1,12 +1,12 @@
 
-\begin{table*}[h]
+\begin{table}[h]
   \centering
   \caption{Summary of dataset content}
   \label{tab-dataset}
 
 
-\begin{tabular}{p{4cm}|l|p{1cm}|r|r}
-\textbf{Title} & \textbf{Genre} & \textbf{Images} & \textbf{\#pages/systems/meas.} 
+\begin{tabular}{p{3cm}|l|l|r|r}
+\textbf{Title} & \textbf{Genre} & \textbf{Images} & \textbf{\#p/\#s/\#m} 
        & \rotatebox[origin=c]{90}{\textbf{Lyrics}} \\
 \hline
 {% for line in list_opus %}
@@ -18,4 +18,4 @@
 Summary &  & & {{total_pages}} / {{total_systems}} / {{total_measures}} \\
 \hline
 \end{tabular}
-\end{table*}
+\end{table}

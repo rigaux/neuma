@@ -748,6 +748,10 @@ class Workflow:
 			print (f"Exporting opus {opus.ref}")
 			ground_truth_src = opus.get_source(source_mod.ItemSource.MEI_GROUND_TRUTH_REF)
 			predicted_src = opus.get_source(source_mod.ItemSource.MEI_REF)
+			iiif_src = opus.get_source(source_mod.ItemSource.IIIF_REF)
+			if iiif_src is None:
+				print (f"No IIIF source for opus {opus_ref}.")	
+				break
 			if ground_truth_src is None:
 				print (f"No ground MEI for opus {opus.ref}. Export aborted")	
 				continue
@@ -763,6 +767,17 @@ class Workflow:
 			predicted_dest  = f"{PATH_TO_DATASET}/predicted/{opus.local_ref()}.mei"
 			print (f"Moving ground truth file {predicted_origin} to {predicted_dest}")
 			shutil.copyfile(predicted_origin, predicted_dest)
+
+			if not (iiif_src.iiif_manifest) or iiif_src.iiif_manifest == {}:
+				print (f"No IIIF manifest in IIIF source for opus {opus_ref}.")	
+				break
+			# Get the IIIF manifest
+			with open(iiif_src.iiif_manifest.path, "r") as f:
+				iiif_manifest = f.read()
+			mnf_name = f"{PATH_TO_DATASET}/ground_truth/{opus.local_ref()}_mnf.json"
+			with open(mnf_name, 'w',encoding='utf8') as filehandle:
+				filehandle.write(iiif_manifest)
+			print (f"Manifest written to file {mnf_name}")
 		print (f"{i_opus} opus have been exported")
 		
 		context = {"total_pages": 0, "total_systems": 0,
@@ -776,11 +791,10 @@ class Workflow:
 			if iiif_src is None:
 				print (f"No IIIF source for opus {opus_ref}.")	
 				break
-			if not (iiif_src.iiif_manifest) or iiif_src.iiif_manifest == {}:
-				print (f"No manifest in IIIF source for opus {opus_ref}.")	
+			if not (iiif_src.manifest) or iiif_src.manifest == {}:
+				print (f"No source manifest in IIIF source for opus {opus_ref}.")	
 				break
-			# Get the manifest
-			print (f"Take the manifest of {opus.ref} from the source")
+			# Get the source manifest
 			with open(iiif_src.manifest.path, "r") as f:
 				manifest = source_mod.Manifest.from_json(json.load(f))
 			

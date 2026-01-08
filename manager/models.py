@@ -1111,11 +1111,8 @@ class Opus(models.Model):
 				getattr(self, Opus.FILE_NAMES[fname]).save(fname, File(file_temp))
 		return
 
-	def to_dict(self, absolute_url):
+	def to_dict(self, absolute_url=None):
 		return self.to_collection_item().to_dict()
-	def to_serializable(self, absolute_url):
-		# DEPRECATED
-		return self.to_dict ()
 	def json(self, indent=2):
 		return self.to_collection_item().json(indent)
 
