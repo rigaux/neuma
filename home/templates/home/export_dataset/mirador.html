@@ -1,0 +1,42 @@
+{% extends 'home/export_dataset/dataset_layout.html' %} 
+
+{% load static i18n  %}
+
+
+{% block title %} 
+{% translate "Projet CollabScore" %} 
+{% endblock title %} 
+
+{% block content %}
+
+<!-- Include the CJS version from a CDN or from a local web server -->
+<script src="https://unpkg.com/mirador@latest/dist/mirador.min.js"></script>
+<!--
+  N.B.: The above line will always use the latest version. If a new major version is released,
+  your Mirador instance might break. Consider pinning it to a specific major version:
+  <script src="https://unpkg.com/mirador@^3/dist/mirador.min.js"></script>
+-->
+<!-- By default uses Roboto font. Be sure to load this or change the font -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500">
+
+
+<!-- Container element of Mirador whose id should be passed to the instantiating call as "id" -->
+<div id="my-mirador"/> 
+
+<script type="text/javascript">
+	let params = new URLSearchParams(document.location.search);
+	let ref = params.get("ref"); // The score ref
+	let file_ref = "iiif/" + ref + "_mnf.json"
+	
+var mirador = Mirador.viewer({
+  "id": "my-mirador",
+  "windows": [
+    {
+      "loadedManifest": "http://127.0.0.1:8080/" + file_ref,
+      "thumbnailNavigationPosition": 'far-bottom'
+    }
+  ]
+}); 
+</script>
+
+{% endblock content %}

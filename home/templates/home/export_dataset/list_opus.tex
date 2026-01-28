@@ -1,21 +1,40 @@
 
-\begin{table}[h]
+\begin{table*}[h]
   \centering
-  \caption{Summary of dataset content}
+  \caption{Summary of the dataset content}
   \label{tab-dataset}
 
-
-\begin{tabular}{p{3cm}|l|l|r|r}
-\textbf{Title} & \textbf{Genre} & \textbf{Images} & \textbf{\#p/\#s/\#m} 
-       & \rotatebox[origin=c]{90}{\textbf{Lyrics}} \\
+\begin{small}
+\begin{tabular}{l|l|l|l|r|r|r|c|c|c|c|c}
+\textbf{Title} & \textbf{Genre} 
+    & \textbf{Images} 
+	& \rotatebox[origin=c]{90}{\textbf{\#parts}}
+    & \rotatebox[origin=c]{90}{\textbf{\#pages}}
+	& \rotatebox[origin=c]{90}{\textbf{\#systems}}
+    & \rotatebox[origin=c]{90}{\textbf{\#measures}}
+    & \rotatebox[origin=c]{90}{\textbf{Lyrics}} 
+	& \rotatebox[origin=c]{90}{\textbf{Clef changes}} 
+	& \rotatebox[origin=c]{90}{\textbf{Ksign changes}} 
+	& \rotatebox[origin=c]{90}{\textbf{Tsign changes}} 
+	& \rotatebox[origin=c]{90}{\textbf{Cross-staff voices}} \\
 \hline
 {% for line in list_opus %}
-{{line.opus.title|safe}} &  &
-\href{ {{line.iiif_link|safe}} }{Link}
- & {{line.nb_music_pages}} / {{line.nb_systems}} / {{line.nb_measures}} & {{line.with_lyrics}} \\
+{{line.opus.title|safe}} & 
+   {{line.genre}} &
+\href{ {{line.iiif_link|safe}} }{Link} &
+  {{line.nb_parts}} &
+ {{line.nb_music_pages}} & 
+  {{line.nb_systems}} &
+  {{line.nb_measures}} & 
+  {{line.with_lyrics}} &
+  {{line.clef_changes}} &
+  {{line.ksign_changes}} &
+  {{line.tsign_changes}} &
+  {{line.cross_staff_voices}} \\
 {% endfor %}
 \hline
-Summary &  & & {{total_pages}} / {{total_systems}} / {{total_measures}} \\
+Summary &  & & & {{total_pages}} & {{total_systems}} & {{total_measures}} \\
 \hline
 \end{tabular}
-\end{table}
+\end{small}
+\end{table*}

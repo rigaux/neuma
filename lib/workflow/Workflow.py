@@ -761,7 +761,20 @@ class Workflow:
 			gt_origin = ground_truth_src.source_file.path
 			gt_dest  = f"{PATH_TO_DATASET}/ground_truth/{opus.local_ref()}.mei"
 			print (f"Moving ground truth file {gt_origin} to {gt_dest}")
-			shutil.copyfile(gt_origin, gt_dest)
+			# We read the content because we need some updates
+			"""with open(gt_origin, 'rb') as file:
+				raw_data = file.read()
+				result = chardet.detect(raw_data
+				encoding = result['encoding']
+"""
+			with open(gt_origin, "rb") as mei_file:
+				mei_raw  = mei_file.read()
+				try:
+					mei_content = mei_raw.decode("utf-8")
+				except Exception as ex:
+					mei_content = mei_raw.decode("utf-16")
+			with open(gt_dest, "w") as mei_dest:
+				mei_dest.write (mei_content)
 			
 			predicted_origin = predicted_src.source_file.path
 			predicted_dest  = f"{PATH_TO_DATASET}/predicted/{opus.local_ref()}.mei"
@@ -774,19 +787,17 @@ class Workflow:
 			# Get the IIIF manifest
 			with open(iiif_src.iiif_manifest.path, "r") as f:
 				iiif_manifest = f.read()
-			mnf_name = f"{PATH_TO_DATASET}/ground_truth/{opus.local_ref()}_mnf.json"
+			mnf_name = f"{PATH_TO_DATASET}/iiif/{opus.local_ref()}_mnf.json"
 			with open(mnf_name, 'w',encoding='utf8') as filehandle:
 				filehandle.write(iiif_manifest)
 			print (f"Manifest written to file {mnf_name}")
 		print (f"{i_opus} opus have been exported")
 		
+		
 		context = {"total_pages": 0, "total_systems": 0,
 						"total_measures": 0} 
 		context["list_opus"] = []
 		for opus in corpus.get_opera():
-			nb_music_pages =  0
-			iiif_link = ""
-			with_lyrics = False
 			iiif_src = opus.get_source(source_mod.ItemSource.IIIF_REF)
 			if iiif_src is None:
 				print (f"No IIIF source for opus {opus_ref}.")	
@@ -798,29 +809,76 @@ class Workflow:
 			with open(iiif_src.manifest.path, "r") as f:
 				manifest = source_mod.Manifest.from_json(json.load(f))
 			
-			if SourceMetaKeys.IIIF_PROVIDER_ID in iiif_src.metadata:
-				iiif_link = iiif3_mod.GALLICA_URL + iiif_src.metadata[SourceMetaKeys.IIIF_PROVIDER_ID]
-			if SourceMetaKeys.WITH_LYRICS in iiif_src.metadata:
-				with_lyrics = iiif_src.metadata[SourceMetaKeys.WITH_LYRICS]
-					
 			line = {"opus": opus, 
+					"nb_parts":  manifest.nb_parts(),
 					"nb_music_pages": manifest.nb_pages_of_music(),
 					"nb_systems":  manifest.nb_systems(),
 					"nb_measures": manifest.nb_measures(),
-					"iiif_link": iiif_link,
-					"with_lyrics": with_lyrics}
+					"genre": "",
+					"iiif_link": "",
+					"with_lyrics": 'N',
+					"clef_changes": 'N',
+					"ksign_changes": 'N',
+					"tsign_changes": 'N',
+					"cross_staff_voices": 'N'
+					}
+
+			if SourceMetaKeys.IIIF_PROVIDER_ID in iiif_src.metadata:
+				line['iiif_link'] = iiif3_mod.GALLICA_URL + iiif_src.metadata[SourceMetaKeys.IIIF_PROVIDER_ID]
+			if SourceMetaKeys.WITH_LYRICS in iiif_src.metadata:
+				if iiif_src.metadata[SourceMetaKeys.WITH_LYRICS]:
+					line['with_lyrics'] = 'Y'
+			if SourceMetaKeys.CLEF_CHANGES in iiif_src.metadata:
+				if iiif_src.metadata[SourceMetaKeys.CLEF_CHANGES]:
+					line['clef_changes'] = 'Y'
+			if SourceMetaKeys.KEY_SIGN_CHANGES in iiif_src.metadata:
+				if iiif_src.metadata[SourceMetaKeys.KEY_SIGN_CHANGES]:
+					line['ksign_changes'] = 'Y'
+			if SourceMetaKeys.TIME_SIGN_CHANGES in iiif_src.metadata:
+				if iiif_src.metadata[SourceMetaKeys.TIME_SIGN_CHANGES]:
+					line['tsign_changes'] = 'Y'
+			if SourceMetaKeys.MULTI_STAVES_VOICE in iiif_src.metadata:
+				if iiif_src.metadata[SourceMetaKeys.MULTI_STAVES_VOICE]:
+					line['cross_staff_voices'] = 'Y'
+			if SourceMetaKeys.GENRE in iiif_src.metadata:
+				genre = iiif_src.metadata[SourceMetaKeys.GENRE]
+				_, _, line['genre'] = genre.partition("Genre musical : ")
+					
 			context["list_opus"].append(line)
 			context["total_pages"] += manifest.nb_pages_of_music()
 			context["total_systems"] += manifest.nb_systems()
 			context["total_measures"] += manifest.nb_measures()
 			#break
 	
+		# Latex file for the paper
 		t = SimpleTemplateResponse('home/export_dataset/list_opus.tex', context).render()
 		target = os.path.join(f"{PATH_TO_LATEX}", 'list_opus.tex')
 		with open(target, 'w',encoding='utf8') as filehandle:
 			content = str(t.rendered_content).replace('{ ', '{').replace(' }', '}')
 			filehandle.write(content)
-		print (f"Data written to file {target}")
+		print (f"Latex list written to file {target}")
+			
+		# HTML file for the dataset
+		t = SimpleTemplateResponse('home/export_dataset/list_opus.html', context).render()
+		target = os.path.join(f"{PATH_TO_DATASET}", 'index.html')
+		with open(target, 'w',encoding='utf8') as filehandle:
+			content = str(t.rendered_content).replace('{ ', '{').replace(' }', '}')
+			filehandle.write(content)
+		print (f"HTML list written to file {target}")
+		# Mirador
+		t = SimpleTemplateResponse('home/export_dataset/mirador.html', context).render()
+		target = os.path.join(f"{PATH_TO_DATASET}", 'mirador.html')
+		with open(target, 'w',encoding='utf8') as filehandle:
+			content = str(t.rendered_content).replace('{ ', '{').replace(' }', '}')
+			filehandle.write(content)
+		print (f"Mirador script written to file {target}")
+		# Verovio
+		t = SimpleTemplateResponse('home/export_dataset/verovio.html', context).render()
+		target = os.path.join(f"{PATH_TO_DATASET}", 'verovio.html')
+		with open(target, 'w',encoding='utf8') as filehandle:
+			content = str(t.rendered_content).replace('{ ', '{').replace(' }', '}')
+			filehandle.write(content)
+		print (f"Verovio script written to file {target}")
 
 	@staticmethod 
 	def copy_dmos(source, target):

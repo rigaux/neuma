@@ -1,0 +1,38 @@
+{% extends 'home/export_dataset/dataset_layout.html' %} 
+
+{% load static i18n  %}
+
+
+{% block title %} 
+{% translate "Verovio" %} 
+{% endblock title %} 
+
+{% block content %}
+<div class="panel-body">
+    <div id="app" class="panel" style="border: 1px solid lightgray; min-height: 800px;"></div>
+</div>
+
+<script type="module">
+    import 'https://editor.verovio.org/javascript/app/verovio-app.js';
+
+    // Create the app - here with an empty option object
+    const app = new Verovio.App(document.getElementById("app"), {});
+	let params = new URLSearchParams(document.location.search);
+	let type = params.get("type"); // The score ref
+	let ref = params.get("ref"); // The score ref
+	let file_ref = "predicted/" + ref + ".mei"
+	if (type == "gt") {
+		file_ref = "ground_truth/" + ref + ".mei"
+	}
+    // Load a file (MEI or MusicXML)
+    fetch("http://127.0.0.1:8080/" + file_ref )
+        .then(function(response) {
+            return response.text();
+        })
+        .then(function(text) {
+            app.loadData(text);
+        });
+</script>
+ 
+
+{% endblock content %}

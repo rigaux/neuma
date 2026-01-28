@@ -61,7 +61,6 @@ class Duration:
 	def __repr__(self):
 		return f'Duration({self.m21_duration.quarterLength})'
 
-
 class Event:
 	'''
 		Super-class for anything (note, rest, chord, clef) that occurs 
@@ -513,8 +512,10 @@ class Dynamics (Decoration):
 	
 	PIANO="p"
 	PIANISSIMO="pp"
+	PIANISSISSIMO="ppp"
 	FORTE="f"
 	FORTISSIMO="ff"
+	FORTISSISSIMO="fff"
 	MEZZOPIANO="mp"
 	MEZZOFORTE="mf"
 	
@@ -525,10 +526,14 @@ class Dynamics (Decoration):
 			self.m21_object = m21.dynamics.Dynamic('p')
 		elif dyn_type == Dynamics.PIANISSIMO:
 			self.m21_object = m21.dynamics.Dynamic('pp')
+		elif dyn_type == Dynamics.PIANISSISSIMO:
+			self.m21_object = m21.dynamics.Dynamic('ppp')
 		elif dyn_type == Dynamics.FORTE:
 			self.m21_object = m21.dynamics.Dynamic('f')
 		elif dyn_type == Dynamics.FORTISSIMO:
 			self.m21_object = m21.dynamics.Dynamic('ff')
+		elif dyn_type == Dynamics.FORTISSISSIMO:
+			self.m21_object = m21.dynamics.Dynamic('fff')
 		elif dyn_type == Dynamics.MEZZOPIANO:
 			self.m21_object = m21.dynamics.Dynamic('mp')
 		elif dyn_type == Dynamics.MEZZOFORTE:

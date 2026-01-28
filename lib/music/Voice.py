@@ -90,6 +90,7 @@ class Voice:
 
 	def remove_hidden_events(self):
 		# We rebuild the voice without hidden events
+		
 		self.m21_stream.clear()
 		
 		old_events = self.events

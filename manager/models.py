@@ -1264,14 +1264,13 @@ class Opus(models.Model):
 			print (f"Got the IIIF manifest. Nb canvases {iiif_manifest.nb_canvases()}")
 			omr_score.manifest.add_image_info (iiif_manifest.get_images()) 
 			
-
 			# Trick: ensure that each pages refers to the
 			# IIIF service
 			i_img = 1
 			for image in iiif_manifest.get_images():
 				first_music_page = omr_score.manifest.first_music_page 
 				last_music_page = omr_score.manifest.last_music_page 
-				print (f"First and last: [{first_music_page},{last_music_page}]. img no {i_img}")
+				#print (f"First and last: [{first_music_page},{last_music_page}]. img no {i_img}")
 				if (i_img >= first_music_page
 						and i_img <= omr_score.manifest.last_music_page):
 					mnf_page = omr_score.manifest.pages[i_img-first_music_page]
@@ -1291,14 +1290,20 @@ class Opus(models.Model):
 			iiif_source.add_meta("iiif_provider_url", serveur_url)
 			iiif_source.add_meta("iiif_provider_id", iiif_id)
 			iiif_source.add_meta("nb_parts", omr_score.manifest.nb_parts())
-			iiif_source.add_meta(SourceMetaKeys.WITH_LYRICS, omr_score.lyrics)
+			iiif_source.add_meta(SourceMetaKeys.WITH_LYRICS, omr_score.with_lyrics)
 			iiif_source.add_meta(SourceMetaKeys.CLEF_CHANGES, omr_score.clef_changes)
 			iiif_source.add_meta(SourceMetaKeys.TIME_SIGN_CHANGES, omr_score.timesign_changes)
 			iiif_source.add_meta(SourceMetaKeys.KEY_SIGN_CHANGES, omr_score.keysign_changes)
 			iiif_source.add_meta(SourceMetaKeys.MULTI_STAVES_VOICE, omr_score.multi_staves_voice)
+			# Some metadata can be found in the IIIF manifest
+			genre = iiif_manifest.get_metadata('Type')
+			print (f"Found genre {genre}")
+			if genre is not None:
+				iiif_source.add_meta(SourceMetaKeys.GENRE, genre)
+				
 
 			iiif_source.save()
-			print (f"Score features. Lyrics : {omr_score.lyrics} Multi staves {omr_score.multi_staves_voice}. Clef/tsign/keysign ch. {omr_score.clef_changes} / {omr_score.timesign_changes} / {omr_score.keysign_changes}")
+			print (f"Score features. Lyrics : {omr_score.with_lyrics} Multi staves {omr_score.multi_staves_voice}. Clef/tsign/keysign ch. {omr_score.clef_changes} / {omr_score.timesign_changes} / {omr_score.keysign_changes}")
 		
 			# Now we know the full url of the MEI document
 			score.uri = mei_source.source_file.url
@@ -1386,6 +1391,7 @@ class SourceMetaKeys (models.TextChoices):
 	IIIF_PROVIDER_URL = "iiif_provider_url", _("URL of IIIF documents provider")
 	IIIF_PROVIDER_ID = "iiif_provider_id", _("ID of the document at provider")
 	NB_PARTS = "nb_parts", _("Number of parts")
+	GENRE = "genre", _("Genre")
 
 class OpusSource (models.Model):
 	'''A link to a source that contains the representation of an Opus.

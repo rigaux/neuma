@@ -1,0 +1,88 @@
+{% load static i18n  %}
+
+
+<!DOCTYPE HTML>
+<!--
+	Editorial by HTML5 UP
+	html5up.net | @ajlkn
+	Free for personal and commercial use under the CCA 3.0 license (html5up.net/license)
+-->
+<html>
+	<head>
+		<title>Site du projet ANR CollabScore</title>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+		<link rel="stylesheet" href="cscore/css/main.css" />
+	</head>
+	<body class="is-preload">
+
+  
+		<!-- Wrapper -->
+			<div id="wrapper">
+
+				<!-- Main -->
+					<div id="main">
+						<div class="inner">
+
+							<!-- Header -->
+								<header id="header">
+									<div  class="logo"><img src="cscore/images/collabscore.svg"/>
+									<br/>
+											<p>Un projet de numérisation collaborative de partitions musicales</p>
+									</div>
+									<ul class="icons">
+										<li><a href="http://anr.fr" class="icon brands"><img width="100"  src="cscore/images/logoAnr.png"/></a><br/>
+										    Financé par l'Agence nationale de la recherche</li>
+									</ul>
+								</header>
+ 
+
+     							{% block content %}
+     {{jojo}}
+      							{% endblock content %}
+
+						</div>
+					</div>
+
+				<!-- Sidebar -->
+					<div id="sidebar">
+						<div class="inner">
+
+								<!-- Menu -->
+								<nav id="menu">
+									<header class="major">
+										<h2>Menu</h2>
+									</header>
+									<ul>
+										<li>Choice 1</li>
+         	</ul>
+								</nav>
+
+
+							<!-- Section -->
+								<section>
+									<header class="major">
+										<h2>Contact</h2>
+									</header>
+									<p>Pour toute information complémentaire, vous pouvez contacter le coordinateur du projet:</p>
+									<ul class="contact">
+										<li class="icon solid fa-envelope"><a href="#">philippe.rigaux@cnam.fr</a></li>
+									</ul>
+								</section>
+
+						</div>
+
+					</div>
+
+			</div>
+
+
+		<!-- Scripts -->
+			<script src="{% static '/cscore//js/jquery.min.js' %}"></script>
+			<script src="{% static '/cscore//js/browser.min.js' %} "></script>
+			<script src="{% static '/cscore//js/breakpoints.min.js' %} "></script>
+			<script src="{% static '/cscore//js/util.js' %}"></script>
+			<script src="{% static '/cscore//js/main.js' %}"></script>
+
+	</body>
+</html>

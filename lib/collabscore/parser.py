@@ -751,7 +751,7 @@ class OmrScore:
 										self.creator, self.uri, header.clef.id, 
 										page.page_url, header.clef.symbol.region.string_xyhw(), constants_mod.IREGION_SYMBOL_CONCEPT)
 									score.add_annotation (annotation)
-									self.chef_changes = True
+									self.clef_changes = True
 								else:
 									logger.info (f"Clef {clef_staff} found on staff {header.no_staff} without change. Ignored.")									
 
@@ -790,7 +790,7 @@ class OmrScore:
 									score.add_annotation (annotation)
 								else:
 									logger.error (f"Null region or XML ID for a key signature. Ignored")
-								self.keyssign_changes = True
+								self.keysign_changes = True
 							else:
 								logger.info (f'Key signature {key_sign} found on staff {header.no_staff} at measure {current_measure_no} without change. Ignored.')
 					
@@ -1013,7 +1013,7 @@ class OmrScore:
 				for syl in voice_item.note_attr.syllables:
 					event.add_syllable(syl["text"],nb=i_verse,dashed=syl["followed_by_dash"])
 					i_verse += 1
-					self.lyrics = True
+					self.with_lyrics = True
 			elif len(events) > 1:
 				# A chord
 				logger.info (f'Adding a chord with {len(events)} notes.')
@@ -1138,7 +1138,10 @@ class OmrScore:
 	def write_as_mei(self, mxml_file, out_file):
 		self.get_score().write_as_mei (mxml_file, out_file)
 		print ("\nApplying post-editions to the MEI file\n")
-		Edition.apply_editions_to_file (self.post_editions, out_file, "mei")
+		try:
+			Edition.apply_editions_to_file (self.post_editions, out_file, "mei")
+		except Exception as e:
+			print (f"Exception when editing MEI file: {e}")
 		print ("\nPost-editions on MEI done\n")
 
 	def write_as_pickle(self, filename):

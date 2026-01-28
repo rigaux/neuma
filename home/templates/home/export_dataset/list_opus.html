@@ -1,0 +1,46 @@
+{% extends 'home/export_dataset/dataset_layout.html' %} 
+
+{% load static i18n  %}
+
+
+{% block title %} 
+{% translate "Projet CollabScore" %} 
+{% endblock title %} 
+
+{% block content %}
+
+
+<h2>Dataset content</h2>
+<table>
+	<tr>
+		<th>Code</th>
+		<th>Title</th>
+		<th>Genre</th>
+		<th>Images</th>
+		<th>Reference score</th>
+		<th>Predicted score</th>
+		<th>#part</th>
+		<th>#pages</th>
+		<th>#systems</th>
+		<th>#measures</th>
+	</tr>
+
+{% for line in list_opus %}
+<tr>
+
+	<td>{{line.opus.local_ref}}</td>
+	<td>{{line.opus.title|safe}}</td>
+	<td>{{line.genre|safe}}</td>
+	<td><a href="mirador.html?ref={{line.opus.local_ref}}" target="_blank">Show</a></td>
+	<td><a href="verovio.html?type=gt&ref={{line.opus.local_ref}}" target="_blank">Show</a></td>
+	<td><a href="verovio.html?type=predicted&ref={{line.opus.local_ref}}" target="_blank">Show</a></td>
+	<td>{{line.nb_parts}}</td>
+	<td>{{line.nb_music_pages}}</td>
+	<td>{{line.nb_systems}}</td>
+	<td>{{line.nb_measures}}</td>
+</tr>
+{% endfor %}
+
+
+</table>
+{% endblock content %}

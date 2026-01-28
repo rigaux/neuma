@@ -225,7 +225,12 @@ class Manifest ():
 		self.prezi_manifest.requiredStatement = required_stmt.to_dict()
 	def add_metadata (self, metadata):
 		self.prezi_manifest.metadata.append(metadata.to_dict())
-
+	def get_metadata (self, key):
+		for meta in self.prezi_manifest.metadata:
+			if key in meta.label['fr']:
+				return meta.value['fr'][0]
+		return None
+		
 	@staticmethod
 	def load_from_dict(manifest_dict):
 		label = Property.from_dict(manifest_dict["label"])

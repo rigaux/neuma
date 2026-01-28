@@ -9,7 +9,6 @@ import converter21
 converter21.register() 
 import verovio
 
-
 # Voice is a complex class defined in a separate file
 from .Voice import Voice
 from . import notation
@@ -492,7 +491,7 @@ class Part:
 	def add_accidental (self, pitch_class, acc):
 		# Record accidentals met in a measure
 		self.accidentals[pitch_class] = acc
-				
+
 	def get_part_staff (self, no_staff):
 		# Given the number of the staff, returns the 
 		# corresponding part staff
@@ -640,11 +639,11 @@ class Part:
 		"""
 		if default_ts is not None:
 			default_ts = default_ts.copy()
-			default_ts.set_by_default(f"default_ts_{self.id}")
+			default_ts.set_by_default(f"default_ts_{self.id}_{measure_no}")
 			measure.add_time_signature(default_ts)
 		if default_ks is not None:
 			default_ks = default_ks.copy()
-			default_ks.set_by_default(f"default_ks_{self.id}")
+			default_ks.set_by_default(f"default_ks_{self.id}_{measure_no}")
 			self.current_key_signature = default_ks
 			measure.add_key_signature(default_ks)
 
@@ -987,7 +986,7 @@ class Measure:
 		self.m21_measure.insert (0, voice.m21_stream)
 		# The absolute position of the voice is that of the measure
 		#voice.absolute_position = self.absolute_position
-		
+
 	def add_system_break(self):
 		system_break = m21.layout.SystemLayout(isNew=True)
 		self.m21_measure.insert (system_break)
@@ -1010,13 +1009,17 @@ class Measure:
 		   expected duration
 		 """
 		
+		
 		# List of events removed 
 		list_removals = []
 		
 		# First get the time signature in effect
 		for voice in self.voices:
-			# Is it really better ?
-			voice.remove_hidden_events()
+			# Do we really want to do that ? If
+			# yes, then we must take care of the
+			# elements inserted in the voice which 
+			# are cleared by this procedure (for instance dynamics)
+			#voice.remove_hidden_events()
 			
 			bar_duration = self.get_expected_duration()
 			if voice.get_duration() > bar_duration:					
