@@ -809,7 +809,8 @@ class Workflow:
 			with open(iiif_src.manifest.path, "r") as f:
 				manifest = source_mod.Manifest.from_json(json.load(f))
 			
-			line = {"opus": opus, 
+			line = {"ref": opus.local_ref(), 
+					"title":  opus.title,
 					"nb_parts":  manifest.nb_parts(),
 					"nb_music_pages": manifest.nb_pages_of_music(),
 					"nb_systems":  manifest.nb_systems(),
@@ -850,6 +851,11 @@ class Workflow:
 			context["total_measures"] += manifest.nb_measures()
 			#break
 	
+		# JSON output of the list
+		target = os.path.join(f"{PATH_TO_DATASET}", 'dataset.json')
+		with open(target, 'w',encoding='utf8') as filehandle:
+			json.dump(context, filehandle)
+
 		# Latex file for the paper
 		t = SimpleTemplateResponse('home/export_dataset/list_opus.tex', context).render()
 		target = os.path.join(f"{PATH_TO_LATEX}", 'list_opus.tex')

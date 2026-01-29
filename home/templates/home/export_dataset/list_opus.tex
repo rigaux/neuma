@@ -19,7 +19,7 @@
 	& \rotatebox[origin=c]{90}{\textbf{Cross-staff voices}} \\
 \hline
 {% for line in list_opus %}
-{{line.opus.title|safe}} & 
+{{line.title|safe}} & 
    {{line.genre}} &
 \href{ {{line.iiif_link|safe}} }{Link} &
   {{line.nb_parts}} &

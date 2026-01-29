@@ -2,9 +2,8 @@
 
 {% load static i18n  %}
 
-
 {% block title %} 
-{% translate "Projet CollabScore" %} 
+{% translate "The CollabScore dataset" %} 
 {% endblock title %} 
 
 {% block content %}
@@ -28,8 +27,8 @@
 {% for line in list_opus %}
 <tr>
 
-	<td>{{line.opus.local_ref}}</td>
-	<td>{{line.opus.title|safe}}</td>
+	<td>{{line.ref}}</td>
+	<td>{{line.title|safe}}</td>
 	<td>{{line.genre|safe}}</td>
 	<td><a href="mirador.html?ref={{line.opus.local_ref}}" target="_blank">Show</a></td>
 	<td><a href="verovio.html?type=gt&ref={{line.opus.local_ref}}" target="_blank">Show</a></td>
