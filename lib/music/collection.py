@@ -115,6 +115,7 @@ class CollectionItem:
 		self.subtitle = subtitle
 		self.collection_ref = collection_ref
 		if composer is not None:
+			print (f"Found composer {composer}")
 			if mode == Collection.FROM_OBJECT:
 				self.composer = composer.to_dict()
 			else:
@@ -138,6 +139,7 @@ class CollectionItem:
 				"local_ref": self.local_ref, 
 				"collection_ref": self.collection_ref,
 				"title": self.title, 
+				"subtitle": self.subtitle, 
 				"description": self.description,
 				"composer": self.composer,
 				"metadata": self.metadata}
@@ -164,15 +166,22 @@ class CollectionItem:
 			dict_opus["metadata"] = []
 		###
 		
+		if "subtitle" not in dict_opus:
+			subtitle = None
+		else:
+			subtitle = dict_opus["subtitle"]
+			
 		item = CollectionItem(dict_opus["url"], 
 							dict_opus["collection_ref"],
 							dict_opus["ref"],
 							dict_opus["title"],
+							subtitle,
 							dict_opus["composer"],
 							dict_opus["description"],
 							dict_opus["metadata"],
 							dict_opus["features"],
 							Collection.FROM_DICT)
+			
 		for source_dict in dict_opus["sources"]:
 			item_source = source_mod.ItemSource.from_dict (source_dict)
 			item.add_source (item_source)

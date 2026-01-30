@@ -97,6 +97,10 @@ class IndexWrapper:
 			music_summary.opus_id = opus.ref
 			msummary_for_es = music_summary.encode()
 
+			if opus.composer is not None:
+				composer = opus.composer.name_and_dates()
+			else:
+				composer = None
 			opus_index = OpusIndex(
 				meta={'id': opus.ref, 'index': settings.ELASTIC_SEARCH["index"]},
 				corpus_ref=opus.corpus.ref,
@@ -104,7 +108,7 @@ class IndexWrapper:
 				local_ref=opus.local_ref(),
 				summary = msummary_for_es,
 				title=opus.title,
-				composer=opus.composer.name_and_dates()
+				composer=composer
 			)
 			
 			# Add features if any
