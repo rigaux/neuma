@@ -1132,7 +1132,7 @@ class OmrScore:
 		print (f"\nWriting as MusicXML in {out_file}")
 		score.write_as_musicxml (out_file)
 		print ("\nApplying post-editions to the MusicXML file\n")
-		#Edition.apply_editions_to_file (self.post_editions, out_file)
+		Edition.apply_editions_to_file (self.post_editions, out_file)
 		print ("\nPost-editions on MusicXML done\n")
 
 	def write_as_mei(self, mxml_file, out_file):
