@@ -748,6 +748,7 @@ class Workflow:
 			print (f"Exporting opus {opus.ref}")
 			ground_truth_src = opus.get_source(source_mod.ItemSource.MEI_GROUND_TRUTH_REF)
 			predicted_src = opus.get_source(source_mod.ItemSource.MEI_REF)
+			predicted_src_xml = opus.get_source(source_mod.ItemSource.MUSICXML_REF)
 			iiif_src = opus.get_source(source_mod.ItemSource.IIIF_REF)
 			if iiif_src is None:
 				print (f"No IIIF source for opus {opus_ref}.")	
@@ -758,15 +759,14 @@ class Workflow:
 			if predicted_src is None:
 				print (f"No predicted MEI for opus {opus.ref}. Export aborted")	
 				continue
+			if predicted_src_xml is None:
+				print (f"No predicted MusicXML for opus {opus.ref}. Export aborted")	
+				continue
+			"""
+			The gt now is fully in the dataset
 			gt_origin = ground_truth_src.source_file.path
 			gt_dest  = f"{PATH_TO_DATASET}/ground_truth/{opus.local_ref()}.mei"
 			print (f"Moving ground truth file {gt_origin} to {gt_dest}")
-			# We read the content because we need some updates
-			"""with open(gt_origin, 'rb') as file:
-				raw_data = file.read()
-				result = chardet.detect(raw_data
-				encoding = result['encoding']
-"""
 			with open(gt_origin, "rb") as mei_file:
 				mei_raw  = mei_file.read()
 				try:
@@ -775,12 +775,17 @@ class Workflow:
 					mei_content = mei_raw.decode("utf-16")
 			with open(gt_dest, "w") as mei_dest:
 				mei_dest.write (mei_content)
-			
+			"""
 			predicted_origin = predicted_src.source_file.path
 			predicted_dest  = f"{PATH_TO_DATASET}/predicted/{opus.local_ref()}.mei"
-			print (f"Moving ground truth file {predicted_origin} to {predicted_dest}")
+			print (f"Moving predicted file {predicted_origin} to {predicted_dest}")
 			shutil.copyfile(predicted_origin, predicted_dest)
-
+			# We also move the XML
+			predicted_origin = predicted_src_xml.source_file.path
+			predicted_dest  = f"{PATH_TO_DATASET}/predicted/{opus.local_ref()}.musicxml"
+			print (f"Moving predicted file {predicted_origin} to {predicted_dest}")
+			shutil.copyfile(predicted_origin, predicted_dest)
+	
 			if not (iiif_src.iiif_manifest) or iiif_src.iiif_manifest == {}:
 				print (f"No IIIF manifest in IIIF source for opus {opus_ref}.")	
 				break

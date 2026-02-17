@@ -185,37 +185,38 @@ class Edition:
 
 		return 
 
-	def append_objects(self, mxml_doc, divisions):
+	def append_objects(self, mxml_doc, divisions, format="musicxml"):
 		''' 
 		    Objects have been removed from a voice
 		    after conversion. We reinsert them directly in the file
 		'''
 		object_id = self.target
-		list_events = self.params["events"]		
+		list_events = self.params["events"]
 
-		target = mxml_doc.find(f".//*[@id = '{object_id}']")
-		if target is not None:
-			# If the part contains more than one voice, we want
-			# to reuse the MusicXML voice id of the target for removed elements
-			voice_el = target.find("./voice")
-			if voice_el is not None:
-				voice = voice_el.text
+		if format=="musicxml":
+			target = mxml_doc.find(f".//*[@id = '{object_id}']")
+			if target is not None:
+				# If the part contains more than one voice, we want
+				# to reuse the MusicXML voice id of the target for removed elements
+				voice_el = target.find("./voice")
+				if voice_el is not None:
+					voice = voice_el.text
+				else:
+					voice = None
+				parser_mod.logger.info (f"Append removed elements after object {object_id}. Divisions={divisions}")
+				parent = target.getparent()
+				#print(f"Object found " + str(etree.tostring(target)))
+				for removed in list_events:
+					parser_mod.logger.info (f"\t\tAppend object {removed.id}")
+					musicxml_elements = removed.to_musicxml(divisions)
+					for el in musicxml_elements:
+						if voice is not None:
+							v = etree.SubElement(el, 'voice')
+							v.text = str(voice)
+						self.insert_after(parent, target, el)
+						target = el
 			else:
-				voice = None
-			parser_mod.logger.info (f"Append removed elements after object {object_id}. Divisions={divisions}")
-			parent = target.getparent()
-			#print(f"Object found " + str(etree.tostring(target)))
-			for removed in list_events:
-				parser_mod.logger.info (f"\t\tAppend object {removed.id}")
-				musicxml_elements = removed.to_musicxml(divisions)
-				for el in musicxml_elements:
-					if voice is not None:
-						v = etree.SubElement(el, 'voice')
-						v.text = str(voice)
-					self.insert_after(parent, target, el)
-					target = el
-		else:
-			print (f"Event {object_id} not found in the file")
+				print (f"Event {object_id} not found in the file")
 
 		
 	def insert_after(self, parent, element, new_element):
@@ -243,7 +244,7 @@ class Edition:
 					# Assign an object to a staff. Done in the MusicXML file
 					ed.move_object_to_staff (mxml_doc)
 				elif ed.name == Edition.CLEAN_BEAM:
-					# Assign an object to a staff. Done in the MusicXML file
+					# Remove temporary beams
 					ed.clean_beam (mxml_doc)
 	
 			# Write it back

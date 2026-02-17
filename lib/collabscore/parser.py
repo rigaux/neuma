@@ -291,6 +291,8 @@ class OmrScore:
 		current_measure_no = 1
 		current_key_signature = None
 		current_time_signature = None
+		next_syll_follows_a_dash = False
+
 		for page in self.pages:
 			# Get the page from the manifest
 			mnf_page = self.manifest.get_page(page.no_page)
@@ -315,10 +317,14 @@ class OmrScore:
 					#for header in measure.headers:
 					#	print (header) 
 					if headers.signature is not None:
-						# We found an occurrence 
+						# We found an occurrence. Check if a change occured
 						if current_time_signature is None or not headers.signature.equals(current_time_signature):
 							self.ts_per_measure[current_measure_no] = headers.signature
 							current_time_signature = headers.signature
+						else:
+							# We can erase this redundant signature
+							headers.signature = None
+							
 					fix_editions += headers.fix_editions
 					
 					# Ok now check voices
@@ -341,6 +347,20 @@ class OmrScore:
 								if not item.clef_attr.id in clefs_already_met.keys():
 									clefs_already_met[item.clef_attr.id] = 1
 									cleaned_items.append(item)
+							elif item.note_attr is not None and item.note_attr.has_lyrics:
+								for syl in item.note_attr.syllables:
+									if next_syll_follows_a_dash:
+										syl["follows_a_dash"] = True
+										next_syll_follows_a_dash = False
+									else:
+										syl["follows_a_dash"] = False
+										
+									if syl["followed_by_dash"]:
+										# We must inform the next syllable that it follows a dash 
+										next_syll_follows_a_dash = True
+									else:
+										next_syll_follows_a_dash = False
+								cleaned_items.append(item)
 							else:
 								cleaned_items.append(item)
 						voice.items = cleaned_items
@@ -350,8 +370,8 @@ class OmrScore:
 		# Show the list of signature changes
 		#for meas_no, sign in self.ks_per_measure.items():
 		#	print (f"Found a key signature change at measure {meas_no}: {sign}")
-		#for meas_no, sign in self.ts_per_measure.items():
-		#	print (f"Found a time signature change at measure {meas_no}: {sign}")
+		for meas_no, sign in self.ts_per_measure.items():
+			print (f"Found a time signature change at measure {meas_no}: {sign}")
 
 		# Determine the default signature
 		if 1 not in  self.ks_per_measure.keys():
@@ -590,6 +610,15 @@ class OmrScore:
 								score.add_annotation (annot_mod.Annotation.create_from_error (
 										self.creator, self.uri, header.clef.id, error.message))
 						if header.time_signature is not None:
+							# Annotate the TS with its region
+							if header.time_signature.region is not None and header.time_signature.id is not None:
+								logger.info (f'New time signature  {header.time_signature} with id {header.time_signature.id} found on staff {header.no_staff} at measure {current_measure_no}')
+								annotation = annot_mod.Annotation.create_annot_from_xml_to_image(
+									self.creator, self.uri, header.time_signature.id, 
+									page.page_url, header.time_signature.region.string_xyhw(), constants_mod.IREGION_SYMBOL_CONCEPT)
+								score.add_annotation (annotation)
+							#else:
+							#	logger.warning (f"Null region or XML ID for a time signature. No annotation produced")
 							for error in header.time_signature.errors:
 								score.add_annotation (annot_mod.Annotation.create_from_error (
 										self.creator, self.uri, header.time_signature.id, error.message))
@@ -707,14 +736,22 @@ class OmrScore:
 					# Create a new measure for each part
 					for part in score.get_parts():
 						logger.info (f"Adding measure {current_measure_no} to part {part.id}")
+						part.add_measure (current_measure_no)
 						# We initialize the measure signatures with the current defaults
 						default_ks = None
 						if current_measure_no in self.ks_per_measure.keys():
 							default_ks = self.ks_per_measure[current_measure_no]
+							# The current signature change for this part
+							#part.set_current_key_signature (default_ks)
+							# TODO: apply the same logic than the TS below
 						default_ts =None
 						if current_measure_no in self.ts_per_measure.keys():
-							default_ts = self.ts_per_measure[current_measure_no]
-						part.add_measure (current_measure_no, default_ts, default_ks)
+							# The current signature change for this part. 
+							# Important for "empty" parts (eg voices that enter after a while)
+							# for which we do no  find a signature on the staff. Cf marins de Kermor
+							print (f"Changing time signature for part {part.id} at measure {current_measure_no}")
+							part.set_current_time_signature (self.ts_per_measure[current_measure_no])
+						#part.add_measure (current_measure_no, default_ts, default_ks)
 						part.reset_voice_counter()
 
 						# Adding page and system breaks
@@ -755,26 +792,14 @@ class OmrScore:
 								else:
 									logger.info (f"Clef {clef_staff} found on staff {header.no_staff} without change. Ignored.")									
 
+						"""
 						if header.time_signature is not None:
 							logger.info (f'Found time signature  {header.time_signature} on staff {header.no_staff} at measure {current_measure_no}')
 							new_time_signature = header.time_signature.get_notation_object()
 							# We assign the TS specifically to the current parts: the id is preserved
 							changed_ts = part.set_current_time_signature (new_time_signature, mnf_staff.number_in_part)			
-							if not changed_ts:
-								logger.info (f'Time signature  {new_time_signature} with id {new_time_signature.id} found on staff {header.no_staff} at measure {current_measure_no} without change. Ignored.')
-								
-							# Annotate the key with its region
-							if header.time_signature.region is not None and header.time_signature.id is not None:
-								if changed_ts:
-									logger.info (f'New time signature  {new_time_signature} with id {new_time_signature.id} found on staff {header.no_staff} at measure {current_measure_no}')
-									annotation = annot_mod.Annotation.create_annot_from_xml_to_image(
-										self.creator, self.uri, header.time_signature.id, 
-										page.page_url, header.time_signature.region.string_xyhw(), constants_mod.IREGION_SYMBOL_CONCEPT)
-									score.add_annotation (annotation)
-									self.timesign_changes = True
-							#else:
-							#	logger.warning (f"Null region or XML ID for a time signature. No annotation produced")
-
+						"""
+						
 						if header.key_signature is not None:
 							key_sign = header.key_signature.get_notation_object()
 							# The key signature impacts all subsequent events on the staff
@@ -1011,7 +1036,9 @@ class OmrScore:
 				# Is there a syllable ?
 				i_verse = 1
 				for syl in voice_item.note_attr.syllables:
-					event.add_syllable(syl["text"],nb=i_verse,dashed=syl["followed_by_dash"])
+					event.add_syllable(syl["text"],nb=i_verse,
+									dashed=syl["followed_by_dash"],
+									follows_a_dash=syl["follows_a_dash"])
 					i_verse += 1
 					self.with_lyrics = True
 			elif len(events) > 1:
@@ -1137,13 +1164,15 @@ class OmrScore:
 
 	def write_as_mei(self, mxml_file, out_file):
 		self.get_score().write_as_mei (mxml_file, out_file)
+		print ("\nWARNING: We do not apply post editions to the MEI as long as we rely on the Verovio converter\n")
+		"""
 		print ("\nApplying post-editions to the MEI file\n")
 		try:
 			Edition.apply_editions_to_file (self.post_editions, out_file, "mei")
 		except Exception as e:
 			print (f"Exception when editing MEI file: {e}")
 		print ("\nPost-editions on MEI done\n")
-
+		"""
 	def write_as_pickle(self, filename):
 		self.get_score().write_as_pickle (filename)
 
@@ -1390,11 +1419,13 @@ class NoteAttr:
 		self.heads = []
 		self.visible = True
 		self.syllables = []
+		self.has_lyrics = False
 		if "visible" in json_note_attr:
 			self.visible = json_note_attr["visible"]
 		if "syllable" in json_note_attr:
 			self.syllables.append(json_note_attr["syllable"])
 		if "verses" in json_note_attr:
+			self.has_lyrics = True
 			for syl in json_note_attr["verses"]:
 				self.syllables.append(syl)
 		for json_head in json_note_attr["heads"]:

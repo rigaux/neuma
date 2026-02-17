@@ -9,11 +9,18 @@ import converter21
 converter21.register() 
 import verovio
 
+# This constant determines which converter is userd: VEROVIO or CONVERTER21
+CONVERTER_MEI="VEROVIO"
+#CONVERTER_MEI="CONVERTER21"
+
 # Voice is a complex class defined in a separate file
 from .Voice import Voice
 from . import notation
 from . import events
 from .constants import ID_SEPARATOR
+
+
+from fractions import Fraction
 
 logging.basicConfig(level=logging.WARNING)
 logger = logging.getLogger(__name__)
@@ -172,10 +179,7 @@ class Score:
 		converter.freeze(self.m21_score, fp=filename)
 
 	def write_as_mei(self, mxml_file,  mei_name):
-			''' Produce the MEI encoding from MusicXML thanks to Converter21'''
-			self.m21_score.write ("mei", mei_name)
-
-	def vrv_write_as_mei(self, mxml_file, mei_name):
+		if CONVERTER_MEI=="VEROVIO":
 			''' Produce the MEI encoding from MusicXML thanks to Verovio'''
 			# Verovio converter. Works fine, and takes into account
 			# post editions on the MusicXML file
@@ -184,6 +188,10 @@ class Score:
 			print (f"Convert {mxml_file} to MEI and write in {mei_name}")
 			with open(mei_name, "w") as mei_file:
 				mei_file.write(tk.getMEI())
+		else:
+			''' Produce the MEI encoding from MusicXML thanks to Converter21'''
+			self.m21_score.write ("mei", mei_name)
+
 
 	def write_as_midi(self, filename):
 			''' Produce the MIDI encoding thanks to Verovio'''
@@ -557,33 +565,32 @@ class Part:
 			#	return True
 		
 	def set_current_time_signature (self, ts, no_staff=1):
+		# 
+		# This method is only called when a change occurs in the TS
 		if self.part_type == Part.GROUP_PART:
-			# Propagate it to the subpart
-			subpart = self.get_part_staff (no_staff)
-			changed_ts = subpart.set_current_time_signature(ts)			
-
-			# Keep the current at the global part level
-			if changed_ts:
-				self.current_time_signature = ts
-				if self.current_measure is not None:
-					self.current_measure.replace_time_signature(ts)
-				
+			self.current_time_signature = ts
+			if self.current_measure is not None:
+				self.current_measure.replace_time_signature(ts)
+			# Propagate it to the subparts
+			no_staff = 1
+			for staff_part in self.staff_group: 
+				staff_part.set_current_time_signature(ts)
 				## TRICK ! See the comment in set_key_signature
 				if no_staff == 2:
 					first_staff_part = self.get_part_staff (1)
-					first_staff_ts = first_staff_part.current_measure.initial_ts 
-					first_staff_ts.id = f"{first_staff_ts.id}{ID_SEPARATOR}{ts.id}"
-					first_staff_ts.m21_time_signature.id = first_staff_ts.id
-			return changed_ts
+					if first_staff_part.current_measure is not None:
+						# Can be None when the score is initialized
+						first_staff_ts = first_staff_part.current_measure.initial_ts 
+						first_staff_ts.id = f"{first_staff_ts.id}{ID_SEPARATOR}{ts.id}"
+						first_staff_ts.m21_time_signature.id = first_staff_ts.id
+				no_staff += 1
+			return True
 		else:
-			if self.current_time_signature.equals(ts) and not self.current_time_signature.is_by_default:
-				return False
-			else:
-				self.current_time_signature = ts
-				if self.current_measure is not None:
-					# Might be done during part initialization
-					self.current_measure.replace_time_signature(ts)
-				return True
+			self.current_time_signature = ts
+			if self.current_measure is not None:
+				# Might be done during part initialization
+				self.current_measure.replace_time_signature(ts)
+			return True
 		
 	def get_clef_at_pos (self, position=0):
 		# Find, in the stream of clef, the clef valid at the given pos
@@ -718,7 +725,7 @@ class Part:
 		for measure in  self.get_current_measures():
 			measure.add_page_break()
 	
-	def insert_measure (self, position, measure):
+	def insert_measure_not_used (self, position, measure):
 		logger.info (f'Inserting measure {measure.no} at position {position} in part {self.id}')
 		if not self.part_type == Part.GROUP_PART:
 			self.m21_part.insert(position, measure.m21_measure)
@@ -949,6 +956,7 @@ class Measure:
 		# A measure may have an initial clef. The first measure MUST have an initial clef
 		# This is tested in check_measure_consistency()
 		self.initial_clef = None 
+		
 	def set_initial_clef (self, clef, abs_position=0):
 		# We add the clef to music 21 measure. 
 		relative_position = abs_position - self.absolute_position 
@@ -1013,6 +1021,19 @@ class Measure:
 		# List of events removed 
 		list_removals = []
 		
+		# Duration of the bar
+		bar_duration = self.get_expected_duration()
+
+		if len (self.voices) == 0: 
+			# We add to staff 1. Can we do better ?
+			pseudo_voice = Voice (self.part, self.part.id + "-v1")
+			fraction = Fraction(bar_duration)
+			duration = events.Duration(fraction.numerator,fraction.denominator) #, whole=True)
+			logger.warning (f"Measure {self.id} is empty. We add a pause {fraction.numerator}/{fraction.denominator}")
+			pause = events.Rest(duration, 1)
+			pseudo_voice.append_event(pause)
+			self.add_voice (pseudo_voice)
+			return list_removals
 		# First get the time signature in effect
 		for voice in self.voices:
 			# Do we really want to do that ? If
@@ -1021,7 +1042,6 @@ class Measure:
 			# are cleared by this procedure (for instance dynamics)
 			#voice.remove_hidden_events()
 			
-			bar_duration = self.get_expected_duration()
 			if voice.get_duration() > bar_duration:					
 				logging.warning (f"Overduration in measure {self.id}. Expected duration: {bar_duration}. Voice {voice.id} duration is {voice.get_duration()}")
 				# Trying to fix this. Easy when we just have to complete the voice

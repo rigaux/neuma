@@ -317,9 +317,22 @@ class Note (Event):
 		self.id_tie = id_tie
 		self.m21_event.tie = m21.tie.Tie('stop')
 	
-	def add_syllable(self, txt, nb=1, dashed=False):
+	def add_syllable(self, txt, nb=1, dashed=False, follows_a_dash=False):
 		if dashed:
 			txt = txt + "-"
+		if follows_a_dash:
+			txt = "-" + txt 
+			#print (f"Syll middle {txt}")
+		
+		# French specific hack: 
+		if "!" in txt:
+			txt = txt.replace("!", " !")
+		if ";" in txt:
+			txt = txt.replace(";", " ;")
+		if ":" in txt: 
+			txt = txt.replace(":", " :")
+		if "?" in txt: 
+			txt = txt.replace("?", " ?")
 		lyric = m21.note.Lyric(text=txt,number=nb)
 		self.m21_event.lyrics.append(lyric)
 		
