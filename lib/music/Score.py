@@ -396,7 +396,9 @@ class Part:
 		self.id = id_part
 		self.staff_group = [] # For parts with multiple PartStaff
 		self.parent_part = None # For staff parts
-		
+
+		# A dictionary of clefs to show initially
+		self.initial_clef = {}
 		
 		if part_type==Part.GROUP_PART:
 			#print (f"Creating a part group for part {id_part}")
@@ -474,6 +476,28 @@ class Part:
 		self.voice_counter += 1
 		return self.voice_counter
 		
+	def set_initial_clefs(self, clefs):
+		self.initial_clefs = clefs
+
+	def ensure_initial_context(self, initial_ks, initial_ts):	
+		if self.current_measure.no == 1:
+			if self.current_measure.initial_clef is None:
+				if self.part_type==Part.GROUP_PART:
+					# TODO
+					pass
+				else:
+					# There should be exactly on clef in the dict
+					if len (self.initial_clefs.keys()) == 1:
+						for id_staff, clef in self.initial_clefs.items():
+							self.set_current_clef(clef, 1)
+							print (f"First measure has not clef for part {self.id}! Setting initial clef to {clef}")
+			if not self.current_measure.has_own_initial_ks:
+				if not self.part_type==Part.GROUP_PART:
+					print (f"First measure has not KS for part {self.id}! Setting initial KS to {initial_ks}")
+					initial_ks = initial_ks.copy()
+					initial_ks.set_by_default(f"initial_ks_{self.id}_{1}")
+					self.set_current_key_signature (initial_ks, 1)
+
 	def set_instrument(self, instr_name, instr_abbrev):
 		# The instrument gives informations about the part, 
 		# and in particular its id (which must be the 'partId' attribute) 
@@ -624,6 +648,7 @@ class Part:
 
 	def add_measure (self, measure_no, default_ts=None, default_ks=None):
 
+		# TODO: default TS and KS are no longer useful. To be done carefully
 		if self.part_type == Part.GROUP_PART:
 			# This is the measure of the group. It is not exported but we give an id anyway
 			id_measure = Measure.make_measure_id(self.id + "-group", measure_no)
@@ -639,7 +664,7 @@ class Part:
 				id_measure = Measure.make_measure_id(self.id, measure_no)
 				
 		measure = Measure(self, measure_no, id_measure)
-		
+					
 		""" Sometimes we must add a default signature. useful
 		    when a staff is missing for the part, while it is shown
 		    empty by the engraver (eg verovio)		
@@ -957,6 +982,7 @@ class Measure:
 		# This is tested in check_measure_consistency()
 		self.initial_clef = None 
 		
+	
 	def set_initial_clef (self, clef, abs_position=0):
 		# We add the clef to music 21 measure. 
 		relative_position = abs_position - self.absolute_position 
@@ -1024,16 +1050,6 @@ class Measure:
 		# Duration of the bar
 		bar_duration = self.get_expected_duration()
 
-		if len (self.voices) == 0: 
-			# We add to staff 1. Can we do better ?
-			pseudo_voice = Voice (self.part, self.part.id + "-v1")
-			fraction = Fraction(bar_duration)
-			duration = events.Duration(fraction.numerator,fraction.denominator) #, whole=True)
-			logger.warning (f"Measure {self.id} is empty. We add a pause {fraction.numerator}/{fraction.denominator}")
-			pause = events.Rest(duration, 1)
-			pseudo_voice.append_event(pause)
-			self.add_voice (pseudo_voice)
-			return list_removals
 		# First get the time signature in effect
 		for voice in self.voices:
 			# Do we really want to do that ? If
@@ -1055,6 +1071,24 @@ class Measure:
 				# incomplete voices are accepted
 
 		return list_removals
+
+	def is_empty(self):
+		# A measure without voice
+		if len (self.voices) == 0:
+			return True
+		else:
+			return False
+	
+	def fill_with_pause(self):
+		bar_duration = self.get_expected_duration()
+		pseudo_voice = Voice (self.part, self.part.id + "-v1")
+		fraction = Fraction(bar_duration)
+		duration = events.Duration(fraction.numerator,fraction.denominator) #, whole=True)
+		logger.warning (f"Measure {self.id} is empty. We add a pause {fraction.numerator}/{fraction.denominator}")
+		id_pause = "pause-" + str(events.Event.counter_event)
+		pause = events.Rest(duration, 1, id=id_pause)
+		pseudo_voice.append_event(pause)
+		self.add_voice (pseudo_voice)
 
 	def get_duration(self):
 		# Returns the measure duration based on it metric

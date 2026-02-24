@@ -246,7 +246,7 @@ class OmrScore:
 		
 		# We will set initial signatures in case one is missing
 		# on the initial measure
-		self.initial_key_signature = score_notation.KeySignature()
+		self.initial_key_signature = None
 		self.initial_time_signature = score_notation.TimeSignature()
 
 		# We keep the list of key and time signatures occurrences,
@@ -292,6 +292,13 @@ class OmrScore:
 		current_key_signature = None
 		current_time_signature = None
 		next_syll_follows_a_dash = False
+		
+		# We record the first clef met for a pârt: this
+		# allows to initialize correctly parts which are not
+		# shown on the first system
+		self.initial_clefs_for_part = {}
+		for id_part in self.manifest.parts.keys():
+			self.initial_clefs_for_part[id_part] = {}
 
 		for page in self.pages:
 			# Get the page from the manifest
@@ -308,6 +315,8 @@ class OmrScore:
 						if current_key_signature is None or not headers.signature.equals(current_key_signature):
 							self.ks_per_measure[current_measure_no] = headers.signature
 							current_key_signature = headers.signature
+							if self.initial_key_signature is None:
+								self.initial_key_signature = current_key_signature
 					# Disabled, do better for transposing instruments
 					#fix_editions += headers.fix_editions
 					# Check time signatures
@@ -321,10 +330,20 @@ class OmrScore:
 						if current_time_signature is None or not headers.signature.equals(current_time_signature):
 							self.ts_per_measure[current_measure_no] = headers.signature
 							current_time_signature = headers.signature
+							if self.initial_time_signature is None:
+								self.initial_time_signature = current_time_signature
 						else:
 							# We can erase this redundant signature
 							headers.signature = None
-							
+					# Now we determine the first clef for each part
+					for header in measure.headers:
+						if header.clef is not None:
+							mnf_staff = mnf_system.get_staff(header.no_staff)
+							id_part = mnf_staff.get_part_id()
+							clef_staff = header.clef.get_notation_clef()
+							if header.no_staff not in self.initial_clefs_for_part[id_part]:
+								self.initial_clefs_for_part[id_part][header.no_staff] = clef_staff
+
 					fix_editions += headers.fix_editions
 					
 					# Ok now check voices
@@ -370,8 +389,8 @@ class OmrScore:
 		# Show the list of signature changes
 		#for meas_no, sign in self.ks_per_measure.items():
 		#	print (f"Found a key signature change at measure {meas_no}: {sign}")
-		for meas_no, sign in self.ts_per_measure.items():
-			print (f"Found a time signature change at measure {meas_no}: {sign}")
+		#for meas_no, sign in self.ts_per_measure.items():
+		#	print (f"Found a time signature change at measure {meas_no}: {sign}")
 
 		# Determine the default signature
 		if 1 not in  self.ks_per_measure.keys():
@@ -749,9 +768,8 @@ class OmrScore:
 							# The current signature change for this part. 
 							# Important for "empty" parts (eg voices that enter after a while)
 							# for which we do no  find a signature on the staff. Cf marins de Kermor
-							print (f"Changing time signature for part {part.id} at measure {current_measure_no}")
+							#print (f"Changing time signature for part {part.id} at measure {current_measure_no}")
 							part.set_current_time_signature (self.ts_per_measure[current_measure_no])
-						#part.add_measure (current_measure_no, default_ts, default_ks)
 						part.reset_voice_counter()
 
 						# Adding page and system breaks
@@ -791,15 +809,7 @@ class OmrScore:
 									self.clef_changes = True
 								else:
 									logger.info (f"Clef {clef_staff} found on staff {header.no_staff} without change. Ignored.")									
-
-						"""
-						if header.time_signature is not None:
-							logger.info (f'Found time signature  {header.time_signature} on staff {header.no_staff} at measure {current_measure_no}')
-							new_time_signature = header.time_signature.get_notation_object()
-							# We assign the TS specifically to the current parts: the id is preserved
-							changed_ts = part.set_current_time_signature (new_time_signature, mnf_staff.number_in_part)			
-						"""
-						
+							
 						if header.key_signature is not None:
 							key_sign = header.key_signature.get_notation_object()
 							# The key signature impacts all subsequent events on the staff
@@ -819,6 +829,12 @@ class OmrScore:
 							else:
 								logger.info (f'Key signature {key_sign} found on staff {header.no_staff} at measure {current_measure_no} without change. Ignored.')
 					
+					# Safety: if the first measure has not clef, we set a default one					
+					
+					for part in score.get_parts():
+						part.ensure_initial_context(self.initial_key_signature, 
+											self.initial_time_signature)
+
 					# Now we scan the voices
 					
 					# Voices are numbered from 1 for 
@@ -917,12 +933,11 @@ class OmrScore:
 						else:
 							logger.warning (f"Found an empty voice {voice_part.id} in measure {measure_for_part.id} of part {current_part.id}. Ignored")
 											
-					# Checking consistency of signatures
-					logger.info("")
-					logger.info("Checking  signatures for the current measure")
-					logger.info("")
-					# In principle the input has been cleaned
-					#score.check_signatures()
+					# Add a pause to empty measures
+					for part in score.get_parts():
+						if (part.current_measure.is_empty()
+							and part.part_type != score_model.Part.GROUP_PART):
+							part.current_measure.fill_with_pause()
 
 		# Aggregate voices at the part level
 		logger.info("")
@@ -1081,7 +1096,7 @@ class OmrScore:
 
 		score =  score_model.Score(use_layout=False)
 		score.set_initial_time_signature(self.initial_time_signature)
-		logger.info (f"Initial key signature set to {self.initial_time_signature}")
+		logger.info (f"Initial time signature set to {self.initial_time_signature}")
 		score.set_initial_key_signature(self.initial_key_signature)
 		logger.info (f"Initial key signature set to {self.initial_key_signature}")
 
@@ -1093,10 +1108,13 @@ class OmrScore:
 				id_part_staff = score_model.Part.make_part_id(src_part.id)
 				part = score_model.Part(id_part=id_part_staff, name=src_part.name, 
 												abbreviation=src_part.abbreviation)
-				
 				part.set_instrument (src_part.name,src_part.abbreviation)
 				score.add_part(part)			
 				logger.info (f"Add a single-staff part {id_part_staff}")
+				
+				# We set the initial clefs 
+				if part.id in self.initial_clefs_for_part:
+					part.set_initial_clefs (self.initial_clefs_for_part[part.id])
 			else:
 				# It is a part group. Create one PartStaff for each staff of the part 
 				staff_group = []
