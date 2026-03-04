@@ -257,8 +257,9 @@ def add_descriptive_properties(iiif_object, summary, thumbnail,
 		summary_prop = iiif3_mod.Property (summary)
 		iiif_object.set_summary (summary_prop)
 	if thumbnail is not None:
+		thumbnail_service = iiif3_mod.Service(thumbnail["url"])
 		thumbnail_prop =  iiif3_mod.ImageBody (thumbnail["url_default"], 
-				thumbnail["width"], thumbnail["height"],  thumbnail["url"])
+				thumbnail["width"], thumbnail["height"],  thumbnail_service)
 		iiif_object.set_thumbnail (thumbnail_prop)
 	if licence is not None:
 		iiif_object.set_rights (licence["url"])
@@ -269,10 +270,11 @@ def add_descriptive_properties(iiif_object, summary, thumbnail,
 	if organization is not None:
 		label_prop = iiif3_mod.Property (organization["name"])
 		if organization["logo"] is not None:
+			org_service = iiif3_mod.Service(organization["logo"]["url"])
 			logo_prop =  iiif3_mod.ImageBody (organization["logo"]["url_default"], 
 				organization["logo"]["width"], 
 				organization["logo"]["height"],
-				organization["logo"]["url"])
+				org_service)
 		else:
 			logo_prop =None
 		hp_prop = iiif3_mod.Property (organization["name"])
@@ -290,4 +292,4 @@ def create_image_item(neuma_image):
 	return iiif3_mod.ImageBody (neuma_image["url_default"], 
 				neuma_image["width"], 
 				neuma_image["height"],
-				neuma_image["url"])
+				iiif3_mod.Service(neuma_image["url"]))
