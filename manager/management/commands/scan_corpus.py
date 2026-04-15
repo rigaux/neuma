@@ -38,7 +38,7 @@ ANALYZE_OPUS_ACTION = "analyze_opus"
 COPY_DMOS_ACTION = "copy_dmos"
 EXPORT_TO_DATASET_ACTION = "export_dataset"
 CONVERT_GALLICA = "convert_gallica"
-
+SET_XML_IDS = "set_xml_ids"
 EXTRACT_FEATURES_ACTION = "extract_features"
 
 class Command(BaseCommand):
@@ -69,6 +69,15 @@ class Command(BaseCommand):
 				if not c.parent_ref(c.ref):
 					Workflow.index_corpus(c)
 			return 
+		elif action == SET_XML_IDS:
+			try:
+				corpus = Corpus.objects.get(ref=options['corpus_ref'])
+				for opus in Opus.objects.filter(corpus__ref=corpus.ref):
+					opus.set_xml_ids()
+					break
+			except Corpus.DoesNotExist:
+				raise CommandError('Corpus "%s" does not exist' % options['corpus_ref'])
+			return "Done"
 		elif action == EXPORT_TO_DATASET_ACTION:
 			# Export the reference and computed MEI to 'ground-truth'
 			# and 'predicted' dirs of the utilities 

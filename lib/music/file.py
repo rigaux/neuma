@@ -36,6 +36,31 @@ class MEI:
 			measure.set(tag, "m" + measure.get('n'))
 		return 
 
+	def set_pages_id(self):
+		"""
+		 Number pages
+		"""
+		pages = self.mei_root.findall(".//mei:pb", self.prefix_map)
+		page_no = 1
+		for page in pages:
+			page_id = f"p{page_no}"
+			print (f"Found page {page_no}")
+			tag = etree.QName('http://www.w3.org/XML/1998/namespace', 'id')
+			page.set(tag, page_id)
+			# Get systems
+			system_no = 2 
+			# Start at 2 because a pb implies a first system which remains implicit
+			systems = page.xpath("following-sibling::mei:sb",
+						namespaces={'mei': "http://www.music-encoding.org/ns/mei"})
+			for system in systems:
+				system_id = f"{page_id}-s{system_no}"
+				print (f"Yes, system {system_id}")
+				tag = etree.QName('http://www.w3.org/XML/1998/namespace', 'id')
+				system.set(tag, system_id)
+				system_no += 1
+			page_no += 1
+		return 
+
 	def write(self, file_path=None):
 		if file_path==None:
 			# We rewrite the same file

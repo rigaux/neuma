@@ -19,6 +19,9 @@ from natsort import natsorted
 import music21 as m21
 import verovio
 
+
+# for XML editions
+from lxml import etree
 #
 # Django packages imports
 #
@@ -52,6 +55,7 @@ import lib.music.source as source_mod
 import lib.music.collection as collection_mod
 import lib.music.opusmeta as opusmeta_mod
 import lib.music.constants as constants_mod
+import lib.music.file as file_mod
 
 import lib.iiif.IIIF2 as iiif2_mod
 import lib.iiif.IIIF3 as iiif3_mod
@@ -923,6 +927,20 @@ class Opus(models.Model):
 		except OpusSource.DoesNotExist as e:
 			return None
 
+	def set_xml_ids(self, source_ref=source_mod.ItemSource.MEI_GROUND_TRUTH_REF):
+		""" 
+			Set consistent ids to the pages/ systems and mesures 
+			of an XML file
+		"""
+		source = self.get_source(source_ref)
+		print (f"Set the ids for the XML file of source {source.ref} of opus {self.ref}")
+		mei_file = file_mod.MEI(source.source_file.path)
+		
+		mei_file.set_measures_id()
+		mei_file.set_pages_id()
+		
+		mei_file.write(source.source_file.path)
+		
 	def get_source_with_type (self, source_type):
 		"""Get  a source from the opus"""
 		
