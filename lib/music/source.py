@@ -3,6 +3,7 @@ import csv
 
 import lib.music.Score as score_mod
 import lib.music.notation as notation_mod
+import lib.music.annotation as annot_mod
 
 import lib.iiif.IIIF3 as iiif3_mod
 
@@ -491,7 +492,42 @@ class Manifest:
 			return True
 		else:
 			return False
-	
+			
+	def export_as_annotations(self, source_url):
+		"""annot = annotation_mod.Annotation.create_annot_from_xml_to_image(
+				creator, doc_url, xml_id, 
+				image_url, 
+				region, 
+				annot_concept)
+		"""
+		list_annots = []
+		creator =  annot_mod.Creator(0, "CollabScore", "CollabScore")
+		measure_no = 1
+		for page in self.pages:
+			xml_id = f"p{page.number}"
+			annot = annot_mod.Annotation.create_annot_from_xml_to_image(
+				creator, source_url, xml_id, 
+				page.url, 'all', 'page')
+			list_annots.append(annot.json())
+
+			for system in page.systems:
+				xml_id = f"p{page.number}-{system.number}"
+				annot = annot_mod.Annotation.create_annot_from_xml_to_image(
+					creator, source_url, xml_id, 
+						system.url, 'all', 'system')
+				list_annots.append(annot.json())
+				
+				for measure in system.measures:
+					xml_id = f"m{measure_no}"
+					measure_no += 1
+					annot = annot_mod.Annotation.create_annot_from_xml_to_image(
+						creator, source_url, xml_id, 
+							measure.url, 'all', 'measure')
+					list_annots.append(annot.json())
+					
+				
+		return list_annots
+
 	def print (self):
 		print (json.dumps(self.to_json()))
 

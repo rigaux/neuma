@@ -786,6 +786,7 @@ class Workflow:
 			print (f"Moving predicted file {predicted_origin} to {predicted_dest}")
 			shutil.copyfile(predicted_origin, predicted_dest)
 	
+			# Export the IIIF manifest
 			if not (iiif_src.iiif_manifest) or iiif_src.iiif_manifest == {}:
 				print (f"No IIIF manifest in IIIF source for opus {opus_ref}.")	
 				break
@@ -796,6 +797,24 @@ class Workflow:
 			with open(mnf_name, 'w',encoding='utf8') as filehandle:
 				filehandle.write(iiif_manifest)
 			print (f"Manifest written to file {mnf_name}")
+
+			# Export the source manifest as annotations
+			if not (iiif_src.manifest) or iiif_src.manifest == {}:
+				print (f"No source manifest in IIIF source for opus {opus_ref}.")	
+				break
+			# Get the source manifest
+			source_url = f"{opus.local_ref()}.mei"
+			with open(iiif_src.manifest.path, "r") as f:
+				source_json = json.load(f)
+				source_manifest = source_mod.Manifest.from_json(source_json)
+				
+				annots = source_manifest.export_as_annotations(source_url)
+
+			annot_name = f"{PATH_TO_DATASET}/iiif/{opus.local_ref()}_annot.json"
+			with open(annot_name, 'w',encoding='utf8') as filehandle:
+				json.dump(annots, filehandle)
+			print (f"Annotations written to file {annot_name}")
+			#break
 		print (f"{i_opus} opus have been exported")
 		
 		

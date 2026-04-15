@@ -65,6 +65,9 @@ class Annotation:
 	def format_id(self):
 		return f'annot{self.id}' 
 
+	def json(self,  w3c=True):
+		return self.get_json_obj(w3c)
+		
 	def get_json_obj (self, w3c=True):
 		''' Produce the JSON string, conform to the W3C spec..'''
 		
