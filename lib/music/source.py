@@ -502,29 +502,41 @@ class Manifest:
 		"""
 		list_annots = []
 		creator =  annot_mod.Creator(0, "CollabScore", "CollabScore")
+		page_ref = 1
+		system_ref = 1
+		measure_ref = 1
 		measure_no = 1
 		for page in self.pages:
-			xml_id = f"p{page.number}"
-			annot = annot_mod.Annotation.create_annot_from_xml_to_image(
-				creator, source_url, xml_id, 
-				page.url, 'all', 'page')
-			list_annots.append(annot.json())
-
+			page_xml_id = []
 			for system in page.systems:
-				xml_id = f"p{page.number}-{system.number}"
-				annot = annot_mod.Annotation.create_annot_from_xml_to_image(
-					creator, source_url, xml_id, 
-						system.url, 'all', 'system')
-				list_annots.append(annot.json())
-				
+				system_xml_id = []
 				for measure in system.measures:
 					xml_id = f"m{measure_no}"
 					measure_no += 1
 					annot = annot_mod.Annotation.create_annot_from_xml_to_image(
-						creator, source_url, xml_id, 
-							measure.url, 'all', 'measure')
+						creator, source_url, [xml_id], 
+							measure.url, 'all', 'measure',
+							annot_id=xml_id)
 					list_annots.append(annot.json())
+					system_xml_id.append(xml_id)
+					page_xml_id.append(xml_id)
 					
+				# Export the system
+				annot = annot_mod.Annotation.create_annot_from_xml_to_image(
+					creator, source_url, system_xml_id, 
+						system.url, 'all', 'system', 
+						annot_id=f"p{page_ref}_s{system_ref}")
+				system_ref += 1
+				list_annots.append(annot.json())
+				
+					
+			# Export the page
+			annot = annot_mod.Annotation.create_annot_from_xml_to_image(
+				creator, source_url, page_xml_id, 
+				page.url, 'all', 'page', annot_id=f"p{page_ref}")
+			page_ref += 1
+			list_annots.append(annot.json())
+
 				
 		return list_annots
 

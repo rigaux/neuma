@@ -44,7 +44,7 @@ class MEI:
 		page_no = 1
 		for page in pages:
 			page_id = f"p{page_no}"
-			print (f"Found page {page_no}")
+			#print (f"Found page {page_no}")
 			tag = etree.QName('http://www.w3.org/XML/1998/namespace', 'id')
 			page.set(tag, page_id)
 			# Get systems
@@ -54,7 +54,7 @@ class MEI:
 						namespaces={'mei': "http://www.music-encoding.org/ns/mei"})
 			for system in systems:
 				system_id = f"{page_id}-s{system_no}"
-				print (f"Yes, system {system_id}")
+				#print (f"Yes, system {system_id}")
 				tag = etree.QName('http://www.w3.org/XML/1998/namespace', 'id')
 				system.set(tag, system_id)
 				system_no += 1

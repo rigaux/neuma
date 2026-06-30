@@ -32,6 +32,8 @@ from xml.dom import minidom
 
 from lib.music.Score import *
 import lib.music.source as source_mod
+
+import lib.music.file as file_mod
 import lib.music.constants as constants_mod
 import lib.iiif.IIIF3 as iiif3_mod
 
@@ -762,8 +764,7 @@ class Workflow:
 			if predicted_src_xml is None:
 				print (f"No predicted MusicXML for opus {opus.ref}. Export aborted")	
 				continue
-			"""
-			The gt now is fully in the dataset
+			
 			gt_origin = ground_truth_src.source_file.path
 			gt_dest  = f"{PATH_TO_DATASET}/ground_truth/{opus.local_ref()}.mei"
 			print (f"Moving ground truth file {gt_origin} to {gt_dest}")
@@ -775,7 +776,13 @@ class Workflow:
 					mei_content = mei_raw.decode("utf-16")
 			with open(gt_dest, "w") as mei_dest:
 				mei_dest.write (mei_content)
-			"""
+			
+			# Number measures
+			mei_dest = file_mod.MEI (gt_dest)
+			mei_dest.set_pages_id()
+			mei_dest.set_measures_id()
+			mei_dest.write(gt_dest)
+			
 			predicted_origin = predicted_src.source_file.path
 			predicted_dest  = f"{PATH_TO_DATASET}/predicted/{opus.local_ref()}.mei"
 			print (f"Moving predicted file {predicted_origin} to {predicted_dest}")
@@ -814,7 +821,7 @@ class Workflow:
 			with open(annot_name, 'w',encoding='utf8') as filehandle:
 				json.dump(annots, filehandle)
 			print (f"Annotations written to file {annot_name}")
-			#break
+			# break
 		print (f"{i_opus} opus have been exported")
 		
 		

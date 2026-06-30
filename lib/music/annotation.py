@@ -136,7 +136,7 @@ class Annotation:
 		
 
 	@staticmethod 
-	def create_annot_from_xml_to_image(creator, doc_url, xml_id, image_url, region, annot_concept):
+	def create_annot_from_xml_to_image(creator, doc_url, xml_id, image_url, region, annot_concept, annot_id= None):
 		''' 
 			An annotation that links an XML element to an image region
 		'''
@@ -147,8 +147,10 @@ class Annotation:
 		body = ResourceBody(body_resource)
 		
 		#print(f'Inserting annotation with concept {annot_concept} from {target} on element {xml_id}, with body {body} ')
-			
-		return Annotation(Annotation.get_new_id(), creator, target, body, 
+		
+		if annot_id == None:
+			annot_id = Annotation.get_new_id()
+		return Annotation(annot_id, creator, target, body, 
 							AM_IMAGE_REGION, annot_concept, 
 							Annotation.MOTIVATION_LINKING,
 							datetime.datetime.now(), datetime.datetime.now())
